@@ -8,9 +8,10 @@
 Here's the Squigglepy implementation of [the example from Squiggle Docs](https://www.squiggle-language.com/docs/Overview):
 
 ```Python
-from squigglepy.sample import *
-from squigglepy.utils import *
+import squigglepy
+from squigglepy.distributions import *
 from squigglepy.numbers import *
+from squigglepy.utils import *
 
 populationOfNewYork2022 = to(8.1*million(), 8.4*million()) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
 
@@ -33,9 +34,10 @@ get_percentiles(sample(totalTunersIn2022, n=1000))
 And the version from the Squiggle doc that incorporates time:
 
 ```Python
-from squigglepy.sample import *
-from squigglepy.utils import *
+import squigglepy
+from squigglepy.distributions import *
 from squigglepy.numbers import *
+from squigglepy.utils import *
 
 populationOfNewYork2022 = to(8.1*million(), 8.4*million())
 
