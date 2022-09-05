@@ -82,20 +82,6 @@ def sample(var, credibility=0.9, n=1):
     elif var[2] == 'log':
         out = lognormal_sample(var[0], var[1], credibility)
 
-    elif var[2] == 'weighted_log':
-        weights = var[1]
-        sum_weights = sum(weights)
-        if sum_weights <= 0.99 or sum_weights >= 1.01:
-            raise ValueError('weighted_log weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
-        if len(weights) != len(var[0]):
-            raise ValueError('weighted_log weights and distributions not same length')
-        log_result = 0
-        for i, log_data in enumerate(var[0]):
-            log_value = lognormal_sample(log_data[0], log_data[1], credibility)
-            weight = weights[i]
-            log_result += log_value * weight
-        out = log_result
-
     elif var[2] == 'distributed_log':
         weights = var[1]
         sum_weights = sum(weights)

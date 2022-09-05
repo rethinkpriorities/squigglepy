@@ -10,9 +10,6 @@ def const(x):
 def lognorm(x, y, lclip=None, rclip=None):
     return [x, y, 'log', lclip, rclip]
 
-def weighted_lognorm(logs, weights, lclip=None, rclip=None):
-    return [logs, weights, 'weighted_log', lclip, rclip]
-
 def distributed_lognorm(logs, weights, lclip=None, rclip=None):
     return [logs, weights, 'distributed_log', lclip, rclip]
 
