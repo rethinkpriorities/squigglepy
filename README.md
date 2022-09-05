@@ -65,6 +65,16 @@ def totalTunersAtTime(t):
 get_percentiles(sample(lambda: totalTunersAtTime(2030-2022), n=1000))
 ```
 
+## Additional Features
+
+Additional distributions:
+
+```Python
+sample(norm(1, 3))
+sample(lognorm(1, 10))
+sample(tdist(1, 10, t=5))
+```
+
 ## Installation
 
 `pip3 install squigglepy`
