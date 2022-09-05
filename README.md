@@ -54,7 +54,7 @@ def populationAtTime(t):
     return sq.sample(populationOfNewYork2022) * ((sq.sample(averageYearlyPercentageChange) + 1) ** t)
 
 def totalTunersAtTime(t):
-	  return (populationAtTime(t) *
+    return (populationAtTime(t) *
             proportionOfPopulationWithPianos() *
             pianoTunersPerPiano())
 
