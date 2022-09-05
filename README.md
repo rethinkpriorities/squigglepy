@@ -8,63 +8,57 @@
 Here's the Squigglepy implementation of [the example from Squiggle Docs](https://www.squiggle-language.com/docs/Overview):
 
 ```Python
-import squigglepy
-from squigglepy.distributions import *
-from squigglepy.numbers import *
-from squigglepy.utils import *
+import squigglepy as sq
 
-populationOfNewYork2022 = to(8.1*million(), 8.4*million()) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
+populationOfNewYork2022 = sq.to(8.1*million(), 8.4*million()) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
 
 def proportionOfPopulationWithPianos():
-    percentage = to(.2, 1)
-    return sample(percentage) * 0.01 # We assume there are almost no people with multiple pianos
+    percentage = sq.to(.2, 1)
+    return sq.sample(percentage) * 0.01 # We assume there are almost no people with multiple pianos
 
 def pianoTunersPerPiano():
-    pianosPerPianoTuner = to(2*thousand(), 50*thousand())
-    return 1 / sample(pianosPerPianoTuner)
+    pianosPerPianoTuner = sq.to(2*thousand(), 50*thousand())
+    return 1 / sq.sample(pianosPerPianoTuner)
 
 def totalTunersIn2022():
-    return (sample(populationOfNewYork2022) *
+    return (sq.sample(populationOfNewYork2022) *
             proportionOfPopulationWithPianos() *
             pianoTunersPerPiano())
 
-get_percentiles(sample(totalTunersIn2022, n=1000))
+sq.get_percentiles(sq.sample(totalTunersIn2022, n=1000))
 ```
 
 And the version from the Squiggle doc that incorporates time:
 
 ```Python
-import squigglepy
-from squigglepy.distributions import *
-from squigglepy.numbers import *
-from squigglepy.utils import *
+import squigglepy as sq
+K = sq.thousand(); M = sq.million()
 
-populationOfNewYork2022 = to(8.1*million(), 8.4*million())
+populationOfNewYork2022 = sq.to(8.1*M, 8.4*M)
 
 def proportionOfPopulationWithPianos():
-    percentage = to(.2, 1)
-    return sample(percentage) * 0.01
+    percentage = sq.to(.2, 1)
+    return sq.sample(percentage) * 0.01
 
 def proportionOfPopulationWithPianos():
-    percentage = to(.2, 1)
-    return sample(percentage) * 0.01
+    percentage = sq.to(.2, 1)
+    return sq.sample(percentage) * 0.01
 
 def pianoTunersPerPiano():
-    pianosPerPianoTuner = to(2*thousand(), 50*thousand())
-    return 1 / sample(pianosPerPianoTuner)
+    pianosPerPianoTuner = sq.to(2*K, 50*K)
+    return 1 / sq.sample(pianosPerPianoTuner)
 
 # Time in years after 2022
 def populationAtTime(t):
-    averageYearlyPercentageChange = to(-0.01, 0.05) # We're expecting NYC to continuously grow with an mean of roughly between -1% and +4% per year
-    return sample(populationOfNewYork2022) * ((sample(averageYearlyPercentageChange) + 1) ** t)
-}
+    averageYearlyPercentageChange = sq.to(-0.01, 0.05) # We're expecting NYC to continuously grow with an mean of roughly between -1% and +4% per year
+    return sq.sample(populationOfNewYork2022) * ((sq.sample(averageYearlyPercentageChange) + 1) ** t)
 
 def totalTunersAtTime(t):
 	  return (populationAtTime(t) *
             proportionOfPopulationWithPianos() *
             pianoTunersPerPiano())
 
-get_percentiles(sample(lambda: totalTunersAtTime(2030-2022), n=1000))
+sq.get_percentiles(sq.sample(lambda: totalTunersAtTime(2030-2022), n=1000))
 ```
 
 ## Additional Features
@@ -72,9 +66,16 @@ get_percentiles(sample(lambda: totalTunersAtTime(2030-2022), n=1000))
 Additional distributions:
 
 ```Python
-sample(norm(1, 3))
-sample(lognorm(1, 10))
-sample(tdist(1, 10, t=5))
+import squigglepy as sq
+
+sq.sample(sq.norm(1, 3))
+sq.sample(sq.lognorm(1, 10))
+sq.sample(sq.tdist(1, 10, t=5))
+
+sq.sample(sq.mixture([sq.norm(1, 3),
+                      sq.norm(4, 10),
+                      sq.lognorm(1, 10)],
+                      [0.3, 0.3, 0.4]))
 ```
 
 ## Installation

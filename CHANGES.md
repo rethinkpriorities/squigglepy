@@ -1,7 +1,7 @@
 ## v0.2
 
-* Move distributions into a separate library (`from squigglepy.distributions import *` will import all the distribution functions)
-* Move `sample` into the base library (`import squigglepy` will import `sample`)
+* Change `distributed_log` to `mixture` (to follow Squiggle) and allow it to implement any sub-distribution.
+* Changed library to single import.
 * Remove `weighted_log` as a distribution.
 
 

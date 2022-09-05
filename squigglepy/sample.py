@@ -82,28 +82,28 @@ def sample(var, credibility=0.9, n=1):
     elif var[2] == 'log':
         out = lognormal_sample(var[0], var[1], credibility)
 
-    elif var[2] == 'distributed_log':
-        weights = var[1]
-        sum_weights = sum(weights)
-        if sum_weights <= 0.99 or sum_weights >= 1.01:
-            raise ValueError('distributed_log weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
-        if len(weights) != len(var[0]):
-            raise ValueError('distributed_log weights and distributions not same length')
-        r_ = random.random()
-        weights = np.cumsum(weights)
-        done = False
-        for i, log_data in enumerate(var[0]):
-            if not done:
-                weight = weights[i]
-                if r_ <= weight:
-                    out = lognormal_sample(log_data[0], log_data[1], credibility)
-                    done = True
-
     elif var[2] == 'tdist':
         out = t_sample(var[0], var[1], var[3], credibility)
 
     elif var[2] == 'log-tdist':
         out = log_t_sample(var[0], var[1], var[3], credibility)
+
+    elif var[2] == 'mixture':
+        weights = var[1]
+        sum_weights = sum(weights)
+        if sum_weights <= 0.99 or sum_weights >= 1.01:
+            raise ValueError('mixture weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+        if len(weights) != len(var[0]):
+            raise ValueError('mixture weights and distributions not same length')
+        r_ = random.random()
+        weights = np.cumsum(weights)
+        done = False
+        for i, dist in enumerate(var[0]):
+            if not done:
+                weight = weights[i]
+                if r_ <= weight:
+                    out = sample(dist, credibility=credibility)
+                    done = True
 
     else:
         raise ValueError('{} sampler not found'.format(var[2]))
