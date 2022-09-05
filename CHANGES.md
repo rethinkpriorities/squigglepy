@@ -1,3 +1,7 @@
+## v0.4
+
+* Fix critical bug introduced in v0.3.
+
 ## v0.3
 
 * Be able to define distributions using `mean` and `sd` instead of defining the interval.

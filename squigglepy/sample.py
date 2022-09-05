@@ -21,7 +21,7 @@ def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
 
     
 def lognormal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
-    if low < 0 or mean < 0:
+    if (low is not None and low < 0) or (mean is not None and mean < 0):
         raise ValueError('lognormal_sample cannot handle negative values')
     if mean is None:
         if low > high:
