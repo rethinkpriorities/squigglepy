@@ -82,7 +82,7 @@ sq.sample(sq.tdist(1, 10, t=5))
 sq.sample(sq.mixture([sq.norm(1, 3),
                       sq.norm(4, 10),
                       sq.lognorm(1, 10)],  # Distributions to mix
-                      [0.3, 0.3, 0.4]))    # These are the weights on each distribution
+                     [0.3, 0.3, 0.4]))     # These are the weights on each distribution
 
 # You can change the CI from 90% (default) to 80%
 sq.sample(sq.norm(1, 3, credibility=0.8))
