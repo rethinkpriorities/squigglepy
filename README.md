@@ -68,14 +68,24 @@ Additional distributions:
 ```Python
 import squigglepy as sq
 
-sq.sample(sq.norm(1, 3))
+# Normal distribution
+sq.sample(sq.norm(1, 3))  # 90% interval from 1 to 3
+
+# Distribution can be sampled with mean and sd too
+sq.sample(sq.norm(mean=2, sd=3))
+
+# Other distributions exist
 sq.sample(sq.lognorm(1, 10))
 sq.sample(sq.tdist(1, 10, t=5))
 
+# You can mix distributions together
 sq.sample(sq.mixture([sq.norm(1, 3),
                       sq.norm(4, 10),
                       sq.lognorm(1, 10)],
-                      [0.3, 0.3, 0.4]))
+                      [0.3, 0.3, 0.4]))    # These are the weights on each distribution
+
+# You can change the CI from 90% (default) to 80%
+sq.sample(sq.norm(1, 3, credibility=0.8))
 ```
 
 ## Installation

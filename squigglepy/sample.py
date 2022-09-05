@@ -4,48 +4,56 @@ import numpy as np
 from scipy import stats
 
 
-def normal_sample(low, high, interval):
-    if low > high:
-        raise ValueError('`high value` cannot be lower than `low value`')
-    if low == high:
-        return low
-    else:
+def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
+    if mean is None:
+        if low > high:
+            raise ValueError('`high value` cannot be lower than `low value`')
+        elif low == high:
+            return low
         mu = (high + low) / 2
-        cdf_value = 0.5 + 0.5 * interval
+        cdf_value = 0.5 + 0.5 * credibility
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (high - mu) / normed_sigma
-        return np.random.normal(mu, sigma)
+    else:
+        mu = mean
+        sigma = sd
+    return np.random.normal(mu, sigma)
 
     
-def lognormal_sample(low, high, interval):
-    if low > high:
-        raise ValueError('`high value` cannot be lower than `low value`')
-    if low < 0:
+def lognormal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
+    if low < 0 or mean < 0:
         raise ValueError('lognormal_sample cannot handle negative values')
-    if low == high:
-        return low
-    else:
+    if mean is None:
+        if low > high:
+            raise ValueError('`high value` cannot be lower than `low value`')
+        elif low == high:
+            return low
         log_low = np.log(low)
         log_high = np.log(high)
         mu = (log_high + log_low) / 2
-        cdf_value = 0.5 + 0.5 * interval
+        cdf_value = 0.5 + 0.5 * credibility
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (log_high - mu) / normed_sigma
-        return np.random.lognormal(mu, sigma)
+    else:
+        mu = mean
+        sigma = sd
+    return np.random.lognormal(mu, sigma)
 
 
-def t_sample(low, high, t, interval):
+def t_sample(low, high, t, credibility=None):
     if low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
-    if low == high:
+    elif low == high:
         return low
-    else:
+    elif mean is None:
         mu = (high + low) / 2
         rangex = (high - low) / 2
-        return np.random.standard_t(t) * rangex * 0.6/interval + mu
+        return np.random.standard_t(t) * rangex * 0.6/credibility + mu
+    else:
+        return np.random.standard_t(t) * rangex * 0.6/credibility + mu
 
 
-def log_t_sample(low, high, t, interval):
+def log_t_sample(low, high, t, credibility=None):
     if low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
     if low < 0:
@@ -57,13 +65,13 @@ def log_t_sample(low, high, t, interval):
         log_high = np.log(high)
         mu = (log_high + log_low) / 2
         rangex = (log_high - log_low) / 2
-        return np.exp(np.random.standard_t(t) * rangex * 0.6/interval + mu)
+        return np.exp(np.random.standard_t(t) * rangex * 0.6/credibility + mu)
     
 
 def sample(var, credibility=0.9, n=1):
     n = int(n)
     if n > 1:
-        return np.array([sample(var) for _ in range(n)])
+        return np.array([sample(var, credibility=credibility) for _ in range(n)])
     elif n <= 0:
         return ValueError('n must be >= 1')
 
@@ -77,16 +85,22 @@ def sample(var, credibility=0.9, n=1):
         out = var[0]
 
     elif var[2] == 'norm':
-        out = normal_sample(var[0], var[1], credibility)
+        out = normal_sample(var[0], var[1], credibility=credibility)
+
+    elif var[2] == 'norm-mean':
+        out = normal_sample(mean=var[0], sd=var[1], credibility=credibility)
 
     elif var[2] == 'log':
-        out = lognormal_sample(var[0], var[1], credibility)
+        out = lognormal_sample(var[0], var[1], credibility=credibility)
+
+    elif var[2] == 'log-mean':
+        out = lognormal_sample(mean=var[0], sd=var[1], credibility=credibility)
 
     elif var[2] == 'tdist':
-        out = t_sample(var[0], var[1], var[3], credibility)
+        out = t_sample(var[0], var[1], var[3], credibility=credibility)
 
     elif var[2] == 'log-tdist':
-        out = log_t_sample(var[0], var[1], var[3], credibility)
+        out = log_t_sample(var[0], var[1], var[3], credibility=credibility)
 
     elif var[2] == 'mixture':
         weights = var[1]
