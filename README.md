@@ -64,8 +64,6 @@ sq.get_percentiles(sq.sample(lambda: totalTunersAtTime(2030-2022), n=1000))
 
 ## Additional Features
 
-Additional distributions:
-
 ```Python
 import squigglepy as sq
 
@@ -74,6 +72,9 @@ sq.sample(sq.norm(1, 3))  # 90% interval from 1 to 3
 
 # Distribution can be sampled with mean and sd too
 sq.sample(sq.norm(mean=2, sd=3))
+
+# Get more than one sample
+sq.sample(sq.norm(1, 3), n=100)
 
 # Other distributions exist
 sq.sample(sq.lognorm(1, 10))
@@ -85,8 +86,14 @@ sq.sample(sq.mixture([sq.norm(1, 3),
                       sq.lognorm(1, 10)],  # Distributions to mix
                      [0.3, 0.3, 0.4]))     # These are the weights on each distribution
 
+# You can add and subtract distributions (a little less cool compared to native Squiggle unfortunately):
+sq.sample(lambda: sq.sample(sq.norm(1,3)) + sq.sample(sq.norm(4,5))), n=100)
+sq.sample(lambda: sq.sample(sq.norm(1,3)) - sq.sample(sq.norm(4,5))), n=100)
+sq.sample(lambda: sq.sample(sq.norm(1,3)) * sq.sample(sq.norm(4,5))), n=100)
+sq.sample(lambda: sq.sample(sq.norm(1,3)) / sq.sample(sq.norm(4,5))), n=100)
+
 # You can change the CI from 90% (default) to 80%
-sq.sample(sq.norm(1, 3, credibility=0.8))
+sq.sample(sq.norm(1, 3), credibility=0.8)
 ```
 
 ## Installation
