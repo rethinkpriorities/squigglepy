@@ -9,7 +9,7 @@ Here's the Squigglepy implementation of [the example from Squiggle Docs](https:/
 
 ```Python
 import squigglepy as sq
-M = sq.million()
+M = sq.million(); K = sq.thousand()
 
 populationOfNewYork2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
 
@@ -18,7 +18,7 @@ def proportionOfPopulationWithPianos():
     return sq.sample(percentage) * 0.01 # We assume there are almost no people with multiple pianos
 
 def pianoTunersPerPiano():
-    pianosPerPianoTuner = sq.to(2*thousand(), 50*thousand())
+    pianosPerPianoTuner = sq.to(2*K, 50*K)
     return 1 / sq.sample(pianosPerPianoTuner)
 
 def totalTunersIn2022():
