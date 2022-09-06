@@ -9,8 +9,9 @@ Here's the Squigglepy implementation of [the example from Squiggle Docs](https:/
 
 ```Python
 import squigglepy as sq
+M = sq.million()
 
-populationOfNewYork2022 = sq.to(8.1*million(), 8.4*million()) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
+populationOfNewYork2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
 
 def proportionOfPopulationWithPianos():
     percentage = sq.to(.2, 1)
