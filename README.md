@@ -96,7 +96,7 @@ sq.sample(lambda: sq.sample(sq.norm(1,3)) / sq.sample(sq.norm(4,5))), n=100)
 # You can change the CI from 90% (default) to 80%
 sq.sample(sq.norm(1, 3), credibility=0.8)
 
-# You can specify a constant (which can be useful for passing things into functions)
+# You can specify a constant (which can be useful for passing things into functions or mixtures)
 sq.sample(sq.const(4)) # Always returns 4
 ```
 
