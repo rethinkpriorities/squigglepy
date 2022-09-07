@@ -71,7 +71,8 @@ import squigglepy as sq
 sq.sample(sq.norm(1, 3))  # 90% interval from 1 to 3
 
 # Distribution can be sampled with mean and sd too
-sq.sample(sq.norm(mean=2, sd=3))
+sq.sample(sq.norm(mean=0, sd=1))
+sq.sample(sq.norm(-1.67, 1.67))  # This is equivalent to mean=0, sd=1
 
 # Get more than one sample
 sq.sample(sq.norm(1, 3), n=100)
