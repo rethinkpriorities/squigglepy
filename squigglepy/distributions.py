@@ -17,16 +17,10 @@ def lognorm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
         return [mean, sd, 'log-mean', lclip, rclip]
 
 def tdist(x, y, t, lclip=None, rclip=None):
-    if mean is None:
-        return [x, y, 'tdist', t, lclip, rclip]
-    else:
-        return [mean, sd, 'tdist-mean', lclip, rclip]
+    return [x, y, 'tdist', t, lclip, rclip]
 
 def log_tdist(x, y, t, lclip=None, rclip=None):
-    if mean is None:
-        return [x, y, 'log-tdist', t, lclip, rclip]
-    else:
-        return [mean, sd, 'log-tdist-mean', lclip, rclip]
+    return [x, y, 'log-tdist', t, lclip, rclip]
 
 def mixture(dists, weights, lclip=None, rclip=None):
     return [dists, weights, 'mixture', lclip, rclip]

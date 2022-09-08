@@ -45,20 +45,18 @@ def t_sample(low, high, t, credibility=None):
         raise ValueError('`high value` cannot be lower than `low value`')
     elif low == high:
         return low
-    elif mean is None:
+    else:
         mu = (high + low) / 2
         rangex = (high - low) / 2
-        return np.random.standard_t(t) * rangex * 0.6/credibility + mu
-    else:
         return np.random.standard_t(t) * rangex * 0.6/credibility + mu
 
 
 def log_t_sample(low, high, t, credibility=None):
     if low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
-    if low < 0:
+    elif low < 0:
         raise ValueError('log_t_sample cannot handle negative values')
-    if low == high:
+    elif low == high:
         return low
     else:
         log_low = np.log(low)

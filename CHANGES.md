@@ -1,3 +1,7 @@
+## v0.5
+
+* Fix critical bug to `tdist` and `log_tdist` introduced in v0.3.
+
 ## v0.4
 
 * Fix critical bug introduced in v0.3.
