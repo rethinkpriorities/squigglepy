@@ -1,4 +1,5 @@
 * Uniform distribution
 * Triangular distribution
 * Metalog distribution
+* tests
 * Metaculus integration?
