@@ -60,3 +60,17 @@ def get_log_percentiles(data, percentiles, reverse=False, display=True, digits=1
     else:
         return dict([(k, np.round(np.log10(v), digits)) for k, v in percentiles.items()])
 
+
+def geomean(a, weights=None):
+    return stats.mstats.gmean(a, weights=weights)
+
+def p_to_odds(p):
+    return p / (1 - p)
+
+def odds_to_p(odds):
+    return odds / (1 + odds)
+
+def geomean_odds(a, weights=None):
+    a = p_to_odds(np.array(a))
+    return odds_to_p(stats.mstats.gmean(a, weights=weights))
+

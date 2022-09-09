@@ -1,3 +1,9 @@
+## v0.6
+
+* Add `geomean` to calculate the geometric mean.
+* Add `p_to_odds` to convert probability to odds. Also `odds_to_p` to convert odds to probability.
+* Add `geomean_odds` to calculate the geometric mean of odds, converted to and from probabilities.
+
 ## v0.5
 
 * Fix critical bug to `tdist` and `log_tdist` introduced in v0.3.
