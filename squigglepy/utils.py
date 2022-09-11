@@ -74,3 +74,17 @@ def geomean_odds(a, weights=None):
     a = p_to_odds(np.array(a))
     return odds_to_p(stats.mstats.gmean(a, weights=weights))
 
+def laplace(s, n=None, time_passed=None, time_remaining=None, time_fixed=False):
+	# Returns probability of success on next trial
+	if time_passed is None and time_remaining is None and n is not None:
+		return (s + 1) / (n + 2)
+	elif time_passed is not None and time_remaining is not None and s == 0:
+		# https://www.lesswrong.com/posts/wE7SK8w8AixqknArs/a-time-invariant-version-of-laplace-s-rule
+		return 1 - ((1 + time_remaining/time_passed) ** -1)
+	elif time_passed is not None and time_remaining is not None and s > 0 and not time_fixed:
+		return 1 - ((1 + time_remaining/time_passed) ** -s)
+	elif time_passed is not None and time_remaining is not None and s > 0 and time_fixed:
+		return 1 - ((1 + time_remaining/time_passed) ** -(s + 1))
+	else:
+		raise ValueError
+
