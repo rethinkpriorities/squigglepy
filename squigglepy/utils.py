@@ -74,6 +74,7 @@ def geomean_odds(a, weights=None):
     a = p_to_odds(np.array(a))
     return odds_to_p(stats.mstats.gmean(a, weights=weights))
 
+
 def laplace(s, n=None, time_passed=None, time_remaining=None, time_fixed=False):
 	# Returns probability of success on next trial
 	if time_passed is None and time_remaining is None and n is not None:

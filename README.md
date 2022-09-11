@@ -5,6 +5,8 @@
 
 ## Usage
 
+### Core Features
+
 Here's the Squigglepy implementation of [the example from Squiggle Docs](https://www.squiggle-language.com/docs/Overview):
 
 ```Python
@@ -62,7 +64,7 @@ def totalTunersAtTime(t):
 sq.get_percentiles(sq.sample(lambda: totalTunersAtTime(2030-2022), n=1000))
 ```
 
-## Additional Features
+### Additional Features
 
 ```Python
 import squigglepy as sq
@@ -101,6 +103,51 @@ sq.sample(sq.norm(1, 3), credibility=0.8)
 
 # You can specify a constant (which can be useful for passing things into functions or mixtures)
 sq.sample(sq.const(4)) # Always returns 4
+```
+
+### Bayesian inference
+
+1% of women at age forty who participate in routine screening have breast cancer.
+80% of women with breast cancer will get positive mammographies.
+9.6% of women without breast cancer will also get positive mammographies.
+A woman in this age group had a positive mammography in a routine screening.
+What is the probability that she actually has breast cancer?
+
+```
+from squigglepy import bayes
+bayes.bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
+# 0.07763975155279504
+```
+
+```
+import matplotlib.pyplot as plt
+from squigglepy import bayes
+
+print('Prior')
+prior = sq.norm(1,5)
+prior_samples = sq.sample(prior, n=10000)
+plt.hist(prior_samples, bins = 200)
+plt.show()
+print(sq.get_percentiles(prior_samples))
+print('Prior Mean: {} SD: {}'.format(np.mean(prior_samples), np.std(prior_samples)))
+print('-')
+
+print('Evidence')
+evidence = sq.norm(2,3)
+evidence_samples = sq.sample(evidence, n=10000)
+plt.hist(evidence_samples, bins = 200)
+plt.show()
+print(sq.get_percentiles(evidence_samples))
+print('Evidence Mean: {} SD: {}'.format(np.mean(evidence_samples), np.std(evidence_samples)))
+print('-')
+
+print('Posterior')
+posterior = bayes.update(prior_samples, evidence_samples)
+posterior_samples = sq.sample(posterior, n=10000)
+plt.hist(posterior_samples, bins = 200)
+plt.show()
+print(sq.get_percentiles(posterior_samples))
+print('Posterior Mean: {} SD: {}'.format(np.mean(posterior_samples), np.std(posterior_samples)))
 ```
 
 ## Installation
