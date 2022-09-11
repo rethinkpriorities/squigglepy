@@ -4,6 +4,9 @@ def to(x, y, lclip=None, rclip=None):
 def const(x):
     return [x, None, 'const', None, None]
 
+def uniform(x, y):
+    return [x, y, 'uniform', None, None]
+
 def norm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
     if mean is None:
         return [x, y, 'norm', lclip, rclip]
@@ -15,6 +18,15 @@ def lognorm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
         return [x, y, 'log', lclip, rclip]
     else:
         return [mean, sd, 'log-mean', lclip, rclip]
+
+def binomial(n, p):
+    return [n, p, 'binomial', None, None]
+
+def beta(a, b):
+    return [a, b, 'beta', None, None]
+
+def bernoulli(p):
+    return [p, None, 'beta', None, None]
 
 def tdist(x, y, t, lclip=None, rclip=None):
     return [x, y, 'tdist', t, lclip, rclip]
