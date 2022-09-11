@@ -64,7 +64,23 @@ def log_t_sample(low, high, t, credibility=None):
         mu = (log_high + log_low) / 2
         rangex = (log_high - log_low) / 2
         return np.exp(np.random.standard_t(t) * rangex * 0.6/credibility + mu)
+
+
+def binomial_sample(n, p):
+    return np.random.binomial(n, p)
+
+
+def beta_sample(a, b):
+    return np.random.beta(a, b)
+
+
+def bernoulli_sample(p):
+    return int(event_occurs(p))
     
+
+def uniform_sample(low, high):
+    return np.random.uniform(low, high)
+
 
 def sample(var, credibility=0.9, n=1):
     n = int(n)
@@ -82,6 +98,9 @@ def sample(var, credibility=0.9, n=1):
     if var[2] == 'const':
         out = var[0]
 
+    elif var[2] == 'uniform':
+        out = uniform_sample(var[0], var[1])
+
     elif var[2] == 'norm':
         out = normal_sample(var[0], var[1], credibility=credibility)
 
@@ -93,6 +112,15 @@ def sample(var, credibility=0.9, n=1):
 
     elif var[2] == 'log-mean':
         out = lognormal_sample(mean=var[0], sd=var[1], credibility=credibility)
+
+    elif var[2] == 'binomial':
+        out = binomial_sample(n=var[0], p=var[1])
+
+    elif var[2] == 'beta':
+        out = beta_sample(a=var[0], b=var[1])
+
+    elif var[2] == 'bernoulli':
+        out = bernoulli_sample(p=var[0])
 
     elif var[2] == 'tdist':
         out = t_sample(var[0], var[1], var[3], credibility=credibility)
