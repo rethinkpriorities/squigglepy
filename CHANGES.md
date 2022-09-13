@@ -5,6 +5,7 @@
 * Add `binomial(n, p)` to calculate a binomial distribution.
 * Add `beta(a, b)` to calculate a beta distribution.
 * Add `bernoulli(p)` to calculate a bernoulli distribution.
+* Add `exponential(scale)` to calculate an exponential distribution.
 
 #### New Bayesian library
 

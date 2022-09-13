@@ -34,6 +34,9 @@ def tdist(x, y, t, lclip=None, rclip=None):
 def log_tdist(x, y, t, lclip=None, rclip=None):
     return [x, y, 'log-tdist', t, lclip, rclip]
 
+def exponential(scale):
+    return [scale, None, 'exponential', None, None]
+
 def mixture(dists, weights, lclip=None, rclip=None):
     return [dists, weights, 'mixture', lclip, rclip]
 

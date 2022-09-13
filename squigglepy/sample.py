@@ -76,6 +76,10 @@ def beta_sample(a, b):
 
 def bernoulli_sample(p):
     return int(event_occurs(p))
+
+
+def exponential_sample(scale):
+    return np.random.exponential(scale)
     
 
 def uniform_sample(low, high):
@@ -121,6 +125,9 @@ def sample(var, credibility=0.9, n=1):
 
     elif var[2] == 'bernoulli':
         out = bernoulli_sample(p=var[0])
+
+    elif var[2] == 'exponential':
+        out = exponential_sample(scale=var[0])
 
     elif var[2] == 'tdist':
         out = t_sample(var[0], var[1], var[3], credibility=credibility)
