@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from .distributions import norm, beta
+from .distributions import norm, beta, mixture
 
 
 def bayes(likelihood_h, likelihood_not_h, prior):
@@ -34,8 +34,4 @@ def update(prior, evidence, type='normal'):
 
 
 def average(prior, evidence, weights=[0.5,0.5]):
-    if np.sum(weights) == 1:
-        return weights[0] * prior + weights[1] * evidence
-    else:
-        raise ValueError('Weights don\'t sum to 1')
-
+    return mixture([prior, evidence], weights)
