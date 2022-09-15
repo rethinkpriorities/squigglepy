@@ -86,7 +86,7 @@ def uniform_sample(low, high):
     return np.random.uniform(low, high)
 
 
-def sample(var, credibility=0.9, n=1):
+def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     n = int(n)
     if n > 1:
         return np.array([sample(var, credibility=credibility) for _ in range(n)])
@@ -156,15 +156,24 @@ def sample(var, credibility=0.9, n=1):
         raise ValueError('{} sampler not found'.format(var[2]))
 
     if var[2] == 'tdist' or var[2] == 'log-tdist':
-        lclip = var[4]
-        rclip = var[5]
+        lclip_ = var[4]
+        rclip_ = var[5]
     else:
-        lclip = var[3]
-        rclip = var[4]
+        lclip_ = var[3]
+        rclip_ = var[4]
 
-    if lclip and out < lclip:
+    if lclip is None and lclip_ is not None:
+        lclip = lclip_
+    elif rclip is None and rclip_ is not None:
+        rclip = rclip_
+    elif lclip is not None and lclip_ is not None:
+        lclip = max(lclip, lclip_)
+    elif rclip is not None and rclip_ is not None:
+        rclip = min(rclip, rclip_)
+
+    if lclip is not None and out < lclip:
         out = lclip
-    if rclip and out > rclip:
+    if rclip is not None and out > rclip:
         out = rclip
 
     return out

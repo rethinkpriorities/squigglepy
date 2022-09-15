@@ -21,6 +21,7 @@
 #### Other
 
 * If a distribution is defined with `sd` but not `mean`, `mean` will be inferred to be 0.
+* `sample` can now take `lclip` and `rclip` directly, in addition to defining `lclip` and `rclip` on the distribution itself. If both are defined, the most restrictive of the two bounds will be used.
 
 ## v0.5
 
