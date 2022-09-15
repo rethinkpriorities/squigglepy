@@ -8,16 +8,24 @@ def uniform(x, y):
     return [x, y, 'uniform', None, None]
 
 def norm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
-    if mean is None:
+    if mean is None and sd is None and x is not None and y is not None:
         return [x, y, 'norm', lclip, rclip]
-    else:
+    elif mean is None and sd is not None and x is None and y is None:
+        return [0, sd, 'norm-mean', lclip, rclip]
+    elif mean is not None and sd is not None and x is None and y is None:
         return [mean, sd, 'norm-mean', lclip, rclip]
+    else:
+        raise ValueError
 
 def lognorm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
-    if mean is None:
+    if mean is None and sd is None and x is not None and y is not None:
         return [x, y, 'log', lclip, rclip]
-    else:
+    elif mean is None and sd is not None and x is None and y is None:
+        return [0, sd, 'log-mean', lclip, rclip]
+    elif mean is not None and sd is not None and x is None and y is None:
         return [mean, sd, 'log-mean', lclip, rclip]
+    else:
+        raise ValueError
 
 def binomial(n, p):
     return [n, p, 'binomial', None, None]

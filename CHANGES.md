@@ -18,6 +18,10 @@
 * Add `p_to_odds` to convert probability to odds. Also `odds_to_p` to convert odds to probability.
 * Add `geomean_odds` to calculate the geometric mean of odds, converted to and from probabilities.
 
+#### Other
+
+* If a distribution is defined with `sd` but not `mean`, `mean` will be inferred to be 0.
+
 ## v0.5
 
 * Fix critical bug to `tdist` and `log_tdist` introduced in v0.3.
