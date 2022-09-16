@@ -118,13 +118,13 @@ sq.sample(sq.const(4)) # Always returns 4
 A woman in this age group had a positive mammography in a routine screening.
 What is the probability that she actually has breast cancer?
 
-```
+```Python
 from squigglepy import bayes
 bayes.bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
 # 0.07763975155279504
 ```
 
-```
+```Python
 import matplotlib.pyplot as plt
 from squigglepy import bayes
 
