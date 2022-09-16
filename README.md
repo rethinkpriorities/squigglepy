@@ -153,6 +153,14 @@ plt.hist(posterior_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(posterior_samples))
 print('Posterior Mean: {} SD: {}'.format(np.mean(posterior_samples), np.std(posterior_samples)))
+
+print('Average')
+average = bayes.average(prior, evidence)
+average_samples = sq.sample(average, n=10000)
+plt.hist(average_samples, bins = 200)
+plt.show()
+print(sq.get_percentiles(average_samples))
+print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_samples)))
 ```
 
 ## Installation

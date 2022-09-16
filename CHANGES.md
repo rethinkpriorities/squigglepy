@@ -11,6 +11,7 @@
 #### New Bayesian library
 
 * Add `bayes.update` to get a posterior distribution from a prior distribution and an evidence distribution.
+* Add `bayes.average` to average distributions (via a mixture).
 
 #### New utility functions
 
