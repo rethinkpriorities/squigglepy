@@ -78,6 +78,10 @@ def bernoulli_sample(p):
     return int(event_occurs(p))
 
 
+def triangular_sample(left, mode, right):
+    return np.random.triangular(left, mode, right)
+
+
 def exponential_sample(scale):
     return np.random.exponential(scale)
     
@@ -133,6 +137,9 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     elif var[2] == 'exponential':
         out = exponential_sample(scale=var[0])
 
+    elif var[2] == 'triangular':
+        out = triangular_sample(var[0], var[1], var[3])
+
     elif var[2] == 'tdist':
         out = t_sample(var[0], var[1], var[3], credibility=credibility)
 
@@ -162,7 +169,7 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     lclip_ = None
     rclip_ = None
     if not callable(var):
-        if var[2] == 'tdist' or var[2] == 'log-tdist':
+        if var[2] == 'tdist' or var[2] == 'log-tdist' or var[2] == 'triangular':
             lclip_ = var[4]
             rclip_ = var[5]
         else:

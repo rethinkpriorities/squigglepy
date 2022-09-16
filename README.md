@@ -82,6 +82,7 @@ sq.sample(sq.norm(1, 3), n=100)
 # Other distributions exist
 sq.sample(sq.lognorm(1, 10))
 sq.sample(sq.tdist(1, 10, t=5))
+sq.sample(sq.triangular(1, 2, 3))
 sq.sample(sq.binomial(p=0.5, n=5))
 sq.sample(sq.beta(a=1, b=2))
 sq.sample(sq.bernoulli(p=0.5))
@@ -101,6 +102,9 @@ sq.sample(lambda: sq.sample(sq.norm(1,3)) / sq.sample(sq.norm(4,5))), n=100)
 
 # You can change the CI from 90% (default) to 80%
 sq.sample(sq.norm(1, 3), credibility=0.8)
+
+# You can clip
+sq.sample(sq.norm(0, 3, lclip=0, rclip=5)) # Sample norm with a 90% CI from 0-3, but anything lower than 0 gets clipped to 0 and anything higher than 5 gets clipped to 5.
 
 # You can specify a constant (which can be useful for passing things into functions or mixtures)
 sq.sample(sq.const(4)) # Always returns 4

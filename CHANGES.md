@@ -2,6 +2,7 @@
 
 #### New distributions
 
+* Add `triangular(left, mode, right)` to calculate a triangular distribution.
 * Add `binomial(n, p)` to calculate a binomial distribution.
 * Add `beta(a, b)` to calculate a beta distribution.
 * Add `bernoulli(p)` to calculate a bernoulli distribution.
