@@ -3,6 +3,11 @@
 [Squiggle](https://www.squiggle-language.com/) is a "simple programming language for intuitive probabilistic estimation". It serves as its own standalone programming language with its own syntax, but it is implemented in JavaScript. I like the features of Squiggle and intend to use it frequently, but I also sometimes want to use similar functionalities in Python, especially alongside other Python statistical programming packages like Numpy, Pandas, and Matplotlib. The **squigglepy** package here implements many Squiggle-like functionalities in Python.
 
 
+## Installation
+
+`pip3 install squigglepy`
+
+
 ## Usage
 
 ### Core Features
@@ -162,8 +167,4 @@ plt.show()
 print(sq.get_percentiles(average_samples))
 print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_samples)))
 ```
-
-## Installation
-
-`pip3 install squigglepy`
 
