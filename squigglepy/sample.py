@@ -89,17 +89,21 @@ def uniform_sample(low, high):
 def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     n = int(n)
     if n > 1:
-        return np.array([sample(var, credibility=credibility) for _ in range(n)])
+        return np.array([sample(var,
+                                credibility=credibility,
+                                n=1,
+                                lclip=lclip,
+                                rclip=rclip) for _ in range(n)])
     elif n <= 0:
         return ValueError('n must be >= 1')
 
     if callable(var):
-        return var()
+        out = var()
 
-    if not isinstance(var, list) and not (len(var) == 5 or len(var) == 6):
+    elif not isinstance(var, list) and not (len(var) == 5 or len(var) == 6):
         raise ValueError('input to sample is malformed - must be sample data')
 
-    if var[2] == 'const':
+    elif var[2] == 'const':
         out = var[0]
 
     elif var[2] == 'uniform':
@@ -155,12 +159,15 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     else:
         raise ValueError('{} sampler not found'.format(var[2]))
 
-    if var[2] == 'tdist' or var[2] == 'log-tdist':
-        lclip_ = var[4]
-        rclip_ = var[5]
-    else:
-        lclip_ = var[3]
-        rclip_ = var[4]
+    lclip_ = None
+    rclip_ = None
+    if not callable(var):
+        if var[2] == 'tdist' or var[2] == 'log-tdist':
+            lclip_ = var[4]
+            rclip_ = var[5]
+        else:
+            lclip_ = var[3]
+            rclip_ = var[4]
 
     if lclip is None and lclip_ is not None:
         lclip = lclip_
@@ -172,9 +179,9 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
         rclip = min(rclip, rclip_)
 
     if lclip is not None and out < lclip:
-        out = lclip
-    if rclip is not None and out > rclip:
-        out = rclip
-
-    return out
+        return lclip
+    elif rclip is not None and out > rclip:
+        return rclip
+    else:
+        return out
 
