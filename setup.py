@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
      name='squigglepy',  
-     version='0.6',
+     version='0.7',
      author='Peter Hurford',
      author_email='peter@peterhurford.com',
      description='Squiggle programming language for intuitive probabilistic estimation features in Python',

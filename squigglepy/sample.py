@@ -3,6 +3,8 @@ import random
 import numpy as np
 from scipy import stats
 
+from .distributions import const
+
 
 def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
     if mean is None:
@@ -90,6 +92,36 @@ def uniform_sample(low, high):
     return np.random.uniform(low, high)
 
 
+def discrete_sample(items, credibility=0.9):
+    if not isinstance(items, dict):
+        return ValueError('inputs to discrete_sample must be a dict')
+    values = [const(k) for k in items.keys()]
+    weights = np.array(list(items.values()))
+    return mixture_sample(values, weights, credibility=credibility)
+
+
+def mixture_sample(values, weights, credibility=0.9):
+    sum_weights = sum(weights)
+    if sum_weights <= 0.99 or sum_weights >= 1.01:
+        raise ValueError('weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+    if len(weights) != len(values):
+        raise ValueError('weights and distributions not same length')
+    r_ = random.random()
+    weights = np.cumsum(weights)
+    done = False
+    for i, dist in enumerate(values):
+        if not done:
+            weight = weights[i]
+            if r_ <= weight:
+                out = sample(dist, credibility=credibility)
+                done = True
+
+    if not done:
+        out = sample(dist, credibility=credibility)
+
+    return out
+
+
 def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     n = int(n)
     if n > 1:
@@ -112,6 +144,9 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
 
     elif var[2] == 'uniform':
         out = uniform_sample(var[0], var[1])
+
+    elif var[2] == 'discrete':
+        out = discrete_sample(var[0])
 
     elif var[2] == 'norm':
         out = normal_sample(var[0], var[1], credibility=credibility)
@@ -147,21 +182,7 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
         out = log_t_sample(var[0], var[1], var[3], credibility=credibility)
 
     elif var[2] == 'mixture':
-        weights = var[1]
-        sum_weights = sum(weights)
-        if sum_weights <= 0.99 or sum_weights >= 1.01:
-            raise ValueError('mixture weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
-        if len(weights) != len(var[0]):
-            raise ValueError('mixture weights and distributions not same length')
-        r_ = random.random()
-        weights = np.cumsum(weights)
-        done = False
-        for i, dist in enumerate(var[0]):
-            if not done:
-                weight = weights[i]
-                if r_ <= weight:
-                    out = sample(dist, credibility=credibility)
-                    done = True
+        out = mixture_sample(var[0], var[1], credibility=credibility)
 
     else:
         raise ValueError('{} sampler not found'.format(var[2]))

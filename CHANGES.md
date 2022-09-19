@@ -1,3 +1,9 @@
+## v0.7
+
+#### New distributions
+
+* Add `discrete` to calculate a discrete distribution. Example: `discrete({'A': 0.3, 'B': 0.3, 'C': 0.4})` will return A 30% of the time, B 30% of the time, and C 40% of the time.
+
 ## v0.6
 
 #### New distributions

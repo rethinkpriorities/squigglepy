@@ -92,6 +92,8 @@ sq.sample(sq.binomial(p=0.5, n=5))
 sq.sample(sq.beta(a=1, b=2))
 sq.sample(sq.bernoulli(p=0.5))
 sq.sample(sq.exponential(scale=1))
+sq.sample(sq.discrete({'A': 0.1, 'B': 0.9}))
+sq.sample(sq.discrete({0: 0.1, 1: 0.3, 2: 0.3, 3: 0.15, 4: 0.15}))
 
 # You can mix distributions together
 sq.sample(sq.mixture([sq.norm(1, 3),

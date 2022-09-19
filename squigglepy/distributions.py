@@ -36,6 +36,11 @@ def beta(a, b):
 def bernoulli(p):
     return [p, None, 'beta', None, None]
 
+def discrete(items):
+    if not isinstance(items, dict):
+        raise ValueError('items passed to discrete distribution must be a dict.')
+    return [items, None, 'discrete', None, None]
+
 def tdist(x, y, t, lclip=None, rclip=None):
     return [x, y, 'tdist', t, lclip, rclip]
 
