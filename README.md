@@ -177,7 +177,7 @@ print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_
 import random
 import squigglepy as sq
 
-def monte_hall_(door_picked, switch=False, n=1):
+def monte_hall(door_picked, switch=False, n=1):
     if n > 1:
         return [monte_hall(door_picked=door_picked, switch=switch, interactive=False, n=1) for _ in range(n)]
     
@@ -195,11 +195,11 @@ def monte_hall_(door_picked, switch=False, n=1):
 rounds = 100000
 for initial_door in ['A', 'B', 'C']:
     print('{} (No switch): {}'.format(initial_door,
-                                      sum(monte_hall_(initial_door, switch=False, n=rounds)) / rounds))
+                                      sum(monte_hall(initial_door, switch=False, n=rounds)) / rounds))
     
 for initial_door in ['A', 'B', 'C']:
     print('{} (switch): {}'.format(initial_door,
-                                   sum(monte_hall_(initial_door, switch=True, n=rounds)) / rounds))
+                                   sum(monte_hall(initial_door, switch=True, n=rounds)) / rounds))
 
 # Output:
 # A (No switch): 0.33243
