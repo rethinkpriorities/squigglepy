@@ -170,3 +170,43 @@ print(sq.get_percentiles(average_samples))
 print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_samples)))
 ```
 
+
+### A Demonstration of the Monte Hall Problem
+
+```Python
+import random
+import squigglepy as sq
+
+def monte_hall_(door_picked, switch=False, n=1):
+    if n > 1:
+        return [monte_hall(door_picked=door_picked, switch=switch, interactive=False, n=1) for _ in range(n)]
+    
+    doors = ['A', 'B', 'C']
+    car_is_behind_door = sq.sample(sq.discrete({'A': 1/3, 'B': 1/3, 'C': 1/3}))    
+    reveal_door = random.choice([d for d in doors if d != door_picked and d != car_is_behind_door])
+    
+    if switch:
+        old_door_picked = door_picked
+        door_picked = [d for d in doors if d != old_door_picked and d != reveal_door][0]
+        
+    won_car = (car_is_behind_door == door_picked)
+    return won_car 
+
+rounds = 100000
+for initial_door in ['A', 'B', 'C']:
+    print('{} (No switch): {}'.format(initial_door,
+                                      sum(monte_hall_(initial_door, switch=False, n=rounds)) / rounds))
+    
+for initial_door in ['A', 'B', 'C']:
+    print('{} (switch): {}'.format(initial_door,
+                                   sum(monte_hall_(initial_door, switch=True, n=rounds)) / rounds))
+
+# Output:
+# A (No switch): 0.33243
+# B (No switch): 0.33186
+# C (No switch): 0.33183
+# A (switch): 0.66648
+# B (switch): 0.66795
+# C (switch): 0.66404
+```
+
