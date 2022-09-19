@@ -192,21 +192,23 @@ def monte_hall(door_picked, switch=False, n=1):
     won_car = (car_is_behind_door == door_picked)
     return won_car 
 
-rounds = 100000
+
+def percent_win(n, switch):
+    return sum(monte_hall_(door_picked=door, switch=switch, n=n)) / n
+
+
 for initial_door in ['A', 'B', 'C']:
-    print('{} (No switch): {}'.format(initial_door,
-                                      sum(monte_hall(initial_door, switch=False, n=rounds)) / rounds))
+    print('{} (No switch): {}'.format(initial_door, percent_win(n=10000, switch=False)))
     
 for initial_door in ['A', 'B', 'C']:
-    print('{} (switch): {}'.format(initial_door,
-                                   sum(monte_hall(initial_door, switch=True, n=rounds)) / rounds))
+    print('{} (switch): {}'.format(initial_door, percent_win(n=10000, switch=True)))
 
 # Output:
-# A (No switch): 0.33243
-# B (No switch): 0.33186
-# C (No switch): 0.33183
-# A (switch): 0.66648
-# B (switch): 0.66795
-# C (switch): 0.66404
+# A (No switch): 0.3327
+# B (No switch): 0.3403
+# C (No switch): 0.3301
+# A (switch): 0.6728
+# B (switch): 0.6679
+# C (switch): 0.6626
 ```
 
