@@ -4,6 +4,7 @@ import numpy as np
 from scipy import stats
 
 from .distributions import const
+from .utils import event_occurs
 
 
 def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
@@ -101,25 +102,26 @@ def discrete_sample(items, credibility=0.9):
 
 
 def mixture_sample(values, weights, credibility=0.9):
+    if len(values) == 1:
+        return sample(values[0], credibility=credibility)
+        
     sum_weights = sum(weights)
+
     if sum_weights <= 0.99 or sum_weights >= 1.01:
         raise ValueError('weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+
     if len(weights) != len(values):
         raise ValueError('weights and distributions not same length')
+
     r_ = random.random()
     weights = np.cumsum(weights)
-    done = False
+
     for i, dist in enumerate(values):
-        if not done:
-            weight = weights[i]
-            if r_ <= weight:
-                out = sample(dist, credibility=credibility)
-                done = True
+        weight = weights[i]
+        if r_ <= weight:
+            return sample(dist, credibility=credibility)
 
-    if not done:
-        out = sample(dist, credibility=credibility)
-
-    return out
+    return sample(dist, credibility=credibility)
 
 
 def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):

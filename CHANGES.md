@@ -1,8 +1,17 @@
 ## v0.7
 
+#### Bugfixes
+
+* Fixes an issue with sampling from the `bernoulli` distribution.
+
 #### New distributions
 
 * Add `discrete` to calculate a discrete distribution. Example: `discrete({'A': 0.3, 'B': 0.3, 'C': 0.4})` will return A 30% of the time, B 30% of the time, and C 40% of the time.
+
+#### Other
+
+* `bayes.update` now can take an `evidence_weight` parameter. Typically this would be equal to the number of samples.
+
 
 ## v0.6
 
@@ -31,17 +40,21 @@
 * If a distribution is defined with `sd` but not `mean`, `mean` will be inferred to be 0.
 * `sample` can now take `lclip` and `rclip` directly, in addition to defining `lclip` and `rclip` on the distribution itself. If both are defined, the most restrictive of the two bounds will be used.
 
+
 ## v0.5
 
 * Fix critical bug to `tdist` and `log_tdist` introduced in v0.3.
+
 
 ## v0.4
 
 * Fix critical bug introduced in v0.3.
 
+
 ## v0.3
 
 * Be able to define distributions using `mean` and `sd` instead of defining the interval.
+
 
 ## v0.2
 
@@ -53,3 +66,4 @@
 ## v0.1
 
 * Initial library
+

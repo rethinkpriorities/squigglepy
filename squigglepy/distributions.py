@@ -34,7 +34,7 @@ def beta(a, b):
     return [a, b, 'beta', None, None]
 
 def bernoulli(p):
-    return [p, None, 'beta', None, None]
+    return [p, None, 'bernoulli', None, None]
 
 def discrete(items):
     if not isinstance(items, dict):

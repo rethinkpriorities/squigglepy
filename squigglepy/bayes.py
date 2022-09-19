@@ -15,14 +15,14 @@ def bayes(likelihood_h, likelihood_not_h, prior):
     return (likelihood_h * prior) / (likelihood_h * prior + likelihood_not_h * (1 - prior))
 
 
-def update(prior, evidence, type='normal'):
+def update(prior, evidence, evidence_weight=1, type='normal'):
     if type == 'normal': #TODO: Infer
         prior_mean = np.mean(prior) # TODO: Get from class, not samples
         prior_var = np.std(prior) ** 2
         evidence_mean = np.mean(evidence)
         evidence_var = np.std(evidence) ** 2
-        return norm(mean=(evidence_var * prior_mean + prior_var * evidence_mean) / (evidence_var + prior_var),
-                    sd=math.sqrt((evidence_var * prior_var) / (evidence_var + prior_var)))
+        return norm(mean=(evidence_var * prior_mean + evidence_weight * (prior_var * evidence_mean)) / (evidence_var + prior_var),
+                    sd=math.sqrt((evidence_var * prior_var) / (evidence_weight * evidence_var + prior_var)))
     elif type == 'beta':
         prior_a = prior[0]
         prior_b = prior[1]
