@@ -167,7 +167,7 @@ bayes.bayesnet(define_event,
 # 0.07723995880535531
 ```
 
-Or if we have the information immediately on hand, we can directly calculate it:
+Or if we have the information immediately on hand, we can directly calculate it. Though this doesn't work for very complex stuff.
 
 ```Python
 from squigglepy import bayes
