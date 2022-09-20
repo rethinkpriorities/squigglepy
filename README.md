@@ -92,14 +92,32 @@ sq.sample(sq.binomial(p=0.5, n=5))
 sq.sample(sq.beta(a=1, b=2))
 sq.sample(sq.bernoulli(p=0.5))
 sq.sample(sq.exponential(scale=1))
+
+# Discrete sampling
 sq.sample(sq.discrete({'A': 0.1, 'B': 0.9}))
+
+# Can return integers
 sq.sample(sq.discrete({0: 0.1, 1: 0.3, 2: 0.3, 3: 0.15, 4: 0.15}))
+
+# Alternate format (also can be used to return more complex objects)
+sq.sample(sq.discrete([[0.1,  0],
+                       [0.3,  1],
+                       [0.3,  2],
+                       [0.15, 3],
+                       [0.15, 4]]))
+
+sq.sample(sq.discrete([0, 1, 2])) # No weights assumes equal weights
 
 # You can mix distributions together
 sq.sample(sq.mixture([sq.norm(1, 3),
                       sq.norm(4, 10),
                       sq.lognorm(1, 10)],  # Distributions to mix
                      [0.3, 0.3, 0.4]))     # These are the weights on each distribution
+
+# This is equivalent to the above, just a different way of doing the notation
+sq.sample(sq.mixture([[0.3, sq.norm(1,3)],
+                      [0.3, sq.norm(4,10)],
+                      [0.4, sq.lognorm(1,10)]]))
 
 # You can add and subtract distributions (a little less cool compared to native Squiggle unfortunately):
 sq.sample(lambda: sq.sample(sq.norm(1,3)) + sq.sample(sq.norm(4,5))), n=100)
@@ -122,14 +140,38 @@ sq.sample(sq.const(4)) # Always returns 4
 1% of women at age forty who participate in routine screening have breast cancer.
 80% of women with breast cancer will get positive mammographies.
 9.6% of women without breast cancer will also get positive mammographies.
+
 A woman in this age group had a positive mammography in a routine screening.
 What is the probability that she actually has breast cancer?
 
+We can approximate the answer with a Bayesian network (uses rejection sampling):
+
+```Python
+def mammography(has_cancer):
+    p = 0.8 if has_cancer else 0.096
+    return bool(sq.sample(sq.bernoulli(p)))
+
+def define_event():
+    cancer = sq.sample(sq.bernoulli(0.01))    
+    return({'mammography': mammography(cancer),
+            'cancer': cancer})
+
+bayesnet(define_event,
+         n=1000000,
+         find=lambda e: e['cancer'],
+         conditional_on=lambda e: e['mammography'])
+# 0.07723995880535531
+```
+
+Or if we have the information immediately on hand, we can directly calculate it:
+
 ```Python
 from squigglepy import bayes
-bayes.bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
+bayes.simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
 # 0.07763975155279504
 ```
+
+You can also make distributions and update them:
 
 ```Python
 import matplotlib.pyplot as plt

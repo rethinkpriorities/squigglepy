@@ -94,16 +94,35 @@ def uniform_sample(low, high):
 
 
 def discrete_sample(items, credibility=0.9):
-    if not isinstance(items, dict):
-        return ValueError('inputs to discrete_sample must be a dict')
-    values = [const(k) for k in items.keys()]
-    weights = np.array(list(items.values()))
+    if isinstance(items, dict):
+        values = [const(k) for k in items.keys()]
+        weights = list(items.values())
+    elif isinstance(items, list):
+        if isinstance(items[0], list):
+            weights = [i[0] for i in items]
+            values = [const(i[1]) for i in items]
+        else:
+            values = [const(i) for i in items]
+            l = len(items)
+            weights = [1 / l for i in range(l)]
+    else:
+        return ValueError('inputs to discrete_sample must be a dict or list')
+
     return mixture_sample(values, weights, credibility=credibility)
 
 
-def mixture_sample(values, weights, credibility=0.9):
+def mixture_sample(values, weights=None, credibility=0.9):
+    if not isinstance(values, list):
+        return ValueError('input must be list')
+    elif not (isinstance(values, list) and isinstance(weights, list)) and not (isinstance(values, list) and weights is None):
+        return ValueError('values / weights misinformed')
+
     if len(values) == 1:
         return sample(values[0], credibility=credibility)
+
+    if weights is None:
+        weights = [v[0] for v in values]
+        values = [v[1] for v in values]
         
     sum_weights = sum(weights)
 

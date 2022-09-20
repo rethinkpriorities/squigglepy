@@ -8,9 +8,11 @@
 
 * Add `discrete` to calculate a discrete distribution. Example: `discrete({'A': 0.3, 'B': 0.3, 'C': 0.4})` will return A 30% of the time, B 30% of the time, and C 40% of the time.
 
-#### Other
+#### Bayesian library updates
 
+* Adds `bayes.bayesnet`.
 * `bayes.update` now can take an `evidence_weight` parameter. Typically this would be equal to the number of samples.
+* `bayes.bayes` has been renamed `bayes.simple_bayes`.
 
 
 ## v0.6

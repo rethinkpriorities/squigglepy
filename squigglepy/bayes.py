@@ -4,7 +4,7 @@ import numpy as np
 from .distributions import norm, beta, mixture
 
 
-def bayes(likelihood_h, likelihood_not_h, prior):
+def simple_bayes(likelihood_h, likelihood_not_h, prior):
     """
     p(h|e) = (p(e|h)*p(h)) / (p(e|h)*p(h) + p(e|~h)*(1-p(h)))
 
@@ -13,6 +13,18 @@ def bayes(likelihood_h, likelihood_not_h, prior):
     p(h) is called prior
     """
     return (likelihood_h * prior) / (likelihood_h * prior + likelihood_not_h * (1 - prior))
+
+
+def bayesnet(event_fn, n=1, find=None, conditional_on=None):
+    events = [event_fn() for _ in range(n)]
+    if conditional_on is not None:
+        events = [e for e in events if conditional_on(e)]
+    if len(events) < 1:
+        raise ValueError('insufficient samples for condition')
+    if find is not None:
+        return sum([find(e) for e in events]) / len(events)
+    else:
+        return events
 
 
 def update(prior, evidence, evidence_weight=1, type='normal'):
@@ -35,3 +47,4 @@ def update(prior, evidence, evidence_weight=1, type='normal'):
 
 def average(prior, evidence, weights=[0.5,0.5]):
     return mixture([prior, evidence], weights)
+

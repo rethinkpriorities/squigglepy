@@ -37,8 +37,6 @@ def bernoulli(p):
     return [p, None, 'bernoulli', None, None]
 
 def discrete(items):
-    if not isinstance(items, dict):
-        raise ValueError('items passed to discrete distribution must be a dict.')
     return [items, None, 'discrete', None, None]
 
 def tdist(x, y, t, lclip=None, rclip=None):
@@ -53,6 +51,6 @@ def triangular(left, mode, right, lclip=None, rclip=None):
 def exponential(scale):
     return [scale, None, 'exponential', None, None]
 
-def mixture(dists, weights, lclip=None, rclip=None):
+def mixture(dists, weights=None, lclip=None, rclip=None):
     return [dists, weights, 'mixture', lclip, rclip]
 
