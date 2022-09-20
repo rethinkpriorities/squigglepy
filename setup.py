@@ -4,13 +4,14 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-     name='squigglepy',  
+     name='squigglepy',
      version='0.7',
      author='Peter Hurford',
      author_email='peter@peterhurford.com',
-     description='Squiggle programming language for intuitive probabilistic estimation features in Python',
+     description=('Squiggle programming language for intuitive probabilistic' +
+                  ' estimation features in Python'),
      long_description=long_description,
-	 long_description_content_type='text/markdown',
+     long_description_content_type='text/markdown',
      url='https://github.com/peterhurford/squigglepy',
      packages=setuptools.find_packages(),
      classifiers=[

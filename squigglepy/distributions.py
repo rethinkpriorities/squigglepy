@@ -1,11 +1,14 @@
 def to(x, y, lclip=None, rclip=None):
     return [x, y, 'log' if x > 0 else 'norm', lclip, rclip]
 
+
 def const(x):
     return [x, None, 'const', None, None]
 
+
 def uniform(x, y):
     return [x, y, 'uniform', None, None]
+
 
 def norm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
     if mean is None and sd is None and x is not None and y is not None:
@@ -17,6 +20,7 @@ def norm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
     else:
         raise ValueError
 
+
 def lognorm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
     if mean is None and sd is None and x is not None and y is not None:
         return [x, y, 'log', lclip, rclip]
@@ -27,30 +31,38 @@ def lognorm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
     else:
         raise ValueError
 
+
 def binomial(n, p):
     return [n, p, 'binomial', None, None]
+
 
 def beta(a, b):
     return [a, b, 'beta', None, None]
 
+
 def bernoulli(p):
     return [p, None, 'bernoulli', None, None]
+
 
 def discrete(items):
     return [items, None, 'discrete', None, None]
 
+
 def tdist(x, y, t, lclip=None, rclip=None):
     return [x, y, 'tdist', t, lclip, rclip]
+
 
 def log_tdist(x, y, t, lclip=None, rclip=None):
     return [x, y, 'log-tdist', t, lclip, rclip]
 
+
 def triangular(left, mode, right, lclip=None, rclip=None):
     return [left, mode, 'triangular', right, lclip, rclip]
+
 
 def exponential(scale):
     return [scale, None, 'exponential', None, None]
 
+
 def mixture(dists, weights=None, lclip=None, rclip=None):
     return [dists, weights, 'mixture', lclip, rclip]
-

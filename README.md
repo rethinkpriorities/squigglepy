@@ -350,5 +350,5 @@ Note that the amount of Bayesian analysis that squigglepy can do is pretty limit
 
 ## Run tests
 
-`pytest`
+`rm -rf build; flake8; pytest`
 
