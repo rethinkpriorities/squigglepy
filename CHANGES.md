@@ -19,6 +19,10 @@
 * **[Breaking change]** Numbers have been changed from functions to global variables. Use `sq.thousand` or `sq.K` instead of `sq.thousand()` (old/deprecated).
 * You can use `sq.flip_coin` and `sq.roll_die(sides)` to flip a coin or roll a die.
 
+#### Non-visible backend changes
+
+* Now has tests via pytest.
+
 
 ## v0.6
 
