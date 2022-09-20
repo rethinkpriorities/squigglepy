@@ -16,7 +16,7 @@ Here's the Squigglepy implementation of [the example from Squiggle Docs](https:/
 
 ```Python
 import squigglepy as sq
-M = sq.million(); K = sq.thousand()
+from squigglepy.numbers import K, M
 
 pop_of_ny_2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
 
@@ -40,7 +40,7 @@ And the version from the Squiggle doc that incorporates time:
 
 ```Python
 import squigglepy as sq
-K = sq.thousand(); M = sq.million()
+from squigglepy.numbers import K, M
 
 pop_of_ny_2022 = sq.to(8.1*M, 8.4*M)
 
@@ -149,6 +149,7 @@ We can approximate the answer with a Bayesian network (uses rejection sampling):
 ```Python
 import squigglepy as sq
 from squigglepy import bayes
+from squigglepy.numbers import M
 
 def mammography(has_cancer):
     p = 0.8 if has_cancer else 0.096
@@ -162,7 +163,7 @@ def define_event():
 bayes.bayesnet(define_event,
                find=lambda e: e['cancer'],
                conditional_on=lambda e: e['mammography'],
-               n=1000000)
+               n=1*M)
 # 0.07723995880535531
 ```
 
@@ -180,10 +181,11 @@ You can also make distributions and update them:
 import matplotlib.pyplot as plt
 import squigglepy as sq
 from squigglepy import bayes
+from squigglepy.numbers import K
 
 print('Prior')
 prior = sq.norm(1,5)
-prior_samples = sq.sample(prior, n=10000)
+prior_samples = sq.sample(prior, n=10*K)
 plt.hist(prior_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(prior_samples))
@@ -192,7 +194,7 @@ print('-')
 
 print('Evidence')
 evidence = sq.norm(2,3)
-evidence_samples = sq.sample(evidence, n=10000)
+evidence_samples = sq.sample(evidence, n=10*K)
 plt.hist(evidence_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(evidence_samples))
@@ -201,7 +203,7 @@ print('-')
 
 print('Posterior')
 posterior = bayes.update(prior_samples, evidence_samples)
-posterior_samples = sq.sample(posterior, n=10000)
+posterior_samples = sq.sample(posterior, n=10*K)
 plt.hist(posterior_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(posterior_samples))
@@ -209,7 +211,7 @@ print('Posterior Mean: {} SD: {}'.format(np.mean(posterior_samples), np.std(post
 
 print('Average')
 average = bayes.average(prior, evidence)
-average_samples = sq.sample(average, n=10000)
+average_samples = sq.sample(average, n=10*K)
 plt.hist(average_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(average_samples))
@@ -237,6 +239,7 @@ This is already included standard in the utils of this package. Use `sq.roll_die
 ```Python
 import random
 import squigglepy as sq
+from squigglepy.numbers import K
 
 def monte_hall(door_picked, switch=False, n=1):
     if n > 1:
@@ -259,10 +262,10 @@ def percent_win(n, switch):
 
 
 for initial_door in ['A', 'B', 'C']:
-    print('{} (No switch): {}'.format(initial_door, percent_win(n=10000, switch=False)))
+    print('{} (No switch): {}'.format(initial_door, percent_win(n=10*K, switch=False)))
     
 for initial_door in ['A', 'B', 'C']:
-    print('{} (switch): {}'.format(initial_door, percent_win(n=10000, switch=True)))
+    print('{} (switch): {}'.format(initial_door, percent_win(n=10*K, switch=True)))
 
 # Output:
 # A (No switch): 0.3327
@@ -296,6 +299,7 @@ Mary will call you 70% of the time when the alarm goes off. But on 1% of the day
 ```Python
 import squigglepy as sq
 from squigglepy import bayes
+from squigglepy.numbers import M
 
 def p_alarm_goes_off(burglary, earthquake):
     if burglary and earthquake:
@@ -327,14 +331,14 @@ def define_event():
 
 # What are the chances that both John and Mary call if an earthquake happens?
 bayes.bayesnet(define_event,
-               n=1000000,
+               n=1*M,
                find=lambda e: (e['mary_calls'] and e['john_calls']),
                conditional_on=lambda e: e['earthquake'])
 # 0.19017763845350052
 
 # If both John and Mary call, what is the chance there's been a burglary?
 bayes.bayesnet(define_event,
-               n=1000000,
+               n=1*M,
                find=lambda e: e['burglary'],
                conditional_on=lambda e: (e['mary_calls'] and e['john_calls']))
 # 0.2715578847070033

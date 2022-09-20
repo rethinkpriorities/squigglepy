@@ -1,33 +1,26 @@
-def thousand():
-    return 10 ** 3
+thousand = 10 ** 3
+K = thousand
 
-def million():
-	return 10 ** 6
+million = 10 ** 6
+M = million
 
-def billion():
-	return 10 ** 9
+billion = 10 ** 9
+B = billion
 
-def trillion():
-	return 10 ** 12
+trillion = 10 ** 12
+T = trillion
 
-def quadrillion():
-	return 10 ** 15
+quadrillion = 10 ** 15
 
-def quintillion():
-	return 10 ** 18
+quintillion = 10 ** 18
 
-def sextillion():
-	return 10 ** 21
+sextillion = 10 ** 21
 
-def septillion():
-	return 10 ** 24
+septillion = 10 ** 24
 
-def octillion():
-	return 10 ** 27
+octillion = 10 ** 27
 
-def nonillion():
-	return 10 ** 30
+nonillion = 10 ** 30
 
-def decillion():
-	return 10 ** 33
+decillion = 10 ** 33
 

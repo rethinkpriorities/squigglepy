@@ -10,12 +10,13 @@
 
 #### Bayesian library updates
 
-* Adds `bayes.bayesnet`.
+* Adds `bayes.bayesnet` to do bayesian inferece (see README).
 * `bayes.update` now can take an `evidence_weight` parameter. Typically this would be equal to the number of samples.
-* `bayes.bayes` has been renamed `bayes.simple_bayes`.
+* **[Breaking change]** `bayes.bayes` has been renamed `bayes.simple_bayes`.
 
 #### Other
 
+* **[Breaking change]** Numbers have been changed from functions to global variables. Use `sq.thousand` or `sq.K` instead of `sq.thousand()` (old/deprecated).
 * You can use `sq.flip_coin` and `sq.roll_die(sides)` to flip a coin or roll a die.
 
 
@@ -64,9 +65,9 @@
 
 ## v0.2
 
-* Change `distributed_log` to `mixture` (to follow Squiggle) and allow it to implement any sub-distribution.
-* Changed library to single import.
-* Remove `weighted_log` as a distribution.
+* **[Breaking change]** Change `distributed_log` to `mixture` (to follow Squiggle) and allow it to implement any sub-distribution.
+* **[Breaking change]** Changed library to single import.
+* **[Breaking change]** Remove `weighted_log` as a distribution.
 
 
 ## v0.1
