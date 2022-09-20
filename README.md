@@ -18,22 +18,22 @@ Here's the Squigglepy implementation of [the example from Squiggle Docs](https:/
 import squigglepy as sq
 M = sq.million(); K = sq.thousand()
 
-populationOfNewYork2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
+pop_of_ny_2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
 
-def proportionOfPopulationWithPianos():
+def pct_of_pop_w_pianos():
     percentage = sq.to(.2, 1)
     return sq.sample(percentage) * 0.01 # We assume there are almost no people with multiple pianos
 
-def pianoTunersPerPiano():
+def piano_tuners_per_piano():
     pianosPerPianoTuner = sq.to(2*K, 50*K)
     return 1 / sq.sample(pianosPerPianoTuner)
 
-def totalTunersIn2022():
-    return (sq.sample(populationOfNewYork2022) *
-            proportionOfPopulationWithPianos() *
-            pianoTunersPerPiano())
+def total_tuners_in_2022():
+    return (sq.sample(pop_of_ny_2022) *
+            pct_of_pop_w_pianos() *
+            piano_tuners_per_piano())
 
-sq.get_percentiles(sq.sample(totalTunersIn2022, n=1000))
+sq.get_percentiles(sq.sample(total_tuners_in_2022, n=1000))
 ```
 
 And the version from the Squiggle doc that incorporates time:
@@ -42,31 +42,31 @@ And the version from the Squiggle doc that incorporates time:
 import squigglepy as sq
 K = sq.thousand(); M = sq.million()
 
-populationOfNewYork2022 = sq.to(8.1*M, 8.4*M)
+pop_of_ny_2022 = sq.to(8.1*M, 8.4*M)
 
-def proportionOfPopulationWithPianos():
+def pct_of_pop_w_pianos():
     percentage = sq.to(.2, 1)
     return sq.sample(percentage) * 0.01
 
-def proportionOfPopulationWithPianos():
+def pct_of_pop_w_pianos():
     percentage = sq.to(.2, 1)
     return sq.sample(percentage) * 0.01
 
-def pianoTunersPerPiano():
+def piano_tuners_per_piano():
     pianosPerPianoTuner = sq.to(2*K, 50*K)
     return 1 / sq.sample(pianosPerPianoTuner)
 
 # Time in years after 2022
-def populationAtTime(t):
-    averageYearlyPercentageChange = sq.to(-0.01, 0.05) # We're expecting NYC to continuously grow with an mean of roughly between -1% and +4% per year
-    return sq.sample(populationOfNewYork2022) * ((sq.sample(averageYearlyPercentageChange) + 1) ** t)
+def pop_at_time(t):
+    avg_yearly_pct_change = sq.to(-0.01, 0.05) # We're expecting NYC to continuously grow with an mean of roughly between -1% and +4% per year
+    return sq.sample(pop_of_ny_2022) * ((sq.sample(avg_yearly_pct_change) + 1) ** t)
 
-def totalTunersAtTime(t):
-    return (populationAtTime(t) *
-            proportionOfPopulationWithPianos() *
-            pianoTunersPerPiano())
+def total_tuners_at_time(t):
+    return (pop_at_time(t) *
+            pct_of_pop_w_pianos() *
+            piano_tuners_per_piano())
 
-sq.get_percentiles(sq.sample(lambda: totalTunersAtTime(2030-2022), n=1000))
+sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030-2022), n=1000))
 ```
 
 ### Additional Features
