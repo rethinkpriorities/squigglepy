@@ -15,16 +15,17 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
     return (likelihood_h * prior) / (likelihood_h * prior + likelihood_not_h * (1 - prior))
 
 
-def bayesnet(event_fn, n=1, find=None, conditional_on=None):
+def bayesnet(event_fn, n=1, find=None, conditional_on=None, raw=False):
     events = [event_fn() for _ in range(n)]
     if conditional_on is not None:
         events = [e for e in events if conditional_on(e)]
     if len(events) < 1:
         raise ValueError('insufficient samples for condition')
     if find is not None:
-        return sum([find(e) for e in events]) / len(events)
-    else:
-        return events
+        events = [find(e) for e in events]
+        if isinstance(events[0], bool) and not raw:
+            return sum(events) / len(events)
+    return events
 
 
 def update(prior, evidence, evidence_weight=1, type='normal'):
