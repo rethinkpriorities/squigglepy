@@ -269,3 +269,67 @@ for initial_door in ['A', 'B', 'C']:
 # C (switch): 0.6626
 ```
 
+
+### Alarm net
+
+Assume your house has an alarm system against burglary.
+
+You live in the seismically active area and the alarm system can get occasionally set off by an earthquake.
+
+You have two neighbors, Mary and John, who do not know each other.
+If they hear the alarm they call you, but this is not guaranteed.
+
+The chance of a burglary on a particular day is 0.1%.
+The chance of an earthquake on a particular day is 0.2%.
+
+The alarm will go off 95% of the time with both a burglary and an earthquae, 94% of the time with just a burglary,
+29% of the time with just an earthquake, and 0.1% of the time with nothing (total false alarm).
+
+John will call you 90% of the time when the alarm goes off. But on 5% of the days, John will just call to say "hi".
+Mary will call you 70% of the time when the alarm goes off. But on 1% of the days, Mary will just call to say "hi".
+
+
+```Python
+def p_alarm_goes_off(burglary, earthquake):
+    if burglary and earthquake:
+        return 0.95
+    elif burglary and not earthquake:
+        return 0.94
+    elif not burglary and earthquake:
+        return 0.29
+    elif not burglary and not earthquake:
+        return 0.001
+
+def p_john_calls(alarm_goes_off):
+    return 0.9 if alarm_goes_off else 0.05
+    
+def p_mary_calls(alarm_goes_off):
+    return 0.7 if alarm_goes_off else 0.01
+
+def define_event():
+    burglary_happens = bool(sq.sample(sq.bernoulli(p=0.001)))
+    earthquake_happens = bool(sq.sample(sq.bernoulli(p=0.002)))
+    alarm_goes_off = bool(sq.sample(sq.bernoulli(p_alarm_goes_off(burglary_happens, earthquake_happens))))
+    john_calls = bool(sq.sample(sq.bernoulli(p_john_calls(alarm_goes_off))))
+    mary_calls = bool(sq.sample(sq.bernoulli(p_mary_calls(alarm_goes_off))))
+    return {'burglary': burglary_happens,
+            'earthquake': earthquake_happens,
+            'alarm_goes_off': alarm_goes_off,
+            'john_calls': john_calls,
+            'mary_calls': mary_calls}
+
+# What are the chances that both John and Mary call if an earthquake happens?
+bayes.bayesnet(define_event,
+               n=1000000,
+               find=lambda e: (e['mary_calls'] and e['john_calls']),
+               conditional_on=lambda e: e['earthquake'])
+# 0.19017763845350052
+
+# If both John and Mary call, what is the chance there's been a burglary?
+bayes.bayesnet(define_event,
+               n=1000000,
+               find=lambda e: e['burglary'],
+               conditional_on=lambda e: (e['mary_calls'] and e['john_calls']))
+# 0.2715578847070033
+```
+
