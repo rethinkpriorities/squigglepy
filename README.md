@@ -279,21 +279,22 @@ for initial_door in ['A', 'B', 'C']:
 
 ### Alarm net
 
-Assume your house has an alarm system against burglary.
+This is the alarm network from [Bayesian Artificial Intelligence - Section 2.5.1](https://bayesian-intelligence.com/publications/bai/book/BAI_Chapter2.pdf):
 
-You live in the seismically active area and the alarm system can get occasionally set off by an earthquake.
-
-You have two neighbors, Mary and John, who do not know each other.
-If they hear the alarm they call you, but this is not guaranteed.
-
-The chance of a burglary on a particular day is 0.1%.
-The chance of an earthquake on a particular day is 0.2%.
-
-The alarm will go off 95% of the time with both a burglary and an earthquake, 94% of the time with just a burglary,
-29% of the time with just an earthquake, and 0.1% of the time with nothing (total false alarm).
-
-John will call you 90% of the time when the alarm goes off. But on 5% of the days, John will just call to say "hi".
-Mary will call you 70% of the time when the alarm goes off. But on 1% of the days, Mary will just call to say "hi".
+> Assume your house has an alarm system against burglary.
+>
+> You live in the seismically active area and the alarm system can get occasionally set off by an earthquake.
+>
+> You have two neighbors, Mary and John, who do not know each other.
+> If they hear the alarm they call you, but this is not guaranteed.
+>
+> The chance of a burglary on a particular day is 0.1%.
+> The chance of an earthquake on a particular day is 0.2%.
+>
+> The alarm will go off 95% of the time with both a burglary and an earthquake, 94% of the time with just a burglary, 29% of the time with just an earthquake, and 0.1% of the time with nothing (total false alarm).
+>
+> John will call you 90% of the time when the alarm goes off. But on 5% of the days, John will just call to say "hi".
+> Mary will call you 70% of the time when the alarm goes off. But on 1% of the days, Mary will just call to say "hi".
 
 
 ```Python
@@ -344,3 +345,4 @@ bayes.bayesnet(define_event,
 # 0.2715578847070033
 ```
 
+Note that the amount of Bayesian analysis that squigglepy can do is pretty limited. For more complex bayesian analysis, consider [sorobn](https://github.com/MaxHalford/sorobn), [pomegranate](https://github.com/jmschrei/pomegranate), [bnlearn](https://github.com/erdogant/bnlearn), or [pyMC](https://github.com/pymc-devs/pymc).
