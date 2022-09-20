@@ -225,7 +225,7 @@ An example of how to use distributions to build tools:
 def roll_die(sides):
     return sq.sample(sq.discrete(list(range(1, sides + 1))))
 
-roll_die(6)
+[roll_die(6) for _ in range(10)]
 # [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
 ```
 
