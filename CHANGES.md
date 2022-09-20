@@ -14,6 +14,10 @@
 * `bayes.update` now can take an `evidence_weight` parameter. Typically this would be equal to the number of samples.
 * `bayes.bayes` has been renamed `bayes.simple_bayes`.
 
+#### Other
+
+* You can use `sq.flip_coin` and `sq.roll_die(sides)` to flip a coin or roll a die.
+
 
 ## v0.6
 

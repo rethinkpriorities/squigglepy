@@ -89,3 +89,13 @@ def laplace(s, n=None, time_passed=None, time_remaining=None, time_fixed=False):
 	else:
 		raise ValueError
 
+
+def roll_die(sides):
+    from .sample import sample as samp
+    from .distributions import discrete
+    return samp(discrete(list(range(1, sides + 1)))) if sides > 0 else None
+
+
+def flip_coin():
+    return 'heads' if roll_die(2) == 2 else 'tails'
+

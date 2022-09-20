@@ -213,6 +213,21 @@ print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_
 ```
 
 
+### Rolling a Die
+
+An example of how to use distributions to build tools:
+
+```Python
+def roll_die(sides):
+    return sq.sample(sq.discrete(list(range(1, sides + 1))))
+
+roll_die(6)
+# [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
+```
+
+This is already included standard in the utils of this package. Use `sq.roll_die`.
+
+
 ### A Demonstration of the Monte Hall Problem
 
 ```Python
