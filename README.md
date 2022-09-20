@@ -25,8 +25,8 @@ def pct_of_pop_w_pianos():
     return sq.sample(percentage) * 0.01 # We assume there are almost no people with multiple pianos
 
 def piano_tuners_per_piano():
-    pianosPerPianoTuner = sq.to(2*K, 50*K)
-    return 1 / sq.sample(pianosPerPianoTuner)
+    pianos_per_piano_tuner = sq.to(2*K, 50*K)
+    return 1 / sq.sample(pianos_per_piano_tuner)
 
 def total_tuners_in_2022():
     return (sq.sample(pop_of_ny_2022) *
@@ -53,8 +53,8 @@ def pct_of_pop_w_pianos():
     return sq.sample(percentage) * 0.01
 
 def piano_tuners_per_piano():
-    pianosPerPianoTuner = sq.to(2*K, 50*K)
-    return 1 / sq.sample(pianosPerPianoTuner)
+    pianos_per_piano_tuner = sq.to(2*K, 50*K)
+    return 1 / sq.sample(pianos_per_piano_tuner)
 
 # Time in years after 2022
 def pop_at_time(t):
