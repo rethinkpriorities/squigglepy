@@ -289,7 +289,7 @@ If they hear the alarm they call you, but this is not guaranteed.
 The chance of a burglary on a particular day is 0.1%.
 The chance of an earthquake on a particular day is 0.2%.
 
-The alarm will go off 95% of the time with both a burglary and an earthquae, 94% of the time with just a burglary,
+The alarm will go off 95% of the time with both a burglary and an earthquake, 94% of the time with just a burglary,
 29% of the time with just an earthquake, and 0.1% of the time with nothing (total false alarm).
 
 John will call you 90% of the time when the alarm goes off. But on 5% of the days, John will just call to say "hi".
