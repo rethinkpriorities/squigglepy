@@ -147,6 +147,9 @@ What is the probability that she actually has breast cancer?
 We can approximate the answer with a Bayesian network (uses rejection sampling):
 
 ```Python
+import squigglepy as sq
+from squigglepy import bayes
+
 def mammography(has_cancer):
     p = 0.8 if has_cancer else 0.096
     return bool(sq.sample(sq.bernoulli(p)))
@@ -156,10 +159,10 @@ def define_event():
     return({'mammography': mammography(cancer),
             'cancer': cancer})
 
-bayesnet(define_event,
-         n=1000000,
-         find=lambda e: e['cancer'],
-         conditional_on=lambda e: e['mammography'])
+bayes.bayesnet(define_event,
+               find=lambda e: e['cancer'],
+               conditional_on=lambda e: e['mammography'],
+               n=1000000)
 # 0.07723995880535531
 ```
 
@@ -175,6 +178,7 @@ You can also make distributions and update them:
 
 ```Python
 import matplotlib.pyplot as plt
+import squigglepy as sq
 from squigglepy import bayes
 
 print('Prior')
@@ -290,6 +294,9 @@ Mary will call you 70% of the time when the alarm goes off. But on 1% of the day
 
 
 ```Python
+import squigglepy as sq
+from squigglepy import bayes
+
 def p_alarm_goes_off(burglary, earthquake):
     if burglary and earthquake:
         return 0.95
