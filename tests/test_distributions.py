@@ -67,4 +67,8 @@ def test_exponential():
     assert exponential(10) == [10, None, 'exponential', None, None]
 
 
+def test_exponential_rclip_lclip():
+    assert exponential(10, lclip=10, rclip=15) == [10, None, 'exponential', 10, 15]
+
+
 # TODO: test mixture

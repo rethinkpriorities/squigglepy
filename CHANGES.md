@@ -17,7 +17,8 @@
 #### Other
 
 * **[Breaking change]** Numbers have been changed from functions to global variables. Use `sq.thousand` or `sq.K` instead of `sq.thousand()` (old/deprecated).
-* You can use `sq.flip_coin` and `sq.roll_die(sides)` to flip a coin or roll a die.
+* The `exponential` distribution now implements `lclip` and `rclip`.
+* You can use `flip_coin` and `roll_die(sides)` to flip a coin or roll a die.
 
 #### Non-visible backend changes
 

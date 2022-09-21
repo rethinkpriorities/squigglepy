@@ -60,8 +60,8 @@ def triangular(left, mode, right, lclip=None, rclip=None):
     return [left, mode, 'triangular', right, lclip, rclip]
 
 
-def exponential(scale):
-    return [scale, None, 'exponential', None, None]
+def exponential(scale, lclip=None, rclip=None):
+    return [scale, None, 'exponential', lclip, rclip]
 
 
 def mixture(dists, weights=None, lclip=None, rclip=None):
