@@ -41,10 +41,16 @@ def beta(a, b):
 
 
 def bernoulli(p):
+    if not isinstance(p, float) or isinstance(p, int):
+        return ValueError('bernoulli p must be a float or int')
+    if p < 0 or p > 1:
+        return ValueError('bernoulli p must be 0-1')
     return [p, None, 'bernoulli', None, None]
 
 
 def discrete(items):
+    if not isinstance(items, dict) or isinstance(items, list):
+        return ValueError('inputs to discrete must be a dict or list')
     return [items, None, 'discrete', None, None]
 
 
