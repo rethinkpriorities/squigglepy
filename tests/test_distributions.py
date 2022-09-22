@@ -2,7 +2,7 @@ import pytest
 from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular,
-                                        exponential, gamma, mixture)
+                                        poisson, exponential, gamma, mixture)
 
 
 def test_to_is_log_when_all_positive():
@@ -77,6 +77,14 @@ def test_exponential():
 
 def test_exponential_rclip_lclip():
     assert exponential(10, lclip=10, rclip=15) == [10, None, 'exponential', 10, 15]
+
+
+def test_poisson():
+    assert poisson(10) == [10, None, 'poisson', None, None]
+
+
+def test_poisson_rclip_lclip():
+    assert poisson(10, lclip=10, rclip=15) == [10, None, 'poisson', 10, 15]
 
 
 def test_gamma():

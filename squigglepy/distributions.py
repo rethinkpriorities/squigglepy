@@ -66,6 +66,10 @@ def triangular(left, mode, right, lclip=None, rclip=None):
     return [left, mode, 'triangular', right, lclip, rclip]
 
 
+def poisson(lam, lclip=None, rclip=None):
+    return [lam, None, 'poisson', lclip, rclip]
+
+
 def exponential(scale, lclip=None, rclip=None):
     return [scale, None, 'exponential', lclip, rclip]
 

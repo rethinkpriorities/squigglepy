@@ -91,6 +91,8 @@ sq.sample(sq.triangular(1, 2, 3))
 sq.sample(sq.binomial(p=0.5, n=5))
 sq.sample(sq.beta(a=1, b=2))
 sq.sample(sq.bernoulli(p=0.5))
+sq.sample(sq.poisson(10))
+sq.sample(sq.gamma(3, 2))
 sq.sample(sq.exponential(scale=1))
 
 # Discrete sampling

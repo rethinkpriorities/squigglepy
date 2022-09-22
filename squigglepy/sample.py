@@ -84,8 +84,16 @@ def triangular_sample(left, mode, right):
     return np.random.triangular(left, mode, right)
 
 
+def poisson_sample(lam):
+    return np.random.poisson(lam)
+
+
 def exponential_sample(scale):
     return np.random.exponential(scale)
+
+
+def gamma_sample(shape, scale):
+    return np.random.gamma(shape, scale)
     
 
 def uniform_sample(low, high):
@@ -189,8 +197,14 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     elif var[2] == 'bernoulli':
         out = bernoulli_sample(p=var[0])
 
+    elif var[2] == 'poisson':
+        out = poisson_sample(lam=var[0])
+
     elif var[2] == 'exponential':
         out = exponential_sample(scale=var[0])
+
+    elif var[2] == 'gamma':
+        out = gamma_sample(shape=var[0], scale=var[0])
 
     elif var[2] == 'triangular':
         out = triangular_sample(var[0], var[1], var[3])

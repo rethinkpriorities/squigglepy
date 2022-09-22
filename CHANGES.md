@@ -6,7 +6,9 @@
 
 #### New distributions
 
-* Add `discrete` to calculate a discrete distribution. Example: `discrete({'A': 0.3, 'B': 0.3, 'C': 0.4})` will return A 30% of the time, B 30% of the time, and C 40% of the time.
+* Adds `discrete` to calculate a discrete distribution. Example: `discrete({'A': 0.3, 'B': 0.3, 'C': 0.4})` will return A 30% of the time, B 30% of the time, and C 40% of the time.
+* Adds `poisson(lam)` to calculate a poisson distribution.
+* Adds `gamma(size, scale)` to calculate a gamma distribution.
 
 #### Bayesian library updates
 
