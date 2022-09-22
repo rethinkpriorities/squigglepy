@@ -42,15 +42,15 @@ def beta(a, b):
 
 def bernoulli(p):
     if not isinstance(p, float) or isinstance(p, int):
-        return ValueError('bernoulli p must be a float or int')
+        raise ValueError('bernoulli p must be a float or int')
     if p < 0 or p > 1:
-        return ValueError('bernoulli p must be 0-1')
+        raise ValueError('bernoulli p must be 0-1')
     return [p, None, 'bernoulli', None, None]
 
 
 def discrete(items):
-    if not isinstance(items, dict) or isinstance(items, list):
-        return ValueError('inputs to discrete must be a dict or list')
+    if not isinstance(items, dict) and not isinstance(items, list):
+        raise ValueError('inputs to discrete must be a dict or list')
     return [items, None, 'discrete', None, None]
 
 
@@ -68,6 +68,10 @@ def triangular(left, mode, right, lclip=None, rclip=None):
 
 def exponential(scale, lclip=None, rclip=None):
     return [scale, None, 'exponential', lclip, rclip]
+
+
+def gamma(shape, scale=1, lclip=None, rclip=None):
+    return [shape, scale, 'gamma', lclip, rclip]
 
 
 def mixture(dists, weights=None, lclip=None, rclip=None):

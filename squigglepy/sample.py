@@ -105,16 +105,16 @@ def discrete_sample(items, credibility=0.9):
             l = len(items)
             weights = [1 / l for i in range(l)]
     else:
-        return ValueError('inputs to discrete_sample must be a dict or list')
+        raise ValueError('inputs to discrete_sample must be a dict or list')
 
     return mixture_sample(values, weights, credibility=credibility)
 
 
 def mixture_sample(values, weights=None, credibility=0.9):
     if not isinstance(values, list):
-        return ValueError('input must be list')
+        raise ValueError('input must be list')
     elif not (isinstance(values, list) and isinstance(weights, list)) and not (isinstance(values, list) and weights is None):
-        return ValueError('values / weights misinformed')
+        raise ValueError('values / weights misinformed')
 
     if len(values) == 1:
         return sample(values[0], credibility=credibility)
@@ -151,7 +151,7 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
                                 lclip=lclip,
                                 rclip=rclip) for _ in range(n)])
     elif n <= 0:
-        return ValueError('n must be >= 1')
+        raise ValueError('n must be >= 1')
 
     if callable(var):
         out = var()

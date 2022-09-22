@@ -1,7 +1,8 @@
+import pytest
 from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular,
-                                        exponential, mixture)
+                                        exponential, gamma, mixture)
 
 
 def test_to_is_log_when_all_positive():
@@ -50,6 +51,13 @@ def test_discrete():
     assert discrete([0, 1]) == [[0, 1], None, 'discrete', None, None]
 
 
+
+def test_discrete_raises_on_wrong_type():
+    with pytest.raises(ValueError) as excinfo:
+        discrete(2)
+    assert 'inputs to discrete must be a dict or list' in str(excinfo.value)
+
+
 # TODO: test tdist, log_tdist
 
 
@@ -69,6 +77,18 @@ def test_exponential():
 
 def test_exponential_rclip_lclip():
     assert exponential(10, lclip=10, rclip=15) == [10, None, 'exponential', 10, 15]
+
+
+def test_gamma():
+    assert gamma(10, 2) == [10, 2, 'gamma', None, None]
+
+
+def test_gamma_default_scale():
+    assert gamma(10) == [10, 1, 'gamma', None, None]
+
+
+def test_gamma_rclip_lclip():
+    assert gamma(10, 2, lclip=10, rclip=15) == [10, 2, 'gamma', 10, 15]
 
 
 # TODO: test mixture
