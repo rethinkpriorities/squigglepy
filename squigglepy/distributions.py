@@ -10,9 +10,9 @@ def uniform(x, y):
     return [x, y, 'uniform', None, None]
 
 
-def norm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
+def norm(x=None, y=None, credibility=0.9, mean=None, sd=None, lclip=None, rclip=None):
     if mean is None and sd is None and x is not None and y is not None:
-        return [x, y, 'norm', lclip, rclip]
+        return [x, y, 'norm', credibility, lclip, rclip]
     elif mean is None and sd is not None and x is None and y is None:
         return [0, sd, 'norm-mean', lclip, rclip]
     elif mean is not None and sd is not None and x is None and y is None:
@@ -21,9 +21,9 @@ def norm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
         raise ValueError
 
 
-def lognorm(x=None, y=None, mean=None, sd=None, lclip=None, rclip=None):
+def lognorm(x=None, y=None, credibility=0.9, mean=None, sd=None, lclip=None, rclip=None):
     if mean is None and sd is None and x is not None and y is not None:
-        return [x, y, 'log', lclip, rclip]
+        return [x, y, 'log', credbility, lclip, rclip]
     elif mean is None and sd is not None and x is None and y is None:
         return [0, sd, 'log-mean', lclip, rclip]
     elif mean is not None and sd is not None and x is None and y is None:
@@ -54,12 +54,12 @@ def discrete(items):
     return [items, None, 'discrete', None, None]
 
 
-def tdist(x, y, t, lclip=None, rclip=None):
-    return [x, y, 'tdist', t, lclip, rclip]
+def tdist(x, y, t, credibility=0.9, lclip=None, rclip=None):
+    return [x, y, 'tdist', t, credibility, lclip, rclip]
 
 
-def log_tdist(x, y, t, lclip=None, rclip=None):
-    return [x, y, 'log-tdist', t, lclip, rclip]
+def log_tdist(x, y, t, credibility=0.9, lclip=None, rclip=None):
+    return [x, y, 'log-tdist', t, credibility, lclip, rclip]
 
 
 def triangular(left, mode, right, lclip=None, rclip=None):

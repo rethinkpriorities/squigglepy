@@ -18,7 +18,8 @@
 
 #### Other
 
-* **[Breaking change]** Numbers have been changed from functions to global variables. Use `sq.thousand` or `sq.K` instead of `sq.thousand()` (old/deprecated).
+* **[Breaking change]** `credibility`, which defines the size of the interval (e.g., `credibility=0.8` for an 80% CI), is now a property of the distribution rather than the sampler. That is, you should now call `sample(norm(1, 3, credibility=0.8))` whereas previously it was `sample(norm(1, 3), credibility=0.8)`. This will allow mixing of distributions with different credibile ranges.
+* **[Breaking change]** Numbers have been changed from functions to global variables. Use `thousand` or `K` instead of `thousand()` (old/deprecated).
 * The `exponential` distribution now implements `lclip` and `rclip`.
 * You can use `flip_coin` and `roll_die(sides)` to flip a coin or roll a die.
 

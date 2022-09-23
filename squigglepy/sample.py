@@ -100,7 +100,7 @@ def uniform_sample(low, high):
     return np.random.uniform(low, high)
 
 
-def discrete_sample(items, credibility=0.9):
+def discrete_sample(items):
     if isinstance(items, dict):
         values = [const(k) for k in items.keys()]
         weights = list(items.values())
@@ -115,17 +115,17 @@ def discrete_sample(items, credibility=0.9):
     else:
         raise ValueError('inputs to discrete_sample must be a dict or list')
 
-    return mixture_sample(values, weights, credibility=credibility)
+    return mixture_sample(values, weights)
 
 
-def mixture_sample(values, weights=None, credibility=0.9):
+def mixture_sample(values, weights=None):
     if not isinstance(values, list):
         raise ValueError('input must be list')
     elif not (isinstance(values, list) and isinstance(weights, list)) and not (isinstance(values, list) and weights is None):
         raise ValueError('values / weights misinformed')
 
     if len(values) == 1:
-        return sample(values[0], credibility=credibility)
+        return sample(values[0])
 
     if weights is None:
         weights = [v[0] for v in values]
@@ -145,16 +145,15 @@ def mixture_sample(values, weights=None, credibility=0.9):
     for i, dist in enumerate(values):
         weight = weights[i]
         if r_ <= weight:
-            return sample(dist, credibility=credibility)
+            return sample(dist)
 
-    return sample(dist, credibility=credibility)
+    return sample(dist)
 
 
-def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
+def sample(var, n=1, lclip=None, rclip=None):
     n = int(n)
     if n > 1:
         return np.array([sample(var,
-                                credibility=credibility,
                                 n=1,
                                 lclip=lclip,
                                 rclip=rclip) for _ in range(n)])
@@ -177,16 +176,16 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
         out = discrete_sample(var[0])
 
     elif var[2] == 'norm':
-        out = normal_sample(var[0], var[1], credibility=credibility)
+        out = normal_sample(var[0], var[1], credibility=var[3])
 
     elif var[2] == 'norm-mean':
-        out = normal_sample(mean=var[0], sd=var[1], credibility=credibility)
+        out = normal_sample(mean=var[0], sd=var[1])
 
     elif var[2] == 'log':
-        out = lognormal_sample(var[0], var[1], credibility=credibility)
+        out = lognormal_sample(var[0], var[1], credibility=var[3])
 
     elif var[2] == 'log-mean':
-        out = lognormal_sample(mean=var[0], sd=var[1], credibility=credibility)
+        out = lognormal_sample(mean=var[0], sd=var[1])
 
     elif var[2] == 'binomial':
         out = binomial_sample(n=var[0], p=var[1])
@@ -210,13 +209,13 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
         out = triangular_sample(var[0], var[1], var[3])
 
     elif var[2] == 'tdist':
-        out = t_sample(var[0], var[1], var[3], credibility=credibility)
+        out = t_sample(var[0], var[1], var[3], credibility=var[4])
 
     elif var[2] == 'log-tdist':
-        out = log_t_sample(var[0], var[1], var[3], credibility=credibility)
+        out = log_t_sample(var[0], var[1], var[3], credibility=var[4])
 
     elif var[2] == 'mixture':
-        out = mixture_sample(var[0], var[1], credibility=credibility)
+        out = mixture_sample(var[0], var[1], credibility=var[4])
 
     else:
         raise ValueError('{} sampler not found'.format(var[2]))
@@ -224,7 +223,10 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
     lclip_ = None
     rclip_ = None
     if not callable(var):
-        if var[2] == 'tdist' or var[2] == 'log-tdist' or var[2] == 'triangular':
+        if var[2] == 'tdist' or var[2] == 'log-tdist':
+            lclip_ = var[5]
+            rclip_ = var[6]
+        if var[2] == 'norm' or var[2] == 'lognorm' or var[2] == 'triangular':
             lclip_ = var[4]
             rclip_ = var[5]
         else:
