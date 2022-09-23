@@ -204,7 +204,7 @@ def sample(var, credibility=0.9, n=1, lclip=None, rclip=None):
         out = exponential_sample(scale=var[0])
 
     elif var[2] == 'gamma':
-        out = gamma_sample(shape=var[0], scale=var[0])
+        out = gamma_sample(shape=var[0], scale=var[1])
 
     elif var[2] == 'triangular':
         out = triangular_sample(var[0], var[1], var[3])
