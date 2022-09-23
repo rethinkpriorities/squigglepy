@@ -66,6 +66,7 @@ def total_tuners_at_time(t):
             pct_of_pop_w_pianos() *
             piano_tuners_per_piano())
 
+# Get total piano tuners at 2030
 sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030-2022), n=1000))
 ```
 

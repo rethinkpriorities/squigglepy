@@ -215,7 +215,7 @@ def sample(var, n=1, lclip=None, rclip=None):
         out = log_t_sample(var[0], var[1], var[3], credibility=var[4])
 
     elif var[2] == 'mixture':
-        out = mixture_sample(var[0], var[1], credibility=var[4])
+        out = mixture_sample(var[0], var[1])
 
     else:
         raise ValueError('{} sampler not found'.format(var[2]))

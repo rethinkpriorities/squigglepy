@@ -1,5 +1,5 @@
-def to(x, y, lclip=None, rclip=None):
-    return [x, y, 'log' if x > 0 else 'norm', lclip, rclip]
+def to(x, y, credibility=0.9, lclip=None, rclip=None):
+    return [x, y, 'log' if x > 0 else 'norm', credibility, lclip, rclip]
 
 
 def const(x):
@@ -23,7 +23,7 @@ def norm(x=None, y=None, credibility=0.9, mean=None, sd=None, lclip=None, rclip=
 
 def lognorm(x=None, y=None, credibility=0.9, mean=None, sd=None, lclip=None, rclip=None):
     if mean is None and sd is None and x is not None and y is not None:
-        return [x, y, 'log', credbility, lclip, rclip]
+        return [x, y, 'log', credibility, lclip, rclip]
     elif mean is None and sd is not None and x is None and y is None:
         return [0, sd, 'log-mean', lclip, rclip]
     elif mean is not None and sd is not None and x is None and y is None:
