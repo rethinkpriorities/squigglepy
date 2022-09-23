@@ -31,11 +31,66 @@ def test_const():
     assert const(1) == [1, None, 'const', None, None]
 
 
+def test_norm():
+    assert norm(1, 2) == [1, 2, 'norm', 0.9, None, None]
+
+
+def test_norm_with_mean_sd():
+    assert norm(mean=1, sd=2) == [1, 2, 'norm-mean', None, None]
+
+
+def test_norm_with_just_sd_infers_zero_mean():
+    assert norm(sd=2) == [0, 2, 'norm-mean', None, None]
+
+
+def test_norm_raises_value_error():
+    with pytest.raises(ValueError) as excinfo:
+        norm()
+    with pytest.raises(ValueError) as excinfo:
+        norm(x=1, y=2, mean=3, sd=4)
+
+
+def test_norm_passes_lclip_rclip():
+    assert norm(1, 2, lclip=0, rclip=3) == [1, 2, 'norm', 0.9, 0, 3]
+    assert norm(mean=1, sd=2, lclip=0, rclip=3) == [1, 2, 'norm-mean', 0, 3]
+    assert norm(sd=2, lclip=0, rclip=3) == [0, 2, 'norm-mean', 0, 3]
+
+
+def test_norm_passes_credibility():
+    assert norm(1, 2, credibility=0.8) == [1, 2, 'norm', 0.8, None, None]
+
+
+def test_lognorm():
+    assert lognorm(1, 2) == [1, 2, 'log', 0.9, None, None]
+
+
+def test_lognorm_with_mean_sd():
+    assert lognorm(mean=1, sd=2) == [1, 2, 'log-mean', None, None]
+
+
+def test_lognorm_with_just_sd_infers_zero_mean():
+    assert lognorm(sd=2) == [0, 2, 'log-mean', None, None]
+
+
+def test_lognorm_raises_value_error():
+    with pytest.raises(ValueError) as excinfo:
+        lognorm()
+    with pytest.raises(ValueError) as excinfo:
+        lognorm(x=1, y=2, mean=3, sd=4)
+
+
+def test_lognorm_passes_lclip_rclip():
+    assert lognorm(1, 2, lclip=0, rclip=3) == [1, 2, 'log', 0.9, 0, 3]
+    assert lognorm(mean=1, sd=2, lclip=0, rclip=3) == [1, 2, 'log-mean', 0, 3]
+    assert lognorm(sd=2, lclip=0, rclip=3) == [0, 2, 'log-mean', 0, 3]
+
+
+def test_lognorm_passes_credibility():
+    assert lognorm(1, 2, credibility=0.8) == [1, 2, 'log', 0.8, None, None]
+
+
 def test_uniform():
     assert uniform(0, 1) == [0, 1, 'uniform', None, None]
-
-
-# TODO: test norm, lognorm
 
 
 def test_binomial():
