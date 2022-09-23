@@ -22,6 +22,11 @@ def to_passes_lclip_rclip():
     assert to(-3, 3, lclip=-4, rclip=4) == norm(-3, 3, lclip=-4, rclip=4)
 
 
+def to_passes_credibility():
+    assert to(3, 5, credibility=0.8) == lognorm(3, 5, credibility=0.8)
+    assert to(-3, 3, credibility=0.8) == norm(-3, 3, credibility=0.8)
+
+
 def test_const():
     assert const(1) == [1, None, 'const', None, None]
 
@@ -51,7 +56,6 @@ def test_discrete():
     assert discrete([0, 1]) == [[0, 1], None, 'discrete', None, None]
 
 
-
 def test_discrete_raises_on_wrong_type():
     with pytest.raises(ValueError) as excinfo:
         discrete(2)
@@ -76,7 +80,8 @@ def test_exponential():
 
 
 def test_exponential_rclip_lclip():
-    assert exponential(10, lclip=10, rclip=15) == [10, None, 'exponential', 10, 15]
+    assert (exponential(10, lclip=10, rclip=15) ==
+            [10, None, 'exponential', 10, 15])
 
 
 def test_poisson():

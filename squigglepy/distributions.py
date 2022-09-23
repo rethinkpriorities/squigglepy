@@ -10,7 +10,8 @@ def uniform(x, y):
     return [x, y, 'uniform', None, None]
 
 
-def norm(x=None, y=None, credibility=0.9, mean=None, sd=None, lclip=None, rclip=None):
+def norm(x=None, y=None, credibility=0.9, mean=None, sd=None,
+         lclip=None, rclip=None):
     if mean is None and sd is None and x is not None and y is not None:
         return [x, y, 'norm', credibility, lclip, rclip]
     elif mean is None and sd is not None and x is None and y is None:
@@ -21,7 +22,8 @@ def norm(x=None, y=None, credibility=0.9, mean=None, sd=None, lclip=None, rclip=
         raise ValueError
 
 
-def lognorm(x=None, y=None, credibility=0.9, mean=None, sd=None, lclip=None, rclip=None):
+def lognorm(x=None, y=None, credibility=0.9, mean=None, sd=None,
+            lclip=None, rclip=None):
     if mean is None and sd is None and x is not None and y is not None:
         return [x, y, 'log', credibility, lclip, rclip]
     elif mean is None and sd is not None and x is None and y is None:

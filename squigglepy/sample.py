@@ -21,8 +21,9 @@ def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
         sigma = sd
     return np.random.normal(mu, sigma)
 
-    
-def lognormal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
+
+def lognormal_sample(low=None, high=None, mean=None, sd=None,
+                     credibility=None):
     if (low is not None and low < 0) or (mean is not None and mean < 0):
         raise ValueError('lognormal_sample cannot handle negative values')
     if mean is None:
@@ -94,7 +95,7 @@ def exponential_sample(scale):
 
 def gamma_sample(shape, scale):
     return np.random.gamma(shape, scale)
-    
+
 
 def uniform_sample(low, high):
     return np.random.uniform(low, high)
@@ -110,8 +111,8 @@ def discrete_sample(items):
             values = [const(i[1]) for i in items]
         else:
             values = [const(i) for i in items]
-            l = len(items)
-            weights = [1 / l for i in range(l)]
+            len_ = len(items)
+            weights = [1 / len_ for i in range(len_)]
     else:
         raise ValueError('inputs to discrete_sample must be a dict or list')
 
@@ -121,7 +122,10 @@ def discrete_sample(items):
 def mixture_sample(values, weights=None):
     if not isinstance(values, list):
         raise ValueError('input must be list')
-    elif not (isinstance(values, list) and isinstance(weights, list)) and not (isinstance(values, list) and weights is None):
+    elif (not (isinstance(values, list) and
+          isinstance(weights, list)) and
+          not (isinstance(values, list) and
+          weights is None)):
         raise ValueError('values / weights misinformed')
 
     if len(values) == 1:
@@ -130,11 +134,12 @@ def mixture_sample(values, weights=None):
     if weights is None:
         weights = [v[0] for v in values]
         values = [v[1] for v in values]
-        
+
     sum_weights = sum(weights)
 
     if sum_weights <= 0.99 or sum_weights >= 1.01:
-        raise ValueError('weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+        raise ValueError('weights don\'t sum to 1 -' +
+                         ' they sum to {}'.format(sum_weights))
 
     if len(weights) != len(values):
         raise ValueError('weights and distributions not same length')
@@ -248,4 +253,3 @@ def sample(var, n=1, lclip=None, rclip=None):
         return rclip
     else:
         return out
-
