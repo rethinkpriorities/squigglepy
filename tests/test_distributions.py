@@ -117,7 +117,34 @@ def test_discrete_raises_on_wrong_type():
     assert 'inputs to discrete must be a dict or list' in str(excinfo.value)
 
 
-# TODO: test tdist, log_tdist
+def test_tdist():
+    assert tdist(1, 3, 5) == [1, 3, 'tdist', 5, 0.9, None, None]
+
+
+def test_tdist_passes_lclip_rclip():
+    assert tdist(2, 4, t=6,
+                       lclip=3,
+                       rclip=5) == [2, 4, 'tdist', 6, 0.9, 3, 5]
+
+
+def test_tdist_passes_credibility():
+    assert (tdist(2, 4, t=5, credibility=0.8) ==
+            [2, 4, 'tdist', 5, 0.8, None, None])
+
+
+def test_log_tdist():
+    assert log_tdist(1, 3, 5) == [1, 3, 'log-tdist', 5, 0.9, None, None]
+
+
+def test_log_tdist_passes_lclip_rclip():
+    assert log_tdist(2, 4, t=6,
+                       lclip=3,
+                       rclip=5) == [2, 4, 'log-tdist', 6, 0.9, 3, 5]
+
+
+def test_log_tdist_passes_credibility():
+    assert (log_tdist(2, 4, t=5, credibility=0.8) ==
+            _2, 4, 'log-tdist', 5, 0.8, None, None])
 
 
 def test_triangular():
