@@ -144,7 +144,7 @@ def test_log_tdist_passes_lclip_rclip():
 
 def test_log_tdist_passes_credibility():
     assert (log_tdist(2, 4, t=5, credibility=0.8) ==
-            _2, 4, 'log-tdist', 5, 0.8, None, None])
+            [2, 4, 'log-tdist', 5, 0.8, None, None])
 
 
 def test_triangular():
