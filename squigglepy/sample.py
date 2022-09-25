@@ -3,7 +3,7 @@ import numpy as np
 from scipy import stats
 
 from .distributions import const
-from .utils import event_occurs
+from .utils import event_occurs, _process_weights_values
 
 
 def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
@@ -120,29 +120,10 @@ def discrete_sample(items):
 
 
 def mixture_sample(values, weights=None):
-    if not isinstance(values, list):
-        raise ValueError('input must be list')
-    elif (not (isinstance(values, list) and
-          isinstance(weights, list)) and
-          not (isinstance(values, list) and
-          weights is None)):
-        raise ValueError('values / weights misinformed')
+    weights, values = _process_weights_values(weights, values)
 
     if len(values) == 1:
         return sample(values[0])
-
-    if weights is None:
-        weights = [v[0] for v in values]
-        values = [v[1] for v in values]
-
-    sum_weights = sum(weights)
-
-    if sum_weights <= 0.99 or sum_weights >= 1.01:
-        raise ValueError('weights don\'t sum to 1 -' +
-                         ' they sum to {}'.format(sum_weights))
-
-    if len(weights) != len(values):
-        raise ValueError('weights and distributions not same length')
 
     r_ = random.random()
     weights = np.cumsum(weights)

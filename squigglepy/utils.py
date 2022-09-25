@@ -4,6 +4,39 @@ import numpy as np
 from scipy import stats
 
 
+def _process_weights_values(weights, values):
+    if isinstance(weights, float):
+        weights = [weights]
+    elif isinstance(weights, np.ndarray):
+        weights = list(weights)
+    elif not isinstance(weights, list) and weights is not None:
+        raise ValueError('passed weights must be a list')
+
+    if not isinstance(values, list):
+        raise ValueError('passed values must be a list')
+
+    if weights is None:
+        if isinstance(values[0], list) and len(values[0]) == 2:
+            weights = [v[0] for v in values]
+            values = [v[1] for v in values]
+        else:
+            len_ = len(values)
+            weights = [1 / len_ for _ in range(len_)]
+
+    sum_weights = sum(weights)
+
+    if len(weights) == len(values) - 1 and sum_weights < 1:
+        weights.append(1 - sum_weights)
+    elif sum_weights <= 0.99 or sum_weights >= 1.01:
+        raise ValueError('weights don\'t sum to 1 -' +
+                         ' they sum to {}'.format(sum_weights))
+
+    if len(weights) != len(values):
+        raise ValueError('weights and distributions not same length')
+
+    return weights, values
+
+
 def event_occurs(p):
     return random.random() < p
 
@@ -75,6 +108,8 @@ def get_log_percentiles(data, percentiles,
 
 
 def geomean(a, weights=None):
+    if weights is not None:
+        weights, a = _process_weights_values(weights, a)
     return stats.mstats.gmean(a, weights=weights)
 
 
@@ -88,7 +123,7 @@ def odds_to_p(odds):
 
 def geomean_odds(a, weights=None):
     a = p_to_odds(np.array(a))
-    return odds_to_p(stats.mstats.gmean(a, weights=weights))
+    return odds_to_p(geomean(a, weights=weights))
 
 
 def laplace(s, n=None, time_passed=None,
