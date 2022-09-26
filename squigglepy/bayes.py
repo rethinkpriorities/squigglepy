@@ -32,7 +32,8 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         events = _BAYES_NET_CACHE.get(event_fn)
         if events:
             if events['metadata']['n'] < n:
-                raise ValueError('{} results cached but requested {}'.format(events['metadata']['n'], n))
+                raise ValueError(('{} results cached but ' +
+                                  'requested {}').format(events['metadata']['n'], n))
             else:
                 if verbose:
                     print('...Cached data found. Using it.')
@@ -51,7 +52,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
                 print('Caching...')
             metadata = {'n': n, 'last_generated': datetime.now()}
             _BAYES_NET_CACHE[event_fn] = {'events': events,
-                                         'metadata': metadata}
+                                          'metadata': metadata}
             if verbose:
                 print('...Cached')
 

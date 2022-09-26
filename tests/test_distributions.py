@@ -44,9 +44,9 @@ def test_norm_with_just_sd_infers_zero_mean():
 
 
 def test_norm_raises_value_error():
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         norm()
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         norm(x=1, y=2, mean=3, sd=4)
 
 
@@ -73,9 +73,9 @@ def test_lognorm_with_just_sd_infers_zero_mean():
 
 
 def test_lognorm_raises_value_error():
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         lognorm()
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         lognorm(x=1, y=2, mean=3, sd=4)
 
 
@@ -122,9 +122,7 @@ def test_tdist():
 
 
 def test_tdist_passes_lclip_rclip():
-    assert tdist(2, 4, t=6,
-                       lclip=3,
-                       rclip=5) == [2, 4, 'tdist', 6, 0.9, 3, 5]
+    assert tdist(2, 4, t=6, lclip=3, rclip=5) == [2, 4, 'tdist', 6, 0.9, 3, 5]
 
 
 def test_tdist_passes_credibility():
@@ -137,9 +135,7 @@ def test_log_tdist():
 
 
 def test_log_tdist_passes_lclip_rclip():
-    assert log_tdist(2, 4, t=6,
-                       lclip=3,
-                       rclip=5) == [2, 4, 'log-tdist', 6, 0.9, 3, 5]
+    assert log_tdist(2, 4, t=6, lclip=3, rclip=5) == [2, 4, 'log-tdist', 6, 0.9, 3, 5]
 
 
 def test_log_tdist_passes_credibility():
