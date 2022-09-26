@@ -62,8 +62,7 @@ def get_log_percentiles(data, percentiles,
                                   reverse=reverse,
                                   digits=digits)
     if display:
-        return dict([(k, '10^{} (~{})'.format(np.round(np.log10(v), digits),
-                                              numerize(np.log10(v)))) for
+        return dict([(k, '10^{}'.format(np.round(np.log10(v), digits))) for
                      k, v in percentiles.items()])
     else:
         return dict([(k, np.round(np.log10(v), digits)) for
