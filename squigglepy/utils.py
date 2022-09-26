@@ -12,7 +12,9 @@ def _process_weights_values(weights, values):
     elif not isinstance(weights, list) and weights is not None:
         raise ValueError('passed weights must be a list')
 
-    if not isinstance(values, list):
+    if isinstance(values, np.ndarray):
+        values = list(values)
+    elif not isinstance(values, list):
         raise ValueError('passed values must be a list')
 
     if weights is None:

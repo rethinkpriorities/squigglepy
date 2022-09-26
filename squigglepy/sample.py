@@ -212,7 +212,7 @@ def sample(var, n=1, lclip=None, rclip=None):
         if var[2] == 'tdist' or var[2] == 'log-tdist':
             lclip_ = var[5]
             rclip_ = var[6]
-        if var[2] == 'norm' or var[2] == 'lognorm' or var[2] == 'triangular':
+        elif var[2] == 'norm' or var[2] == 'lognorm' or var[2] == 'triangular':
             lclip_ = var[4]
             rclip_ = var[5]
         else:
