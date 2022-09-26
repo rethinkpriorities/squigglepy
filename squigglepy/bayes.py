@@ -19,7 +19,7 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
              likelihood_not_h * (1 - prior)))
 
 
-BAYES_NET_CACHE = {}
+_BAYES_NET_CACHE = {}
 
 
 def bayesnet(event_fn, n=1, find=None, conditional_on=None,
@@ -29,7 +29,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
     if not reload_cache:
         if verbose:
             print('Checking cache...')
-        events = BAYES_NET_CACHE.get(event_fn)
+        events = _BAYES_NET_CACHE.get(event_fn)
         if events:
             if events['metadata']['n'] < n:
                 raise ValueError('{} results cached but requested {}'.format(events['metadata']['n'], n))
@@ -50,7 +50,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             if verbose:
                 print('Caching...')
             metadata = {'n': n, 'last_generated': datetime.now()}
-            BAYES_NET_CACHE[event_fn] = {'events': events,
+            _BAYES_NET_CACHE[event_fn] = {'events': events,
                                          'metadata': metadata}
             if verbose:
                 print('...Cached')
