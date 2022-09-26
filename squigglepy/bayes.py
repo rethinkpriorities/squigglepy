@@ -1,6 +1,8 @@
 import math
 import numpy as np
 
+from datetime import datetime
+
 from .distributions import norm, beta, mixture
 
 
@@ -17,23 +19,64 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
              likelihood_not_h * (1 - prior)))
 
 
+BAYES_NET_CACHE = {}
+
+
 def bayesnet(event_fn, n=1, find=None, conditional_on=None,
-             reduce_fn=None, raw=False):
-    events = [event_fn() for _ in range(n)]
+             reduce_fn=None, raw=False, cache=True,
+             reload_cache=False, verbose=False):
+    events = None
+    if not reload_cache:
+        if verbose:
+            print('Checking cache...')
+        events = BAYES_NET_CACHE.get(event_fn)
+        if events:
+            if events['metadata']['n'] < n:
+                raise ValueError('{} results cached but requested {}'.format(events['metadata']['n'], n))
+            else:
+                if verbose:
+                    print('...Cached data found. Using it.')
+                events = events['events']
+    elif verbose:
+        print('Reloading cache...')
+
+    if events is None:
+        if verbose:
+            print('Generating Bayes net...')
+        events = [event_fn() for _ in range(n)]
+        if verbose:
+            print('...Generated')
+        if cache:
+            if verbose:
+                print('Caching...')
+            metadata = {'n': n, 'last_generated': datetime.now()}
+            BAYES_NET_CACHE[event_fn] = {'events': events,
+                                         'metadata': metadata}
+            if verbose:
+                print('...Cached')
 
     if conditional_on is not None:
+        if verbose:
+            print('Filtering conditional...')
         events = [e for e in events if conditional_on(e)]
 
     if len(events) < 1:
         raise ValueError('insufficient samples for condition')
 
+    if conditional_on and verbose:
+        print('...Done')
+
     if find is None:
+        if verbose:
+            print('...Reducing')
         return events if reduce_fn is None else reduce_fn(events)
     else:
         events = [find(e) for e in events]
         if raw:
             return events
         else:
+            if verbose:
+                print('...Reducing')
             reduce_fn = np.mean if reduce_fn is None else reduce_fn
             return reduce_fn(events)
 

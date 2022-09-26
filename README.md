@@ -249,7 +249,7 @@ def monte_hall(door_picked, switch=False, n=1):
         return [monte_hall(door_picked=door_picked, switch=switch, interactive=False, n=1) for _ in range(n)]
     
     doors = ['A', 'B', 'C']
-    car_is_behind_door = sq.sample(sq.discrete({'A': 1/3, 'B': 1/3, 'C': 1/3}))    
+    car_is_behind_door = sq.sample(sq.discrete(doors))
     reveal_door = random.choice([d for d in doors if d != door_picked and d != car_is_behind_door])
     
     if switch:
@@ -338,14 +338,17 @@ bayes.bayesnet(define_event,
                n=1*M,
                find=lambda e: (e['mary_calls'] and e['john_calls']),
                conditional_on=lambda e: e['earthquake'])
-# 0.19017763845350052
+# Result will be ~0.19, though it varies because it is based on a random sample.
+# This also may take a minute to run.
 
 # If both John and Mary call, what is the chance there's been a burglary?
 bayes.bayesnet(define_event,
                n=1*M,
                find=lambda e: e['burglary'],
                conditional_on=lambda e: (e['mary_calls'] and e['john_calls']))
-# 0.2715578847070033
+# Result will be ~0.27, though it varies because it is based on a random sample.
+# This will run quickly because there is a built-in cache.
+# Use `cache=False` to not build a cache and `reload_cache=True` to recalculate the cache.
 ```
 
 Note that the amount of Bayesian analysis that squigglepy can do is pretty limited. For more complex bayesian analysis, consider [sorobn](https://github.com/MaxHalford/sorobn), [pomegranate](https://github.com/jmschrei/pomegranate), [bnlearn](https://github.com/erdogant/bnlearn), or [pyMC](https://github.com/pymc-devs/pymc).
