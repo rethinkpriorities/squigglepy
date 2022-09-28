@@ -1,6 +1,8 @@
 import math
+
 import numpy as np
 
+from tqdm import tqdm
 from datetime import datetime
 
 from .distributions import norm, beta, mixture
@@ -44,7 +46,9 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
     if events is None:
         if verbose:
             print('Generating Bayes net...')
-        events = [event_fn() for _ in range(n)]
+            events = [event_fn() for _ in tqdm(range(n))]
+        else:
+            events = [event_fn() for _ in range(n)]
         if verbose:
             print('...Generated')
         if cache:
