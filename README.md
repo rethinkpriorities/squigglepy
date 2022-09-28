@@ -70,6 +70,8 @@ def total_tuners_at_time(t):
 sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030-2022), n=1000))
 ```
 
+**WARNING:** Be careful about dividing by `K`, `M`, etc. `1/2*K` = 500 in Python. Use `1/(2*K)` instead to get the expected outcome.
+
 ### Additional Features
 
 ```Python
