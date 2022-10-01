@@ -58,7 +58,10 @@ def get_percentiles(data,
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
     percentiles = np.percentile(data, percentiles)
     if digits is not None:
-        percentiles = np.round(percentiles, digits)
+        if digits == 0:
+            percentiles = [int(p) for p in percentiles]
+        else:
+            percentiles = np.round(percentiles, digits)
     return dict(list(zip(percentile_labels, percentiles)))
 
 

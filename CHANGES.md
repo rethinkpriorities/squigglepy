@@ -26,6 +26,7 @@
 * `geomean` and `geomean_odds` can infer the last weight if the last weight is not given.
 * You can use `flip_coin` and `roll_die(sides)` to flip a coin or roll a die.
 * `event_happens` and `event` are aliases for `event_occurs`.
+* `get_percentiles` will now cast output to `int` if `digits=0`.
 
 #### Non-visible backend changes
 
