@@ -32,7 +32,7 @@ def _process_weights_values(weights, values):
         raise ValueError('weights don\'t sum to 1 -' +
                          ' they sum to {}'.format(sum_weights))
 
-    if l(weights) != len(values):
+    if len(weights) != len(values):
         raise ValueError('weights and distributions not same length')
 
     return weights, values
