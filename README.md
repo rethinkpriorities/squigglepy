@@ -229,10 +229,12 @@ print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_
 An example of how to use distributions to build tools:
 
 ```Python
-def roll_die(sides):
-    return sq.sample(sq.discrete(list(range(1, sides + 1))))
+import squigglepy as sq
 
-[roll_die(6) for _ in range(10)]
+def roll_die(sides, n=1):
+    return sq.sample(sq.discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
+
+roll_die(sides=6, n=10)
 # [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
 ```
 
