@@ -140,6 +140,24 @@ sq.sample(sq.norm(0, 3, lclip=0, rclip=5)) # Sample norm with a 90% CI from 0-3,
 sq.sample(sq.const(4)) # Always returns 4
 ```
 
+
+### Rolling a Die
+
+An example of how to use distributions to build tools:
+
+```Python
+import squigglepy as sq
+
+def roll_die(sides, n=1):
+    return sq.sample(sq.discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
+
+roll_die(sides=6, n=10)
+# [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
+```
+
+This is already included standard in the utils of this package. Use `sq.roll_die`.
+
+
 ### Bayesian inference
 
 1% of women at age forty who participate in routine screening have breast cancer.
@@ -222,23 +240,6 @@ plt.show()
 print(sq.get_percentiles(average_samples))
 print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_samples)))
 ```
-
-
-### Rolling a Die
-
-An example of how to use distributions to build tools:
-
-```Python
-import squigglepy as sq
-
-def roll_die(sides, n=1):
-    return sq.sample(sq.discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
-
-roll_die(sides=6, n=10)
-# [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
-```
-
-This is already included standard in the utils of this package. Use `sq.roll_die`.
 
 
 ### Alarm net
@@ -346,18 +347,35 @@ RUNS = 10000
 r = bayes.bayesnet(define_event,
                    find=lambda e: e['won'],
                    conditional_on=lambda e: e['switched'],
+                   verbose=True,
                    n=RUNS)
 print('Win {}% of the time when switching'.format(int(r * 100)))
 
 r = bayes.bayesnet(define_event,
                    find=lambda e: e['won'],
                    conditional_on=lambda e: not e['switched'],
+                   verbose=True,
                    n=RUNS)
 print('Win {}% of the time when not switching'.format(int(r * 100)))
 
 # Win 66% of the time when switching
 # Win 34% of the time when not switching
 ```
+
+
+### More complex coin/dice interactions
+
+Imagine that I flip a coin. If heads, I take a random die out of my blue bag. If tails, I take a random die out of my red bag.
+The blue bag contains only 6-sided dice. The red bag contains a 4-sided die, a 6-sided die, a 10-sided die, and a 20-sided die.
+I then roll the random die I took. What is the chance that I roll a 6?
+
+```Python
+import squigglepy as sq
+
+def model():
+    flip = sq.flip_coin()
+    if flip == 'heads':
+			  dice
 
 
 ## Run tests

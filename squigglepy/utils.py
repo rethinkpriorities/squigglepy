@@ -123,4 +123,8 @@ def roll_die(sides, n=1):
 
 
 def flip_coin(n=1):
-    return ['heads' if d == 2 else 'tails' for d in roll_die(2, n=n)]
+    rolls = roll_die(2, n=n)
+    if isinstance(rolls, int):
+        rolls = [rolls]
+    flips = ['heads' if d == 2 else 'tails' for d in rolls]
+    return flips[0] if len(flips) == 1 else flips
