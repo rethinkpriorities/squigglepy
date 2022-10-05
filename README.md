@@ -239,49 +239,6 @@ def roll_die(sides):
 This is already included standard in the utils of this package. Use `sq.roll_die`.
 
 
-### A Demonstration of the Monte Hall Problem
-
-```Python
-import random
-import squigglepy as sq
-from squigglepy.numbers import K
-
-def monte_hall(door_picked, switch=False, n=1):
-    if n > 1:
-        return [monte_hall(door_picked=door_picked, switch=switch, interactive=False, n=1) for _ in range(n)]
-    
-    doors = ['A', 'B', 'C']
-    car_is_behind_door = sq.sample(sq.discrete(doors))
-    reveal_door = random.choice([d for d in doors if d != door_picked and d != car_is_behind_door])
-    
-    if switch:
-        old_door_picked = door_picked
-        door_picked = [d for d in doors if d != old_door_picked and d != reveal_door][0]
-        
-    won_car = (car_is_behind_door == door_picked)
-    return won_car 
-
-
-def percent_win(n, switch):
-    return sum(monte_hall_(door_picked=door, switch=switch, n=n)) / n
-
-
-for initial_door in ['A', 'B', 'C']:
-    print('{} (No switch): {}'.format(initial_door, percent_win(n=10*K, switch=False)))
-    
-for initial_door in ['A', 'B', 'C']:
-    print('{} (switch): {}'.format(initial_door, percent_win(n=10*K, switch=True)))
-
-# Output:
-# A (No switch): 0.3327
-# B (No switch): 0.3403
-# C (No switch): 0.3301
-# A (switch): 0.6728
-# B (switch): 0.6679
-# C (switch): 0.6626
-```
-
-
 ### Alarm net
 
 This is the alarm network from [Bayesian Artificial Intelligence - Section 2.5.1](https://bayesian-intelligence.com/publications/bai/book/BAI_Chapter2.pdf):
@@ -354,6 +311,51 @@ bayes.bayesnet(define_event,
 ```
 
 Note that the amount of Bayesian analysis that squigglepy can do is pretty limited. For more complex bayesian analysis, consider [sorobn](https://github.com/MaxHalford/sorobn), [pomegranate](https://github.com/jmschrei/pomegranate), [bnlearn](https://github.com/erdogant/bnlearn), or [pyMC](https://github.com/pymc-devs/pymc).
+
+
+### A Demonstration of the Monte Hall Problem
+
+```Python
+import random
+import squigglepy as sq
+from squigglepy import bayes
+
+
+def monte_hall(door_picked, switch=False):
+    doors = ['A', 'B', 'C']
+    car_is_behind_door = random.choice(doors)
+    reveal_door = random.choice([d for d in doors if d != door_picked and d != car_is_behind_door])
+    
+    if switch:
+        old_door_picked = door_picked
+        door_picked = [d for d in doors if d != old_door_picked and d != reveal_door][0]
+        
+    won_car = (car_is_behind_door == door_picked)
+    return won_car 
+
+
+def define_event():
+    door = random.choice(['A', 'B', 'C'])
+    switch = random.random() >= 0.5
+    return {'won': monte_hall(door_picked=door, switch=switch),
+            'switched': switch}
+
+RUNS = 10000
+r = bayes.bayesnet(define_event,
+                   find=lambda e: e['won'],
+                   conditional_on=lambda e: e['switched'],
+                   n=RUNS)
+print('Win {}% of the time when switching'.format(int(r * 100)))
+
+r = bayes.bayesnet(define_event,
+                   find=lambda e: e['won'],
+                   conditional_on=lambda e: not e['switched'],
+                   n=RUNS)
+print('Win {}% of the time when not switching'.format(int(r * 100)))
+
+# Win 66% of the time when switching
+# Win 34% of the time when not switching
+```
 
 
 ## Run tests
