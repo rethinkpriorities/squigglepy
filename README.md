@@ -322,6 +322,7 @@ Note that the amount of Bayesian analysis that squigglepy can do is pretty limit
 import random
 import squigglepy as sq
 from squigglepy import bayes
+from squigglepy.numbers import K, M, B, T
 
 
 def monte_hall(door_picked, switch=False):
@@ -343,7 +344,7 @@ def define_event():
     return {'won': monte_hall(door_picked=door, switch=switch),
             'switched': switch}
 
-RUNS = 10000
+RUNS = 10*K
 r = bayes.bayesnet(define_event,
                    find=lambda e: e['won'],
                    conditional_on=lambda e: e['switched'],
@@ -365,18 +366,29 @@ print('Win {}% of the time when not switching'.format(int(r * 100)))
 
 ### More complex coin/dice interactions
 
-Imagine that I flip a coin. If heads, I take a random die out of my blue bag. If tails, I take a random die out of my red bag.
-The blue bag contains only 6-sided dice. The red bag contains a 4-sided die, a 6-sided die, a 10-sided die, and a 20-sided die.
-I then roll the random die I took. What is the chance that I roll a 6?
+> Imagine that I flip a coin. If heads, I take a random die out of my blue bag. If tails, I take a random die out of my red bag.
+> The blue bag contains only 6-sided dice. The red bag contains a 4-sided die, a 6-sided die, a 10-sided die, and a 20-sided die.
+> I then roll the random die I took. What is the chance that I roll a 6?
 
 ```Python
 import squigglepy as sq
+from squigglepy.numbers import K, M, B, T
+from squigglepy import bayes
 
-def model():
+def define_event():
     flip = sq.flip_coin()
-    if flip == 'heads':
-			  dice
+    if flip == 'heads': # Blue bag
+        dice_sides = 6
+    else: # Red bag
+        dice_sides = sq.sample(sq.discrete([4, 6, 10, 20]))
+    return sq.roll_die(dice_sides)
 
+
+bayes.bayesnet(define_event,
+               find=lambda e: e == 6,
+               verbose=True,
+               n=100*K)
+# This run for me returned 0.12306 which is pretty close to the correct answer of 0.12292
 
 ## Run tests
 
