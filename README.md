@@ -389,6 +389,7 @@ bayes.bayesnet(define_event,
                verbose=True,
                n=100*K)
 # This run for me returned 0.12306 which is pretty close to the correct answer of 0.12292
+```
 
 ## Run tests
 
