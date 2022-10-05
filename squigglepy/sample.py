@@ -1,6 +1,8 @@
 import random
 import numpy as np
+
 from scipy import stats
+from tqdm import tqdm
 
 from .distributions import const
 from .utils import event_occurs, _process_weights_values
@@ -136,13 +138,19 @@ def mixture_sample(values, weights=None):
     return sample(dist)
 
 
-def sample(var, n=1, lclip=None, rclip=None):
+def sample(var, n=1, lclip=None, rclip=None, verbose=False):
     n = int(n)
     if n > 1:
-        return np.array([sample(var,
-                                n=1,
-                                lclip=lclip,
-                                rclip=rclip) for _ in range(n)])
+        if verbose:
+            return np.array([sample(var,
+                                    n=1,
+                                    lclip=lclip,
+                                    rclip=rclip) for _ in tqdm(range(n))])
+        else:
+            return np.array([sample(var,
+                                    n=1,
+                                    lclip=lclip,
+                                    rclip=rclip) for _ in range(n)])
     elif n <= 0:
         raise ValueError('n must be >= 1')
 
