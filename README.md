@@ -125,10 +125,10 @@ sq.sample(sq.mixture([[0.3, sq.norm(1,3)],
                       [0.4, sq.lognorm(1,10)]]))
 
 # You can add and subtract distributions (a little less cool compared to native Squiggle unfortunately):
-sq.sample(lambda: sq.sample(sq.norm(1,3)) + sq.sample(sq.norm(4,5))), n=100)
-sq.sample(lambda: sq.sample(sq.norm(1,3)) - sq.sample(sq.norm(4,5))), n=100)
-sq.sample(lambda: sq.sample(sq.norm(1,3)) * sq.sample(sq.norm(4,5))), n=100)
-sq.sample(lambda: sq.sample(sq.norm(1,3)) / sq.sample(sq.norm(4,5))), n=100)
+sq.sample(lambda: sq.sample(sq.norm(1,3)) + sq.sample(sq.norm(4,5)), n=100)
+sq.sample(lambda: sq.sample(sq.norm(1,3)) - sq.sample(sq.norm(4,5)), n=100)
+sq.sample(lambda: sq.sample(sq.norm(1,3)) * sq.sample(sq.norm(4,5)), n=100)
+sq.sample(lambda: sq.sample(sq.norm(1,3)) / sq.sample(sq.norm(4,5)), n=100)
 
 # You can change the CI from 90% (default) to 80%
 sq.sample(sq.norm(1, 3, credibility=0.8))
@@ -393,5 +393,5 @@ bayes.bayesnet(define_event,
 
 ## Run tests
 
-`rm -rf build; flake8; pytest`
+`rm -rf build; flake8; pytest; python3 tests/integration.py`
 
