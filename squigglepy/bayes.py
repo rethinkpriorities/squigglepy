@@ -8,6 +8,9 @@ from datetime import datetime
 from .distributions import norm, beta, mixture
 
 
+_squigglepy_internal_bayesnet_caches = {}
+
+
 def simple_bayes(likelihood_h, likelihood_not_h, prior):
     """
     p(h|e) = (p(e|h)*p(h)) / (p(e|h)*p(h) + p(e|~h)*(1-p(h)))
@@ -21,9 +24,6 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
              likelihood_not_h * (1 - prior)))
 
 
-_BAYES_NET_CACHE = {}
-
-
 def bayesnet(event_fn, n=1, find=None, conditional_on=None,
              reduce_fn=None, raw=False, cache=True,
              reload_cache=False, verbose=False):
@@ -31,7 +31,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
     if not reload_cache:
         if verbose:
             print('Checking cache...')
-        events = _BAYES_NET_CACHE.get(event_fn)
+        events = _squigglepy_internal_bayesnet_caches.get(event_fn)
         if events:
             if events['metadata']['n'] < n:
                 raise ValueError(('{} results cached but ' +
@@ -55,8 +55,8 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             if verbose:
                 print('Caching...')
             metadata = {'n': n, 'last_generated': datetime.now()}
-            _BAYES_NET_CACHE[event_fn] = {'events': events,
-                                          'metadata': metadata}
+            _squigglepy_internal_bayesnet_caches[event_fn] = {'events': events,
+                                                              'metadata': metadata}
             if verbose:
                 print('...Cached')
 
