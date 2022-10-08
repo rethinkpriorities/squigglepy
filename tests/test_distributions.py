@@ -182,4 +182,31 @@ def test_gamma_rclip_lclip():
     assert gamma(10, 2, lclip=10, rclip=15) == [10, 2, 'gamma', 10, 15]
 
 
-# TODO: test mixture
+def test_mixture():
+    test = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6])
+    expected = [[norm(1, 2), norm(3, 4)], [0.4, 0.6], 'mixture', None, None]
+    assert test == expected
+
+
+def test_mixture_different_distributions():
+    test = mixture([lognorm(1, 10), gamma(3)], [0.1, 0.9])
+    expected = [[lognorm(1, 10), gamma(3)], [0.1, 0.9], 'mixture', None, None]
+    assert test == expected
+
+
+def test_mixture_no_weights():
+    test = mixture([lognorm(1, 10), gamma(3)])
+    expected = [[lognorm(1, 10), gamma(3)], None, 'mixture', None, None]
+    assert test == expected
+
+
+def test_mixture_lclip_rclip():
+    test = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6], lclip=1, rclip=4)
+    expected = [[norm(1, 2), norm(3, 4)], [0.4, 0.6], 'mixture', 1, 4]
+    assert test == expected
+
+
+def test_mixture_different_format():
+    test = mixture([[0.4, norm(1, 2)], [0.6, norm(3, 4)]])
+    expected = [[[0.4, norm(1, 2)], [0.6, norm(3, 4)]], None, 'mixture', None, None]
+    assert test == expected
