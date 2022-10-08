@@ -28,10 +28,13 @@
 * You can use `flip_coin` and `roll_die(sides)` to flip a coin or roll a die.
 * `event_happens` and `event` are aliases for `event_occurs`.
 * `get_percentiles` will now cast output to `int` if `digits=0`.
+* `get_log_percentiles` now has a default value for `percentiles`.
+* You can now set the seed for the RNG using `sq.set_seed`.
 
 #### Non-visible backend changes
 
 * Now has tests via pytest.
+* The random numbers now come from a numpy generator as opposed to the previous deprecated `np.random` methods.
 
 
 ## v0.6
