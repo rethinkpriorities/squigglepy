@@ -1,4 +1,3 @@
-import random
 import numpy as np
 
 from scipy import stats
@@ -21,7 +20,8 @@ def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
     else:
         mu = mean
         sigma = sd
-    return np.random.normal(mu, sigma)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.normal(mu, sigma)
 
 
 def lognormal_sample(low=None, high=None, mean=None, sd=None,
@@ -42,7 +42,8 @@ def lognormal_sample(low=None, high=None, mean=None, sd=None,
     else:
         mu = mean
         sigma = sd
-    return np.random.lognormal(mu, sigma)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.lognormal(mu, sigma)
 
 
 def t_sample(low, high, t, credibility=None):
@@ -53,7 +54,8 @@ def t_sample(low, high, t, credibility=None):
     else:
         mu = (high + low) / 2
         rangex = (high - low) / 2
-        return np.random.standard_t(t) * rangex * 0.6/credibility + mu
+        from .rng import _squigglepy_internal_rng
+        return _squigglepy_internal_rng.standard_t(t) * rangex * 0.6/credibility + mu
 
 
 def log_t_sample(low, high, t, credibility=None):
@@ -68,15 +70,18 @@ def log_t_sample(low, high, t, credibility=None):
         log_high = np.log(high)
         mu = (log_high + log_low) / 2
         rangex = (log_high - log_low) / 2
-        return np.exp(np.random.standard_t(t) * rangex * 0.6/credibility + mu)
+        from .rng import _squigglepy_internal_rng
+        return np.exp(_squigglepy_internal_rng.standard_t(t) * rangex * 0.6/credibility + mu)
 
 
 def binomial_sample(n, p):
-    return np.random.binomial(n, p)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.binomial(n, p)
 
 
 def beta_sample(a, b):
-    return np.random.beta(a, b)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.beta(a, b)
 
 
 def bernoulli_sample(p):
@@ -84,23 +89,28 @@ def bernoulli_sample(p):
 
 
 def triangular_sample(left, mode, right):
-    return np.random.triangular(left, mode, right)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.triangular(left, mode, right)
 
 
 def poisson_sample(lam):
-    return np.random.poisson(lam)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.poisson(lam)
 
 
 def exponential_sample(scale):
-    return np.random.exponential(scale)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.exponential(scale)
 
 
 def gamma_sample(shape, scale):
-    return np.random.gamma(shape, scale)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.gamma(shape, scale)
 
 
 def uniform_sample(low, high):
-    return np.random.uniform(low, high)
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng.uniform(low, high)
 
 
 def discrete_sample(items):
@@ -127,7 +137,7 @@ def mixture_sample(values, weights=None):
     if len(values) == 1:
         return sample(values[0])
 
-    r_ = random.random()
+    r_ = uniform_sample(0, 1)
     weights = np.cumsum(weights)
 
     for i, dist in enumerate(values):
