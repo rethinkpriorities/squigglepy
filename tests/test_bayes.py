@@ -98,6 +98,97 @@ def test_bayesnet_cache():
     assert _squigglepy_internal_bayesnet_caches.get(define_event)['metadata']['n'] == 100
 
 
+def test_bayesnet_cache_multiple():
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches = len(_squigglepy_internal_bayesnet_caches)
+
+    def define_event():
+        return {'a': 1, 'b': 2}
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             n=100)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches2 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches < n_caches2
+
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             n=100)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches3 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches2 == n_caches3
+
+    def define_event2():
+        return {'a': 4, 'b': 6}
+    bayesnet(define_event2,
+             find=lambda e: e['b'],
+             n=1000)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches4 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches2 < n_caches4
+    assert _squigglepy_internal_bayesnet_caches.get(define_event)['metadata']['n'] == 100
+    assert _squigglepy_internal_bayesnet_caches.get(define_event2)['metadata']['n'] == 1000
+
+    bayesnet(define_event2,
+             find=lambda e: e['a'],
+             n=100)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches5 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches4 == n_caches5
+
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             n=100)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches6 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches4 == n_caches6
+
+
+def test_bayesnet_reload_cache():
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches = len(_squigglepy_internal_bayesnet_caches)
+
+    def define_event():
+        return {'a': 1, 'b': 2}
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             n=100)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches2 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches < n_caches2
+
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             n=100)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches3 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches2 == n_caches3
+
+    bayesnet(define_event,
+             find=lambda e: e['b'],
+             n=100,
+             reload_cache=True)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches4 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches3 == n_caches4
+    assert _squigglepy_internal_bayesnet_caches.get(define_event)['metadata']['n'] == 100
+
+
+def test_bayesnet_dont_use_cache():
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches = len(_squigglepy_internal_bayesnet_caches)
+
+    def define_event():
+        return {'a': 1, 'b': 2}
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             cache=False,
+             n=100)
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches2 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches == n_caches2
+
+
 def test_bayesnet_cache_n_error():
     def define_event():
         return {'a': 1, 'b': 2}
