@@ -3,6 +3,7 @@
 #### Bugfixes
 
 * Fixes an issue with sampling from the `bernoulli` distribution.
+* Fixes a bug with the implementation of `lclip` and `rclip`.
 
 #### New distributions
 
@@ -18,9 +19,8 @@
 
 #### Other
 
-* **[Breaking change]** `credibility`, which defines the size of the interval (e.g., `credibility=0.8` for an 80% CI), is now a property of the distribution rather than the sampler. That is, you should now call `sample(norm(1, 3, credibility=0.8))` whereas previously it was `sample(norm(1, 3), credibility=0.8)`. This will allow mixing of distributions with different credibile ranges.
+* **[Breaking change]** `credibility`, which defines the size of the interval (e.g., `credibility=0.8` for an 80% CI), is now a property of the distribution rather than the sampler. That is, you should now call `sample(norm(1, 3, credibility=0.8))` whereas previously it was `sample(norm(1, 3), credibility=0.8)`. This will allow mixing of distributions with different credible ranges.
 * **[Breaking change]** Numbers have been changed from functions to global variables. Use `thousand` or `K` instead of `thousand()` (old/deprecated).
-* Fixed a bug with the implementation of `lclip` and `rclip`.
 * `sample` now has a nice progress reporter if `verbose=True`.
 * The `exponential` distribution now implements `lclip` and `rclip`.
 * The `mixture` distribution can infer equal weights if no weights are given.
