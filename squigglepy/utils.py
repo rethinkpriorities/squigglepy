@@ -133,14 +133,14 @@ def laplace(s, n=None, time_passed=None,
 
 
 def roll_die(sides, n=1):
-    from .sample import sample as samp
+    from .samplers import sample
     from .distributions import discrete
     if sides < 2:
         raise ValueError('cannot roll less than a 2-sided die.')
     elif not isinstance(sides, int):
         raise ValueError('can only roll an integer number of sides')
     else:
-        return samp(discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
+        return sample(discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
 
 
 def flip_coin(n=1):

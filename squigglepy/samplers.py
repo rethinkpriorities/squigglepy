@@ -7,7 +7,12 @@ from .distributions import const
 from .utils import event_occurs, _process_weights_values
 
 
-def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
+def _get_rng():
+    from .rng import _squigglepy_internal_rng
+    return _squigglepy_internal_rng
+
+
+def normal_sample(low=None, high=None, mean=None, sd=None, credibility=0.9):
     if mean is None:
         if low > high:
             raise ValueError('`high value` cannot be lower than `low value`')
@@ -20,12 +25,11 @@ def normal_sample(low=None, high=None, mean=None, sd=None, credibility=None):
     else:
         mu = mean
         sigma = sd
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.normal(mu, sigma)
+    return _get_rng().normal(mu, sigma)
 
 
 def lognormal_sample(low=None, high=None, mean=None, sd=None,
-                     credibility=None):
+                     credibility=0.9):
     if (low is not None and low < 0) or (mean is not None and mean < 0):
         raise ValueError('lognormal_sample cannot handle negative values')
     if mean is None:
@@ -42,11 +46,10 @@ def lognormal_sample(low=None, high=None, mean=None, sd=None,
     else:
         mu = mean
         sigma = sd
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.lognormal(mu, sigma)
+    return _get_rng().lognormal(mu, sigma)
 
 
-def t_sample(low, high, t, credibility=None):
+def t_sample(low, high, t, credibility=0.9):
     if low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
     elif low == high:
@@ -54,11 +57,10 @@ def t_sample(low, high, t, credibility=None):
     else:
         mu = (high + low) / 2
         rangex = (high - low) / 2
-        from .rng import _squigglepy_internal_rng
-        return _squigglepy_internal_rng.standard_t(t) * rangex * 0.6/credibility + mu
+        return _get_rng().standard_t(t) * rangex * 0.6/credibility + mu
 
 
-def log_t_sample(low, high, t, credibility=None):
+def log_t_sample(low, high, t, credibility=0.9):
     if low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
     elif low < 0:
@@ -70,18 +72,15 @@ def log_t_sample(low, high, t, credibility=None):
         log_high = np.log(high)
         mu = (log_high + log_low) / 2
         rangex = (log_high - log_low) / 2
-        from .rng import _squigglepy_internal_rng
-        return np.exp(_squigglepy_internal_rng.standard_t(t) * rangex * 0.6/credibility + mu)
+        return np.exp(_get_rng().standard_t(t) * rangex * 0.6/credibility + mu)
 
 
 def binomial_sample(n, p):
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.binomial(n, p)
+    return _get_rng().binomial(n, p)
 
 
 def beta_sample(a, b):
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.beta(a, b)
+    return _get_rng().beta(a, b)
 
 
 def bernoulli_sample(p):
@@ -89,28 +88,23 @@ def bernoulli_sample(p):
 
 
 def triangular_sample(left, mode, right):
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.triangular(left, mode, right)
+    return _get_rng().triangular(left, mode, right)
 
 
 def poisson_sample(lam):
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.poisson(lam)
+    return _get_rng().poisson(lam)
 
 
 def exponential_sample(scale):
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.exponential(scale)
+    return _get_rng().exponential(scale)
 
 
 def gamma_sample(shape, scale):
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.gamma(shape, scale)
+    return _get_rng().gamma(shape, scale)
 
 
 def uniform_sample(low, high):
-    from .rng import _squigglepy_internal_rng
-    return _squigglepy_internal_rng.uniform(low, high)
+    return _get_rng().uniform(low, high)
 
 
 def discrete_sample(items):
@@ -122,9 +116,8 @@ def discrete_sample(items):
             weights = [i[0] for i in items]
             values = [const(i[1]) for i in items]
         else:
+            weights = None
             values = [const(i) for i in items]
-            len_ = len(items)
-            weights = [1 / len_ for i in range(len_)]
     else:
         raise ValueError('inputs to discrete_sample must be a dict or list')
 
@@ -183,7 +176,7 @@ def sample(var, n=1, lclip=None, rclip=None, verbose=False):
         out = normal_sample(var[0], var[1], credibility=var[3])
 
     elif var[2] == 'norm-mean':
-        out = normal_sample(mean=var[0], sd=var[1])
+        out = normal_sample(mean=var[0], sd=var[1], credibility=var[3])
 
     elif var[2] == 'log':
         out = lognormal_sample(var[0], var[1], credibility=var[3])
@@ -239,11 +232,11 @@ def sample(var, n=1, lclip=None, rclip=None, verbose=False):
 
     if lclip is None and lclip_ is not None:
         lclip = lclip_
-    elif rclip is None and rclip_ is not None:
+    if rclip is None and rclip_ is not None:
         rclip = rclip_
-    elif lclip is not None and lclip_ is not None:
+    if lclip is not None and lclip_ is not None:
         lclip = max(lclip, lclip_)
-    elif rclip is not None and rclip_ is not None:
+    if rclip is not None and rclip_ is not None:
         rclip = min(rclip, rclip_)
 
     if lclip is not None and out < lclip:

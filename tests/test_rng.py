@@ -1,5 +1,5 @@
 from ..squigglepy.rng import set_seed
-from ..squigglepy.sample import sample
+from ..squigglepy.samplers import sample
 from ..squigglepy.distributions import norm
 
 
