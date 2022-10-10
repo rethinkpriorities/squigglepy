@@ -6,13 +6,13 @@ with open('README.md', 'r') as fh:
 setuptools.setup(
      name='squigglepy',
      version='0.8',
-     author='Peter Hurford',
+     author='Peter Wildeford',
      author_email='peter@peterhurford.com',
      description=('Squiggle programming language for intuitive probabilistic' +
                   ' estimation features in Python'),
      long_description=long_description,
      long_description_content_type='text/markdown',
-     url='https://github.com/peterhurford/squigglepy',
+     url='https://github.com/rethinkpriorities/squigglepy',
      packages=setuptools.find_packages(),
      classifiers=[
          'Development Status :: 3 - Alpha',
