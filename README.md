@@ -225,7 +225,7 @@ print('Evidence Mean: {} SD: {}'.format(np.mean(evidence_samples), np.std(eviden
 print('-')
 
 print('Posterior')
-posterior = bayes.update(prior_samples, evidence_samples)
+posterior = bayes.update(prior, evidence)
 posterior_samples = sq.sample(posterior, n=10*K)
 plt.hist(posterior_samples, bins = 200)
 plt.show()
