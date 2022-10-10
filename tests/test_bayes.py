@@ -2,7 +2,7 @@ import pytest
 
 from ..squigglepy.bayes import simple_bayes, bayesnet, update, average
 from ..squigglepy.samplers import sample
-from ..squigglepy.distributions import discrete, norm, beta, mixture
+from ..squigglepy.distributions import discrete, norm, beta
 from ..squigglepy.rng import set_seed
 
 
@@ -213,23 +213,24 @@ def test_bayesnet_insufficent_samples_error():
 
 def test_update_normal():
     out = update(list(range(10)), list(range(5, 15)))
-    out[1] = round(out[1], 2)
-    expected = [7.0, 2.03, 'norm-mean', None, None]
-    assert out == expected
+    assert out.type == 'norm'
+    assert out.mean == 7
+    assert round(out.sd, 2) == 2.03
 
 
 def test_update_normal_evidence_weight():
     out = update(list(range(10)), list(range(5, 15)), evidence_weight=3)
-    out[1] = round(out[1], 2)
+    assert out.type == 'norm'
     # TODO: This seems wrong?
-    expected = [16.5, 1.44, 'norm-mean', None, None]
-    assert out == expected
+    assert out.mean == 16.5
+    assert round(out.sd, 2) == 1.44
 
 
 def test_update_beta():
     out = update(beta(1, 1), beta(2, 2), type='beta')
-    expected = beta(3, 3)
-    assert out == expected
+    assert out.type == 'beta'
+    assert out.a == 3
+    assert out.b == 3
 
 
 def test_update_not_implemented():
@@ -240,5 +241,11 @@ def test_update_not_implemented():
 
 def test_average():
     out = average(norm(1, 2), norm(3, 4))
-    expected = mixture([norm(1, 2), norm(3, 4)], [0.5, 0.5])
-    assert out == expected
+    assert out.type == 'mixture'
+    assert out.dists[0].type == 'norm'
+    assert out.dists[0].x == 1
+    assert out.dists[0].y == 2
+    assert out.dists[1].type == 'norm'
+    assert out.dists[1].x == 3
+    assert out.dists[1].y == 4
+    assert out.weights == [0.5, 0.5]

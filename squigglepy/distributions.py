@@ -1,84 +1,266 @@
-def to(x, y, credibility=0.9, lclip=None, rclip=None):
-    return [x, y, 'log' if x > 0 else 'norm', credibility, lclip, rclip]
+from .utils import _process_weights_values
+
+
+class BaseDistribution:
+    def __init__(self):
+        self.x = None
+        self.y = None
+        self.n = None
+        self.p = None
+        self.t = None
+        self.a = None
+        self.b = None
+        self.shape = None
+        self.scale = None
+        self.credibility = None
+        self.mean = None
+        self.sd = None
+        self.left = None
+        self.mode = None
+        self.right = None
+        self.lclip = None
+        self.rclip = None
+        self.lam = None
+        self.items = None
+        self.dists = None
+        self.weights = None
+        self.type = 'BaseDistribution'
+
+    def __str__(self):
+        return '<Distribution> {}'.format(self.type)
+
+
+class ConstantDistribution(BaseDistribution):
+    def __init__(self, x):
+        super().__init__()
+        self.x = x
+        self.type = 'const'
 
 
 def const(x):
-    return [x, None, 'const', None, None]
+    return ConstantDistribution(x)
+
+
+class UniformDistribution(BaseDistribution):
+    def __init__(self, x, y):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.type = 'uniform'
 
 
 def uniform(x, y):
-    return [x, y, 'uniform', None, None]
+    return UniformDistribution(x=x, y=y)
+
+
+class NormalDistribution(BaseDistribution):
+    def __init__(self, x=None, y=None, mean=None, sd=None,
+                 credibility=0.9, lclip=None, rclip=None):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.credibility = credibility
+        self.mean = mean
+        self.sd = sd
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'norm'
+        if (self.x is None or self.y is None) and self.sd is None:
+            raise ValueError('must define either x/y or mean/sd')
+        elif (self.x is not None or self.y is not None) and self.sd is not None:
+            raise ValueError('must define either x/y or mean/sd -- cannot define both')
+        elif self.sd is not None and self.mean is None:
+            self.mean = 0
 
 
 def norm(x=None, y=None, credibility=0.9, mean=None, sd=None,
          lclip=None, rclip=None):
-    if mean is None and sd is None and x is not None and y is not None:
-        return [x, y, 'norm', credibility, lclip, rclip]
-    elif mean is None and sd is not None and x is None and y is None:
-        return [0, sd, 'norm-mean', lclip, rclip]
-    elif mean is not None and sd is not None and x is None and y is None:
-        return [mean, sd, 'norm-mean', lclip, rclip]
-    else:
-        raise ValueError
+    return NormalDistribution(x=x, y=y, credibility=credibility, mean=mean, sd=sd,
+                              lclip=lclip, rclip=rclip)
+
+
+class LognormalDistribution(BaseDistribution):
+    def __init__(self, x=None, y=None, mean=None, sd=None,
+                 credibility=0.9, lclip=None, rclip=None):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.credibility = credibility
+        self.mean = mean
+        self.sd = sd
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'lognorm'
+        if (self.x is None or self.y is None) and self.sd is None:
+            raise ValueError('must define either x/y or mean/sd')
+        elif (self.x is not None or self.y is not None) and self.sd is not None:
+            raise ValueError('must define either x/y or mean/sd -- cannot define both')
+        elif self.sd is not None and self.mean is None:
+            self.mean = 0
 
 
 def lognorm(x=None, y=None, credibility=0.9, mean=None, sd=None,
             lclip=None, rclip=None):
-    if mean is None and sd is None and x is not None and y is not None:
-        return [x, y, 'log', credibility, lclip, rclip]
-    elif mean is None and sd is not None and x is None and y is None:
-        return [0, sd, 'log-mean', lclip, rclip]
-    elif mean is not None and sd is not None and x is None and y is None:
-        return [mean, sd, 'log-mean', lclip, rclip]
+    return LognormalDistribution(x=x, y=y, credibility=credibility, mean=mean, sd=sd,
+                                 lclip=lclip, rclip=rclip)
+
+
+def to(x, y, credibility=0.9, lclip=None, rclip=None):
+    if x > 0:
+        return lognorm(x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip)
     else:
-        raise ValueError
+        return norm(x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip)
+
+
+class BinomialDistribution(BaseDistribution):
+    def __init__(self, n, p):
+        super().__init__()
+        self.n = n
+        self.p = p
+        self.type = 'binomial'
 
 
 def binomial(n, p):
-    return [n, p, 'binomial', None, None]
+    return BinomialDistribution(n=n, p=p)
+
+
+class BetaDistribution(BaseDistribution):
+    def __init__(self, a, b):
+        super().__init__()
+        self.a = a
+        self.b = b
+        self.type = 'beta'
 
 
 def beta(a, b):
-    return [a, b, 'beta', None, None]
+    return BetaDistribution(a, b)
+
+
+class BernoulliDistribution(BaseDistribution):
+    def __init__(self, p):
+        super().__init__()
+        if not isinstance(p, float) or isinstance(p, int):
+            raise ValueError('bernoulli p must be a float or int')
+        if p < 0 or p > 1:
+            raise ValueError('bernoulli p must be 0-1')
+        self.p = p
+        self.type = 'bernoulli'
 
 
 def bernoulli(p):
-    if not isinstance(p, float) or isinstance(p, int):
-        raise ValueError('bernoulli p must be a float or int')
-    if p < 0 or p > 1:
-        raise ValueError('bernoulli p must be 0-1')
-    return [p, None, 'bernoulli', None, None]
+    return BernoulliDistribution(p)
+
+
+class DiscreteDistribution(BaseDistribution):
+    def __init__(self, items):
+        super().__init__()
+        if not isinstance(items, dict) and not isinstance(items, list):
+            raise ValueError('inputs to discrete must be a dict or list')
+        self.items = items
+        self.type = 'discrete'
 
 
 def discrete(items):
-    if not isinstance(items, dict) and not isinstance(items, list):
-        raise ValueError('inputs to discrete must be a dict or list')
-    return [items, None, 'discrete', None, None]
+    return DiscreteDistribution(items)
+
+
+class TDistribution(BaseDistribution):
+    def __init__(self, x, y, t, credibility=0.9, lclip=None, rclip=None):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.t = t
+        self.credibility = credibility
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'tdist'
 
 
 def tdist(x, y, t, credibility=0.9, lclip=None, rclip=None):
-    return [x, y, 'tdist', t, credibility, lclip, rclip]
+    return TDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
+
+
+class LogTDistribution(BaseDistribution):
+    def __init__(self, x, y, t, credibility=0.9, lclip=None, rclip=None):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.t = t
+        self.credibility = credibility
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'log-tdist'
 
 
 def log_tdist(x, y, t, credibility=0.9, lclip=None, rclip=None):
-    return [x, y, 'log-tdist', t, credibility, lclip, rclip]
+    return LogTDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
+
+
+class TriangularDistribution(BaseDistribution):
+    def __init__(self, left, mode, right, lclip=None, rclip=None):
+        super().__init__()
+        self.left = left
+        self.mode = mode
+        self.right = right
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'triangular'
 
 
 def triangular(left, mode, right, lclip=None, rclip=None):
-    return [left, mode, 'triangular', right, lclip, rclip]
+    return TriangularDistribution(left=left, mode=mode, right=right, lclip=lclip, rclip=rclip)
+
+
+class PoissonDistribution(BaseDistribution):
+    def __init__(self, lam, lclip=None, rclip=None):
+        super().__init__()
+        self.lam = lam
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'poisson'
 
 
 def poisson(lam, lclip=None, rclip=None):
-    return [lam, None, 'poisson', lclip, rclip]
+    return PoissonDistribution(lam=lam, lclip=lclip, rclip=rclip)
+
+
+class ExponentialDistribution(BaseDistribution):
+    def __init__(self, scale, lclip=None, rclip=None):
+        super().__init__()
+        self.scale = scale
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'exponential'
 
 
 def exponential(scale, lclip=None, rclip=None):
-    return [scale, None, 'exponential', lclip, rclip]
+    return ExponentialDistribution(scale=scale, lclip=lclip, rclip=rclip)
+
+
+class GammaDistribution(BaseDistribution):
+    def __init__(self, shape, scale=1, lclip=None, rclip=None):
+        super().__init__()
+        self.shape = shape
+        self.scale = scale
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'gamma'
 
 
 def gamma(shape, scale=1, lclip=None, rclip=None):
-    return [shape, scale, 'gamma', lclip, rclip]
+    return GammaDistribution(shape=shape, scale=scale, lclip=lclip, rclip=rclip)
+
+
+class MixtureDistribution(BaseDistribution):
+    def __init__(self, dists, weights=None, lclip=None, rclip=None):
+        super().__init__()
+        weights, dists = _process_weights_values(weights, dists)
+        self.dists = dists
+        self.weights = weights
+        self.lclip = lclip
+        self.rclip = rclip
+        self.type = 'mixture'
 
 
 def mixture(dists, weights=None, lclip=None, rclip=None):
-    return [dists, weights, 'mixture', lclip, rclip]
+    return MixtureDistribution(dists=dists, weights=weights, lclip=lclip, rclip=rclip)

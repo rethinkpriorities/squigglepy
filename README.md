@@ -393,5 +393,5 @@ bayes.bayesnet(define_event,
 
 ## Run tests
 
-`rm -rf build; flake8; pytest; python3 tests/integration.py`
+`rm -rf build && flake8 && pytest && pip3 install . && python3 tests/integration.py`
 

@@ -98,10 +98,10 @@ def update(prior, evidence, evidence_weight=1, type='normal'):
                     sd=math.sqrt((evidence_var * prior_var) /
                                  (evidence_weight * evidence_var + prior_var)))
     elif type == 'beta':
-        prior_a = prior[0]
-        prior_b = prior[1]
-        evidence_a = evidence[0]
-        evidence_b = evidence[1]
+        prior_a = prior.a
+        prior_b = prior.b
+        evidence_a = evidence.a
+        evidence_b = evidence.b
         return beta(prior_a + evidence_a, prior_b + evidence_b)
     else:
         raise ValueError('type `{}` not supported.'.format(type))

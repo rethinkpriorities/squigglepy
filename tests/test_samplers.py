@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 from unittest.mock import patch, Mock
 
 from ..squigglepy.distributions import (const, uniform, norm, lognorm,
@@ -296,3 +297,26 @@ def test_mixture_different_distributions(mocker):
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_mixture_sample(mocker):
     assert sample(mixture([lognorm(1, 2), norm(3, 4)])) == (0.35, 0.21)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_n_gt_1(mocker):
+    assert np.array_equal(sample(norm(1, 2), n=5), np.array([(1.5, 0.3)] * 5))
+
+
+def test_sample_n_is_0_is_error():
+    with pytest.raises(ValueError) as execinfo:
+        sample(norm(1, 5), n=0)
+    assert 'n must be >= 1' in str(execinfo.value)
+
+
+def test_sample_callable():
+    def sample_fn():
+        return 1
+    assert sample(sample_fn) == 1
+
+
+def test_sample_invalid_input():
+    with pytest.raises(ValueError) as execinfo:
+        sample([1, 5])
+    assert 'must be a distribution' in str(execinfo.value)

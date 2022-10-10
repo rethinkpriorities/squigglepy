@@ -6,15 +6,15 @@ from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
 
 
 def test_to_is_log_when_all_positive():
-    assert to(1, 2) == lognorm(1, 2)
+    assert to(1, 2).type == 'lognorm'
 
 
 def test_to_is_norm_when_not_all_positive():
-    assert to(-1, 2) == norm(-1, 2)
+    assert to(-1, 2).type == 'norm'
 
 
 def test_to_is_norm_when_zero():
-    assert to(0, 10) == norm(0, 10)
+    assert to(0, 10).type == 'norm'
 
 
 def to_passes_lclip_rclip():
@@ -28,87 +28,180 @@ def to_passes_credibility():
 
 
 def test_const():
-    assert const(1) == [1, None, 'const', None, None]
+    assert const(1).type == 'const'
+    assert const(1).x == 1
+    assert str(const(1)) == '<Distribution> const'
 
 
 def test_norm():
-    assert norm(1, 2) == [1, 2, 'norm', 0.9, None, None]
+    assert norm(1, 2).type == 'norm'
+    assert norm(1, 2).x == 1
+    assert norm(1, 2).y == 2
+    assert norm(1, 2).mean is None
+    assert norm(1, 2).sd is None
+    assert norm(1, 2).credibility == 0.9
+    assert norm(1, 2).lclip is None
+    assert norm(1, 2).rclip is None
+    assert str(norm(1, 2)) == '<Distribution> norm'
 
 
 def test_norm_with_mean_sd():
-    assert norm(mean=1, sd=2) == [1, 2, 'norm-mean', None, None]
+    assert norm(mean=1, sd=2).type == 'norm'
+    assert norm(mean=1, sd=2).x is None
+    assert norm(mean=1, sd=2).y is None
+    assert norm(mean=1, sd=2).mean == 1
+    assert norm(mean=1, sd=2).sd == 2
+    assert norm(mean=1, sd=2).credibility == 0.9
+    assert norm(mean=1, sd=2).lclip is None
+    assert norm(mean=1, sd=2).rclip is None
 
 
 def test_norm_with_just_sd_infers_zero_mean():
-    assert norm(sd=2) == [0, 2, 'norm-mean', None, None]
+    assert norm(sd=2).type == 'norm'
+    assert norm(sd=2).x is None
+    assert norm(sd=2).y is None
+    assert norm(sd=2).mean == 0
+    assert norm(sd=2).sd == 2
+    assert norm(sd=2).credibility == 0.9
+    assert norm(sd=2).lclip is None
+    assert norm(sd=2).rclip is None
 
 
-def test_norm_raises_value_error():
-    with pytest.raises(ValueError):
+def test_norm_blank_raises_value_error():
+    with pytest.raises(ValueError) as execinfo:
         norm()
-    with pytest.raises(ValueError):
+    assert 'must define either x/y or mean/sd' in str(execinfo.value)
+
+
+def test_norm_overdefinition_value_error():
+    with pytest.raises(ValueError) as execinfo:
         norm(x=1, y=2, mean=3, sd=4)
+    assert 'cannot define both' in str(execinfo.value)
 
 
 def test_norm_passes_lclip_rclip():
-    assert norm(1, 2, lclip=0, rclip=3) == [1, 2, 'norm', 0.9, 0, 3]
-    assert norm(mean=1, sd=2, lclip=0, rclip=3) == [1, 2, 'norm-mean', 0, 3]
-    assert norm(sd=2, lclip=0, rclip=3) == [0, 2, 'norm-mean', 0, 3]
+    obj = norm(1, 2, lclip=0, rclip=3)
+    assert obj.type == 'norm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    obj = norm(mean=1, sd=2, lclip=0, rclip=3)
+    assert obj.type == 'norm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    obj = norm(sd=2, lclip=0, rclip=3)
+    assert obj.type == 'norm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
 
 
 def test_norm_passes_credibility():
-    assert norm(1, 2, credibility=0.8) == [1, 2, 'norm', 0.8, None, None]
+    obj = norm(1, 2, credibility=0.8)
+    assert obj.type == 'norm'
+    assert obj.credibility == 0.8
 
 
 def test_lognorm():
-    assert lognorm(1, 2) == [1, 2, 'log', 0.9, None, None]
+    assert lognorm(1, 2).type == 'lognorm'
+    assert lognorm(1, 2).x == 1
+    assert lognorm(1, 2).y == 2
+    assert lognorm(1, 2).mean is None
+    assert lognorm(1, 2).sd is None
+    assert lognorm(1, 2).credibility == 0.9
+    assert lognorm(1, 2).lclip is None
+    assert lognorm(1, 2).rclip is None
+    assert str(lognorm(1, 2)) == '<Distribution> lognorm'
 
 
 def test_lognorm_with_mean_sd():
-    assert lognorm(mean=1, sd=2) == [1, 2, 'log-mean', None, None]
+    assert lognorm(mean=1, sd=2).type == 'lognorm'
+    assert lognorm(mean=1, sd=2).x is None
+    assert lognorm(mean=1, sd=2).y is None
+    assert lognorm(mean=1, sd=2).mean == 1
+    assert lognorm(mean=1, sd=2).sd == 2
+    assert lognorm(mean=1, sd=2).credibility == 0.9
+    assert lognorm(mean=1, sd=2).lclip is None
+    assert lognorm(mean=1, sd=2).rclip is None
 
 
 def test_lognorm_with_just_sd_infers_zero_mean():
-    assert lognorm(sd=2) == [0, 2, 'log-mean', None, None]
+    assert lognorm(sd=2).type == 'lognorm'
+    assert lognorm(sd=2).x is None
+    assert lognorm(sd=2).y is None
+    assert lognorm(sd=2).mean == 0
+    assert lognorm(sd=2).sd == 2
+    assert lognorm(sd=2).credibility == 0.9
+    assert lognorm(sd=2).lclip is None
+    assert lognorm(sd=2).rclip is None
 
 
-def test_lognorm_raises_value_error():
-    with pytest.raises(ValueError):
+def test_lognorm_blank_raises_value_error():
+    with pytest.raises(ValueError) as execinfo:
         lognorm()
-    with pytest.raises(ValueError):
+    assert 'must define either x/y or mean/sd' in str(execinfo.value)
+
+
+def test_lognorm_overdefinition_value_error():
+    with pytest.raises(ValueError) as execinfo:
         lognorm(x=1, y=2, mean=3, sd=4)
+    assert 'cannot define both' in str(execinfo.value)
 
 
 def test_lognorm_passes_lclip_rclip():
-    assert lognorm(1, 2, lclip=0, rclip=3) == [1, 2, 'log', 0.9, 0, 3]
-    assert lognorm(mean=1, sd=2, lclip=0, rclip=3) == [1, 2, 'log-mean', 0, 3]
-    assert lognorm(sd=2, lclip=0, rclip=3) == [0, 2, 'log-mean', 0, 3]
+    obj = lognorm(1, 2, lclip=0, rclip=3)
+    assert obj.type == 'lognorm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    obj = lognorm(mean=1, sd=2, lclip=0, rclip=3)
+    assert obj.type == 'lognorm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    obj = lognorm(sd=2, lclip=0, rclip=3)
+    assert obj.type == 'lognorm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
 
 
 def test_lognorm_passes_credibility():
-    assert lognorm(1, 2, credibility=0.8) == [1, 2, 'log', 0.8, None, None]
+    obj = lognorm(1, 2, credibility=0.8)
+    assert obj.type == 'lognorm'
+    assert obj.credibility == 0.8
 
 
 def test_uniform():
-    assert uniform(0, 1) == [0, 1, 'uniform', None, None]
+    assert uniform(0, 1).type == 'uniform'
+    assert uniform(0, 1).x == 0
+    assert uniform(0, 1).y == 1
+    assert str(uniform(0, 1)) == '<Distribution> uniform'
 
 
 def test_binomial():
-    assert binomial(10, 0.1) == [10, 0.1, 'binomial', None, None]
+    assert binomial(10, 0.1).type == 'binomial'
+    assert binomial(10, 0.1).n == 10
+    assert binomial(10, 0.1).p == 0.1
+    assert str(binomial(10, 0.1)) == '<Distribution> binomial'
 
 
 def test_beta():
-    assert beta(10, 1) == [10, 1, 'beta', None, None]
+    assert beta(10, 1).type == 'beta'
+    assert beta(10, 1).a == 10
+    assert beta(10, 1).b == 1
+    assert str(beta(10, 0.1)) == '<Distribution> beta'
 
 
 def test_bernoulli():
-    assert bernoulli(0.1) == [0.1, None, 'bernoulli', None, None]
+    assert bernoulli(0.1).type == 'bernoulli'
+    assert bernoulli(0.1).p == 0.1
+    assert str(bernoulli(0.1)) == '<Distribution> bernoulli'
 
 
 def test_discrete():
-    assert discrete({'a': 0.9, 'b': 0.1}) == [{'a': 0.9, 'b': 0.1},
-                                              None, 'discrete', None, None]
-    assert discrete([0, 1]) == [[0, 1], None, 'discrete', None, None]
+    obj = discrete({'a': 0.9, 'b': 0.1})
+    assert obj.type == 'discrete'
+    assert obj.items == {'a': 0.9, 'b': 0.1}
+    obj = discrete([0, 1])
+    assert obj.type == 'discrete'
+    assert obj.items == [0, 1]
+    assert str(obj) == '<Distribution> discrete'
 
 
 def test_discrete_raises_on_wrong_type():
@@ -118,95 +211,160 @@ def test_discrete_raises_on_wrong_type():
 
 
 def test_tdist():
-    assert tdist(1, 3, 5) == [1, 3, 'tdist', 5, 0.9, None, None]
+    assert tdist(1, 3, 5).type == 'tdist'
+    assert tdist(1, 3, 5).x == 1
+    assert tdist(1, 3, 5).y == 3
+    assert tdist(1, 3, 5).t == 5
+    assert tdist(1, 3, 5).credibility == 0.9
+    assert tdist(1, 3, 5).lclip is None
+    assert tdist(1, 3, 5).rclip is None
+    assert str(tdist(1, 3, 5)) == '<Distribution> tdist'
 
 
 def test_tdist_passes_lclip_rclip():
-    assert tdist(2, 4, t=6, lclip=3, rclip=5) == [2, 4, 'tdist', 6, 0.9, 3, 5]
+    obj = tdist(1, 3, t=5, lclip=3, rclip=5)
+    assert obj.type == 'tdist'
+    assert obj.lclip == 3
+    assert obj.rclip == 5
+    assert obj.credibility == 0.9
 
 
 def test_tdist_passes_credibility():
-    assert (tdist(2, 4, t=5, credibility=0.8) ==
-            [2, 4, 'tdist', 5, 0.8, None, None])
+    obj = tdist(1, 3, t=5, credibility=0.8)
+    assert obj.type == 'tdist'
+    assert obj.credibility == 0.8
 
 
 def test_log_tdist():
-    assert log_tdist(1, 3, 5) == [1, 3, 'log-tdist', 5, 0.9, None, None]
+    assert log_tdist(1, 3, 5).type == 'log-tdist'
+    assert log_tdist(1, 3, 5).x == 1
+    assert log_tdist(1, 3, 5).y == 3
+    assert log_tdist(1, 3, 5).t == 5
+    assert log_tdist(1, 3, 5).credibility == 0.9
+    assert log_tdist(1, 3, 5).lclip is None
+    assert log_tdist(1, 3, 5).rclip is None
+    assert str(log_tdist(1, 3, 5)) == '<Distribution> log-tdist'
 
 
 def test_log_tdist_passes_lclip_rclip():
-    assert log_tdist(2, 4, t=6, lclip=3, rclip=5) == [2, 4, 'log-tdist', 6, 0.9, 3, 5]
+    obj = log_tdist(1, 3, t=5, lclip=3, rclip=5)
+    assert obj.type == 'log-tdist'
+    assert obj.lclip == 3
+    assert obj.rclip == 5
+    assert obj.credibility == 0.9
 
 
 def test_log_tdist_passes_credibility():
-    assert (log_tdist(2, 4, t=5, credibility=0.8) ==
-            [2, 4, 'log-tdist', 5, 0.8, None, None])
+    obj = log_tdist(1, 3, t=5, credibility=0.8)
+    assert obj.type == 'log-tdist'
+    assert obj.credibility == 0.8
 
 
 def test_triangular():
-    assert triangular(1, 3, 5) == [1, 3, 'triangular', 5, None, None]
+    assert triangular(1, 3, 5).type == 'triangular'
+    assert triangular(1, 3, 5).left == 1
+    assert triangular(1, 3, 5).mode == 3
+    assert triangular(1, 3, 5).right == 5
+    assert str(triangular(1, 3, 5)) == '<Distribution> triangular'
 
 
 def test_triangular_lclip_rclip():
-    assert triangular(2, 4, 6,
-                      lclip=3,
-                      rclip=5) == [2, 4, 'triangular', 6, 3, 5]
+    obj = triangular(2, 4, 6, lclip=3, rclip=5)
+    assert obj.type == 'triangular'
+    assert obj.lclip == 3
+    assert obj.rclip == 5
 
 
 def test_exponential():
-    assert exponential(10) == [10, None, 'exponential', None, None]
+    assert exponential(10).type == 'exponential'
+    assert exponential(10).scale == 10
+    assert str(exponential(10)) == '<Distribution> exponential'
 
 
 def test_exponential_rclip_lclip():
-    assert (exponential(10, lclip=10, rclip=15) ==
-            [10, None, 'exponential', 10, 15])
+    obj = exponential(10, lclip=10, rclip=15)
+    assert obj.type == 'exponential'
+    assert obj.lclip == 10
+    assert obj.rclip == 15
 
 
 def test_poisson():
-    assert poisson(10) == [10, None, 'poisson', None, None]
+    assert poisson(10).type == 'poisson'
+    assert poisson(10).lam == 10
+    assert str(poisson(10)) == '<Distribution> poisson'
 
 
 def test_poisson_rclip_lclip():
-    assert poisson(10, lclip=10, rclip=15) == [10, None, 'poisson', 10, 15]
+    obj = poisson(10, lclip=10, rclip=15)
+    assert obj.type == 'poisson'
+    assert obj.lclip == 10
+    assert obj.rclip == 15
 
 
 def test_gamma():
-    assert gamma(10, 2) == [10, 2, 'gamma', None, None]
+    assert gamma(10, 2).type == 'gamma'
+    assert gamma(10, 2).shape == 10
+    assert gamma(10, 2).scale == 2
+    assert str(gamma(10, 2)) == '<Distribution> gamma'
 
 
 def test_gamma_default_scale():
-    assert gamma(10) == [10, 1, 'gamma', None, None]
+    assert gamma(10).type == 'gamma'
+    assert gamma(10).shape == 10
+    assert gamma(10).scale == 1
 
 
 def test_gamma_rclip_lclip():
-    assert gamma(10, 2, lclip=10, rclip=15) == [10, 2, 'gamma', 10, 15]
+    obj = gamma(10, 2, lclip=10, rclip=15)
+    assert obj.type == 'gamma'
+    assert obj.lclip == 10
+    assert obj.rclip == 15
 
 
 def test_mixture():
-    test = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6])
-    expected = [[norm(1, 2), norm(3, 4)], [0.4, 0.6], 'mixture', None, None]
-    assert test == expected
+    obj = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6])
+    assert obj.type == 'mixture'
+    assert obj.dists[0].type == 'norm'
+    assert obj.dists[0].x == 1
+    assert obj.dists[0].y == 2
+    assert obj.dists[1].type == 'norm'
+    assert obj.dists[1].x == 3
+    assert obj.dists[1].y == 4
+    assert obj.weights == [0.4, 0.6]
+    assert str(obj) == '<Distribution> mixture'
 
 
 def test_mixture_different_distributions():
-    test = mixture([lognorm(1, 10), gamma(3)], [0.1, 0.9])
-    expected = [[lognorm(1, 10), gamma(3)], [0.1, 0.9], 'mixture', None, None]
-    assert test == expected
+    obj = mixture([lognorm(1, 10), gamma(3)], [0.4, 0.6])
+    assert obj.type == 'mixture'
+    assert obj.dists[0].type == 'lognorm'
+    assert obj.dists[0].x == 1
+    assert obj.dists[0].y == 10
+    assert obj.dists[1].type == 'gamma'
+    assert obj.dists[1].shape == 3
+    assert obj.weights == [0.4, 0.6]
 
 
 def test_mixture_no_weights():
-    test = mixture([lognorm(1, 10), gamma(3)])
-    expected = [[lognorm(1, 10), gamma(3)], None, 'mixture', None, None]
-    assert test == expected
+    obj = mixture([lognorm(1, 10), gamma(3)])
+    assert obj.type == 'mixture'
+    assert obj.weights == [0.5, 0.5]
 
 
 def test_mixture_lclip_rclip():
-    test = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6], lclip=1, rclip=4)
-    expected = [[norm(1, 2), norm(3, 4)], [0.4, 0.6], 'mixture', 1, 4]
-    assert test == expected
+    obj = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6], lclip=1, rclip=4)
+    assert obj.type == 'mixture'
+    assert obj.lclip == 1
+    assert obj.rclip == 4
 
 
 def test_mixture_different_format():
-    test = mixture([[0.4, norm(1, 2)], [0.6, norm(3, 4)]])
-    expected = [[[0.4, norm(1, 2)], [0.6, norm(3, 4)]], None, 'mixture', None, None]
-    assert test == expected
+    obj = mixture([[0.4, norm(1, 2)], [0.6, norm(3, 4)]])
+    assert obj.type == 'mixture'
+    assert obj.dists[0].type == 'norm'
+    assert obj.dists[0].x == 1
+    assert obj.dists[0].y == 2
+    assert obj.dists[1].type == 'norm'
+    assert obj.dists[1].x == 3
+    assert obj.dists[1].y == 4
+    assert obj.weights == [0.4, 0.6]

@@ -1,3 +1,10 @@
+## v0.8
+
+#### Non-visible backend changes
+
+* Distributions are now implemented as classes (rather than lists).
+
+
 ## v0.7
 
 #### Bugfixes

@@ -3,7 +3,7 @@ import numpy as np
 from scipy import stats
 from tqdm import tqdm
 
-from .distributions import const
+from .distributions import const, BaseDistribution
 from .utils import event_occurs, _process_weights_values
 
 
@@ -160,75 +160,68 @@ def sample(var, n=1, lclip=None, rclip=None, verbose=False):
     if callable(var):
         out = var()
 
-    elif not isinstance(var, list) and not (len(var) == 5 or len(var) == 6):
-        raise ValueError('input to sample is malformed - must be sample data')
+    elif not isinstance(var, BaseDistribution):
+        raise ValueError('input to sample is malformed - must be a distribution')
 
-    elif var[2] == 'const':
-        out = var[0]
+    elif var.type == 'const':
+        out = var.x
 
-    elif var[2] == 'uniform':
-        out = uniform_sample(var[0], var[1])
+    elif var.type == 'uniform':
+        out = uniform_sample(var.x, var.y)
 
-    elif var[2] == 'discrete':
-        out = discrete_sample(var[0])
+    elif var.type == 'discrete':
+        out = discrete_sample(var.items)
 
-    elif var[2] == 'norm':
-        out = normal_sample(var[0], var[1], credibility=var[3])
+    elif var.type == 'norm':
+        if var.x is not None and var.y is not None:
+            out = normal_sample(var.x, var.y, credibility=var.credibility)
+        else:
+            out = normal_sample(mean=var.mean, sd=var.sd)
 
-    elif var[2] == 'norm-mean':
-        out = normal_sample(mean=var[0], sd=var[1], credibility=var[3])
+    elif var.type == 'lognorm':
+        if var.x is not None and var.y is not None:
+            out = lognormal_sample(var.x, var.y, credibility=var.credibility)
+        else:
+            out = lognormal_sample(mean=var.mean, sd=var.sd)
 
-    elif var[2] == 'log':
-        out = lognormal_sample(var[0], var[1], credibility=var[3])
+    elif var.type == 'binomial':
+        out = binomial_sample(n=var.n, p=var.p)
 
-    elif var[2] == 'log-mean':
-        out = lognormal_sample(mean=var[0], sd=var[1])
+    elif var.type == 'beta':
+        out = beta_sample(a=var.a, b=var.b)
 
-    elif var[2] == 'binomial':
-        out = binomial_sample(n=var[0], p=var[1])
+    elif var.type == 'bernoulli':
+        out = bernoulli_sample(p=var.p)
 
-    elif var[2] == 'beta':
-        out = beta_sample(a=var[0], b=var[1])
+    elif var.type == 'poisson':
+        out = poisson_sample(lam=var.lam)
 
-    elif var[2] == 'bernoulli':
-        out = bernoulli_sample(p=var[0])
+    elif var.type == 'exponential':
+        out = exponential_sample(scale=var.scale)
 
-    elif var[2] == 'poisson':
-        out = poisson_sample(lam=var[0])
+    elif var.type == 'gamma':
+        out = gamma_sample(shape=var.shape, scale=var.scale)
 
-    elif var[2] == 'exponential':
-        out = exponential_sample(scale=var[0])
+    elif var.type == 'triangular':
+        out = triangular_sample(var.left, var.mode, var.right)
 
-    elif var[2] == 'gamma':
-        out = gamma_sample(shape=var[0], scale=var[1])
+    elif var.type == 'tdist':
+        out = t_sample(var.x, var.y, var.t, credibility=var.credibility)
 
-    elif var[2] == 'triangular':
-        out = triangular_sample(var[0], var[1], var[3])
+    elif var.type == 'log-tdist':
+        out = log_t_sample(var.x, var.y, var.t, credibility=var.credibility)
 
-    elif var[2] == 'tdist':
-        out = t_sample(var[0], var[1], var[3], credibility=var[4])
-
-    elif var[2] == 'log-tdist':
-        out = log_t_sample(var[0], var[1], var[3], credibility=var[4])
-
-    elif var[2] == 'mixture':
-        out = mixture_sample(var[0], var[1])
+    elif var.type == 'mixture':
+        out = mixture_sample(var.dists, var.weights)
 
     else:
-        raise ValueError('{} sampler not found'.format(var[2]))
+        raise ValueError('{} sampler not found'.format(var.type))
 
     lclip_ = None
     rclip_ = None
     if not callable(var):
-        if var[2] == 'tdist' or var[2] == 'log-tdist':
-            lclip_ = var[5]
-            rclip_ = var[6]
-        elif var[2] == 'norm' or var[2] == 'log' or var[2] == 'triangular':
-            lclip_ = var[4]
-            rclip_ = var[5]
-        else:
-            lclip_ = var[3]
-            rclip_ = var[4]
+        lclip_ = var.lclip
+        rclip_ = var.rclip
 
     if lclip is None and lclip_ is not None:
         lclip = lclip_
