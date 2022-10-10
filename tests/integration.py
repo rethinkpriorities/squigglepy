@@ -166,13 +166,9 @@ if round(out, 2) != 0.08:
 
 print('Test 6...')
 prior = sq.norm(1, 5)
-prior_samples = sq.sample(prior, n=K)
 evidence = sq.norm(2, 3)
-evidence_samples = sq.sample(evidence, n=K)
-posterior = bayes.update(prior_samples, evidence_samples)
-posterior_samples = sq.sample(posterior, n=K)
-out = (np.mean(posterior_samples), np.std(posterior_samples))
-if round(out[0], 2) != 2.53 and round(out[1], 2) != 0.3:
+posterior = bayes.update(prior, evidence)
+if round(posterior.mean, 2) != 2.53 and round(posterior.sd, 2) != 0.3:
     print('ERROR 6')
     import pdb
     pdb.set_trace()
@@ -182,7 +178,7 @@ print('Test 7...')
 average = bayes.average(prior, evidence)
 average_samples = sq.sample(average, n=K)
 out = (np.mean(average_samples), np.std(average_samples))
-if round(out[0], 2) != 2.73 and round(out[1], 2) != 0.97:
+if round(out[0], 2) != 2.74 and round(out[1], 2) != 0.93:
     print('ERROR 7')
     import pdb
     pdb.set_trace()
@@ -229,7 +225,7 @@ out = bayes.bayesnet(define_event,
                      n=10*K,
                      find=lambda e: (e['mary_calls'] and e['john_calls']),
                      conditional_on=lambda e: e['earthquake'])
-if round(out, 2) != 0.1:
+if round(out, 2) != 0.29:
     print('ERROR 8')
     import pdb
     pdb.set_trace()
@@ -240,7 +236,7 @@ out = bayes.bayesnet(define_event,
                      n=10*K,
                      find=lambda e: e['burglary'],
                      conditional_on=lambda e: (e['mary_calls'] and e['john_calls']))
-if round(out, 2) != 0.32:
+if round(out, 2) != 0.29:
     print('ERROR 9')
     import pdb
     pdb.set_trace()

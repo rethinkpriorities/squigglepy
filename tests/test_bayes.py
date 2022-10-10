@@ -2,7 +2,7 @@ import pytest
 
 from ..squigglepy.bayes import simple_bayes, bayesnet, update, average
 from ..squigglepy.samplers import sample
-from ..squigglepy.distributions import discrete, norm, beta
+from ..squigglepy.distributions import discrete, norm, beta, gamma
 from ..squigglepy.rng import set_seed
 
 
@@ -212,22 +212,21 @@ def test_bayesnet_insufficent_samples_error():
 
 
 def test_update_normal():
-    out = update(list(range(10)), list(range(5, 15)))
+    out = update(norm(1, 10), norm(5, 15))
     assert out.type == 'norm'
-    assert out.mean == 7
+    assert round(out.mean, 2) == 7.51
     assert round(out.sd, 2) == 2.03
 
 
 def test_update_normal_evidence_weight():
-    out = update(list(range(10)), list(range(5, 15)), evidence_weight=3)
+    out = update(norm(1, 10), norm(5, 15), evidence_weight=3)
     assert out.type == 'norm'
-    # TODO: This seems wrong?
-    assert out.mean == 16.5
-    assert round(out.sd, 2) == 1.44
+    assert round(out.mean, 2) == 8.69
+    assert round(out.sd, 2) == 1.48
 
 
 def test_update_beta():
-    out = update(beta(1, 1), beta(2, 2), type='beta')
+    out = update(beta(1, 1), beta(2, 2))
     assert out.type == 'beta'
     assert out.a == 3
     assert out.b == 3
@@ -235,8 +234,14 @@ def test_update_beta():
 
 def test_update_not_implemented():
     with pytest.raises(ValueError) as excinfo:
-        update(1, 2, type='error')
-    assert 'type `error` not supported' in str(excinfo.value)
+        update(gamma(1), gamma(2))
+    assert 'type `gamma` not supported' in str(excinfo.value)
+
+
+def test_update_not_matching():
+    with pytest.raises(ValueError) as excinfo:
+        update(norm(1, 2), beta(1, 2))
+    assert 'can only update distributions of the same type' in str(excinfo.value)
 
 
 def test_average():

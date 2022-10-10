@@ -4,6 +4,11 @@
 
 * Distributions are now implemented as classes (rather than lists).
 
+#### Bayesian library updates
+* **[Breaking change]** `bayes.update` now updates normal distributions from the distribution rather than from samples.
+* **[Breaking change]** `bayes.update` no longer takes a `type` parameter but can now infer the type from the passed distribution.
+* **[Breaking change]** Corrected a bug in how `bayes.update` implemented `evidence_weight` when updating normal distributions.
+
 
 ## v0.7
 

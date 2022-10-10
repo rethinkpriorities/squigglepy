@@ -37,8 +37,8 @@ def test_norm():
     assert norm(1, 2).type == 'norm'
     assert norm(1, 2).x == 1
     assert norm(1, 2).y == 2
-    assert norm(1, 2).mean is None
-    assert norm(1, 2).sd is None
+    assert norm(1, 2).mean == 1.5
+    assert round(norm(1, 2).sd, 2) == 0.3
     assert norm(1, 2).credibility == 0.9
     assert norm(1, 2).lclip is None
     assert norm(1, 2).rclip is None
@@ -79,6 +79,12 @@ def test_norm_overdefinition_value_error():
     assert 'cannot define both' in str(execinfo.value)
 
 
+def test_norm_low_gt_high():
+    with pytest.raises(ValueError) as execinfo:
+        norm(10, 5)
+    assert '`high value` cannot be lower than `low value`' in str(execinfo.value)
+
+
 def test_norm_passes_lclip_rclip():
     obj = norm(1, 2, lclip=0, rclip=3)
     assert obj.type == 'norm'
@@ -104,8 +110,8 @@ def test_lognorm():
     assert lognorm(1, 2).type == 'lognorm'
     assert lognorm(1, 2).x == 1
     assert lognorm(1, 2).y == 2
-    assert lognorm(1, 2).mean is None
-    assert lognorm(1, 2).sd is None
+    assert round(lognorm(1, 2).mean, 2) == 0.35
+    assert round(lognorm(1, 2).sd, 2) == 0.21
     assert lognorm(1, 2).credibility == 0.9
     assert lognorm(1, 2).lclip is None
     assert lognorm(1, 2).rclip is None
@@ -144,6 +150,12 @@ def test_lognorm_overdefinition_value_error():
     with pytest.raises(ValueError) as execinfo:
         lognorm(x=1, y=2, mean=3, sd=4)
     assert 'cannot define both' in str(execinfo.value)
+
+
+def test_lognorm_low_gt_high():
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(10, 5)
+    assert '`high value` cannot be lower than `low value`' in str(execinfo.value)
 
 
 def test_lognorm_passes_lclip_rclip():

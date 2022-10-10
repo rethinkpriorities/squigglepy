@@ -1,3 +1,6 @@
+import numpy as np
+from scipy import stats
+
 from .utils import _process_weights_values
 
 
@@ -65,12 +68,22 @@ class NormalDistribution(BaseDistribution):
         self.lclip = lclip
         self.rclip = rclip
         self.type = 'norm'
+
+        if self.x is not None and self.y is not None and self.x > self.y:
+            raise ValueError('`high value` cannot be lower than `low value`')
+
         if (self.x is None or self.y is None) and self.sd is None:
             raise ValueError('must define either x/y or mean/sd')
         elif (self.x is not None or self.y is not None) and self.sd is not None:
             raise ValueError('must define either x/y or mean/sd -- cannot define both')
         elif self.sd is not None and self.mean is None:
             self.mean = 0
+
+        if self.mean is None and self.sd is None:
+            self.mean = (self.x + self.y) / 2
+            cdf_value = 0.5 + 0.5 * self.credibility
+            normed_sigma = stats.norm.ppf(cdf_value)
+            self.sd = (self.y - self.mean) / normed_sigma
 
 
 def norm(x=None, y=None, credibility=0.9, mean=None, sd=None,
@@ -91,12 +104,22 @@ class LognormalDistribution(BaseDistribution):
         self.lclip = lclip
         self.rclip = rclip
         self.type = 'lognorm'
+
+        if self.x is not None and self.y is not None and self.x > self.y:
+            raise ValueError('`high value` cannot be lower than `low value`')
+
         if (self.x is None or self.y is None) and self.sd is None:
             raise ValueError('must define either x/y or mean/sd')
         elif (self.x is not None or self.y is not None) and self.sd is not None:
             raise ValueError('must define either x/y or mean/sd -- cannot define both')
         elif self.sd is not None and self.mean is None:
             self.mean = 0
+
+        if self.mean is None and self.sd is None:
+            self.mean = (np.log(self.x) + np.log(self.y)) / 2
+            cdf_value = 0.5 + 0.5 * self.credibility
+            normed_sigma = stats.norm.ppf(cdf_value)
+            self.sd = (np.log(self.y) - self.mean) / normed_sigma
 
 
 def lognorm(x=None, y=None, credibility=0.9, mean=None, sd=None,

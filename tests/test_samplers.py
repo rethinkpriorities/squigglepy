@@ -49,28 +49,17 @@ class FakeRNG:
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_norm(mocker):
-    assert normal_sample(1, 2) == (1.5, 0.3)
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_norm_with_mean_sd(mocker):
-    assert normal_sample(mean=1, sd=2) == (1, 2)
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_norm_with_credibility(mocker):
-    assert normal_sample(1, 2, credibility=0.7) == (1.5, 0.48)
-
-
-def test_norm_low_gt_high():
-    with pytest.raises(ValueError) as execinfo:
-        normal_sample(10, 5)
-    assert '`high value` cannot be lower than `low value`' in str(execinfo.value)
+    assert normal_sample(1, 2) == (1, 2)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_norm(mocker):
     assert sample(norm(1, 2)) == (1.5, 0.3)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_norm_with_credibility(mocker):
+    assert sample(norm(1, 2, credibility=0.7)) == (1.5, 0.48)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -86,28 +75,17 @@ def test_sample_norm_passes_lclip_rclip():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_lognorm(mocker):
-    assert lognormal_sample(1, 2) == (0.35, 0.21)
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_lognorm_with_mean_sd(mocker):
-    assert lognormal_sample(mean=1, sd=2) == (1, 2)
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_lognorm_with_credibility(mocker):
-    assert lognormal_sample(1, 2, credibility=0.7) == (0.35, 0.33)
-
-
-def test_lognorm_low_gt_high():
-    with pytest.raises(ValueError) as execinfo:
-        lognormal_sample(10, 5)
-    assert '`high value` cannot be lower than `low value`' in str(execinfo.value)
+    assert lognormal_sample(1, 2) == (1, 2)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_lognorm(mocker):
     assert sample(lognorm(1, 2)) == (0.35, 0.21)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_lognorm_with_credibility(mocker):
+    assert sample(lognorm(1, 2, credibility=0.7)) == (0.35, 0.33)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))

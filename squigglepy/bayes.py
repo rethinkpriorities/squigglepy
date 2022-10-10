@@ -86,25 +86,27 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             return reduce_fn(events)
 
 
-def update(prior, evidence, evidence_weight=1, type='normal'):
-    if type == 'normal':  # TODO: Infer
-        prior_mean = np.mean(prior)  # TODO: Get from class, not samples
-        prior_var = np.std(prior) ** 2
-        evidence_mean = np.mean(evidence)
-        evidence_var = np.std(evidence) ** 2
+def update(prior, evidence, evidence_weight=1):
+    if prior.type == 'norm' and evidence.type == 'norm':
+        prior_mean = prior.mean
+        prior_var = prior.sd ** 2
+        evidence_mean = evidence.mean
+        evidence_var = evidence.sd ** 2
         return norm(mean=((evidence_var * prior_mean +
                            evidence_weight * (prior_var * evidence_mean)) /
-                          (evidence_var + prior_var)),
+                          (evidence_weight * prior_var + evidence_var)),
                     sd=math.sqrt((evidence_var * prior_var) /
-                                 (evidence_weight * evidence_var + prior_var)))
-    elif type == 'beta':
+                                 (evidence_weight * prior_var + evidence_var)))
+    elif prior.type == 'beta' and evidence.type == 'beta':
         prior_a = prior.a
         prior_b = prior.b
         evidence_a = evidence.a
         evidence_b = evidence.b
         return beta(prior_a + evidence_a, prior_b + evidence_b)
+    elif prior.type != evidence.type:
+        raise ValueError('can only update distributions of the same type.')
     else:
-        raise ValueError('type `{}` not supported.'.format(type))
+        raise ValueError('type `{}` not supported.'.format(prior.type))
 
 
 def average(prior, evidence, weights=[0.5, 0.5]):

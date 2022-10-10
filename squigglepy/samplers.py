@@ -1,6 +1,5 @@
 import numpy as np
 
-from scipy import stats
 from tqdm import tqdm
 
 from .distributions import const, BaseDistribution
@@ -12,41 +11,12 @@ def _get_rng():
     return _squigglepy_internal_rng
 
 
-def normal_sample(low=None, high=None, mean=None, sd=None, credibility=0.9):
-    if mean is None:
-        if low > high:
-            raise ValueError('`high value` cannot be lower than `low value`')
-        elif low == high:
-            return low
-        mu = (high + low) / 2
-        cdf_value = 0.5 + 0.5 * credibility
-        normed_sigma = stats.norm.ppf(cdf_value)
-        sigma = (high - mu) / normed_sigma
-    else:
-        mu = mean
-        sigma = sd
-    return _get_rng().normal(mu, sigma)
+def normal_sample(mean, sd):
+    return _get_rng().normal(mean, sd)
 
 
-def lognormal_sample(low=None, high=None, mean=None, sd=None,
-                     credibility=0.9):
-    if (low is not None and low < 0) or (mean is not None and mean < 0):
-        raise ValueError('lognormal_sample cannot handle negative values')
-    if mean is None:
-        if low > high:
-            raise ValueError('`high value` cannot be lower than `low value`')
-        elif low == high:
-            return low
-        log_low = np.log(low)
-        log_high = np.log(high)
-        mu = (log_high + log_low) / 2
-        cdf_value = 0.5 + 0.5 * credibility
-        normed_sigma = stats.norm.ppf(cdf_value)
-        sigma = (log_high - mu) / normed_sigma
-    else:
-        mu = mean
-        sigma = sd
-    return _get_rng().lognormal(mu, sigma)
+def lognormal_sample(mean, sd):
+    return _get_rng().lognormal(mean, sd)
 
 
 def t_sample(low, high, t, credibility=0.9):
@@ -173,16 +143,10 @@ def sample(var, n=1, lclip=None, rclip=None, verbose=False):
         out = discrete_sample(var.items)
 
     elif var.type == 'norm':
-        if var.x is not None and var.y is not None:
-            out = normal_sample(var.x, var.y, credibility=var.credibility)
-        else:
-            out = normal_sample(mean=var.mean, sd=var.sd)
+        out = normal_sample(mean=var.mean, sd=var.sd)
 
     elif var.type == 'lognorm':
-        if var.x is not None and var.y is not None:
-            out = lognormal_sample(var.x, var.y, credibility=var.credibility)
-        else:
-            out = lognormal_sample(mean=var.mean, sd=var.sd)
+        out = lognormal_sample(mean=var.mean, sd=var.sd)
 
     elif var.type == 'binomial':
         out = binomial_sample(n=var.n, p=var.p)
