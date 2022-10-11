@@ -16,7 +16,10 @@ Here's the Squigglepy implementation of [the example from Squiggle Docs](https:/
 
 ```Python
 import squigglepy as sq
+import numpy as np
+import matplotlib.pyplot as plt
 from squigglepy.numbers import K, M
+from pprint import pprint
 
 pop_of_ny_2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
 
@@ -33,7 +36,15 @@ def total_tuners_in_2022():
             pct_of_pop_w_pianos() *
             piano_tuners_per_piano())
 
-sq.get_percentiles(sq.sample(total_tuners_in_2022, n=1000))
+samples = sq.sample(total_tuners_in_2022, n=1000, verbose=True)
+print('-')
+print('Mean: {}, SD: {}'.format(round(np.mean(samples), 2),
+                                round(np.std(samples), 2)))
+print('-')
+pprint(sq.get_percentiles(samples, digits=0))
+plt.hist(samples, bins=200)
+plt.show()
+
 ```
 
 And the version from the Squiggle doc that incorporates time:
