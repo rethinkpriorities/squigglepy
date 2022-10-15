@@ -8,12 +8,18 @@ def _process_weights_values(weights, values):
     elif isinstance(weights, np.ndarray):
         weights = list(weights)
     elif not isinstance(weights, list) and weights is not None:
-        raise ValueError('passed weights must be a list')
+        raise ValueError('passed weights must be a list or array')
 
     if isinstance(values, np.ndarray):
         values = list(values)
-    elif not isinstance(values, list):
-        raise ValueError('passed values must be a list')
+    elif isinstance(values, dict):
+        if weights is None:
+            weights = list(values.values())
+            values = list(values.keys())
+        else:
+            raise ValueError('cannot pass dict and weights separately')
+    elif not isinstance(values, list) and not isinstance(values, dict):
+        raise ValueError('passed values must be a list, dict, or array')
 
     if weights is None:
         if isinstance(values[0], list) and len(values[0]) == 2:
@@ -82,8 +88,7 @@ def get_log_percentiles(data,
 
 
 def geomean(a, weights=None):
-    if weights is not None:
-        weights, a = _process_weights_values(weights, a)
+    weights, a = _process_weights_values(weights, a)
     return stats.mstats.gmean(a, weights=weights)
 
 
@@ -96,6 +101,7 @@ def odds_to_p(odds):
 
 
 def geomean_odds(a, weights=None):
+    weights, a = _process_weights_values(weights, a)
     a = p_to_odds(np.array(a))
     return odds_to_p(geomean(a, weights=weights))
 

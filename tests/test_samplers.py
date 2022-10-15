@@ -122,15 +122,38 @@ def test_sample_bernoulli():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_discrete():
+    assert discrete_sample([0, 1, 2]) == 0
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_discrete_alt_format():
+    assert discrete_sample([[0.9, 'a'], [0.1, 'b']]) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_discrete_alt2_format():
+    assert discrete_sample({'a': 0.9, 'b': 0.1}) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_sample_discrete():
-    assert sample(discrete({'a': 0.9, 'b': 0.1})) == 'a'
     assert sample(discrete([0, 1, 2])) == 0
 
 
-def test_sample_discrete_error():
-    with pytest.raises(ValueError) as execinfo:
-        discrete_sample('error')
-    assert 'inputs to discrete_sample must be a dict or list' in str(execinfo.value)
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_alt_format():
+    assert sample(discrete([[0.9, 'a'], [0.1, 'b']])) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_alt2_format():
+    assert sample(discrete({'a': 0.9, 'b': 0.1})) == 'a'
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -242,38 +265,63 @@ def test_sample_gamma_passes_lclip_rclip():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture(mocker):
+def test_mixture_sample(mocker):
     assert mixture_sample([norm(1, 2), norm(3, 4)], [0.2, 0.8]) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_different_format(mocker):
+def test_mixture_sample_alt_format(mocker):
     assert mixture_sample([[0.2, norm(1, 2)], [0.8, norm(3, 4)]]) == (1.5, 0.3)
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=100))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_rclip_lclip(mocker):
+def test_mixture_sample_rclip_lclip(mocker):
     assert mixture_sample([norm(1, 2), norm(3, 4)], [0.2, 0.8]) == 100
     assert mixture_sample([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8]) == 3
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_no_weights(mocker):
+def test_mixture_sample_no_weights(mocker):
     assert mixture_sample([norm(1, 2), norm(3, 4)]) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_different_distributions(mocker):
+def test_mixture_sample_different_distributions(mocker):
     assert mixture_sample([lognorm(1, 2), norm(3, 4)]) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample(mocker):
+def test_sample_mixture(mocker):
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == (1.5, 0.3)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_alt_format(mocker):
+    assert sample(mixture([[0.2, norm(1, 2)], [0.8, norm(3, 4)]])) == (1.5, 0.3)
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=100))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_rclip_lclip(mocker):
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == 100
+    assert sample(mixture([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8])) == 3
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_no_weights(mocker):
+    assert sample(mixture([norm(1, 2), norm(3, 4)])) == (1.5, 0.3)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_different_distributions(mocker):
     assert sample(mixture([lognorm(1, 2), norm(3, 4)])) == (0.35, 0.21)
 
 

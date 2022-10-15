@@ -26,6 +26,39 @@ def test_process_weights_values_length_one():
     assert test == expected
 
 
+def test_process_weights_values_alt_format():
+    test = _process_weights_values(None,
+                                   [[0.1, 2],
+                                    [0.2, 3],
+                                    [0.3, 4],
+                                    [0.4, 5]])
+    expected = ([0.1, 0.2, 0.3, 0.4], [2, 3, 4, 5])
+    assert test == expected
+
+
+def test_process_weights_values_alt2_format():
+    test = _process_weights_values(None,
+                                   {2: 0.1,
+                                    3: 0.2,
+                                    4: 0.3,
+                                    5: 0.4})
+    expected = ([0.1, 0.2, 0.3, 0.4], [2, 3, 4, 5])
+    assert test == expected
+
+
+def test_process_weights_values_dict_error():
+    with pytest.raises(ValueError) as execinfo:
+        _process_weights_values([0.1, 0.2, 0.3, 0.4],
+                                {2: 0.1, 3: 0.2, 4: 0.3, 5: 0.4})
+    assert 'cannot pass dict and weights separately' in str(execinfo.value)
+
+
+def test_process_weights_values_entry_error():
+    with pytest.raises(ValueError) as execinfo:
+        _process_weights_values(None, 'troll')
+    assert 'passed values must be a list, dict, or array' in str(execinfo.value)
+
+
 def test_process_weights_values_weight_inference():
     test = _process_weights_values([0.9], [2, 3])
     expected = ([0.9, 0.1], [2, 3])
@@ -189,6 +222,22 @@ def test_weighted_geomean():
                          weights=[0.5, 0.1, 0.1, 0.1, 0.2]), 2) == 0.19
 
 
+def test_weighted_geomean_alt_format():
+    assert round(geomean([[0.5, 0.1],
+                          [0.1, 0.2],
+                          [0.1, 0.3],
+                          [0.1, 0.4],
+                          [0.2, 0.5]]), 2) == 0.19
+
+
+def test_weighted_geomean_alt2_format():
+    assert round(geomean({0.1: 0.5,
+                          0.2: 0.1,
+                          0.3: 0.1,
+                          0.4: 0.1,
+                          0.5: 0.2}), 2) == 0.19
+
+
 def test_p_to_odds():
     assert round(p_to_odds(0.1), 2) == 0.11
 
@@ -199,6 +248,31 @@ def test_odds_to_p():
 
 def test_geomean_odds():
     assert round(geomean_odds([0.1, 0.2, 0.3, 0.4, 0.5]), 2) == 0.28
+
+
+def test_geomean_odds_numpy():
+    assert round(geomean_odds(np.array([0.1, 0.2, 0.3, 0.4, 0.5])), 2) == 0.28
+
+
+def test_weighted_geomean_odds():
+    assert round(geomean_odds([0.1, 0.2, 0.3, 0.4, 0.5],
+                              weights=[0.5, 0.1, 0.1, 0.1, 0.2]), 2) == 0.2
+
+
+def test_weighted_geomean_odds_alt_format():
+    assert round(geomean_odds([[0.5, 0.1],
+                               [0.1, 0.2],
+                               [0.1, 0.3],
+                               [0.1, 0.4],
+                               [0.2, 0.5]]), 2) == 0.2
+
+
+def test_weighted_geomean_odds_alt2_format():
+    assert round(geomean_odds({0.1: 0.5,
+                               0.2: 0.1,
+                               0.3: 0.1,
+                               0.4: 0.1,
+                               0.5: 0.2}), 2) == 0.2
 
 
 def test_laplace_simple():

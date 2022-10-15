@@ -78,19 +78,8 @@ def uniform_sample(low, high):
 
 
 def discrete_sample(items):
-    if isinstance(items, dict):
-        values = [const(k) for k in items.keys()]
-        weights = list(items.values())
-    elif isinstance(items, list):
-        if isinstance(items[0], list):
-            weights = [i[0] for i in items]
-            values = [const(i[1]) for i in items]
-        else:
-            weights = None
-            values = [const(i) for i in items]
-    else:
-        raise ValueError('inputs to discrete_sample must be a dict or list')
-
+    weights, values = _process_weights_values(None, items)
+    values = [const(v) for v in values]
     return mixture_sample(values, weights)
 
 
