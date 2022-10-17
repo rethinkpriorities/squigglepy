@@ -330,7 +330,6 @@ Note that the amount of Bayesian analysis that squigglepy can do is pretty limit
 ### A Demonstration of the Monte Hall Problem
 
 ```Python
-import random
 import squigglepy as sq
 from squigglepy import bayes
 from squigglepy.numbers import K, M, B, T
@@ -338,8 +337,8 @@ from squigglepy.numbers import K, M, B, T
 
 def monte_hall(door_picked, switch=False):
     doors = ['A', 'B', 'C']
-    car_is_behind_door = random.choice(doors)
-    reveal_door = random.choice([d for d in doors if d != door_picked and d != car_is_behind_door])
+    car_is_behind_door = sq.sample(sq.discrete(doors))
+    reveal_door = sq.sample(sq.discrete([d for d in doors if d != door_picked and d != car_is_behind_door]))
     
     if switch:
         old_door_picked = door_picked
@@ -350,8 +349,8 @@ def monte_hall(door_picked, switch=False):
 
 
 def define_event():
-    door = random.choice(['A', 'B', 'C'])
-    switch = random.random() >= 0.5
+    door = sq.sample(sq.discrete(['A', 'B', 'C']))
+    switch = sq.event(0.5)
     return {'won': monte_hall(door_picked=door, switch=switch),
             'switched': switch}
 

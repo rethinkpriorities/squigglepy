@@ -1,4 +1,3 @@
-import random
 import numpy as np
 import squigglepy as sq
 from squigglepy.numbers import K, M
@@ -6,7 +5,6 @@ from squigglepy import bayes
 
 
 sq.set_seed(42)
-random.seed(42)
 
 
 print('Test 1...')
@@ -247,8 +245,9 @@ print('Test 10...')
 
 def monte_hall(door_picked, switch=False):
     doors = ['A', 'B', 'C']
-    car_is_behind_door = random.choice(doors)
-    reveal_door = random.choice([d for d in doors if d != door_picked and d != car_is_behind_door])
+    car_is_behind_door = sq.sample(sq.discrete(doors))
+    reveal_door = [d for d in doors if d != door_picked and d != car_is_behind_door]
+    reveal_door = sq.sample(sq.discrete(reveal_door))
 
     if switch:
         old_door_picked = door_picked
@@ -259,8 +258,8 @@ def monte_hall(door_picked, switch=False):
 
 
 def define_event():
-    door = random.choice(['A', 'B', 'C'])
-    switch = random.random() >= 0.5
+    door = sq.sample(sq.discrete(['A', 'B', 'C']))
+    switch = sq.event(0.5)
     return {'won': monte_hall(door_picked=door, switch=switch),
             'switched': switch}
 
