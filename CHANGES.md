@@ -1,7 +1,5 @@
 ## v0.9
 
-#### Other
-
 * `goemean` and `geomean_odds` now can take the nested-list-based and dictionary-based formats for passing weights.
 
 
