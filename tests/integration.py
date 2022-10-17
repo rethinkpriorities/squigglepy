@@ -9,7 +9,7 @@ sq.set_seed(42)
 RUNS = 10*K
 
 
-def _mark_time(start, expected_sec, label, tolerance=1.25):
+def _mark_time(start, expected_sec, label, tolerance_ratio=1.05, tolerance_ms_threshold=3):
     end = time.time()
     delta_sec = end - start
     use_delta = delta_sec
@@ -26,10 +26,11 @@ def _mark_time(start, expected_sec, label, tolerance=1.25):
                                                   delta_label,
                                                   expected,
                                                   delta_label))
-    deviation=False
-    if (use_delta / expected) > tolerance or (use_delta / expected) < (1 / tolerance):
-        print('!!! WARNING: Unexpected timing deviation')
-        deviation = True
+    deviation = False
+    if (use_delta / expected) > tolerance_ratio or (use_delta / expected) < (1 / tolerance_ratio):
+        if np.abs(use_delta - expected) > tolerance_ms_threshold or delta_label != 'ms':
+            print('!!! WARNING: Unexpected timing deviation')
+            deviation = True
     return {'timing(sec)': delta_sec, 'deviation': deviation}
 
 
@@ -62,7 +63,7 @@ if out != expected:
     print('ERROR 1')
     import pdb
     pdb.set_trace()
-_mark_time(start1, 0.024, '...Test 1 complete')
+_mark_time(start1, 0.024, 'Test 1 complete')
 
 
 start2 = time.time()
@@ -90,7 +91,7 @@ if out != expected:
     print('ERROR 2')
     import pdb
     pdb.set_trace()
-_mark_time(start2, 0.0335, '...Test 2 complete')
+_mark_time(start2, 0.0335, 'Test 2 complete')
 
 
 start3 = time.time()
@@ -157,7 +158,7 @@ def roll_die(sides, n=1):
 
 
 roll_die(sides=6, n=10)
-_mark_time(start3, 0.088, '...Test 3 complete')
+_mark_time(start3, 0.088, 'Test 3 complete')
 
 
 start4 = time.time()
@@ -184,7 +185,7 @@ if round(out, 2) != expected:
     print('ERROR 4')
     import pdb
     pdb.set_trace()
-_mark_time(start4, 0.13, '...Test 4 complete')
+_mark_time(start4, 0.13, 'Test 4 complete')
 
 
 start5 = time.time()
@@ -195,7 +196,7 @@ if round(out, 2) != 0.08:
     print('ERROR 5')
     import pdb
     pdb.set_trace()
-_mark_time(start5, 0.00001, '...Test 5 complete')
+_mark_time(start5, 0.00001, 'Test 5 complete')
 
 
 start6 = time.time()
@@ -207,7 +208,7 @@ if round(posterior.mean, 2) != 2.53 and round(posterior.sd, 2) != 0.3:
     print('ERROR 6')
     import pdb
     pdb.set_trace()
-_mark_time(start6, 0.0004, '...Test 6 complete')
+_mark_time(start6, 0.0004, 'Test 6 complete')
 
 
 start7 = time.time()
@@ -219,7 +220,7 @@ if round(out[0], 2) != 2.75 and round(out[1], 2) != 0.94:
     print('ERROR 7')
     import pdb
     pdb.set_trace()
-_mark_time(start7, 0.014, '...Test 7 complete')
+_mark_time(start7, 0.014, 'Test 7 complete')
 
 
 start8 = time.time()
@@ -268,7 +269,7 @@ if round(out, 2) != 0.26:
     print('ERROR 8')
     import pdb
     pdb.set_trace()
-_mark_time(start8, 0.93, '...Test 8 complete')
+_mark_time(start8, 0.93, 'Test 8 complete')
 
 
 start9 = time.time()
@@ -282,7 +283,7 @@ if round(out, 2) != 0.34:
     print('ERROR 9')
     import pdb
     pdb.set_trace()
-_mark_time(start9, 0.0025, '...Test 9 complete')
+_mark_time(start9, 0.0025, 'Test 9 complete')
 
 
 start10 = time.time()
@@ -318,7 +319,7 @@ if round(out, 2) != 0.67:
     print('ERROR 10')
     import pdb
     pdb.set_trace()
-_mark_time(start10, 0.54, '...Test 10 complete')
+_mark_time(start10, 0.54, 'Test 10 complete')
 
 
 start11 = time.time()
@@ -331,7 +332,7 @@ if round(out, 2) != 0.33:
     print('ERROR 11')
     import pdb
     pdb.set_trace()
-_mark_time(start11, 0.002, '...Test 11 complete')
+_mark_time(start11, 0.002, 'Test 11 complete')
 
 
 start12 = time.time()
@@ -354,8 +355,8 @@ if round(out, 2) != 0.13:
     print('ERROR 12')
     import pdb
     pdb.set_trace()
-_mark_time(start12, 0.637, '...Test 12 complete')
+_mark_time(start12, 0.637, 'Test 12 complete')
 
 
+_mark_time(start1, 2.4, 'Integration tests complete')
 print('DONE! INTEGRATION TEST SUCCESS!')
-_mark_time(start1, 2.4, '...Integration tests complete')
