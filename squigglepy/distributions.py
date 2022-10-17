@@ -58,7 +58,7 @@ def uniform(x, y):
 
 class NormalDistribution(BaseDistribution):
     def __init__(self, x=None, y=None, mean=None, sd=None,
-                 credibility=0.9, lclip=None, rclip=None):
+                 credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -81,12 +81,12 @@ class NormalDistribution(BaseDistribution):
 
         if self.mean is None and self.sd is None:
             self.mean = (self.x + self.y) / 2
-            cdf_value = 0.5 + 0.5 * self.credibility
+            cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = stats.norm.ppf(cdf_value)
             self.sd = (self.y - self.mean) / normed_sigma
 
 
-def norm(x=None, y=None, credibility=0.9, mean=None, sd=None,
+def norm(x=None, y=None, credibility=90, mean=None, sd=None,
          lclip=None, rclip=None):
     return NormalDistribution(x=x, y=y, credibility=credibility, mean=mean, sd=sd,
                               lclip=lclip, rclip=rclip)
@@ -94,7 +94,7 @@ def norm(x=None, y=None, credibility=0.9, mean=None, sd=None,
 
 class LognormalDistribution(BaseDistribution):
     def __init__(self, x=None, y=None, mean=None, sd=None,
-                 credibility=0.9, lclip=None, rclip=None):
+                 credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -117,18 +117,18 @@ class LognormalDistribution(BaseDistribution):
 
         if self.mean is None and self.sd is None:
             self.mean = (np.log(self.x) + np.log(self.y)) / 2
-            cdf_value = 0.5 + 0.5 * self.credibility
+            cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = stats.norm.ppf(cdf_value)
             self.sd = (np.log(self.y) - self.mean) / normed_sigma
 
 
-def lognorm(x=None, y=None, credibility=0.9, mean=None, sd=None,
+def lognorm(x=None, y=None, credibility=90, mean=None, sd=None,
             lclip=None, rclip=None):
     return LognormalDistribution(x=x, y=y, credibility=credibility, mean=mean, sd=sd,
                                  lclip=lclip, rclip=rclip)
 
 
-def to(x, y, credibility=0.9, lclip=None, rclip=None):
+def to(x, y, credibility=90, lclip=None, rclip=None):
     if x > 0:
         return lognorm(x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip)
     else:
@@ -188,7 +188,7 @@ def discrete(items):
 
 
 class TDistribution(BaseDistribution):
-    def __init__(self, x, y, t, credibility=0.9, lclip=None, rclip=None):
+    def __init__(self, x, y, t, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -199,12 +199,12 @@ class TDistribution(BaseDistribution):
         self.type = 'tdist'
 
 
-def tdist(x, y, t, credibility=0.9, lclip=None, rclip=None):
+def tdist(x, y, t, credibility=90, lclip=None, rclip=None):
     return TDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
 class LogTDistribution(BaseDistribution):
-    def __init__(self, x, y, t, credibility=0.9, lclip=None, rclip=None):
+    def __init__(self, x, y, t, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -215,7 +215,7 @@ class LogTDistribution(BaseDistribution):
         self.type = 'log-tdist'
 
 
-def log_tdist(x, y, t, credibility=0.9, lclip=None, rclip=None):
+def log_tdist(x, y, t, credibility=90, lclip=None, rclip=None):
     return LogTDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 

@@ -116,7 +116,7 @@ sq.sample(lambda: sq.sample(sq.norm(1, 3)) - sq.sample(sq.norm(4, 5)), n=100)
 sq.sample(lambda: sq.sample(sq.norm(1, 3)) * sq.sample(sq.norm(4, 5)), n=100)
 sq.sample(lambda: sq.sample(sq.norm(1, 3)) / sq.sample(sq.norm(4, 5)), n=100)
 
-sq.sample(sq.norm(1, 3, credibility=0.8))
+sq.sample(sq.norm(1, 3, credibility=80))
 sq.sample(sq.norm(0, 3, lclip=0, rclip=5))
 sq.sample(sq.const(4))
 

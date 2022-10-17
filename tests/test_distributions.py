@@ -23,8 +23,8 @@ def to_passes_lclip_rclip():
 
 
 def to_passes_credibility():
-    assert to(3, 5, credibility=0.8) == lognorm(3, 5, credibility=0.8)
-    assert to(-3, 3, credibility=0.8) == norm(-3, 3, credibility=0.8)
+    assert to(3, 5, credibility=80) == lognorm(3, 5, credibility=80)
+    assert to(-3, 3, credibility=80) == norm(-3, 3, credibility=80)
 
 
 def test_const():
@@ -39,7 +39,7 @@ def test_norm():
     assert norm(1, 2).y == 2
     assert norm(1, 2).mean == 1.5
     assert round(norm(1, 2).sd, 2) == 0.3
-    assert norm(1, 2).credibility == 0.9
+    assert norm(1, 2).credibility == 90
     assert norm(1, 2).lclip is None
     assert norm(1, 2).rclip is None
     assert str(norm(1, 2)) == '<Distribution> norm'
@@ -51,7 +51,7 @@ def test_norm_with_mean_sd():
     assert norm(mean=1, sd=2).y is None
     assert norm(mean=1, sd=2).mean == 1
     assert norm(mean=1, sd=2).sd == 2
-    assert norm(mean=1, sd=2).credibility == 0.9
+    assert norm(mean=1, sd=2).credibility == 90
     assert norm(mean=1, sd=2).lclip is None
     assert norm(mean=1, sd=2).rclip is None
 
@@ -62,7 +62,7 @@ def test_norm_with_just_sd_infers_zero_mean():
     assert norm(sd=2).y is None
     assert norm(sd=2).mean == 0
     assert norm(sd=2).sd == 2
-    assert norm(sd=2).credibility == 0.9
+    assert norm(sd=2).credibility == 90
     assert norm(sd=2).lclip is None
     assert norm(sd=2).rclip is None
 
@@ -101,9 +101,9 @@ def test_norm_passes_lclip_rclip():
 
 
 def test_norm_passes_credibility():
-    obj = norm(1, 2, credibility=0.8)
+    obj = norm(1, 2, credibility=80)
     assert obj.type == 'norm'
-    assert obj.credibility == 0.8
+    assert obj.credibility == 80
 
 
 def test_lognorm():
@@ -112,7 +112,7 @@ def test_lognorm():
     assert lognorm(1, 2).y == 2
     assert round(lognorm(1, 2).mean, 2) == 0.35
     assert round(lognorm(1, 2).sd, 2) == 0.21
-    assert lognorm(1, 2).credibility == 0.9
+    assert lognorm(1, 2).credibility == 90
     assert lognorm(1, 2).lclip is None
     assert lognorm(1, 2).rclip is None
     assert str(lognorm(1, 2)) == '<Distribution> lognorm'
@@ -124,7 +124,7 @@ def test_lognorm_with_mean_sd():
     assert lognorm(mean=1, sd=2).y is None
     assert lognorm(mean=1, sd=2).mean == 1
     assert lognorm(mean=1, sd=2).sd == 2
-    assert lognorm(mean=1, sd=2).credibility == 0.9
+    assert lognorm(mean=1, sd=2).credibility == 90
     assert lognorm(mean=1, sd=2).lclip is None
     assert lognorm(mean=1, sd=2).rclip is None
 
@@ -135,7 +135,7 @@ def test_lognorm_with_just_sd_infers_zero_mean():
     assert lognorm(sd=2).y is None
     assert lognorm(sd=2).mean == 0
     assert lognorm(sd=2).sd == 2
-    assert lognorm(sd=2).credibility == 0.9
+    assert lognorm(sd=2).credibility == 90
     assert lognorm(sd=2).lclip is None
     assert lognorm(sd=2).rclip is None
 
@@ -174,9 +174,9 @@ def test_lognorm_passes_lclip_rclip():
 
 
 def test_lognorm_passes_credibility():
-    obj = lognorm(1, 2, credibility=0.8)
+    obj = lognorm(1, 2, credibility=80)
     assert obj.type == 'lognorm'
-    assert obj.credibility == 0.8
+    assert obj.credibility == 80
 
 
 def test_uniform():
@@ -227,7 +227,7 @@ def test_tdist():
     assert tdist(1, 3, 5).x == 1
     assert tdist(1, 3, 5).y == 3
     assert tdist(1, 3, 5).t == 5
-    assert tdist(1, 3, 5).credibility == 0.9
+    assert tdist(1, 3, 5).credibility == 90
     assert tdist(1, 3, 5).lclip is None
     assert tdist(1, 3, 5).rclip is None
     assert str(tdist(1, 3, 5)) == '<Distribution> tdist'
@@ -238,13 +238,13 @@ def test_tdist_passes_lclip_rclip():
     assert obj.type == 'tdist'
     assert obj.lclip == 3
     assert obj.rclip == 5
-    assert obj.credibility == 0.9
+    assert obj.credibility == 90
 
 
 def test_tdist_passes_credibility():
-    obj = tdist(1, 3, t=5, credibility=0.8)
+    obj = tdist(1, 3, t=5, credibility=80)
     assert obj.type == 'tdist'
-    assert obj.credibility == 0.8
+    assert obj.credibility == 80
 
 
 def test_log_tdist():
@@ -252,7 +252,7 @@ def test_log_tdist():
     assert log_tdist(1, 3, 5).x == 1
     assert log_tdist(1, 3, 5).y == 3
     assert log_tdist(1, 3, 5).t == 5
-    assert log_tdist(1, 3, 5).credibility == 0.9
+    assert log_tdist(1, 3, 5).credibility == 90
     assert log_tdist(1, 3, 5).lclip is None
     assert log_tdist(1, 3, 5).rclip is None
     assert str(log_tdist(1, 3, 5)) == '<Distribution> log-tdist'
@@ -263,13 +263,13 @@ def test_log_tdist_passes_lclip_rclip():
     assert obj.type == 'log-tdist'
     assert obj.lclip == 3
     assert obj.rclip == 5
-    assert obj.credibility == 0.9
+    assert obj.credibility == 90
 
 
 def test_log_tdist_passes_credibility():
-    obj = log_tdist(1, 3, t=5, credibility=0.8)
+    obj = log_tdist(1, 3, t=5, credibility=80)
     assert obj.type == 'log-tdist'
-    assert obj.credibility == 0.8
+    assert obj.credibility == 80
 
 
 def test_triangular():

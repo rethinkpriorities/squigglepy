@@ -19,7 +19,8 @@ def lognormal_sample(mean, sd):
     return _get_rng().lognormal(mean, sd)
 
 
-def t_sample(low, high, t, credibility=0.9):
+def t_sample(low, high, t, credibility=90):
+    credibility /= 100
     if low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
     elif low == high:
@@ -30,7 +31,8 @@ def t_sample(low, high, t, credibility=0.9):
         return _get_rng().standard_t(t) * rangex * 0.6/credibility + mu
 
 
-def log_t_sample(low, high, t, credibility=0.9):
+def log_t_sample(low, high, t, credibility=90):
+    credibility /= 100
     if low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
     elif low < 0:

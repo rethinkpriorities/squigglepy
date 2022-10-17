@@ -142,7 +142,7 @@ sq.sample(lambda: sq.sample(sq.norm(1,3)) * sq.sample(sq.norm(4,5)), n=100)
 sq.sample(lambda: sq.sample(sq.norm(1,3)) / sq.sample(sq.norm(4,5)), n=100)
 
 # You can change the CI from 90% (default) to 80%
-sq.sample(sq.norm(1, 3, credibility=0.8))
+sq.sample(sq.norm(1, 3, credibility=80))
 
 # You can clip
 sq.sample(sq.norm(0, 3, lclip=0, rclip=5)) # Sample norm with a 90% CI from 0-3, but anything lower than 0 gets clipped to 0 and anything higher than 5 gets clipped to 5.

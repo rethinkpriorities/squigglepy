@@ -1,3 +1,8 @@
+## v0.10
+
+* **[Breaking change]** `credibility` is now defined using a number out of 100 (e.g., `credibility=80` to define an 80% CI) rather than a decimal out of 1 (e.g., `credibility=0.8` to define an 80% CI).
+
+
 ## v0.9
 
 * `goemean` and `geomean_odds` now can take the nested-list-based and dictionary-based formats for passing weights.
