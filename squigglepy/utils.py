@@ -1,5 +1,7 @@
 import numpy as np
+
 from scipy import stats
+from datetime import datetime
 
 
 def _process_weights_values(weights, values):
@@ -155,3 +157,37 @@ def flip_coin(n=1):
         rolls = [rolls]
     flips = ['heads' if d == 2 else 'tails' for d in rolls]
     return flips[0] if len(flips) == 1 else flips
+
+
+def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0):
+    if market_price >= 1 or market_price <= 0:
+        raise ValueError('market_price must be >0 and <1')
+    if my_price >= 1 or my_price <= 0:
+        raise ValueError('my_price must be >0 and <1')
+    if deference > 1 or deference < 0:
+        raise ValueError('deference must be >=0 and <=1')
+    adj_price = my_price * (1 - deference) + market_price * deference
+    kelly = np.abs(adj_price - ((1 - adj_price) * (market_price / (1 - market_price))))
+    target = bankroll * kelly
+    expected_roi = np.abs((adj_price / market_price) - 1)
+    if resolve_date is None:
+        expected_arr = None
+    else:
+        resolve_date = datetime.strptime(resolve_date, '%Y-%m-%d')
+        expected_arr = ((expected_roi + 1) ** (365 / (resolve_date - datetime.now()).days)) - 1
+    return {'my_price': round(my_price, 2),
+            'market_price': round(market_price, 2),
+            'deference': round(deference, 3),
+            'adj_price': round(adj_price, 2),
+            'delta_price': round(np.abs(market_price - my_price), 2),
+            'adj_delta_price': round(np.abs(market_price - adj_price), 2),
+            'kelly': round(kelly, 3),
+            'target': round(target, 2),
+            'current': round(current, 2),
+            'delta': round(target - current, 2),
+            'max_gain': round(target / market_price, 2),
+            'modeled_gain': round((adj_price * (target / market_price) +
+                                  (1 - adj_price) * -target), 2),
+            'expected_roi': round(expected_roi, 3),
+            'expected_arr': round(expected_arr, 3) if expected_arr is not None else None,
+            'resolve_date': resolve_date}

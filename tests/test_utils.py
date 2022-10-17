@@ -1,10 +1,11 @@
 import pytest
 import numpy as np
 
+from datetime import datetime, timedelta
 from ..squigglepy.utils import (_process_weights_values, event_occurs, event_happens,
                                 event, get_percentiles, get_log_percentiles, geomean,
                                 p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
-                                flip_coin)
+                                flip_coin, kelly)
 from ..squigglepy.rng import set_seed
 
 
@@ -363,3 +364,194 @@ def test_flip_coin():
 def test_flip_five_coins():
     set_seed(42)
     assert flip_coin(5) == ['heads', 'tails', 'heads', 'heads', 'tails']
+
+
+def test_kelly_market_price_error():
+    for val in [0, 1, 2, -1]:
+        with pytest.raises(ValueError) as execinfo:
+            kelly(my_price=0.99, market_price=val)
+        assert 'market_price must be >0 and <1' in str(execinfo.value)
+
+
+def test_kelly_my_price_error():
+    for val in [0, 1, 2, -1]:
+        with pytest.raises(ValueError) as execinfo:
+            kelly(my_price=val, market_price=0.99)
+        assert 'my_price must be >0 and <1' in str(execinfo.value)
+
+
+def test_kelly_deference_error():
+    for val in [-1, 2]:
+        with pytest.raises(ValueError) as execinfo:
+            kelly(my_price=0.01, market_price=0.99, deference=val)
+        assert 'deference must be >=0 and <=1' in str(execinfo.value)
+
+
+def test_kelly_defaults():
+    obj = kelly(my_price=0.99, market_price=0.01)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0
+    assert obj['adj_price'] == 0.99
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.98
+    assert obj['kelly'] == 0.99
+    assert obj['target'] == 0.99
+    assert obj['current'] == 0
+    assert obj['delta'] == 0.99
+    assert obj['max_gain'] == 98.99
+    assert obj['modeled_gain'] == 97.99
+    assert obj['expected_roi'] == 98
+    assert obj['expected_arr'] is None
+    assert obj['resolve_date'] is None
+
+
+def test_half_kelly():
+    obj = kelly(my_price=0.99, market_price=0.01, deference=0.5)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0.5
+    assert obj['adj_price'] == 0.5
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.49
+    assert obj['kelly'] == 0.495
+    assert obj['target'] == 0.49
+    assert obj['current'] == 0
+    assert obj['delta'] == 0.49
+    assert obj['max_gain'] == 49.49
+    assert obj['modeled_gain'] == 24.5
+    assert obj['expected_roi'] == 49
+    assert obj['expected_arr'] is None
+    assert obj['resolve_date'] is None
+
+
+def test_quarter_kelly():
+    obj = kelly(my_price=0.99, market_price=0.01, deference=0.75)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0.75
+    assert obj['adj_price'] == 0.26
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.24
+    assert obj['kelly'] == 0.247
+    assert obj['target'] == 0.25
+    assert obj['current'] == 0
+    assert obj['delta'] == 0.25
+    assert obj['max_gain'] == 24.75
+    assert obj['modeled_gain'] == 6.13
+    assert obj['expected_roi'] == 24.5
+    assert obj['expected_arr'] is None
+    assert obj['resolve_date'] is None
+
+
+def test_kelly_with_bankroll():
+    obj = kelly(my_price=0.99, market_price=0.01, bankroll=1000)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0
+    assert obj['adj_price'] == 0.99
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.98
+    assert obj['kelly'] == 0.99
+    assert obj['target'] == 989.9
+    assert obj['current'] == 0
+    assert obj['delta'] == 989.9
+    assert obj['max_gain'] == 98989.9
+    assert obj['modeled_gain'] == 97990.1
+    assert obj['expected_roi'] == 98
+    assert obj['expected_arr'] is None
+    assert obj['resolve_date'] is None
+
+
+def test_kelly_with_current():
+    obj = kelly(my_price=0.99, market_price=0.01, bankroll=1000, current=100)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0
+    assert obj['adj_price'] == 0.99
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.98
+    assert obj['kelly'] == 0.99
+    assert obj['target'] == 989.9
+    assert obj['current'] == 100
+    assert obj['delta'] == 889.9
+    assert obj['max_gain'] == 98989.9
+    assert obj['modeled_gain'] == 97990.1
+    assert obj['expected_roi'] == 98
+    assert obj['expected_arr'] is None
+    assert obj['resolve_date'] is None
+
+
+def test_kelly_with_resolve_date():
+    one_year_from_today = datetime.now() + timedelta(days=365)
+    one_year_from_today_str = one_year_from_today.strftime('%Y-%m-%d')
+    obj = kelly(my_price=0.99, market_price=0.01, resolve_date=one_year_from_today_str)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0
+    assert obj['adj_price'] == 0.99
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.98
+    assert obj['kelly'] == 0.99
+    assert obj['target'] == 0.99
+    assert obj['current'] == 0
+    assert obj['delta'] == 0.99
+    assert obj['max_gain'] == 98.99
+    assert obj['modeled_gain'] == 97.99
+    assert obj['expected_roi'] == 98
+    assert obj['expected_arr'] == 99.258
+    assert obj['resolve_date'] == datetime(one_year_from_today.year,
+                                           one_year_from_today.month,
+                                           one_year_from_today.day,
+                                           0,
+                                           0)
+
+
+def test_kelly_with_resolve_date2():
+    two_years_from_today = datetime.now() + timedelta(days=365*2)
+    two_years_from_today_str = two_years_from_today.strftime('%Y-%m-%d')
+    obj = kelly(my_price=0.99, market_price=0.01, resolve_date=two_years_from_today_str)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0
+    assert obj['adj_price'] == 0.99
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.98
+    assert obj['kelly'] == 0.99
+    assert obj['target'] == 0.99
+    assert obj['current'] == 0
+    assert obj['delta'] == 0.99
+    assert obj['max_gain'] == 98.99
+    assert obj['modeled_gain'] == 97.99
+    assert obj['expected_roi'] == 98
+    assert obj['expected_arr'] == 8.981
+    assert obj['resolve_date'] == datetime(two_years_from_today.year,
+                                           two_years_from_today.month,
+                                           two_years_from_today.day,
+                                           0,
+                                           0)
+
+
+def test_kelly_with_resolve_date0pt5():
+    half_year_from_today = datetime.now() + timedelta(days=int(round(365*0.5)))
+    half_year_from_today_str = half_year_from_today.strftime('%Y-%m-%d')
+    obj = kelly(my_price=0.99, market_price=0.01, resolve_date=half_year_from_today_str)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0
+    assert obj['adj_price'] == 0.99
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.98
+    assert obj['kelly'] == 0.99
+    assert obj['target'] == 0.99
+    assert obj['current'] == 0
+    assert obj['delta'] == 0.99
+    assert obj['max_gain'] == 98.99
+    assert obj['modeled_gain'] == 97.99
+    assert obj['expected_roi'] == 98
+    assert obj['expected_arr'] == 10575.628
+    assert obj['resolve_date'] == datetime(half_year_from_today.year,
+                                           half_year_from_today.month,
+                                           half_year_from_today.day,
+                                           0,
+                                           0)

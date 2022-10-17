@@ -1,3 +1,7 @@
+## v0.11
+
+* Added `kelly` to calculate Kelly criterion for bet sizing with probabilities.
+
 ## v0.10
 
 * **[Breaking change]** `credibility` is now defined using a number out of 100 (e.g., `credibility=80` to define an 80% CI) rather than a decimal out of 1 (e.g., `credibility=0.8` to define an 80% CI).
