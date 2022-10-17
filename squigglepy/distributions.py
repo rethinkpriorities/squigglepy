@@ -32,12 +32,18 @@ class BaseDistribution:
     def __str__(self):
         return '<Distribution> {}'.format(self.type)
 
+    def __repr__(self):
+        return str(self)
+
 
 class ConstantDistribution(BaseDistribution):
     def __init__(self, x):
         super().__init__()
         self.x = x
         self.type = 'const'
+
+    def __str__(self):
+        return '<Distribution> {}({})'.format(self.type, self.x)
 
 
 def const(x):
@@ -50,6 +56,9 @@ class UniformDistribution(BaseDistribution):
         self.x = x
         self.y = y
         self.type = 'uniform'
+
+    def __str__(self):
+        return '<Distribution> {}({}, {})'.format(self.type, self.x, self.y)
 
 
 def uniform(x, y):
@@ -84,6 +93,17 @@ class NormalDistribution(BaseDistribution):
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = stats.norm.ppf(cdf_value)
             self.sd = (self.y - self.mean) / normed_sigma
+
+    def __str__(self):
+        out = '<Distribution> {}(mean={}, sd={}'.format(self.type,
+                                                        round(self.mean, 2),
+                                                        round(self.sd, 2))
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
 
 
 def norm(x=None, y=None, credibility=90, mean=None, sd=None,
@@ -121,6 +141,17 @@ class LognormalDistribution(BaseDistribution):
             normed_sigma = stats.norm.ppf(cdf_value)
             self.sd = (np.log(self.y) - self.mean) / normed_sigma
 
+    def __str__(self):
+        out = '<Distribution> {}(mean={}, sd={}'.format(self.type,
+                                                        round(self.mean, 2),
+                                                        round(self.sd, 2))
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
+
 
 def lognorm(x=None, y=None, credibility=90, mean=None, sd=None,
             lclip=None, rclip=None):
@@ -142,6 +173,9 @@ class BinomialDistribution(BaseDistribution):
         self.p = p
         self.type = 'binomial'
 
+    def __str__(self):
+        return '<Distribution> {}(n={}, p={})'.format(self.type, self.n, self.p)
+
 
 def binomial(n, p):
     return BinomialDistribution(n=n, p=p)
@@ -153,6 +187,9 @@ class BetaDistribution(BaseDistribution):
         self.a = a
         self.b = b
         self.type = 'beta'
+
+    def __str__(self):
+        return '<Distribution> {}(a={}, b={})'.format(self.type, self.a, self.b)
 
 
 def beta(a, b):
@@ -168,6 +205,9 @@ class BernoulliDistribution(BaseDistribution):
             raise ValueError('bernoulli p must be 0-1')
         self.p = p
         self.type = 'bernoulli'
+
+    def __str__(self):
+        return '<Distribution> {}(p={})'.format(self.type, self.p)
 
 
 def bernoulli(p):
@@ -198,6 +238,17 @@ class TDistribution(BaseDistribution):
         self.rclip = rclip
         self.type = 'tdist'
 
+    def __str__(self):
+        out = '<Distribution> {}(x={}, y={}, t={}'.format(self.type, self.x, self.y, self.t)
+        if self.credibility != 90:
+            out += ', credibility={}'.format(self.credibility)
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
+
 
 def tdist(x, y, t, credibility=90, lclip=None, rclip=None):
     return TDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
@@ -212,7 +263,18 @@ class LogTDistribution(BaseDistribution):
         self.credibility = credibility
         self.lclip = lclip
         self.rclip = rclip
-        self.type = 'log-tdist'
+        self.type = 'log_tdist'
+
+    def __str__(self):
+        out = '<Distribution> {}(x={}, y={}, t={}'.format(self.type, self.x, self.y, self.t)
+        if self.credibility != 90:
+            out += ', credibility={}'.format(self.credibility)
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
 
 
 def log_tdist(x, y, t, credibility=90, lclip=None, rclip=None):
@@ -229,6 +291,15 @@ class TriangularDistribution(BaseDistribution):
         self.rclip = rclip
         self.type = 'triangular'
 
+    def __str__(self):
+        out = '<Distribution> {}({}, {}, {}'.format(self.type, self.left, self.mode, self.right)
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
+
 
 def triangular(left, mode, right, lclip=None, rclip=None):
     return TriangularDistribution(left=left, mode=mode, right=right, lclip=lclip, rclip=rclip)
@@ -241,6 +312,15 @@ class PoissonDistribution(BaseDistribution):
         self.lclip = lclip
         self.rclip = rclip
         self.type = 'poisson'
+
+    def __str__(self):
+        out = '<Distribution> {}({}'.format(self.type, self.lam)
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
 
 
 def poisson(lam, lclip=None, rclip=None):
@@ -255,6 +335,15 @@ class ExponentialDistribution(BaseDistribution):
         self.rclip = rclip
         self.type = 'exponential'
 
+    def __str__(self):
+        out = '<Distribution> {}({}'.format(self.type, self.scale)
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
+
 
 def exponential(scale, lclip=None, rclip=None):
     return ExponentialDistribution(scale=scale, lclip=lclip, rclip=rclip)
@@ -268,6 +357,15 @@ class GammaDistribution(BaseDistribution):
         self.lclip = lclip
         self.rclip = rclip
         self.type = 'gamma'
+
+    def __str__(self):
+        out = '<Distribution> {}(shape={}, scale={}'.format(self.type, self.shape, self.scale)
+        if self.lclip is not None:
+            out += ', lclip={}'.format(self.lclip)
+        if self.rclip is not None:
+            out += ', rclip={}'.format(self.rclip)
+        out += ')'
+        return out
 
 
 def gamma(shape, scale=1, lclip=None, rclip=None):
