@@ -158,12 +158,12 @@ def test_sample_discrete_alt2_format():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_tdist(mocker):
-    assert t_sample(1, 2, 3) == 2.5
+    assert round(t_sample(1, 2, 3), 2) == 1.94
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_tdist_with_credibility(mocker):
-    assert round(t_sample(1, 2, 3, credibility=70), 2) == 2.79
+    assert round(t_sample(1, 2, 3, credibility=70), 2) == 2.07
 
 
 def test_tdist_low_gt_high():
@@ -174,7 +174,7 @@ def test_tdist_low_gt_high():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_tdist(mocker):
-    assert sample(tdist(1, 2, 3)) == 2.5
+    assert round(sample(tdist(1, 2, 3)), 2) == 1.94
 
 
 @patch.object(samplers, 't_sample', Mock(return_value=100))
@@ -185,12 +185,12 @@ def test_sample_tdist_passes_lclip_rclip():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_log_tdist(mocker):
-    assert round(log_t_sample(1, 2, 3), 2) == 2.83
+    assert round(log_t_sample(1, 2, 3), 2) == 1.92
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_log_tdist_with_credibility(mocker):
-    assert round(log_t_sample(1, 2, 3, credibility=70), 2) == 3.45
+    assert round(log_t_sample(1, 2, 3, credibility=70), 2) == 2.1
 
 
 def test_log_tdist_low_gt_high():

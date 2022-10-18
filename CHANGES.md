@@ -2,6 +2,7 @@
 
 #### Distributions
 
+* **[Breaking change]** `tdist` and `log_tdist` have been modified to better approximate the desired credible intervals.
 * `tdist` now can be defined by just `t`, producing a classic t-distribution.
 * `tdist` now has a default value for `t`: 1.
 * `lognormal` now returns an error if it is defined with a zero or negative value.

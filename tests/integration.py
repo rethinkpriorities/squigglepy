@@ -3,10 +3,27 @@ import numpy as np
 import squigglepy as sq
 from squigglepy.numbers import K, M
 from squigglepy import bayes
+from tqdm import tqdm
 
 
 sq.set_seed(42)
 RUNS = 10*K
+
+
+def _within(actual, expected, tolerance_ratio=None, abs_tolerance=None):
+    if actual < expected:
+        ratio = expected / actual
+    else:
+        ratio = actual / expected
+
+    abs_diff = np.abs(actual - expected)
+
+    if abs_tolerance is not None and abs_diff < abs_tolerance:
+        return True
+    elif tolerance_ratio is not None and ratio < tolerance_ratio:
+        return True
+    else:
+        return False
 
 
 def _mark_time(start, expected_sec, label, tolerance_ratio=1.05, tolerance_ms_threshold=3):
@@ -26,11 +43,12 @@ def _mark_time(start, expected_sec, label, tolerance_ratio=1.05, tolerance_ms_th
                                                   delta_label,
                                                   expected,
                                                   delta_label))
-    deviation = False
-    if (use_delta / expected) > tolerance_ratio or (use_delta / expected) < (1 / tolerance_ratio):
-        if np.abs(use_delta - expected) > tolerance_ms_threshold or delta_label != 'ms':
-            print('!!! WARNING: Unexpected timing deviation')
-            deviation = True
+    if delta_label == 'ms':
+        deviation = not _within(use_delta, expected, tolerance_ratio, tolerance_ms_threshold)
+    else:
+        deviation = not _within(use_delta, expected, tolerance_ratio)
+    if deviation:
+        print('!!! WARNING: Unexpected timing deviation')
     return {'timing(sec)': delta_sec, 'deviation': deviation}
 
 
@@ -358,5 +376,28 @@ if round(out, 2) != 0.13:
 _mark_time(start12, 0.637, 'Test 12 complete')
 
 
-_mark_time(start1, 2.4, 'Integration tests complete')
+start13 = time.time()
+print('Test 13...')
+ts = [1, 2, 3, 4, 5, 10, 20, 50]
+vals = [[1, 10], [2, 20], [1, 2], [5, 10], [100, 200]]
+credibilities = [80, 90, 95]
+tol = 1.25
+for t in tqdm(ts):
+    for val in vals:
+        for credibility in credibilities:
+            pctiles = sq.get_percentiles(sq.sample(sq.tdist(val[0],
+                                                            val[1],
+                                                            t,
+                                                            credibility=credibility), n=100*K),
+                                         percentiles=[(100 - credibility) / 2,
+                                                      100 - ((100 - credibility) / 2)])
+if (not _within(pctiles[(100 - credibility) / 2], val[0], tol) or
+    not _within(pctiles[100 - ((100 - credibility) / 2)], val[1], tol)):
+    print('ERROR 13 on ({}, {}) t={} credibility = {}'.format(val[0], val[1], t, credibility))
+    import pdb
+    pdb.set_trace()
+_mark_time(start13, 45.79, 'Test 13 complete')
+
+
+_mark_time(start1, 48.22, 'Integration tests complete')
 print('DONE! INTEGRATION TEST SUCCESS!')

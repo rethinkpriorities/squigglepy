@@ -95,7 +95,7 @@ def t_sample(low=None, high=None, t=1, credibility=90):
     --------
     >>> set_seed(42)
     >>> t_sample(1, 2, t=4)
-    1.6778545267059948
+    1.5790464563137754
     """
     credibility /= 100
     if low is None and high is None:
@@ -109,7 +109,7 @@ def t_sample(low=None, high=None, t=1, credibility=90):
     else:
         mu = (high + low) / 2
         rangex = (high - low) / 2
-        return _get_rng().standard_t(t) * rangex * 0.6/credibility + mu
+        return _get_rng().standard_t(t) * rangex / (3.75 * credibility) + mu
 
 
 def log_t_sample(low, high, t, credibility=90):
@@ -144,7 +144,7 @@ def log_t_sample(low, high, t, credibility=90):
     --------
     >>> set_seed(42)
     >>> log_t_sample(1, 2, t=4)
-    1.599758937794021
+    1.4938615602679368
     """
     credibility /= 100
     if low > high:
@@ -158,7 +158,7 @@ def log_t_sample(low, high, t, credibility=90):
         log_high = np.log(high)
         mu = (log_high + log_low) / 2
         rangex = (log_high - log_low) / 2
-        return np.exp(_get_rng().standard_t(t) * rangex * 0.6/credibility + mu)
+        return np.exp(_get_rng().standard_t(t) * rangex / (3.75 * credibility) + mu)
 
 
 def binomial_sample(n, p):
