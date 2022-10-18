@@ -172,6 +172,15 @@ def test_lognorm_low_gt_high():
     assert '`high value` cannot be lower than `low value`' in str(execinfo.value)
 
 
+def test_lognorm_must_be_gt_0():
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(0, 5)
+    assert 'lognormal distribution must have values >= 0' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(-5, 5)
+    assert 'lognormal distribution must have values >= 0' in str(execinfo.value)
+
+
 def test_lognorm_passes_lclip_rclip():
     obj = lognorm(1, 2, lclip=1)
     assert obj.type == 'lognorm'
@@ -260,6 +269,28 @@ def test_tdist():
     assert str(tdist(1, 3, 5)) == '<Distribution> tdist(x=1, y=3, t=5)'
 
 
+def test_pure_tdist():
+    assert tdist(t=5).type == 'tdist'
+    assert tdist(t=5).x is None
+    assert tdist(t=5).y is None
+    assert tdist(t=5).t == 5
+    assert tdist(t=5).credibility is None
+    assert tdist(t=5).lclip is None
+    assert tdist(t=5).rclip is None
+    assert str(tdist(t=5)) == '<Distribution> tdist(t=5)'
+
+
+def test_default_pure_tdist():
+    assert tdist().type == 'tdist'
+    assert tdist().x is None
+    assert tdist().y is None
+    assert tdist().t == 1
+    assert tdist().credibility is None
+    assert tdist().lclip is None
+    assert tdist().rclip is None
+    assert str(tdist()) == '<Distribution> tdist(t=1)'
+
+
 def test_tdist_passes_lclip_rclip():
     obj = tdist(1, 3, t=5, lclip=3)
     assert obj.type == 'tdist'
@@ -297,6 +328,28 @@ def test_log_tdist():
     assert log_tdist(1, 3, 5).lclip is None
     assert log_tdist(1, 3, 5).rclip is None
     assert str(log_tdist(1, 3, 5)) == '<Distribution> log_tdist(x=1, y=3, t=5)'
+
+
+def test_pure_log_tdist():
+    assert log_tdist(t=5).type == 'log_tdist'
+    assert log_tdist(t=5).x is None
+    assert log_tdist(t=5).y is None
+    assert log_tdist(t=5).t == 5
+    assert log_tdist(t=5).credibility is None
+    assert log_tdist(t=5).lclip is None
+    assert log_tdist(t=5).rclip is None
+    assert str(log_tdist(t=5)) == '<Distribution> log_tdist(t=5)'
+
+
+def test_default_pure_log_tdist():
+    assert log_tdist().type == 'log_tdist'
+    assert log_tdist().x is None
+    assert log_tdist().y is None
+    assert log_tdist().t == 1
+    assert log_tdist().credibility is None
+    assert log_tdist().lclip is None
+    assert log_tdist().rclip is None
+    assert str(log_tdist()) == '<Distribution> log_tdist(t=1)'
 
 
 def test_log_tdist_passes_lclip_rclip():

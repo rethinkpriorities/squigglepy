@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from ..squigglepy.utils import (_process_weights_values, event_occurs, event_happens,
                                 event, get_percentiles, get_log_percentiles, geomean,
                                 p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
-                                flip_coin, kelly)
+                                flip_coin, kelly, full_kelly, half_kelly, quarter_kelly)
 from ..squigglepy.rng import set_seed
 
 
@@ -406,8 +406,27 @@ def test_kelly_defaults():
     assert obj['resolve_date'] is None
 
 
+def test_full_kelly():
+    obj = full_kelly(my_price=0.99, market_price=0.01)
+    assert obj['my_price'] == 0.99
+    assert obj['market_price'] == 0.01
+    assert obj['deference'] == 0
+    assert obj['adj_price'] == 0.99
+    assert obj['delta_price'] == 0.98
+    assert obj['adj_delta_price'] == 0.98
+    assert obj['kelly'] == 0.99
+    assert obj['target'] == 0.99
+    assert obj['current'] == 0
+    assert obj['delta'] == 0.99
+    assert obj['max_gain'] == 98.99
+    assert obj['modeled_gain'] == 97.99
+    assert obj['expected_roi'] == 98
+    assert obj['expected_arr'] is None
+    assert obj['resolve_date'] is None
+
+
 def test_half_kelly():
-    obj = kelly(my_price=0.99, market_price=0.01, deference=0.5)
+    obj = half_kelly(my_price=0.99, market_price=0.01)
     assert obj['my_price'] == 0.99
     assert obj['market_price'] == 0.01
     assert obj['deference'] == 0.5
@@ -426,7 +445,7 @@ def test_half_kelly():
 
 
 def test_quarter_kelly():
-    obj = kelly(my_price=0.99, market_price=0.01, deference=0.75)
+    obj = quarter_kelly(my_price=0.99, market_price=0.01)
     assert obj['my_price'] == 0.99
     assert obj['market_price'] == 0.01
     assert obj['deference'] == 0.75

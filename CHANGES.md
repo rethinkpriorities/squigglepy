@@ -1,6 +1,16 @@
 ## v0.11
 
+#### Distributions
+
+* `tdist` now can be defined by just `t`, producing a classic t-distribution.
+* `tdist` now has a default value for `t`: 1.
+* `lognormal` now returns an error if it is defined with a zero or negative value.
+
+#### Other
+
+* All functions now have docstrings.
 * Added `kelly` to calculate Kelly criterion for bet sizing with probabilities.
+* Added `full_kelly`, `half_kelly`, `quarter_kelly` as helpful aliases.
 
 ## v0.10
 

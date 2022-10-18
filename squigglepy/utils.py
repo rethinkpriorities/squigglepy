@@ -46,15 +46,65 @@ def _process_weights_values(weights, values):
 
 
 def event_occurs(p):
+    """
+    Return True with probability ``p`` and False with probability ``1 - p``.
+
+    Parameters
+    ----------
+    p : float
+        The probability of returning True. Must be between 0 and 1.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> event_occurs(p=0.5)
+    False
+    """
     from .rng import _squigglepy_internal_rng
     return _squigglepy_internal_rng.uniform(0, 1) < p
 
 
 def event_happens(p):
+    """
+    Return True with probability ``p`` and False with probability ``1 - p``.
+
+    Alias for ``event_occurs``.
+
+    Parameters
+    ----------
+    p : float
+        The probability of returning True. Must be between 0 and 1.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> event_happens(p=0.5)
+    False
+    """
     return event_occurs(p)
 
 
 def event(p):
+    """
+    Return True with probability ``p`` and False with probability ``1 - p``.
+
+    Alias for ``event_occurs``.
+
+    Parameters
+    ----------
+    p : float
+        The probability of returning True. Must be between 0 and 1.
+
+    Returns
+    -------
+    bool
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> event(p=0.5)
+    False
+    """
     return event_occurs(p)
 
 
@@ -63,6 +113,31 @@ def get_percentiles(data,
                                  60, 70, 80, 90, 95, 99],
                     reverse=False,
                     digits=None):
+    """
+    Print the percentiles of the data.
+
+    Parameters
+    ----------
+    data : list or np.array
+        The data to calculate percentiles for.
+    percentiles : list
+        A list of percentiles to calculate. Must be values between 0 and 100.
+    reverse : bool
+        If `True`, the percentile values are reversed (e.g., 95th and 5th percentile
+        swap values.)
+    digits : int or None
+        The number of digits to display (using rounding).
+
+    Returns
+    -------
+    dict
+        A dictionary of the given percentiles.
+
+    Examples
+    --------
+    >>> get_percentiles(range(100), percentiles=[25, 50, 75])
+    {25: 24.75, 50: 49.5, 75: 74.25}
+    """
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
     percentiles = np.percentile(data, percentiles)
     if digits is not None:
@@ -77,6 +152,34 @@ def get_log_percentiles(data,
                         percentiles=[1, 5, 10, 20, 30, 40, 50,
                                      60, 70, 80, 90, 95, 99],
                         reverse=False, display=True, digits=1):
+    """
+    Print the log (base 10) of the percentiles of the data.
+
+    Parameters
+    ----------
+    data : list or np.array
+        The data to calculate percentiles for.
+    percentiles : list
+        A list of percentiles to calculate. Must be values between 0 and 100.
+    reverse : bool
+        If True, the percentile values are reversed (e.g., 95th and 5th percentile
+        swap values.)
+    display : bool
+        If True, the function returns an easy to read display.
+    digits : int or None
+        The number of digits to display (using rounding).
+
+    Returns
+    -------
+    dict
+        A dictionary of the given percentiles. If ``display`` is true, will be str values.
+        Otherwise will be float values. 10 to the power of the value gives the true percentile.
+
+    Examples
+    --------
+    >>> get_percentiles(range(100), percentiles=[25, 50, 75])
+    {25: 24.75, 50: 49.5, 75: 74.25}
+    """
     percentiles = get_percentiles(data,
                                   percentiles=percentiles,
                                   reverse=reverse,
@@ -90,19 +193,94 @@ def get_log_percentiles(data,
 
 
 def geomean(a, weights=None):
+    """
+    Calculate the geometric mean.
+
+    Parameters
+    ----------
+    a : list or np.array
+        The values to calculate the geometric mean of.
+    weights : list or None
+        The weights, if a weighted geometric mean is desired.
+
+    Returns
+    -------
+    float
+
+    Examples
+    --------
+    >>> geomean([1, 3, 10])
+    3.1072325059538595
+    """
     weights, a = _process_weights_values(weights, a)
     return stats.mstats.gmean(a, weights=weights)
 
 
 def p_to_odds(p):
+    """
+    Calculate the decimal odds from a given probability.
+
+    Parameters
+    ----------
+    p : float
+        The probability to calculate decimal odds for. Must be between 0 and 1.
+
+    Returns
+    -------
+    float
+        Decimal odds
+
+    Examples
+    --------
+    >>> p_to_odds(0.1)
+    0.1111111111111111
+    """
     return p / (1 - p)
 
 
 def odds_to_p(odds):
+    """
+    Calculate the probability from given decimal odds.
+
+    Parameters
+    ----------
+    odds : float
+        The decimal odds to calculate the probability for.
+
+    Returns
+    -------
+    float
+        Probability
+
+    Examples
+    --------
+    >>> odds_to_p(0.1)
+    0.09090909090909091
+    """
     return odds / (1 + odds)
 
 
 def geomean_odds(a, weights=None):
+    """
+    Calculate the geometric mean of odds.
+
+    Parameters
+    ----------
+    a : list or np.array
+        The probabilities to calculate the geometric mean of. These are converted to odds
+        before the geometric mean is taken..
+    weights : list or None
+        The weights, if a weighted geometric mean is desired.
+
+    Returns
+    -------
+    float
+
+    Examples
+    --------
+    >>> geomean_odds([0.1, 0.3, 0.9])
+    0.42985748800076845
+    """
     weights, a = _process_weights_values(weights, a)
     a = p_to_odds(np.array(a))
     return odds_to_p(geomean(a, weights=weights))
@@ -110,13 +288,51 @@ def geomean_odds(a, weights=None):
 
 def laplace(s, n=None, time_passed=None,
             time_remaining=None, time_fixed=False):
-    # Returns probability of success on next trial
+    """
+    Return probability of success on next trial given Laplace's law of succession.
+
+    Also can be used to calculate a time-invariant version defined in
+    https://www.lesswrong.com/posts/wE7SK8w8AixqknArs/a-time-invariant-version-of-laplace-s-rule
+
+    Parameters
+    ----------
+    s : int
+        The number of successes among ``n`` past trials or among ``time_passed`` amount of time.
+    n : int or None
+        The number of trials that contain the successes (and/or failures). Leave as None if
+        time-invariant mode is desired.
+    time_passed : float or None
+        The amount of time that has passed when the successes (and/or failures) occured for
+        calculating a time-invariant Laplace.
+    time_remaining : float or None
+        We are calculating the likelihood of observing at least one success over this time
+        period.
+    time_fixed : bool
+        This should be False if the time period is variable - that is, if the time period
+        was chosen specifically to include the most recent success. Otherwise the time period
+        is fixed and this should be True.
+
+    Returns
+    -------
+    float
+        The probability of at least one success in the next trial or ``time_remaining`` amount
+        of time.
+
+    Examples
+    --------
+    >>> # The sun has risen the past 100,000 days. What are the odds it rises again tomorrow?
+    >>> laplace(s=100*K, n=100*K)
+    0.999990000199996
+    >>> # The last time a nuke was used in war was 77 years ago. What are the odds a nuke
+    >>> # is used in the next year, not considering any information other than this naive prior?
+    >>> laplace(s=1, time_passed=77, time_remaining=1, time_fixed=False)
+    0.012820512820512664
+    """
     if n is not None and s > n:
         raise ValueError('`s` cannot be greater than `n`')
     elif time_passed is None and time_remaining is None and n is not None:
         return (s + 1) / (n + 2)
     elif time_passed is not None and time_remaining is not None and s == 0:
-        # https://www.lesswrong.com/posts/wE7SK8w8AixqknArs/a-time-invariant-version-of-laplace-s-rule
         return 1 - ((1 + time_remaining/time_passed) ** -1)
     elif (time_passed is not None and time_remaining is not None
           and s > 0 and not time_fixed):
@@ -141,6 +357,27 @@ def laplace(s, n=None, time_passed=None,
 
 
 def roll_die(sides, n=1):
+    """
+    Roll a die.
+
+    Parameters
+    ----------
+    sides : int
+        The number of sides of the die that is rolled.
+    n : int
+        The number of dice to be rolled.
+
+    Returns
+    -------
+    int or list
+        Returns the value of each die roll.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> roll_die(6)
+    5
+    """
     from .samplers import sample
     from .distributions import discrete
     if sides < 2:
@@ -152,6 +389,25 @@ def roll_die(sides, n=1):
 
 
 def flip_coin(n=1):
+    """
+    Flip a coin.
+
+    Parameters
+    ----------
+    n : int
+        The number of coins to be flipped.
+
+    Returns
+    -------
+    str or list
+        Returns the value of each coin flip, as either "heads" or "tails"
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> flip_coin()
+    'heads'
+    """
     rolls = roll_die(2, n=n)
     if isinstance(rolls, int):
         rolls = [rolls]
@@ -160,6 +416,60 @@ def flip_coin(n=1):
 
 
 def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0):
+    """
+    Calculate the Kelly criterion.
+
+    Parameters
+    ----------
+    my_price : float
+        The price (or probability) you give for the given event.
+    market_price : float
+        The price the market is giving for that event.
+    deference : float
+        How much deference (or weight) do you give the market price? Use 0.5 for half Kelly
+        and 0.75 for quarter Kelly. Defaults to 0, which is full Kelly.
+    bankroll : float
+        How much money do you have to bet? Defaults to 1.
+    resolve_date : str or None
+        When will the event happen, the market resolve, and you get your money back? Used for
+        calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
+        ARR is not calculated.
+    current : float
+        How much do you already have invested in this event? Used for calculating the
+        additional amount you should invest. Defaults to 0.
+
+    Returns
+    -------
+    dict
+        A dict of values specifying:
+        * ``my_price``
+        * ``market_price``
+        * ``deference``
+        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+          into account.
+        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+          ``market_price``.
+        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+          you should bet.
+        * ``target`` : the target amount of money you should have invested
+        * ``current``
+        * ``delta`` : the amount of money you should invest given what you already
+          have invested
+        * ``max_gain`` : the amount of money you would gain if you win
+        * ``modeled_gain`` : the expected value you would win given ``adj_price``
+        * ``expected_roi`` : the expected return on investment
+        * ``expected_arr`` : the expected ARR given ``resolve_date``
+        * ``resolve_date``
+
+    Examples
+    --------
+    >>> kelly(my_price=0.7, market_price=0.4, deference=0.5, bankroll=100)
+    {'my_price': 0.7, 'market_price': 0.4, 'deference': 0.5, 'adj_price': 0.55,
+     'delta_price': 0.3, 'adj_delta_price': 0.15, 'kelly': 0.25, 'target': 25.0,
+     'current': 0, 'delta': 25.0, 'max_gain': 62.5, 'modeled_gain': 23.13,
+     'expected_roi': 0.375, 'expected_arr': None, 'resolve_date': None}
+    """
     if market_price >= 1 or market_price <= 0:
         raise ValueError('market_price must be >0 and <1')
     if my_price >= 1 or my_price <= 0:
@@ -191,3 +501,183 @@ def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, cu
             'expected_roi': round(expected_roi, 3),
             'expected_arr': round(expected_arr, 3) if expected_arr is not None else None,
             'resolve_date': resolve_date}
+
+
+def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+    """
+    Alias for ``kelly`` where ``deference`` is 0.
+
+    Parameters
+    ----------
+    my_price : float
+        The price (or probability) you give for the given event.
+    market_price : float
+        The price the market is giving for that event.
+    bankroll : float
+        How much money do you have to bet? Defaults to 1.
+    resolve_date : str or None
+        When will the event happen, the market resolve, and you get your money back? Used for
+        calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
+        ARR is not calculated.
+    current : float
+        How much do you already have invested in this event? Used for calculating the
+        additional amount you should invest. Defaults to 0.
+
+    Returns
+    -------
+    dict
+        A dict of values specifying:
+        * ``my_price``
+        * ``market_price``
+        * ``deference``
+        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+          into account.
+        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+          ``market_price``.
+        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+          you should bet.
+        * ``target`` : the target amount of money you should have invested
+        * ``current``
+        * ``delta`` : the amount of money you should invest given what you already
+          have invested
+        * ``max_gain`` : the amount of money you would gain if you win
+        * ``modeled_gain`` : the expected value you would win given ``adj_price``
+        * ``expected_roi`` : the expected return on investment
+        * ``expected_arr`` : the expected ARR given ``resolve_date``
+        * ``resolve_date``
+
+    Examples
+    --------
+    >>> full_kelly(my_price=0.7, market_price=0.4, bankroll=100)
+    {'my_price': 0.7, 'market_price': 0.4, 'deference': 0, 'adj_price': 0.7,
+     'delta_price': 0.3, 'adj_delta_price': 0.3, 'kelly': 0.5, 'target': 50.0,
+     'current': 0, 'delta': 50.0, 'max_gain': 125.0, 'modeled_gain': 72.5,
+     'expected_roi': 0.75, 'expected_arr': None, 'resolve_date': None}
+    """
+    return kelly(my_price=my_price,
+                 market_price=market_price,
+                 bankroll=bankroll,
+                 resolve_date=resolve_date,
+                 current=current,
+                 deference=0)
+
+
+def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+    """
+    Alias for ``kelly`` where ``deference`` is 0.5.
+
+    Parameters
+    ----------
+    my_price : float
+        The price (or probability) you give for the given event.
+    market_price : float
+        The price the market is giving for that event.
+    bankroll : float
+        How much money do you have to bet? Defaults to 1.
+    resolve_date : str or None
+        When will the event happen, the market resolve, and you get your money back? Used for
+        calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
+        ARR is not calculated.
+    current : float
+        How much do you already have invested in this event? Used for calculating the
+        additional amount you should invest. Defaults to 0.
+
+    Returns
+    -------
+    dict
+        A dict of values specifying:
+        * ``my_price``
+        * ``market_price``
+        * ``deference``
+        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+          into account.
+        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+          ``market_price``.
+        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+          you should bet.
+        * ``target`` : the target amount of money you should have invested
+        * ``current``
+        * ``delta`` : the amount of money you should invest given what you already
+          have invested
+        * ``max_gain`` : the amount of money you would gain if you win
+        * ``modeled_gain`` : the expected value you would win given ``adj_price``
+        * ``expected_roi`` : the expected return on investment
+        * ``expected_arr`` : the expected ARR given ``resolve_date``
+        * ``resolve_date``
+
+    Examples
+    --------
+    >>> half_kelly(my_price=0.7, market_price=0.4, bankroll=100)
+    {'my_price': 0.7, 'market_price': 0.4, 'deference': 0.5, 'adj_price': 0.55,
+     'delta_price': 0.3, 'adj_delta_price': 0.15, 'kelly': 0.25, 'target': 25.0,
+     'current': 0, 'delta': 25.0, 'max_gain': 62.5, 'modeled_gain': 23.13,
+     'expected_roi': 0.375, 'expected_arr': None, 'resolve_date': None}
+    """
+    return kelly(my_price=my_price,
+                 market_price=market_price,
+                 bankroll=bankroll,
+                 resolve_date=resolve_date,
+                 current=current,
+                 deference=0.5)
+
+
+def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+    """
+    Alias for ``kelly`` where ``deference`` is 0.75.
+
+    Parameters
+    ----------
+    my_price : float
+        The price (or probability) you give for the given event.
+    market_price : float
+        The price the market is giving for that event.
+    bankroll : float
+        How much money do you have to bet? Defaults to 1.
+    resolve_date : str or None
+        When will the event happen, the market resolve, and you get your money back? Used for
+        calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
+        ARR is not calculated.
+    current : float
+        How much do you already have invested in this event? Used for calculating the
+        additional amount you should invest. Defaults to 0.
+
+    Returns
+    -------
+    dict
+        A dict of values specifying:
+        * ``my_price``
+        * ``market_price``
+        * ``deference``
+        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+          into account.
+        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+          ``market_price``.
+        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+          you should bet.
+        * ``target`` : the target amount of money you should have invested
+        * ``current``
+        * ``delta`` : the amount of money you should invest given what you already
+          have invested
+        * ``max_gain`` : the amount of money you would gain if you win
+        * ``modeled_gain`` : the expected value you would win given ``adj_price``
+        * ``expected_roi`` : the expected return on investment
+        * ``expected_arr`` : the expected ARR given ``resolve_date``
+        * ``resolve_date``
+
+    Examples
+    --------
+    >>> quarter_kelly(my_price=0.7, market_price=0.4, bankroll=100)
+    {'my_price': 0.7, 'market_price': 0.4, 'deference': 0.75, 'adj_price': 0.48,
+     'delta_price': 0.3, 'adj_delta_price': 0.08, 'kelly': 0.125, 'target': 12.5,
+     'current': 0, 'delta': 12.5, 'max_gain': 31.25, 'modeled_gain': 8.28,
+     'expected_roi': 0.188, 'expected_arr': None, 'resolve_date': None}
+    """
+    return kelly(my_price=my_price,
+                 market_price=market_price,
+                 bankroll=bankroll,
+                 resolve_date=resolve_date,
+                 current=current,
+                 deference=0.75)
