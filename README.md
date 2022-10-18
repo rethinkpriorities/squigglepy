@@ -401,6 +401,30 @@ bayes.bayesnet(define_event,
 # This run for me returned 0.12306 which is pretty close to the correct answer of 0.12292
 ```
 
+
+#### Kelly betting
+
+You can use probability generated, combine with a bankroll to determine bet sizing using [Kelly criterion](https://en.wikipedia.org/wiki/Kelly_criterion).
+
+For example, if you want to Kelly bet and you've...
+
+* determined that your price (your probability of the event in question happening / the market in question resolving in your favor) is $0.70 (70%)
+* see that the market is pricing at $0.65
+* you have a bankroll of $1000 that you are willing to bet
+
+You should bet as follows:
+
+```Python
+import squigglepy as sq
+kelly_data = sq.kelly(my_price=0.70, market_price=0.65, bankroll=1000)
+kelly_data['kelly']  # What fraction of my bankroll should I bet on this?
+# 0.143
+kelly_data['target']  # How much money should be invested in this?
+# 142.86
+kelly_data['expected_roi']  # What is the expected ROI of this bet?
+# 0.077
+```
+
 ## Run tests
 
 `flake8 && pytest && pip3 install . && python3 tests/integration.py`
