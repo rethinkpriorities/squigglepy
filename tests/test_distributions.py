@@ -229,6 +229,15 @@ def test_binomial():
     assert str(binomial(10, 0.1)) == '<Distribution> binomial(n=10, p=0.1)'
 
 
+def test_binomial_must_be_between_0_and_1():
+    with pytest.raises(ValueError) as execinfo:
+        binomial(10, -1)
+    assert 'must be between 0 and 1' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        binomial(10, 1.1)
+    assert 'must be between 0 and 1' in str(execinfo.value)
+
+
 def test_beta():
     assert beta(10, 1).type == 'beta'
     assert beta(10, 1).a == 10

@@ -317,6 +317,8 @@ class BinomialDistribution(BaseDistribution):
         self.n = n
         self.p = p
         self.type = 'binomial'
+        if self.p < 0 or self.p > 1:
+            raise ValueError('p must be between 0 and 1')
 
     def __str__(self):
         return '<Distribution> {}(n={}, p={})'.format(self.type, self.n, self.p)
