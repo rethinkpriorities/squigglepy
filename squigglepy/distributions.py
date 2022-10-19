@@ -24,6 +24,7 @@ class BaseDistribution:
         self.lclip = None
         self.rclip = None
         self.lam = None
+        self.df = None
         self.items = None
         self.dists = None
         self.weights = None
@@ -461,6 +462,7 @@ class TDistribution(BaseDistribution):
         self.x = x
         self.y = y
         self.t = t
+        self.df = t
         self.credibility = credibility
         self.lclip = lclip
         self.rclip = rclip
@@ -535,6 +537,7 @@ class LogTDistribution(BaseDistribution):
         self.x = x
         self.y = y
         self.t = t
+        self.df = t
         self.credibility = credibility
         self.lclip = lclip
         self.rclip = rclip
@@ -693,6 +696,39 @@ def poisson(lam, lclip=None, rclip=None):
     <Distribution> poisson(1)
     """
     return PoissonDistribution(lam=lam, lclip=lclip, rclip=rclip)
+
+
+class ChiSquareDistribution(BaseDistribution):
+    def __init__(self, df):
+        super().__init__()
+        self.df = df
+        self.type = 'chisquare'
+        if self.df <= 0:
+            raise ValueError('df must be positive')
+
+    def __str__(self):
+        return '<Distribution> {}({})'.format(self.type, self.df)
+
+
+def chisquare(df):
+    """
+    Initialize a chi-square distribution.
+
+    Parameters
+    ----------
+    df : float
+        The degrees of freedom. Must be positive.
+
+    Returns
+    -------
+    ChiSquareDistribution
+
+    Examples
+    --------
+    >>> chisquare(2)
+    <Distribution> chiaquare(2)
+    """
+    return ChiSquareDistribution(df=df)
 
 
 class ExponentialDistribution(BaseDistribution):

@@ -1,7 +1,7 @@
 import pytest
 from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
-                                        tdist, log_tdist, triangular,
+                                        tdist, log_tdist, triangular, chisquare,
                                         poisson, exponential, gamma, mixture)
 
 
@@ -462,6 +462,12 @@ def test_poisson_lclip_rclip():
     assert obj.lclip == 10
     assert obj.rclip == 15
     assert str(obj) == '<Distribution> poisson(10, lclip=10, rclip=15)'
+
+
+def test_chisquare():
+    assert chisquare(10).type == 'chisquare'
+    assert chisquare(10).df == 10
+    assert str(chisquare(10)) == '<Distribution> chisquare(10)'
 
 
 def test_gamma():

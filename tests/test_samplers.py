@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 from ..squigglepy.distributions import (const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
-                                        tdist, log_tdist, triangular,
+                                        tdist, log_tdist, triangular, chisquare,
                                         poisson, exponential, gamma, mixture)
 from ..squigglepy.rng import set_seed
 from ..squigglepy import samplers
@@ -45,6 +45,9 @@ class FakeRNG:
 
     def standard_t(self, t):
         return t
+
+    def chisquare(self, df):
+        return df
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -157,13 +160,15 @@ def test_sample_discrete_alt2_format():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
 def test_tdist(mocker):
-    assert round(t_sample(1, 2, 3), 2) == 1.94
+    assert round(t_sample(1, 2, 3), 2) == 1
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
 def test_tdist_with_credibility(mocker):
-    assert round(t_sample(1, 2, 3, credibility=70), 2) == 2.07
+    assert round(t_sample(1, 2, 3, credibility=70), 2) == 1
 
 
 def test_tdist_low_gt_high():
@@ -173,8 +178,9 @@ def test_tdist_low_gt_high():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
 def test_sample_tdist(mocker):
-    assert round(sample(tdist(1, 2, 3)), 2) == 1.94
+    assert round(sample(tdist(1, 2, 3)), 2) == 1
 
 
 @patch.object(samplers, 't_sample', Mock(return_value=100))
@@ -184,13 +190,15 @@ def test_sample_tdist_passes_lclip_rclip():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
 def test_log_tdist(mocker):
-    assert round(log_t_sample(1, 2, 3), 2) == 1.92
+    assert round(log_t_sample(1, 2, 3), 2) == 2.72
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
 def test_log_tdist_with_credibility(mocker):
-    assert round(log_t_sample(1, 2, 3, credibility=70), 2) == 2.1
+    assert round(log_t_sample(1, 2, 3, credibility=70), 2) == 2.72
 
 
 def test_log_tdist_low_gt_high():
@@ -200,8 +208,9 @@ def test_log_tdist_low_gt_high():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
 def teslog_t_sample_log_tdist(mocker):
-    assert round(sample(log_tdist(1, 2, 3)), 2) == 2.82
+    assert round(sample(log_tdist(1, 2, 3)), 2) == 1 / 3
 
 
 @patch.object(samplers, 'log_t_sample', Mock(return_value=100))
@@ -233,6 +242,11 @@ def test_sample_exponential_passes_lclip_rclip():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_chisquare():
+    assert sample(chisquare(9)) == 9
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_poisson():
     assert sample(poisson(10)) == 10
 
@@ -244,7 +258,7 @@ def test_sample_poisson_passes_lclip_rclip():
 
 
 def test_sample_const():
-    assert sample(const(10)) == 10
+    assert sample(const(11)) == 11
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))

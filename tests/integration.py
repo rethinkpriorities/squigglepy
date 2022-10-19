@@ -11,7 +11,9 @@ RUNS = 10*K
 
 
 def _within(actual, expected, tolerance_ratio=None, abs_tolerance=None):
-    if actual < expected:
+    if expected == 0 or actual == 0:
+        ratio = None
+    elif actual < expected:
         ratio = expected / actual
     else:
         ratio = actual / expected
@@ -132,6 +134,7 @@ sq.sample(sq.binomial(p=0.5, n=5))
 sq.sample(sq.beta(a=1, b=2))
 sq.sample(sq.bernoulli(p=0.5))
 sq.sample(sq.poisson(10))
+sq.sample(sq.chisquare(2))
 sq.sample(sq.gamma(3, 2))
 sq.sample(sq.exponential(scale=1))
 
@@ -378,26 +381,30 @@ _mark_time(start12, 0.637, 'Test 12 complete')
 
 start13 = time.time()
 print('Test 13...')
-ts = [1, 2, 3, 4, 5, 10, 20, 50]
-vals = [[1, 10], [2, 20], [1, 2], [5, 10], [100, 200]]
-credibilities = [80, 90, 95]
-tol = 1.25
-for t in tqdm(ts):
+ts = [10, 20, 50]
+vals = [[1, 10], [0, 3], [-4, 4], [5, 10], [100, 200]]
+credibilities = [80, 90]
+tqdm_ = tqdm(total=len(ts) * len(vals) * len(credibilities) * 2)
+for t in ts:
     for val in vals:
         for credibility in credibilities:
-            pctiles = sq.get_percentiles(sq.sample(sq.tdist(val[0],
-                                                            val[1],
-                                                            t,
-                                                            credibility=credibility), n=100*K),
-                                         percentiles=[(100 - credibility) / 2,
-                                                      100 - ((100 - credibility) / 2)])
-if (not _within(pctiles[(100 - credibility) / 2], val[0], tol) or
-    not _within(pctiles[100 - ((100 - credibility) / 2)], val[1], tol)):
-    print('ERROR 13 on ({}, {}) t={} credibility = {}'.format(val[0], val[1], t, credibility))
-    import pdb
-    pdb.set_trace()
-_mark_time(start13, 45.79, 'Test 13 complete')
+            for dist in [sq.tdist, sq.log_tdist]:
+                dist = dist(val[0], val[1], t, credibility=credibility)
+                if not (dist.type == 'log_tdist' and val[0] < 1):
+                    pctiles = sq.get_percentiles(sq.sample(dist, n=20*K),
+                                                 percentiles=[(100 - credibility) / 2,
+                                                              100 - ((100 - credibility) / 2)])
+                    tol = 140 / t if dist.type == 'log_tdist' else 1.35
+                    if (not _within(pctiles[(100 - credibility) / 2], val[0], tol, tol) or
+                        not _within(pctiles[100 - ((100 - credibility) / 2)], val[1], tol, tol)):
+                        print('ERROR 13 on {}'.format(str(dist)))
+                        print(pctiles)
+                        import pdb
+                        pdb.set_trace()
+                tqdm_.update(1)
+tqdm_.close()
+_mark_time(start13, 107.2, 'Test 13 complete')
 
 
-_mark_time(start1, 48.22, 'Integration tests complete')
+_mark_time(start1, 109.66, 'Integration tests complete')
 print('DONE! INTEGRATION TEST SUCCESS!')

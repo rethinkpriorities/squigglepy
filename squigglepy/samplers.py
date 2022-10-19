@@ -1,6 +1,7 @@
 import numpy as np
 
 from tqdm import tqdm
+from scipy import stats
 
 from .distributions import const, BaseDistribution
 from .utils import event_occurs, _process_weights_values
@@ -95,9 +96,8 @@ def t_sample(low=None, high=None, t=1, credibility=90):
     --------
     >>> set_seed(42)
     >>> t_sample(1, 2, t=4)
-    1.5790464563137754
+    2.7887113716855985
     """
-    credibility /= 100
     if low is None and high is None:
         return _get_rng().standard_t(t)
     elif low is None or high is None:
@@ -108,11 +108,13 @@ def t_sample(low=None, high=None, t=1, credibility=90):
         return low
     else:
         mu = (high + low) / 2
-        rangex = (high - low) / 2
-        return _get_rng().standard_t(t) * rangex / (3.75 * credibility) + mu
+        cdf_value = 0.5 + 0.5 * (credibility / 100)
+        normed_sigma = stats.norm.ppf(cdf_value)
+        sigma = (high - mu) / normed_sigma
+        return normal_sample(mu, sigma) / ((chi_square_sample(t) / t) ** 0.5)
 
 
-def log_t_sample(low, high, t, credibility=90):
+def log_t_sample(low=None, high=None, t=1, credibility=90):
     """
     Sample a random number according to a log-t-distribution.
 
@@ -144,10 +146,11 @@ def log_t_sample(low, high, t, credibility=90):
     --------
     >>> set_seed(42)
     >>> log_t_sample(1, 2, t=4)
-    1.4938615602679368
+    2.052949773846356
     """
-    credibility /= 100
-    if low > high:
+    if low is None and high is None:
+        return np.exp(_get_rng().standard_t(t))
+    elif low > high:
         raise ValueError('`high value` cannot be lower than `low value`')
     elif low < 0:
         raise ValueError('log_t_sample cannot handle negative values')
@@ -157,8 +160,10 @@ def log_t_sample(low, high, t, credibility=90):
         log_low = np.log(low)
         log_high = np.log(high)
         mu = (log_high + log_low) / 2
-        rangex = (log_high - log_low) / 2
-        return np.exp(_get_rng().standard_t(t) * rangex / (3.75 * credibility) + mu)
+        cdf_value = 0.5 + 0.5 * (credibility / 100)
+        normed_sigma = stats.norm.ppf(cdf_value)
+        sigma = (log_high - mu) / normed_sigma
+        return np.exp(normal_sample(mu, sigma) / ((chi_square_sample(t) / t) ** 0.5))
 
 
 def binomial_sample(n, p):
@@ -362,6 +367,29 @@ def uniform_sample(low, high):
     return _get_rng().uniform(low, high)
 
 
+def chi_square_sample(df):
+    """
+    Sample a random number according to a chi-square distribution.
+
+    Parameters
+    ----------
+    df : float
+        The number of degrees of freedom
+
+    Returns
+    -------
+    float
+        A random number sampled from a chi-square distribution.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> chi_square_sample(2)
+    4.808417207931989
+    """
+    return _get_rng().chisquare(df)
+
+
 def discrete_sample(items):
     """
     Sample a random value from a discrete distribution (aka categorical distribution).
@@ -517,6 +545,9 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
     elif dist.type == 'poisson':
         out = poisson_sample(lam=dist.lam)
 
+    elif dist.type == 'chisquare':
+        out = chi_square_sample(df=dist.df)
+
     elif dist.type == 'exponential':
         out = exponential_sample(scale=dist.scale)
 
@@ -529,7 +560,7 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
     elif dist.type == 'tdist':
         out = t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility)
 
-    elif dist.type == 'log-tdist':
+    elif dist.type == 'log_tdist':
         out = log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility)
 
     elif dist.type == 'mixture':
