@@ -403,7 +403,7 @@ bayes.bayesnet(define_event,
 ```
 
 
-#### Kelly betting
+### Kelly betting
 
 You can use probability generated, combine with a bankroll to determine bet sizing using [Kelly criterion](https://en.wikipedia.org/wiki/Kelly_criterion).
 
@@ -425,6 +425,11 @@ kelly_data['target']  # How much money should be invested in this?
 kelly_data['expected_roi']  # What is the expected ROI of this bet?
 # 0.077
 ```
+
+### More examples
+
+You can see more examples of squiggelpy in action [here](https://github.com/peterhurford/public-botecs).
+
 
 ## Run tests
 
