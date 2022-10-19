@@ -435,3 +435,11 @@ You can see more examples of squiggelpy in action [here](https://github.com/pete
 
 `flake8 && pytest && pip3 install . && python3 tests/integration.py`
 
+
+## Disclaimers
+
+This package is unofficial and supported by myself and Rethink Priorities. It is not affiliated with or associated with the Quantified Uncertainty Research Institute, which maintains the Squiggle language (in JavaScript).
+
+This package is also new and not yet in a stable production version, so you may encounter bugs and other errors. Please report those so they can be fixed. It's also possible that future versions of the package may introduce breaking changes.
+
+This package is available under an MIT License.
