@@ -1,3 +1,7 @@
+## v0.14
+
+* Nested sampling now works as intended.
+
 ## v0.13
 
 * Sample shorthand notation can go in either order. That is, `100 @ sq.norm(1, 2)` now works and is the same as `sq.norm(1, 2) @ 100`, which is the same as `sq.sample(sq.norm(1, 2), n=100)`.

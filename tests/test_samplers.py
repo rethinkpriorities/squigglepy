@@ -138,49 +138,6 @@ def test_sample_bernoulli():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_discrete():
-    assert discrete_sample([0, 1, 2]) == 0
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_discrete_alt_format():
-    assert discrete_sample([[0.9, 'a'], [0.1, 'b']]) == 'a'
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_discrete_alt2_format():
-    assert discrete_sample({'a': 0.9, 'b': 0.1}) == 'a'
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_discrete():
-    assert sample(discrete([0, 1, 2])) == 0
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_discrete_alt_format():
-    assert sample(discrete([[0.9, 'a'], [0.1, 'b']])) == 'a'
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_discrete_alt2_format():
-    assert sample(discrete({'a': 0.9, 'b': 0.1})) == 'a'
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_discrete_shorthand():
-    assert ~discrete([0, 1, 2]) == 0
-    assert ~discrete([[0.9, 'a'], [0.1, 'b']]) == 'a'
-    assert ~discrete({'a': 0.9, 'b': 0.1}) == 'a'
-
-
-@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 def test_tdist(mocker):
     assert round(t_sample(1, 2, 3), 2) == 1
@@ -282,6 +239,21 @@ def test_sample_const():
     assert sample(const(11)) == 11
 
 
+def test_sample_const_shorthand():
+    assert ~const(11) == 11
+
+
+def test_nested_const_does_not_resolve():
+    assert (~const(norm(1, 2))).type == 'norm'
+    assert (~const(norm(1, 2))).x == 1
+    assert (~const(norm(1, 2))).y == 2
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_nested_const_double_resolve():
+    assert ~~const(norm(1, 2)) == (1.5, 0.3)
+
+
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_gamma_default():
     assert sample(gamma(10)) == (10, 1)
@@ -296,6 +268,67 @@ def test_sample_gamma():
 def test_sample_gamma_passes_lclip_rclip():
     assert sample(gamma(1, 2)) == 100
     assert sample(gamma(1, 2, lclip=1, rclip=3)) == 3
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_discrete():
+    assert discrete_sample([0, 1, 2]) == 0
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_discrete_alt_format():
+    assert discrete_sample([[0.9, 'a'], [0.1, 'b']]) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_discrete_alt2_format():
+    assert discrete_sample({'a': 0.9, 'b': 0.1}) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete():
+    assert sample(discrete([0, 1, 2])) == 0
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_alt_format():
+    assert sample(discrete([[0.9, 'a'], [0.1, 'b']])) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_alt2_format():
+    assert sample(discrete({'a': 0.9, 'b': 0.1})) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_shorthand():
+    assert ~discrete([0, 1, 2]) == 0
+    assert ~discrete([[0.9, 'a'], [0.1, 'b']]) == 'a'
+    assert ~discrete({'a': 0.9, 'b': 0.1}) == 'a'
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_cannot_mixture():
+    obj = ~discrete([norm(1, 2), norm(3, 4)])
+    # Instead of sampling `norm(1, 2)`, discrete just returns it unsampled.
+    assert obj.type == 'norm'
+    assert obj.x == 1
+    assert obj.y == 2
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_indirect_mixture():
+    # You would have to double resolve this to get a value.
+    assert ~~discrete([norm(1, 2), norm(3, 4)]) == (1.5, 0.3) 
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -373,6 +406,15 @@ def test_sample_mixture_with_numbers(mocker):
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_can_be_discrete():
+    assert ~mixture([0, 1, 2]) == 0
+    assert ~mixture([[0.9, 'a'], [0.1, 'b']]) == 'a'
+    assert ~mixture({'a': 0.9, 'b': 0.1}) == 'a'
+    assert ~mixture([norm(1, 2), norm(3, 4)]) == (1.5, 0.3)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_n_gt_1(mocker):
     assert np.array_equal(sample(norm(1, 2), n=5), np.array([(1.5, 0.3)] * 5))
 
@@ -421,6 +463,29 @@ def test_sample_more_complex_callable():
     def sample_fn():
         return max(~norm(1, 4), ~lognorm(1, 10))
     assert sample(sample_fn) == 4
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'lognormal_sample', Mock(return_value=4))
+def test_sample_callable_resolves_fully():
+    def sample_fn():
+        return norm(1, 4) + lognorm(1, 10)
+    assert sample(sample_fn) == 5
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'lognormal_sample', Mock(return_value=4))
+def test_sample_callable_resolves_fully2():
+    def really_inner_sample_fn():
+        return 1
+
+    def inner_sample_fn():
+        return norm(1, 4) + lognorm(1, 10) + really_inner_sample_fn()
+
+    def outer_sample_fn():
+        return inner_sample_fn
+
+    assert sample(outer_sample_fn) == 6
 
 
 def test_sample_invalid_input():

@@ -516,15 +516,18 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
 
     if callable(dist):
         out = dist()
+        if isinstance(out, BaseDistribution) or callable(out):
+            return sample(out)
 
-    elif isinstance(dist, float) or isinstance(dist, int):
+    elif isinstance(dist, float) or isinstance(dist, int) or isinstance(dist, str):
         return dist
 
     elif not isinstance(dist, BaseDistribution):
-        raise ValueError('input to sample is malformed - must be a distribution')
+        raise ValueError('input to sample is malformed - must ' +
+                         'be a distribution but got {}'.format(type(dist)))
 
     elif dist.type == 'const':
-        out = dist.x
+        return dist.x
 
     elif dist.type == 'uniform':
         out = uniform_sample(dist.x, dist.y)
@@ -576,9 +579,6 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
 
     else:
         raise ValueError('{} sampler not found'.format(dist.type))
-
-    if isinstance(out, BaseDistribution):
-        return sample(out)
 
     lclip_ = None
     rclip_ = None

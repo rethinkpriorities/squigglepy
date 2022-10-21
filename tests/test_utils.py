@@ -7,6 +7,7 @@ from ..squigglepy.utils import (_process_weights_values, event_occurs, event_hap
                                 p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
                                 flip_coin, kelly, full_kelly, half_kelly, quarter_kelly)
 from ..squigglepy.rng import set_seed
+from ..squigglepy.distributions import bernoulli, beta
 
 
 def test_process_weights_values_simple_case():
@@ -115,6 +116,17 @@ def test_event_occurs():
     assert event_occurs(0.9)
     set_seed(42)
     assert not event_occurs(0.1)
+
+
+def test_event_occurs_can_handle_distributions():
+    set_seed(42)
+    assert event_occurs(bernoulli(0.9))
+    set_seed(42)
+    assert event_occurs(beta(10, 1))
+    set_seed(42)
+    def get_p():
+        return 0.9
+    assert event_occurs(get_p)
 
 
 def test_event_happens():

@@ -251,22 +251,6 @@ def test_bernoulli():
     assert str(bernoulli(0.1)) == '<Distribution> bernoulli(p=0.1)'
 
 
-def test_discrete():
-    obj = discrete({'a': 0.9, 'b': 0.1})
-    assert obj.type == 'discrete'
-    assert obj.items == {'a': 0.9, 'b': 0.1}
-    obj = discrete([0, 1])
-    assert obj.type == 'discrete'
-    assert obj.items == [0, 1]
-    assert str(obj) == '<Distribution> discrete'
-
-
-def test_discrete_raises_on_wrong_type():
-    with pytest.raises(ValueError) as excinfo:
-        discrete(2)
-    assert 'inputs to discrete must be a dict or list' in str(excinfo.value)
-
-
 def test_tdist():
     assert tdist(1, 3, 5).type == 'tdist'
     assert tdist(1, 3, 5).x == 1
@@ -502,6 +486,22 @@ def test_gamma_lclip_rclip():
     assert str(obj) == '<Distribution> gamma(shape=10, scale=2, lclip=10, rclip=15)'
 
 
+def test_discrete():
+    obj = discrete({'a': 0.9, 'b': 0.1})
+    assert obj.type == 'discrete'
+    assert obj.items == {'a': 0.9, 'b': 0.1}
+    obj = discrete([0, 1])
+    assert obj.type == 'discrete'
+    assert obj.items == [0, 1]
+    assert str(obj) == '<Distribution> discrete'
+
+
+def test_discrete_raises_on_wrong_type():
+    with pytest.raises(ValueError) as excinfo:
+        discrete(2)
+    assert 'inputs to discrete must be a dict or list' in str(excinfo.value)
+
+
 def test_mixture():
     obj = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6])
     assert obj.type == 'mixture'
@@ -558,6 +558,18 @@ def test_mixture_different_format():
     assert obj.dists[1].x == 3
     assert obj.dists[1].y == 4
     assert obj.weights == [0.4, 0.6]
+
+
+def test_mixture_can_be_discrete():
+    obj = mixture({'a': 0.9, 'b': 0.1})
+    assert obj.type == 'mixture'
+    assert obj.dists == ['a', 'b']
+    assert obj.weights == [0.9, 0.1]
+    obj = mixture([0, 1])
+    assert obj.type == 'mixture'
+    assert obj.dists == [0, 1]
+    assert obj.weights == [0.5, 0.5]
+    assert str(obj) == '<Distribution> mixture'
 
 
 def test_add_distribution():

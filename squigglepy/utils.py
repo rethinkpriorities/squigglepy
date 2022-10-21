@@ -61,6 +61,10 @@ def event_occurs(p):
     False
     """
     from .rng import _squigglepy_internal_rng
+    from .samplers import sample
+    from .distributions import BaseDistribution
+    if isinstance(p, BaseDistribution) or callable(p):
+        p = sample(p)
     return _squigglepy_internal_rng.uniform(0, 1) < p
 
 
