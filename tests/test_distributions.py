@@ -526,6 +526,15 @@ def test_mixture_different_distributions():
     assert obj.weights == [0.4, 0.6]
 
 
+def test_mixture_with_numbers():
+    obj = mixture([10, gamma(3)], [0.4, 0.6])
+    assert obj.type == 'mixture'
+    assert obj.dists[0] == 10
+    assert obj.dists[1].type == 'gamma'
+    assert obj.dists[1].shape == 3
+    assert obj.weights == [0.4, 0.6]
+
+
 def test_mixture_no_weights():
     obj = mixture([lognorm(1, 10), gamma(3)])
     assert obj.type == 'mixture'

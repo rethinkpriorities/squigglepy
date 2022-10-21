@@ -153,9 +153,6 @@ sq.norm(1, 3, credibility=80)
 
 # You can clip
 sq.norm(0, 3, lclip=0, rclip=5) # Sample norm with a 90% CI from 0-3, but anything lower than 0 gets clipped to 0 and anything higher than 5 gets clipped to 5.
-
-# You can specify a constant (which can be useful for passing things into functions or mixtures)
-sq.const(4) # Always returns 4
 ```
 
 
