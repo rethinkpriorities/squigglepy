@@ -1,7 +1,7 @@
 ## v0.12
 
 * Distributions now implement math directly. That is, you can do things like `sq.norm(2, 3) + sq.norm(4, 5)`, whereas previously this would not work. Thanks to Denis Drescher for helping me implement this.
-* `~sq.norm(1, 2)` is now a shorthand for `sq.sample(sq.norm(1, 2))`.
+* `~sq.norm(1, 2)` is now a shorthand for `sq.sample(sq.norm(1, 2))`. Thanks to Denis Drescher for helping me implement this shorthand.
 * `sq.norm(1, 2) @ 100` is now a shorthand for `sq.sample(sq.norm(1, 2), n=100)`
 
 ## v0.11

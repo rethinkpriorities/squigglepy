@@ -455,4 +455,5 @@ This package is available under an MIT License.
 
 * Thanks to Ozzie Gooen and the Quantified Uncertainty Research Institute for creating and maintaining the original Squiggle language.
 * Thanks to Denis Drescher for helping me implement math between distributions.
+* Thanks to Denis Drescher for coming up with the idea to use `~` as a shorthand for `sample`, as well as helping me implement it.
 
