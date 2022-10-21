@@ -1,3 +1,7 @@
+## v0.13
+
+* Sample shorthand notation can go in either order. That is, `100 @ sq.norm(1, 2)` now works and is the same as `sq.norm(1, 2) @ 100`, which is the same as `sq.sample(sq.norm(1, 2), n=100)`.
+
 ## v0.12
 
 * Distributions now implement math directly. That is, you can do things like `sq.norm(2, 3) + sq.norm(4, 5)`, whereas previously this would not work. Thanks to Dawn Drescher for helping me implement this.

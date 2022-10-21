@@ -32,7 +32,7 @@ def piano_tuners_per_piano():
     return 1 / pianos_per_piano_tuner
 
 def total_tuners_in_2022():
-    return pop_of_ny_2022 * pct_of_pop_w_pianos() * piano_tuners_per_piano()
+    return pop_of_ny_2022 * pct_of_pop_w_pianos * piano_tuners_per_piano
 
 samples = sq.sample(total_tuners_in_2022, n=1000, verbose=True)
 print('-')
@@ -67,7 +67,7 @@ def pop_at_time(t):
     return pop_of_ny_2022 * ((avg_yearly_pct_change + 1) ** t)
 
 def total_tuners_at_time(t):
-    return pop_at_time(t) * pct_of_pop_w_pianos() * piano_tuners_per_piano()
+    return pop_at_time(t) * pct_of_pop_w_pianos * piano_tuners_per_piano
 
 # Get total piano tuners at 2030
 sq.get_percentiles(total_tuners_at_time(2030-2022) @ 1000)  # Note: `@ 1000` is shorthand to get 1000 samples

@@ -370,6 +370,11 @@ def test_sample_shorthand_n_gt_1(mocker):
     assert np.array_equal(norm(1, 2) @ 5, np.array([(1.5, 0.3)] * 5))
 
 
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_shorthand_n_gt_1_alt(mocker):
+    assert np.array_equal(5 @ norm(1, 2), np.array([(1.5, 0.3)] * 5))
+
+
 def test_sample_n_is_0_is_error():
     with pytest.raises(ValueError) as execinfo:
         sample(norm(1, 5), n=0)
@@ -379,6 +384,12 @@ def test_sample_n_is_0_is_error():
 def test_sample_n_is_0_is_error_shorthand():
     with pytest.raises(ValueError) as execinfo:
         norm(1, 5) @ 0
+    assert 'n must be >= 1' in str(execinfo.value)
+
+
+def test_sample_n_is_0_is_error_shorthand_alt():
+    with pytest.raises(ValueError) as execinfo:
+        0 @ norm(1, 5)
     assert 'n must be >= 1' in str(execinfo.value)
 
 

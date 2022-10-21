@@ -132,9 +132,7 @@ def piano_tuners_per_piano():
 
 
 def total_tuners_at_time(t):
-    return (pop_at_time(t) *
-            pct_of_pop_w_pianos() *
-            piano_tuners_per_piano())
+    return pop_at_time(t) * pct_of_pop_w_pianos * piano_tuners_per_piano
 
 
 # Get total piano tuners at 2030

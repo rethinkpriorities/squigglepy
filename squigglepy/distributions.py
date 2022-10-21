@@ -55,6 +55,9 @@ class OperableDistribution(BaseDistribution):
         else:
             raise ValueError
 
+    def __rmatmul__(self, n):
+        return self.__matmul__(n)
+
     def __add__(self, dist):
         return ComplexDistribution(self, dist, operator.add, '+')
 
