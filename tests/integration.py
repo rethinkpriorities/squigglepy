@@ -272,8 +272,7 @@ print('Test 6...')
 
 
 def mammography(has_cancer):
-    p = 0.8 if has_cancer else 0.096
-    return bool(~sq.bernoulli(p))
+    return sq.event(0.8 if has_cancer else 0.096)
 
 
 def define_event():
@@ -357,12 +356,12 @@ def p_mary_calls(alarm_goes_off):
 
 
 def define_event():
-    burglary_happens = bool(~sq.bernoulli(p=0.001))
-    earthquake_happens = bool(~sq.bernoulli(p=0.002))
-    alarm_goes_off = bool(~sq.bernoulli(p_alarm_goes_off(burglary_happens,
-                                                         earthquake_happens)))
-    john_calls = bool(~sq.bernoulli(p_john_calls(alarm_goes_off)))
-    mary_calls = bool(~sq.bernoulli(p_mary_calls(alarm_goes_off)))
+    burglary_happens = sq.event(p=0.001)
+    earthquake_happens = sq.event(p=0.002)
+    alarm_goes_off = sq.event(p_alarm_goes_off(burglary_happens,
+                                               earthquake_happens))
+    john_calls = sq.event(p_john_calls(alarm_goes_off))
+    mary_calls = sq.event(p_mary_calls(alarm_goes_off))
     return {'burglary': burglary_happens,
             'earthquake': earthquake_happens,
             'alarm_goes_off': alarm_goes_off,
