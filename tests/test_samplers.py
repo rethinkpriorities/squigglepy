@@ -405,10 +405,22 @@ def test_sample_n_is_0_is_error_shorthand_alt():
     assert 'n must be >= 1' in str(execinfo.value)
 
 
+def test_sample_number():
+    assert sample(4) == 4
+
+
 def test_sample_callable():
     def sample_fn():
         return 1
     assert sample(sample_fn) == 1
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'lognormal_sample', Mock(return_value=4))
+def test_sample_more_complex_callable():
+    def sample_fn():
+        return max(~norm(1, 4), ~lognorm(1, 10))
+    assert sample(sample_fn) == 4
 
 
 def test_sample_invalid_input():
