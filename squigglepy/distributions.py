@@ -1,7 +1,9 @@
+import operator
 import numpy as np
 from scipy import stats
 
 from .utils import _process_weights_values
+from .samplers import sample
 
 
 class BaseDistribution:
@@ -21,6 +23,8 @@ class BaseDistribution:
         self.left = None
         self.mode = None
         self.right = None
+        self.fn = None
+        self.fn_str = None
         self.lclip = None
         self.rclip = None
         self.lam = None
@@ -28,7 +32,7 @@ class BaseDistribution:
         self.items = None
         self.dists = None
         self.weights = None
-        self.type = 'BaseDistribution'
+        self.type = 'base'
 
     def __str__(self):
         return '<Distribution> {}'.format(self.type)
@@ -37,7 +41,78 @@ class BaseDistribution:
         return str(self)
 
 
-class ConstantDistribution(BaseDistribution):
+class OperableDistribution(BaseDistribution):
+    def __init__(self):
+        super().__init__()
+        self.type = 'base'
+
+    def __invert__(self):
+        return sample(self)
+
+    def __matmul__(self, n):
+        if isinstance(n, int):
+            return sample(self, n=n)
+        else:
+            raise ValueError
+
+    def __add__(self, dist):
+        return ComplexDistribution(self, dist, operator.add, '+')
+
+    def __radd__(self, dist):
+        return ComplexDistribution(dist, self, operator.add, '+')
+
+    def __sub__(self, dist):
+        return ComplexDistribution(self, dist, operator.sub, '-')
+
+    def __rsub__(self, dist):
+        return ComplexDistribution(dist, self, operator.sub, '-')
+
+    def __mul__(self, dist):
+        return ComplexDistribution(self, dist, operator.mul, '*')
+
+    def __rmul__(self, dist):
+        return ComplexDistribution(dist, self, operator.mul, '*')
+
+    def __truediv__(self, dist):
+        return ComplexDistribution(self, dist, operator.truediv, '/')
+
+    def __rtruediv__(self, dist):
+        return ComplexDistribution(dist, self, operator.truediv, '/')
+
+    def __floordiv__(self, dist):
+        return ComplexDistribution(self, dist, operator.floordiv, '//')
+
+    def __rfloordiv__(self, dist):
+        return ComplexDistribution(dist, self, operator.floordiv, '//')
+
+    def __pow__(self, dist):
+        return ComplexDistribution(self, dist, operator.pow, '**')
+
+    def __rpow__(self, dist):
+        return ComplexDistribution(dist, self, operator.pow, '**')
+
+
+class ComplexDistribution(OperableDistribution):
+    def __init__(self, left, right=None, fn=operator.add, fn_str='+'):
+        super().__init__()
+        self.left = left
+        self.right = right
+        self.fn = fn
+        self.fn_str = fn_str
+        self.type = 'complex'
+
+    def __str__(self):
+        if self.right is None:
+            out = '<Distribution> {} {}'.format(self.fn_str,
+                                                str(self.left).replace('<Distribution> ', ''))
+        else:
+            out = '<Distribution> {} {} {}'.format(str(self.left).replace('<Distribution> ', ''),
+                                                   self.fn_str,
+                                                   str(self.right).replace('<Distribution> ', ''))
+        return out
+
+
+class ConstantDistribution(OperableDistribution):
     def __init__(self, x):
         super().__init__()
         self.x = x
@@ -56,7 +131,7 @@ def const(x):
     Parameters
     ----------
     x : anything
-        The value the constant distribution should always return."
+        The value the constant distribution should always return.
 
     Returns
     -------
@@ -70,7 +145,7 @@ def const(x):
     return ConstantDistribution(x)
 
 
-class UniformDistribution(BaseDistribution):
+class UniformDistribution(OperableDistribution):
     def __init__(self, x, y):
         super().__init__()
         self.x = x
@@ -104,7 +179,7 @@ def uniform(x, y):
     return UniformDistribution(x=x, y=y)
 
 
-class NormalDistribution(BaseDistribution):
+class NormalDistribution(OperableDistribution):
     def __init__(self, x=None, y=None, mean=None, sd=None,
                  credibility=90, lclip=None, rclip=None):
         super().__init__()
@@ -186,7 +261,7 @@ def norm(x=None, y=None, credibility=90, mean=None, sd=None,
                               lclip=lclip, rclip=rclip)
 
 
-class LognormalDistribution(BaseDistribution):
+class LognormalDistribution(OperableDistribution):
     def __init__(self, x=None, y=None, mean=None, sd=None,
                  credibility=90, lclip=None, rclip=None):
         super().__init__()
@@ -312,7 +387,7 @@ def to(x, y, credibility=90, lclip=None, rclip=None):
         return norm(x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
-class BinomialDistribution(BaseDistribution):
+class BinomialDistribution(OperableDistribution):
     def __init__(self, n, p):
         super().__init__()
         self.n = n
@@ -348,7 +423,7 @@ def binomial(n, p):
     return BinomialDistribution(n=n, p=p)
 
 
-class BetaDistribution(BaseDistribution):
+class BetaDistribution(OperableDistribution):
     def __init__(self, a, b):
         super().__init__()
         self.a = a
@@ -384,7 +459,7 @@ def beta(a, b):
     return BetaDistribution(a, b)
 
 
-class BernoulliDistribution(BaseDistribution):
+class BernoulliDistribution(OperableDistribution):
     def __init__(self, p):
         super().__init__()
         if not isinstance(p, float) or isinstance(p, int):
@@ -419,7 +494,7 @@ def bernoulli(p):
     return BernoulliDistribution(p)
 
 
-class DiscreteDistribution(BaseDistribution):
+class DiscreteDistribution(OperableDistribution):
     def __init__(self, items):
         super().__init__()
         if not isinstance(items, dict) and not isinstance(items, list):
@@ -456,7 +531,7 @@ def discrete(items):
     return DiscreteDistribution(items)
 
 
-class TDistribution(BaseDistribution):
+class TDistribution(OperableDistribution):
     def __init__(self, x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
@@ -531,7 +606,7 @@ def tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
     return TDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
-class LogTDistribution(BaseDistribution):
+class LogTDistribution(OperableDistribution):
     def __init__(self, x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
@@ -606,7 +681,7 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
     return LogTDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
-class TriangularDistribution(BaseDistribution):
+class TriangularDistribution(OperableDistribution):
     def __init__(self, left, mode, right, lclip=None, rclip=None):
         super().__init__()
         self.left = left
@@ -655,7 +730,7 @@ def triangular(left, mode, right, lclip=None, rclip=None):
     return TriangularDistribution(left=left, mode=mode, right=right, lclip=lclip, rclip=rclip)
 
 
-class PoissonDistribution(BaseDistribution):
+class PoissonDistribution(OperableDistribution):
     def __init__(self, lam, lclip=None, rclip=None):
         super().__init__()
         self.lam = lam
@@ -698,7 +773,7 @@ def poisson(lam, lclip=None, rclip=None):
     return PoissonDistribution(lam=lam, lclip=lclip, rclip=rclip)
 
 
-class ChiSquareDistribution(BaseDistribution):
+class ChiSquareDistribution(OperableDistribution):
     def __init__(self, df):
         super().__init__()
         self.df = df
@@ -731,7 +806,7 @@ def chisquare(df):
     return ChiSquareDistribution(df=df)
 
 
-class ExponentialDistribution(BaseDistribution):
+class ExponentialDistribution(OperableDistribution):
     def __init__(self, scale, lclip=None, rclip=None):
         super().__init__()
         self.scale = scale
@@ -774,7 +849,7 @@ def exponential(scale, lclip=None, rclip=None):
     return ExponentialDistribution(scale=scale, lclip=lclip, rclip=rclip)
 
 
-class GammaDistribution(BaseDistribution):
+class GammaDistribution(OperableDistribution):
     def __init__(self, shape, scale=1, lclip=None, rclip=None):
         super().__init__()
         self.shape = shape
@@ -820,7 +895,7 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
     return GammaDistribution(shape=shape, scale=scale, lclip=lclip, rclip=rclip)
 
 
-class MixtureDistribution(BaseDistribution):
+class MixtureDistribution(OperableDistribution):
     def __init__(self, dists, weights=None, lclip=None, rclip=None):
         super().__init__()
         weights, dists = _process_weights_values(weights, dists)

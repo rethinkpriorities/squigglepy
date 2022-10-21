@@ -6,7 +6,6 @@ from ..squigglepy.distributions import (const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular, chisquare,
                                         poisson, exponential, gamma, mixture)
-from ..squigglepy.rng import set_seed
 from ..squigglepy import samplers
 from ..squigglepy.samplers import (normal_sample, lognormal_sample, mixture_sample,
                                    discrete_sample, log_t_sample, t_sample, sample)
@@ -61,6 +60,11 @@ def test_sample_norm(mocker):
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_norm_shorthand(mocker):
+    assert ~norm(1, 2) == (1.5, 0.3)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_norm_with_credibility(mocker):
     assert sample(norm(1, 2, credibility=70)) == (1.5, 0.48)
 
@@ -74,6 +78,7 @@ def test_sample_norm_with_just_sd_infers_zero_mean():
 def test_sample_norm_passes_lclip_rclip():
     assert sample(norm(1, 2)) == 100
     assert sample(norm(1, 2, lclip=1, rclip=3)) == 3
+    assert ~norm(1, 2, lclip=1, rclip=3) == 3
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -89,6 +94,16 @@ def test_sample_lognorm(mocker):
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_lognorm_with_credibility(mocker):
     assert sample(lognorm(1, 2, credibility=70)) == (0.35, 0.33)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_shorthand_lognorm(mocker):
+    assert ~lognorm(1, 2) == (0.35, 0.21)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_shorthand_lognorm_with_credibility(mocker):
+    assert ~lognorm(1, 2, credibility=70) == (0.35, 0.33)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -119,7 +134,6 @@ def test_sample_beta():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_sample_bernoulli():
-    set_seed(42)
     assert sample(bernoulli(0.1)) == 0
 
 
@@ -157,6 +171,13 @@ def test_sample_discrete_alt_format():
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_sample_discrete_alt2_format():
     assert sample(discrete({'a': 0.9, 'b': 0.1})) == 'a'
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_discrete_shorthand():
+    assert ~discrete([0, 1, 2]) == 0
+    assert ~discrete([[0.9, 'a'], [0.1, 'b']]) == 'a'
+    assert ~discrete({'a': 0.9, 'b': 0.1}) == 'a'
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -344,9 +365,20 @@ def test_sample_n_gt_1(mocker):
     assert np.array_equal(sample(norm(1, 2), n=5), np.array([(1.5, 0.3)] * 5))
 
 
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_shorthand_n_gt_1(mocker):
+    assert np.array_equal(norm(1, 2) @ 5, np.array([(1.5, 0.3)] * 5))
+
+
 def test_sample_n_is_0_is_error():
     with pytest.raises(ValueError) as execinfo:
         sample(norm(1, 5), n=0)
+    assert 'n must be >= 1' in str(execinfo.value)
+
+
+def test_sample_n_is_0_is_error_shorthand():
+    with pytest.raises(ValueError) as execinfo:
+        norm(1, 5) @ 0
     assert 'n must be >= 1' in str(execinfo.value)
 
 
@@ -360,3 +392,16 @@ def test_sample_invalid_input():
     with pytest.raises(ValueError) as execinfo:
         sample([1, 5])
     assert 'must be a distribution' in str(execinfo.value)
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=100))
+def test_sample_math():
+    assert ~(norm(0, 1) + norm(1, 2)) == 200
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+@patch.object(samplers, 'lognormal_sample', Mock(return_value=100))
+def test_sample_complex_math():
+    obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (lognorm(10, 100) / 11) + 8
+    expected = (2 ** 10) - (8 * 6) + 2 + (100 / 11) + 8
+    assert ~obj == expected

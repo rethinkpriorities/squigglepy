@@ -549,3 +549,141 @@ def test_mixture_different_format():
     assert obj.dists[1].x == 3
     assert obj.dists[1].y == 4
     assert obj.weights == [0.4, 0.6]
+
+
+def test_add_distribution():
+    obj = norm(0, 1) + 12
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 12
+    assert obj.fn_str == '+'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) + 12'
+
+
+def test_radd_distribution():
+    obj = 12 + norm(0, 1)
+    assert obj.type == 'complex'
+    assert obj.left == 12
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 0
+    assert obj.right.y == 1
+    assert obj.fn_str == '+'
+    assert str(obj) == '<Distribution> 12 + norm(mean=0.5, sd=0.3)'
+
+
+def test_sub_distribution():
+    obj = norm(0, 1) - 12
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 12
+    assert obj.fn_str == '-'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) - 12'
+
+
+def test_rsub_distribution():
+    obj = 12 - norm(0, 1)
+    assert obj.type == 'complex'
+    assert obj.left == 12
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 0
+    assert obj.right.y == 1
+    assert obj.fn_str == '-'
+    assert str(obj) == '<Distribution> 12 - norm(mean=0.5, sd=0.3)'
+
+
+def test_mul_distribution():
+    obj = norm(0, 1) * 12
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 12
+    assert obj.fn_str == '*'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) * 12'
+
+
+def test_rmul_distribution():
+    obj = 12 * norm(0, 1)
+    assert obj.type == 'complex'
+    assert obj.left == 12
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 0
+    assert obj.right.y == 1
+    assert obj.fn_str == '*'
+    assert str(obj) == '<Distribution> 12 * norm(mean=0.5, sd=0.3)'
+
+
+def test_truediv_distribution():
+    obj = norm(0, 1) / 12
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 12
+    assert obj.fn_str == '/'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) / 12'
+
+
+def test_rtruediv_distribution():
+    obj = 12 / norm(0, 1)
+    assert obj.type == 'complex'
+    assert obj.left == 12
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 0
+    assert obj.right.y == 1
+    assert obj.fn_str == '/'
+    assert str(obj) == '<Distribution> 12 / norm(mean=0.5, sd=0.3)'
+
+
+def test_floordiv_distribution():
+    obj = norm(0, 1) // 12
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 12
+    assert obj.fn_str == '//'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) // 12'
+
+
+def test_rfloordiv_distribution():
+    obj = 12 // norm(0, 1)
+    assert obj.type == 'complex'
+    assert obj.left == 12
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 0
+    assert obj.right.y == 1
+    assert obj.fn_str == '//'
+    assert str(obj) == '<Distribution> 12 // norm(mean=0.5, sd=0.3)'
+
+
+def test_pow_distribution():
+    obj = norm(0, 1) ** 2
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 2
+    assert obj.fn_str == '**'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) ** 2'
+
+
+def test_rpow_distribution():
+    obj = 2 ** norm(0, 1)
+    assert obj.type == 'complex'
+    assert obj.left == 2
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 0
+    assert obj.right.y == 1
+    assert obj.fn_str == '**'
+    assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3)'
+
+
+def test_complex_math():
+    obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (lognorm(10, 100) / 11) + 8
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 + lognorm(mean=3.45, sd=0.7) / 11 + 8'

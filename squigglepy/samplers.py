@@ -3,7 +3,6 @@ import numpy as np
 from tqdm import tqdm
 from scipy import stats
 
-from .distributions import const, BaseDistribution
 from .utils import event_occurs, _process_weights_values
 
 
@@ -419,6 +418,7 @@ def discrete_sample(items):
     'b'
     """
     weights, values = _process_weights_values(None, items)
+    from .distributions import const
     values = [const(v) for v in values]
     return mixture_sample(values, weights)
 
@@ -512,8 +512,13 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
     elif n <= 0:
         raise ValueError('n must be >= 1')
 
+    from .distributions import BaseDistribution
+
     if callable(dist):
         out = dist()
+
+    elif isinstance(dist, float) or isinstance(dist, int):
+        return dist
 
     elif not isinstance(dist, BaseDistribution):
         raise ValueError('input to sample is malformed - must be a distribution')
@@ -566,8 +571,14 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
     elif dist.type == 'mixture':
         out = mixture_sample(dist.dists, dist.weights)
 
+    elif dist.type == 'complex':
+        out = dist.fn(sample(dist.left), sample(dist.right))
+
     else:
         raise ValueError('{} sampler not found'.format(dist.type))
+
+    if isinstance(out, BaseDistribution):
+        return sample(out)
 
     lclip_ = None
     rclip_ = None

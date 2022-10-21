@@ -25,16 +25,14 @@ pop_of_ny_2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the 
 
 def pct_of_pop_w_pianos():
     percentage = sq.to(.2, 1)
-    return sq.sample(percentage) * 0.01 # We assume there are almost no people with multiple pianos
+    return percentage * 0.01 # We assume there are almost no people with multiple pianos
 
 def piano_tuners_per_piano():
     pianos_per_piano_tuner = sq.to(2*K, 50*K)
-    return 1 / sq.sample(pianos_per_piano_tuner)
+    return 1 / pianos_per_piano_tuner
 
 def total_tuners_in_2022():
-    return (sq.sample(pop_of_ny_2022) *
-            pct_of_pop_w_pianos() *
-            piano_tuners_per_piano())
+    return pop_of_ny_2022 * pct_of_pop_w_pianos() * piano_tuners_per_piano()
 
 samples = sq.sample(total_tuners_in_2022, n=1000, verbose=True)
 print('-')
@@ -57,31 +55,27 @@ pop_of_ny_2022 = sq.to(8.1*M, 8.4*M)
 
 def pct_of_pop_w_pianos():
     percentage = sq.to(.2, 1)
-    return sq.sample(percentage) * 0.01
-
-def pct_of_pop_w_pianos():
-    percentage = sq.to(.2, 1)
-    return sq.sample(percentage) * 0.01
+    return percentage * 0.01
 
 def piano_tuners_per_piano():
     pianos_per_piano_tuner = sq.to(2*K, 50*K)
-    return 1 / sq.sample(pianos_per_piano_tuner)
+    return 1 / pianos_per_piano_tuner
 
 # Time in years after 2022
 def pop_at_time(t):
     avg_yearly_pct_change = sq.to(-0.01, 0.05) # We're expecting NYC to continuously grow with an mean of roughly between -1% and +4% per year
-    return sq.sample(pop_of_ny_2022) * ((sq.sample(avg_yearly_pct_change) + 1) ** t)
+    return pop_of_ny_2022 * ((avg_yearly_pct_change + 1) ** t)
 
 def total_tuners_at_time(t):
-    return (pop_at_time(t) *
-            pct_of_pop_w_pianos() *
-            piano_tuners_per_piano())
+    return pop_at_time(t) * pct_of_pop_w_pianos() * piano_tuners_per_piano()
 
 # Get total piano tuners at 2030
-sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030-2022), n=1000))
+sq.get_percentiles(total_tuners_at_time(2030-2022) @ 1000)  # Note: `@ 1000` is shorthand to get 1000 samples
 ```
 
 **WARNING:** Be careful about dividing by `K`, `M`, etc. `1/2*K` = 500 in Python. Use `1/(2*K)` instead to get the expected outcome.
+
+**WARNING:** Be careful about using `K` to get sample counts. Use `sq.norm(2, 3) @ (2*K)`... `sq.norm(2, 3) @ 2*K` will return only two samples, multiplied by 1000.
 
 ### Additional Features
 
@@ -89,67 +83,79 @@ sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030-2022), n=1000))
 import squigglepy as sq
 
 # Normal distribution
-sq.sample(sq.norm(1, 3))  # 90% interval from 1 to 3
+sq.norm(1, 3)  # 90% interval from 1 to 3
 
 # Distribution can be sampled with mean and sd too
-sq.sample(sq.norm(mean=0, sd=1))
-sq.sample(sq.norm(-1.67, 1.67))  # This is equivalent to mean=0, sd=1
+sq.norm(mean=0, sd=1)
+sq.norm(-1.67, 1.67)  # This is equivalent to mean=0, sd=1
 
-# Get more than one sample
+# Shorthand to get one sample
+~sq.norm(1, 3)
+
+# Shorthand to get more than one sample
+sq.norm(1, 3) @ 100
+
+# Longhand version
 sq.sample(sq.norm(1, 3), n=100)
 
+# Nice progress reporter
+sq.sample(sq.norm(1, 3), n=1000, verbose=True)
+
 # Other distributions exist
-sq.sample(sq.lognorm(1, 10))
-sq.sample(sq.tdist(1, 10, t=5))
-sq.sample(sq.triangular(1, 2, 3))
-sq.sample(sq.binomial(p=0.5, n=5))
-sq.sample(sq.beta(a=1, b=2))
-sq.sample(sq.bernoulli(p=0.5))
-sq.sample(sq.poisson(10))
-sq.sample(sq.chisquare(2))
-sq.sample(sq.gamma(3, 2))
-sq.sample(sq.exponential(scale=1))
+sq.lognorm(1, 10)
+sq.tdist(1, 10, t=5)
+sq.triangular(1, 2, 3)
+sq.binomial(p=0.5, n=5)
+sq.beta(a=1, b=2)
+sq.bernoulli(p=0.5)
+sq.poisson(10)
+sq.chisquare(2)
+sq.gamma(3, 2)
+sq.exponential(scale=1)
 
 # Discrete sampling
-sq.sample(sq.discrete({'A': 0.1, 'B': 0.9}))
+sq.discrete({'A': 0.1, 'B': 0.9})
 
 # Can return integers
-sq.sample(sq.discrete({0: 0.1, 1: 0.3, 2: 0.3, 3: 0.15, 4: 0.15}))
+sq.discrete({0: 0.1, 1: 0.3, 2: 0.3, 3: 0.15, 4: 0.15})
 
 # Alternate format (also can be used to return more complex objects)
-sq.sample(sq.discrete([[0.1,  0],
-                       [0.3,  1],
-                       [0.3,  2],
-                       [0.15, 3],
-                       [0.15, 4]]))
+sq.discrete([[0.1,  0],
+             [0.3,  1],
+             [0.3,  2],
+             [0.15, 3],
+             [0.15, 4]]))
 
-sq.sample(sq.discrete([0, 1, 2])) # No weights assumes equal weights
+sq.discrete([0, 1, 2]) # No weights assumes equal weights
 
 # You can mix distributions together
-sq.sample(sq.mixture([sq.norm(1, 3),
-                      sq.norm(4, 10),
-                      sq.lognorm(1, 10)],  # Distributions to mix
-                     [0.3, 0.3, 0.4]))     # These are the weights on each distribution
+sq.mixture([sq.norm(1, 3),
+            sq.norm(4, 10),
+            sq.lognorm(1, 10)],  # Distributions to mix
+           [0.3, 0.3, 0.4]))     # These are the weights on each distribution
 
 # This is equivalent to the above, just a different way of doing the notation
-sq.sample(sq.mixture([[0.3, sq.norm(1,3)],
-                      [0.3, sq.norm(4,10)],
-                      [0.4, sq.lognorm(1,10)]]))
+sq.mixture([[0.3, sq.norm(1,3)],
+            [0.3, sq.norm(4,10)],
+            [0.4, sq.lognorm(1,10)]]))
 
-# You can add and subtract distributions (a little less cool compared to native Squiggle unfortunately):
-sq.sample(lambda: sq.sample(sq.norm(1,3)) + sq.sample(sq.norm(4,5)), n=100)
-sq.sample(lambda: sq.sample(sq.norm(1,3)) - sq.sample(sq.norm(4,5)), n=100)
-sq.sample(lambda: sq.sample(sq.norm(1,3)) * sq.sample(sq.norm(4,5)), n=100)
-sq.sample(lambda: sq.sample(sq.norm(1,3)) / sq.sample(sq.norm(4,5)), n=100)
+# You can add and subtract distributions
+(sq.norm(1,3) + sq.norm(4,5)) @ 100
+(sq.norm(1,3) - sq.norm(4,5)) @ 100
+(sq.norm(1,3) * sq.norm(4,5)) @ 100
+(sq.norm(1,3) / sq.norm(4,5)) @ 100
+
+# You can also do math with numbers
+~((sq.norm(sd=5) + 2) * 2)
 
 # You can change the CI from 90% (default) to 80%
-sq.sample(sq.norm(1, 3, credibility=80))
+sq.norm(1, 3, credibility=80)
 
 # You can clip
-sq.sample(sq.norm(0, 3, lclip=0, rclip=5)) # Sample norm with a 90% CI from 0-3, but anything lower than 0 gets clipped to 0 and anything higher than 5 gets clipped to 5.
+sq.norm(0, 3, lclip=0, rclip=5) # Sample norm with a 90% CI from 0-3, but anything lower than 0 gets clipped to 0 and anything higher than 5 gets clipped to 5.
 
 # You can specify a constant (which can be useful for passing things into functions or mixtures)
-sq.sample(sq.const(4)) # Always returns 4
+sq.const(4) # Always returns 4
 ```
 
 
@@ -161,7 +167,7 @@ An example of how to use distributions to build tools:
 import squigglepy as sq
 
 def roll_die(sides, n=1):
-    return sq.sample(sq.discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
+    return sq.discrete(list(range(1, sides + 1))) @ n if sides > 0 else None
 
 roll_die(sides=6, n=10)
 # [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
@@ -188,10 +194,10 @@ from squigglepy.numbers import M
 
 def mammography(has_cancer):
     p = 0.8 if has_cancer else 0.096
-    return bool(sq.sample(sq.bernoulli(p)))
+    return bool(~sq.bernoulli(p)))
 
 def define_event():
-    cancer = sq.sample(sq.bernoulli(0.01))    
+    cancer = ~sq.bernoulli(0.01)
     return({'mammography': mammography(cancer),
             'cancer': cancer})
 
@@ -220,7 +226,7 @@ from squigglepy.numbers import K
 
 print('Prior')
 prior = sq.norm(1,5)
-prior_samples = sq.sample(prior, n=10*K)
+prior_samples = prior @ (10*K)
 plt.hist(prior_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(prior_samples))
@@ -229,7 +235,7 @@ print('-')
 
 print('Evidence')
 evidence = sq.norm(2,3)
-evidence_samples = sq.sample(evidence, n=10*K)
+evidence_samples = evidence @ (10*K)
 plt.hist(evidence_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(evidence_samples))
@@ -238,7 +244,7 @@ print('-')
 
 print('Posterior')
 posterior = bayes.update(prior, evidence)
-posterior_samples = sq.sample(posterior, n=10*K)
+posterior_samples = posterior @ (10*K)
 plt.hist(posterior_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(posterior_samples))
@@ -246,7 +252,7 @@ print('Posterior Mean: {} SD: {}'.format(np.mean(posterior_samples), np.std(post
 
 print('Average')
 average = bayes.average(prior, evidence)
-average_samples = sq.sample(average, n=10*K)
+average_samples = average @ (10*K)
 plt.hist(average_samples, bins = 200)
 plt.show()
 print(sq.get_percentiles(average_samples))
@@ -296,11 +302,11 @@ def p_mary_calls(alarm_goes_off):
     return 0.7 if alarm_goes_off else 0.01
 
 def define_event():
-    burglary_happens = bool(sq.sample(sq.bernoulli(p=0.001)))
-    earthquake_happens = bool(sq.sample(sq.bernoulli(p=0.002)))
-    alarm_goes_off = bool(sq.sample(sq.bernoulli(p_alarm_goes_off(burglary_happens, earthquake_happens))))
-    john_calls = bool(sq.sample(sq.bernoulli(p_john_calls(alarm_goes_off))))
-    mary_calls = bool(sq.sample(sq.bernoulli(p_mary_calls(alarm_goes_off))))
+    burglary_happens = bool(~sq.bernoulli(p=0.001))
+    earthquake_happens = bool(~sq.bernoulli(p=0.002))
+    alarm_goes_off = bool(~sq.bernoulli(p_alarm_goes_off(burglary_happens, earthquake_happens)))
+    john_calls = bool(~sq.bernoulli(p_john_calls(alarm_goes_off)))
+    mary_calls = bool(~sq.bernoulli(p_mary_calls(alarm_goes_off)))
     return {'burglary': burglary_happens,
             'earthquake': earthquake_happens,
             'alarm_goes_off': alarm_goes_off,
@@ -338,8 +344,8 @@ from squigglepy.numbers import K, M, B, T
 
 def monte_hall(door_picked, switch=False):
     doors = ['A', 'B', 'C']
-    car_is_behind_door = sq.sample(sq.discrete(doors))
-    reveal_door = sq.sample(sq.discrete([d for d in doors if d != door_picked and d != car_is_behind_door]))
+    car_is_behind_door = ~sq.discrete(doors)
+    reveal_door = ~sq.discrete([d for d in doors if d != door_picked and d != car_is_behind_door])
     
     if switch:
         old_door_picked = door_picked
@@ -350,7 +356,7 @@ def monte_hall(door_picked, switch=False):
 
 
 def define_event():
-    door = sq.sample(sq.discrete(['A', 'B', 'C']))
+    door = ~sq.discrete(['A', 'B', 'C'])
     switch = sq.event(0.5)
     return {'won': monte_hall(door_picked=door, switch=switch),
             'switched': switch}
@@ -391,7 +397,7 @@ def define_event():
     if flip == 'heads': # Blue bag
         dice_sides = 6
     else: # Red bag
-        dice_sides = sq.sample(sq.discrete([4, 6, 10, 20]))
+        dice_sides = ~sq.discrete([4, 6, 10, 20])
     return sq.roll_die(dice_sides)
 
 
@@ -443,3 +449,10 @@ This package is unofficial and supported by myself and Rethink Priorities. It is
 This package is also new and not yet in a stable production version, so you may encounter bugs and other errors. Please report those so they can be fixed. It's also possible that future versions of the package may introduce breaking changes.
 
 This package is available under an MIT License.
+
+
+## Acknowledgements
+
+* Thanks to Ozzie Gooen and the Quantified Uncertainty Research Institute for creating and maintaining the original Squiggle language.
+* Thanks to Denis Drescher for helping me implement math between distributions.
+
