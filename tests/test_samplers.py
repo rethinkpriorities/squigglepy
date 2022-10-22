@@ -5,7 +5,9 @@ from unittest.mock import patch, Mock
 from ..squigglepy.distributions import (const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular, chisquare,
-                                        poisson, exponential, gamma, mixture)
+                                        poisson, exponential, gamma, mixture,
+                                        dist_min, dist_max, dist_round, dist_ceil,
+                                        dist_floor, lclip, rclip, clip, dist_fn)
 from ..squigglepy import samplers
 from ..squigglepy.samplers import (normal_sample, lognormal_sample, mixture_sample,
                                    discrete_sample, log_t_sample, t_sample, sample)
@@ -447,8 +449,20 @@ def test_sample_n_is_0_is_error_shorthand_alt():
     assert 'n must be >= 1' in str(execinfo.value)
 
 
-def test_sample_number():
+def test_sample_int():
     assert sample(4) == 4
+
+
+def test_sample_float():
+    assert sample(3.14) == 3.14
+
+
+def test_sample_str():
+    assert sample('a') == 'a'
+
+
+def test_sample_none():
+    assert sample(None) is None
 
 
 def test_sample_callable():
@@ -505,3 +519,88 @@ def test_sample_complex_math():
     obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (lognorm(10, 100) / 11) + 8
     expected = (2 ** 10) - (8 * 6) + 2 + (100 / 11) + 8
     assert ~obj == expected
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+def test_pipe():
+    assert ~(norm(0, 1) >> rclip(2)) == 2
+    assert ~(norm(0, 1) >> lclip(2)) == 10
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1.6))
+def test_two_pipes():
+    assert ~(norm(0, 1) >> rclip(10) >> dist_round) == 2
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+def test_dist_fn():
+    def mirror(x):
+        return 1 - x if x > 0.5 else x
+
+    assert ~dist_fn(norm(0, 1), mirror) == -9
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+def test_dist_fn2():
+    def mirror(x, y):
+        return 1 - x if x > y else x
+
+    assert ~dist_fn(norm(0, 10), norm(1, 2), mirror) == 10
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+def test_dist_fn_list():
+    def mirror(x):
+        return 1 - x if x > 0.5 else x
+
+    def mirror2(x):
+        return 1 + x if x > 0.5 else x
+
+    assert ~dist_fn(norm(0, 1), [mirror, mirror2]) == -9
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+@patch.object(samplers, 'lognormal_sample', Mock(return_value=20))
+def test_max():
+    assert ~dist_max(norm(0, 1), lognorm(0.1, 1)) == 20
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+@patch.object(samplers, 'lognormal_sample', Mock(return_value=20))
+def test_min():
+    assert ~dist_min(norm(0, 1), lognorm(0.1, 1)) == 10
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=3.1415))
+def test_round():
+    assert ~dist_round(norm(0, 1)) == 3
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=3.1415))
+def test_round_two_digits():
+    assert ~dist_round(norm(0, 1), digits=2) == 3.14
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=3.1415))
+def test_ceil():
+    assert ~dist_ceil(norm(0, 1)) == 4
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=3.1415))
+def test_floor():
+    assert ~dist_floor(norm(0, 1)) == 3
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+def test_lclip():
+    assert ~lclip(norm(0, 1), 0.5) == 10
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+def test_rclip():
+    assert ~rclip(norm(0, 1), 0.5) == 0.5
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=10))
+def test_clip():
+    assert ~clip(norm(0, 1), 0.5, 0.9) == 0.9

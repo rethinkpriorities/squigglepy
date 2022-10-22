@@ -144,7 +144,7 @@ if out != expected:
     print('ERROR 3')
     import pdb
     pdb.set_trace()
-_mark_time(start3, 0.00452, 'Test 3 complete')
+_mark_time(start3, 0.028, 'Test 3 complete')
 
 
 sq.set_seed(42)
@@ -474,6 +474,33 @@ _mark_time(start14, 0.637, 'Test 14 complete')
 sq.set_seed(42)
 start15 = time.time()
 print('Test 15...')
+def model():
+    prior = sq.exponential(12)
+    guess = sq.norm(10, 14)
+    days = bayes.average(prior, guess, weights=[0.3, 0.7])
+
+    def move_days(days):
+        if days < 4 and sq.event(0.9):
+            days = 4
+        if days < 7 and sq.event(0.9):
+            diff_days = 7 - days
+            days = days + sq.norm(diff_days / 1.5, diff_days * 1.5)
+        return days
+        
+    return sq.dist_fn(days, fn=move_days) >> sq.dist_round >> sq.lclip(3)
+
+
+samples = sq.sample(model, n=1000)
+if not all(isinstance(s, np.int64) for s in samples):
+    print('ERROR 15')
+    import pdb
+    pdb.set_trace()
+_mark_time(start15, 0.187, 'Test 15 complete')
+
+
+sq.set_seed(42)
+start16 = time.time()
+print('Test 16...')
 ts = [10, 20, 50]
 vals = [[1, 10], [0, 3], [-4, 4], [5, 10], [100, 200]]
 credibilities = [80, 90]
@@ -496,7 +523,7 @@ for t in ts:
                         pdb.set_trace()
                 tqdm_.update(1)
 tqdm_.close()
-_mark_time(start15, 107.2, 'Test 15 complete')
+_mark_time(start16, 107.2, 'Test 16 complete')
 
 
 _mark_time(start1, 109.66, 'Integration tests complete')

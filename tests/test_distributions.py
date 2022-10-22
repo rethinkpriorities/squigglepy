@@ -2,7 +2,9 @@ import pytest
 from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular, chisquare,
-                                        poisson, exponential, gamma, mixture)
+                                        poisson, exponential, gamma, mixture,
+                                        lclip, rclip, clip, dist_round, dist_fn,
+                                        dist_max, dist_ceil, dist_floor)
 
 
 def test_to_is_log_when_all_positive():
@@ -572,6 +574,58 @@ def test_mixture_can_be_discrete():
     assert str(obj) == '<Distribution> mixture'
 
 
+def test_lt_distribution():
+    obj = norm(0, 1) < norm(1, 2)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 1
+    assert obj.right.y == 2
+    assert obj.fn_str == '<'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) < norm(mean=1.5, sd=0.3)'
+
+
+def test_lte_distribution():
+    obj = norm(0, 1) <= norm(1, 2)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 1
+    assert obj.right.y == 2
+    assert obj.fn_str == '<='
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) <= norm(mean=1.5, sd=0.3)'
+
+
+def test_gt_distribution():
+    obj = norm(0, 1) > norm(1, 2)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 1
+    assert obj.right.y == 2
+    assert obj.fn_str == '>'
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) > norm(mean=1.5, sd=0.3)'
+
+
+def test_gte_distribution():
+    obj = norm(0, 1) >= norm(1, 2)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 1
+    assert obj.right.y == 2
+    assert obj.fn_str == '>='
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) >= norm(mean=1.5, sd=0.3)'
+
+
 def test_add_distribution():
     obj = norm(0, 1) + 12
     assert obj.type == 'complex'
@@ -708,3 +762,129 @@ def test_complex_math():
     obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (lognorm(10, 100) / 11) + 8
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 + lognorm(mean=3.45, sd=0.7) / 11 + 8'
+
+
+def test_pipe():
+    obj = norm(0, 1) >> lclip(2)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 2)'
+
+
+def test_two_pipes():
+    obj = norm(0, 1) >> lclip(2) >> dist_round
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), 0)'
+
+
+def test_dist_fn():
+    def mirror(x):
+        return 1 - x if x > 0.5 else x
+
+    obj = dist_fn(norm(0, 1), mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
+    obj = norm(0, 1) >> dist_fn(mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
+
+
+def test_dist_fn2():
+    def mirror(x, y):
+        return 1 - x if x > y else x
+
+    obj = dist_fn(norm(0, 10), norm(1, 2), mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))'
+    obj = norm(0, 10) >> dist_fn(norm(1, 2), mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))'
+
+
+def test_dist_fn_list():
+    def mirror(x):
+        return 1 - x if x > 0.5 else x
+
+    def mirror2(x):
+        return 1 + x if x > 0.5 else x
+
+    obj = dist_fn(norm(0, 1), [mirror, mirror2])
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror2(mirror(norm(mean=0.5, sd=0.3)))'
+    obj = norm(0, 1) >> dist_fn([mirror, mirror2])
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror2(mirror(norm(mean=0.5, sd=0.3)))'
+
+
+def test_max():
+    obj = dist_max(norm(0, 1), lognorm(0.1, 1))
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+
+
+def test_min():
+    obj = dist_max(norm(0, 1), lognorm(0.1, 1))
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+
+
+def test_round():
+    obj = dist_round(norm(0, 1))
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 0)'
+    obj = norm(0, 1) >> dist_round
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 0)'
+
+
+def test_round_two_digits():
+    obj = dist_round(norm(0, 1), digits=2)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 2)'
+    obj = norm(0, 1) >> dist_round(2)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 2)'
+
+
+def test_ceil():
+    obj = dist_ceil(norm(0, 1))
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> ceil(norm(mean=0.5, sd=0.3))'
+    obj = norm(0, 1) >> dist_ceil
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> ceil(norm(mean=0.5, sd=0.3))'
+
+
+def test_floor():
+    obj = dist_floor(norm(0, 1))
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> floor(norm(mean=0.5, sd=0.3))'
+    obj = norm(0, 1) >> dist_floor
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> floor(norm(mean=0.5, sd=0.3))'
+
+
+def test_lclip():
+    obj = lclip(norm(0, 1), 0.5)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)'
+    obj = norm(0, 1) >> lclip(0.5)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)'
+
+
+def test_rclip():
+    obj = rclip(norm(0, 1), 0.5)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)'
+    obj = norm(0, 1) >> rclip(0.5)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)'
+
+
+def test_clip():
+    obj = clip(norm(0, 1), 0.5, 0.9)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)'
+    obj = norm(0, 1) >> clip(0.5, 0.9)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)'

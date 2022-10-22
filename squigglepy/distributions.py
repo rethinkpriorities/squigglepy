@@ -55,8 +55,28 @@ class OperableDistribution(BaseDistribution):
         else:
             raise ValueError
 
+    def __rshift__(self, fn):
+        if callable(fn):
+            return fn(self)
+        elif isinstance(fn, ComplexDistribution):
+            return ComplexDistribution(self, fn.left, fn.fn, fn.fn_str, infix=False)
+        else:
+            raise ValueError
+
     def __rmatmul__(self, n):
         return self.__matmul__(n)
+
+    def __gt__(self, dist):
+        return ComplexDistribution(self, dist, operator.gt, '>')
+
+    def __ge__(self, dist):
+        return ComplexDistribution(self, dist, operator.ge, '>=')
+
+    def __lt__(self, dist):
+        return ComplexDistribution(self, dist, operator.lt, '<')
+
+    def __le__(self, dist):
+        return ComplexDistribution(self, dist, operator.le, '<=')
 
     def __add__(self, dist):
         return ComplexDistribution(self, dist, operator.add, '+')
@@ -96,23 +116,342 @@ class OperableDistribution(BaseDistribution):
 
 
 class ComplexDistribution(OperableDistribution):
-    def __init__(self, left, right=None, fn=operator.add, fn_str='+'):
+    def __init__(self, left, right=None, fn=operator.add, fn_str='+', infix=True):
         super().__init__()
         self.left = left
         self.right = right
         self.fn = fn
         self.fn_str = fn_str
+        self.infix = infix
         self.type = 'complex'
 
     def __str__(self):
-        if self.right is None:
+        if self.right is None and self.infix:
             out = '<Distribution> {} {}'.format(self.fn_str,
                                                 str(self.left).replace('<Distribution> ', ''))
-        else:
+        elif self.right is None and not self.infix:
+            out = '<Distribution> {}({})'.format(self.fn_str,
+                                                 str(self.left).replace('<Distribution> ', ''))
+        elif self.right is not None and self.infix:
             out = '<Distribution> {} {} {}'.format(str(self.left).replace('<Distribution> ', ''),
                                                    self.fn_str,
                                                    str(self.right).replace('<Distribution> ', ''))
+        elif self.right is not None and not self.infix:
+            out = '<Distribution> {}({}, {})'
+            out = out.format(self.fn_str,
+                             str(self.left).replace('<Distribution> ', ''),
+                             str(self.right).replace('<Distribution> ', ''))
+        else:
+            raise ValueError
         return out
+
+
+def dist_fn(dist1, dist2=None, fn=None, name=None):
+    """
+    Initialize a distribution that has a custom function applied to the result.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution or function or list
+        Typically, the distribution to apply the function to. Could also be a function
+        or list of functions if ``dist_fn`` is being used in a pipe.
+    dist2 : Distribution or function or list or None
+        Typically, the second distribution to apply the function to if the function takes
+        two arguments. Could also be a function or list of functions if ``dist_fn`` is
+        being used in a pipe.
+    fn : function or None
+        The function to apply to the distribution(s).
+    name : str or None
+        By default, ``fn.__name__`` will be used to name the function. But you can pass
+        a custom name.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+        when it is sampled.
+
+    Examples
+    --------
+    >>> def double(x):
+    >>>     return x * 2
+    >>> dist_fn(norm(0, 1), double)
+    <Distribution> double(norm(mean=0.5, sd=0.3))
+    >>> norm(0, 1) >> dist_fn(double)
+    <Distribution> double(norm(mean=0.5, sd=0.3))
+    """
+    if isinstance(dist1, list) and callable(dist1[0]) and dist2 is None and fn is None:
+        fn = dist1
+
+        def out_fn(d):
+            out = d
+            for f in fn:
+                name_ = f.__name__ if name is None else name
+                out = ComplexDistribution(out, None, fn=f, fn_str=name_, infix=False)
+            return out
+
+        return out_fn
+
+    if callable(dist1) and dist2 is None and fn is None:
+        return lambda d: dist_fn(d, fn=dist1)
+
+    if isinstance(dist2, list) and callable(dist2[0]) and fn is None:
+        fn = dist2
+        dist2 = None
+
+    if callable(dist2) and fn is None:
+        fn = dist2
+        dist2 = None
+
+    if not isinstance(fn, list):
+        fn = [fn]
+
+    out = dist1
+    for f in fn:
+        name_ = f.__name__ if name is None else name
+        out = ComplexDistribution(out, dist2, fn=f, fn_str=name_, infix=False)
+
+    return out
+
+
+def dist_max(dist1, dist2):
+    """
+    Initialize the calculation of the maximum value of two distributions.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The distribution to sample and determine the max of.
+    dist2 : Distribution
+        The second distribution to sample and determine the max of.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+        when it is sampled.
+
+    Examples
+    --------
+    >>> dist_max(norm(0, 1), norm(1, 2))
+    <Distribution> max(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
+    """
+    return dist_fn(dist1, dist2, max)
+
+
+def dist_min(dist1, dist2):
+    """
+    Initialize the calculation of the minimum value of two distributions.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The distribution to sample and determine the min of.
+    dist2 : Distribution
+        The second distribution to sample and determine the min of.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> dist_min(norm(0, 1), norm(1, 2))
+    <Distribution> min(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
+    """
+    return dist_fn(dist1, dist2, min)
+
+
+def _round(x, digits=0):
+    x = round(x, digits)
+    if digits == 0:
+        x = int(x)
+    return x
+
+
+def dist_round(dist1, digits=0):
+    """
+    Initialize the rounding of the output of the distribution.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The distribution to sample and then round.
+    digits : int
+        The number of digits to round to.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> dist_round(norm(0, 1))
+    <Distribution> round(norm(mean=0.5, sd=0.3), 0)
+    """
+    if isinstance(dist1, int) and digits == 0:
+        return lambda d: dist_round(d, digits=dist1)
+    else:
+        return dist_fn(dist1, digits, _round, name='round')
+
+
+def dist_ceil(dist1):
+    """
+    Initialize the ceiling rounding of the output of the distribution.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The distribution to sample and then ceiling round.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> dist_ceil(norm(0, 1))
+    <Distribution> ceil(norm(mean=0.5, sd=0.3))
+    """
+    return dist_fn(dist1, None, np.ceil)
+
+
+def dist_floor(dist1):
+    """
+    Initialize the floor rounding of the output of the distribution.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The distribution to sample and then floor round.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> dist_floor(norm(0, 1))
+    <Distribution> floor(norm(mean=0.5, sd=0.3))
+    """
+    return dist_fn(dist1, None, np.floor)
+
+
+def _lclip(n, val):
+    return val if n < val else n
+
+
+def lclip(dist1, val=None):
+    """
+    Initialize the clipping/bounding of the output of the distribution by the lower value.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution or function
+        The distribution to clip. If this is a funciton, it will return a partial that will
+        be suitable for use in piping.
+    val : int or float or None
+        The value to use as the lower bound for clipping.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> lclip(norm(0, 1), 0.5)
+    <Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)
+    """
+    if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
+        return lambda d: lclip(d, dist1)
+    else:
+        return dist_fn(dist1, val, _lclip, name='lclip')
+
+
+def _rclip(n, val):
+    return val if n > val else n
+
+
+def rclip(dist1, val=None):
+    """
+    Initialize the clipping/bounding of the output of the distribution by the upper value.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution or function
+        The distribution to clip. If this is a funciton, it will return a partial that will
+        be suitable for use in piping.
+    val : int or float or None
+        The value to use as the upper bound for clipping.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> rclip(norm(0, 1), 0.5)
+    <Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)
+    """
+    if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
+        return lambda d: rclip(d, dist1)
+    else:
+        return dist_fn(dist1, val, _rclip, name='rclip')
+
+
+def clip(dist1, left, right=None):
+    """
+    Initialize the clipping/bounding of the output of the distribution.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution or function
+        The distribution to clip. If this is a funciton, it will return a partial that will
+        be suitable for use in piping.
+    left : int or float or None
+        The value to use as the lower bound for clipping.
+    right : int or float or None
+        The value to use as the upper bound for clipping.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> clip(norm(0, 1), 0.5, 0.9)
+    <Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)
+    """
+    if ((isinstance(dist1, int) or isinstance(dist1, float)) and
+       (isinstance(left, int) or isinstance(left, float)) and right is None):
+        return lambda d: rclip(lclip(d, dist1), left)
+    else:
+        return rclip(lclip(dist1, left), right)
 
 
 class ConstantDistribution(OperableDistribution):

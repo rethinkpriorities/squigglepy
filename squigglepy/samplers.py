@@ -519,7 +519,10 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
         if isinstance(out, BaseDistribution) or callable(out):
             return sample(out)
 
-    elif isinstance(dist, float) or isinstance(dist, int) or isinstance(dist, str):
+    elif (isinstance(dist, float) or
+          isinstance(dist, int) or
+          isinstance(dist, str) or
+          dist is None):
         return dist
 
     elif not isinstance(dist, BaseDistribution):
@@ -575,7 +578,12 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
         out = mixture_sample(dist.dists, dist.weights)
 
     elif dist.type == 'complex':
-        out = dist.fn(sample(dist.left), sample(dist.right))
+        if dist.right is None:
+            out = dist.fn(sample(dist.left))
+        else:
+            out = dist.fn(sample(dist.left), sample(dist.right))
+        if isinstance(out, BaseDistribution) or callable(out):
+            return sample(out)
 
     else:
         raise ValueError('{} sampler not found'.format(dist.type))

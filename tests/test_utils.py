@@ -7,7 +7,7 @@ from ..squigglepy.utils import (_process_weights_values, event_occurs, event_hap
                                 p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
                                 flip_coin, kelly, full_kelly, half_kelly, quarter_kelly)
 from ..squigglepy.rng import set_seed
-from ..squigglepy.distributions import bernoulli, beta
+from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
 
 
 def test_process_weights_values_simple_case():
@@ -351,6 +351,11 @@ def test_roll_die_different_sides():
     assert roll_die(4) == 4
 
 
+def test_roll_die_with_distribution():
+    set_seed(42)
+    assert (norm(2, 6) >> dist_round >> roll_die) == 2
+
+
 def test_roll_one_sided_die():
     with pytest.raises(ValueError) as excinfo:
         roll_die(1)
@@ -361,6 +366,12 @@ def test_roll_nonint_die():
     with pytest.raises(ValueError) as excinfo:
         roll_die(2.5)
     assert 'can only roll an integer number of sides' in str(excinfo.value)
+
+
+def test_roll_nonint_n():
+    with pytest.raises(ValueError) as excinfo:
+        roll_die(6, 2.5)
+    assert 'can only roll an integer number of times' in str(excinfo.value)
 
 
 def test_roll_five_die():

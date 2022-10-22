@@ -383,8 +383,12 @@ def roll_die(sides, n=1):
     5
     """
     from .samplers import sample
-    from .distributions import discrete
-    if sides < 2:
+    from .distributions import BaseDistribution, discrete
+    if isinstance(sides, BaseDistribution) or callable(sides):
+        sides = sample(sides)
+    if not isinstance(n, int):
+        raise ValueError('can only roll an integer number of times')
+    elif sides < 2:
         raise ValueError('cannot roll less than a 2-sided die.')
     elif not isinstance(sides, int):
         raise ValueError('can only roll an integer number of sides')

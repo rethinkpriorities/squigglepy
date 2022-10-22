@@ -95,7 +95,7 @@ sq.norm(-1.67, 1.67)  # This is equivalent to mean=0, sd=1
 # Shorthand to get more than one sample
 sq.norm(1, 3) @ 100
 
-# Longhand version
+# Longhand version to get more than one sample
 sq.sample(sq.norm(1, 3), n=100)
 
 # Nice progress reporter
@@ -153,6 +153,9 @@ sq.norm(1, 3, credibility=80)
 
 # You can clip
 sq.norm(0, 3, lclip=0, rclip=5) # Sample norm with a 90% CI from 0-3, but anything lower than 0 gets clipped to 0 and anything higher than 5 gets clipped to 5.
+
+# You can also clip with a function, and use pipes
+sq.norm(0, 3) >> sq.clip(0, 5)
 ```
 
 
@@ -389,12 +392,10 @@ from squigglepy.numbers import K, M, B, T
 from squigglepy import bayes
 
 def define_event():
-    flip = sq.flip_coin()
-    if flip == 'heads': # Blue bag
-        dice_sides = 6
+    if sq.flip_coin() == 'heads': # Blue bag
+        return sq.roll_die(6)
     else: # Red bag
-        dice_sides = ~sq.discrete([4, 6, 10, 20])
-    return sq.roll_die(dice_sides)
+        return sq.discrete([4, 6, 10, 20]) >> sq.roll_die
 
 
 bayes.bayesnet(define_event,
