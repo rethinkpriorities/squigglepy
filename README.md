@@ -87,7 +87,6 @@ sq.norm(1, 3)  # 90% interval from 1 to 3
 
 # Distribution can be sampled with mean and sd too
 sq.norm(mean=0, sd=1)
-sq.norm(-1.67, 1.67)  # This is equivalent to mean=0, sd=1
 
 # Shorthand to get one sample
 ~sq.norm(1, 3)

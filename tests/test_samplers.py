@@ -521,6 +521,11 @@ def test_sample_complex_math():
     assert ~obj == expected
 
 
+@patch.object(samplers, 'normal_sample', Mock(return_value=100))
+def test_sample_equality():
+    assert ~(norm(0, 1) == norm(1, 2))
+
+
 @patch.object(samplers, 'normal_sample', Mock(return_value=10))
 def test_pipe():
     assert ~(norm(0, 1) >> rclip(2)) == 2

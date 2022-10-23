@@ -78,6 +78,12 @@ class OperableDistribution(BaseDistribution):
     def __le__(self, dist):
         return ComplexDistribution(self, dist, operator.le, '<=')
 
+    def __eq__(self, dist):
+        return ComplexDistribution(self, dist, operator.le, '==')
+
+    def __ne__(self, dist):
+        return ComplexDistribution(self, dist, operator.le, '!=')
+
     def __add__(self, dist):
         return ComplexDistribution(self, dist, operator.add, '+')
 

@@ -1,3 +1,8 @@
+## v0.15
+
+* Distributions can now be compared with `==` and `!=`.
+
+
 ## v0.14
 
 * Nested sampling now works as intended.
@@ -14,15 +19,18 @@
 * `sample` can now be used directly on numbers. This makes `const` functionally obsolete, but `const` is maintained for backwards compatibility and in case it is useful.
 * `sample(None)` now returns `None` instead of an error.
 
+
 ## v0.13
 
 * Sample shorthand notation can go in either order. That is, `100 @ sq.norm(1, 2)` now works and is the same as `sq.norm(1, 2) @ 100`, which is the same as `sq.sample(sq.norm(1, 2), n=100)`.
+
 
 ## v0.12
 
 * Distributions now implement math directly. That is, you can do things like `sq.norm(2, 3) + sq.norm(4, 5)`, whereas previously this would not work. Thanks to Dawn Drescher for helping me implement this.
 * `~sq.norm(1, 2)` is now a shorthand for `sq.sample(sq.norm(1, 2))`. Thanks to Dawn Drescher for helping me implement this shorthand.
 * `sq.norm(1, 2) @ 100` is now a shorthand for `sq.sample(sq.norm(1, 2), n=100)`
+
 
 ## v0.11
 
@@ -39,6 +47,7 @@
 * All functions now have docstrings.
 * Added `kelly` to calculate Kelly criterion for bet sizing with probabilities.
 * Added `full_kelly`, `half_kelly`, `quarter_kelly` as helpful aliases.
+
 
 ## v0.10
 

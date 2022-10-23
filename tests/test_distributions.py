@@ -626,6 +626,32 @@ def test_gte_distribution():
     assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) >= norm(mean=1.5, sd=0.3)'
 
 
+def test_eq_distribution():
+    obj = norm(0, 1) == norm(1, 2)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 1
+    assert obj.right.y == 2
+    assert obj.fn_str == '=='
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) == norm(mean=1.5, sd=0.3)'
+
+
+def test_ne_distribution():
+    obj = norm(0, 1) != norm(1, 2)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right.type == 'norm'
+    assert obj.right.x == 1
+    assert obj.right.y == 2
+    assert obj.fn_str == '!='
+    assert str(obj) == '<Distribution> norm(mean=0.5, sd=0.3) != norm(mean=1.5, sd=0.3)'
+
+
 def test_add_distribution():
     obj = norm(0, 1) + 12
     assert obj.type == 'complex'
