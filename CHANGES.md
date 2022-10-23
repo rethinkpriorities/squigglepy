@@ -3,7 +3,7 @@
 * Nested sampling now works as intended.
 * You can now use `>>` for pipes for distributions. For example, `sq.norm(1, 2) >> dist_ceil`
 * Distributions can now be compared with `>`, `<`, `>=`, and `<=`.
-* `dist_max` can be used to get the maximum value between two distributions.
+* `dist_max` can be used to get the maximum value between two distributions. This family of functions are not evaluated until the distribution is sampled and they work with pipes.
 * `dist_min` can be used to get the minimum value between two distributions.
 * `dist_round` can be used to round the final output of a distribution. This makes the distribution discrete.
 * `dist_ceil` can be used to ceiling round the final output of a distribution. This makes the distribution discrete.
@@ -11,7 +11,7 @@
 * `lclip` can be used to clip a distribution to a lower bound. This is the same functionality that is available within the distribution and the `sample` method.
 * `rclip` can be used to clip a distribution to an upper bound. This is the same functionality that is available within the distribution and the `sample` method.
 * `clip` can be used to clip a distribution to both an upper bound and a lower bound. This is the same functionality that is available within the distribution and the `sample` method.
-* `sample` can now be used directly on numbers. This makes `const` functionally obsolete, but we maintain the function for backwards compatibility and in case it is useful.
+* `sample` can now be used directly on numbers. This makes `const` functionally obsolete, but `const` is maintained for backwards compatibility and in case it is useful.
 * `sample(None)` now returns `None` instead of an error.
 
 ## v0.13
