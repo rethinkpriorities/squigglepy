@@ -1,4 +1,6 @@
+import os
 import math
+import pickle
 
 import numpy as np
 
@@ -50,7 +52,8 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
 
 def bayesnet(event_fn, n=1, find=None, conditional_on=None,
              reduce_fn=None, raw=False, cache=True,
-             reload_cache=False, verbose=False):
+             reload_cache=False, dump_cache_file=None,
+             load_cache_file=None, verbose=False):
     """
     Calculate a Bayesian network.
 
@@ -77,6 +80,12 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         based on the ``event_fn``.
     reload_cache : bool
         If True, any existing cache will be ignored and recalculated.
+    dump_cache_file : str or None
+        If present, will write out the cache to a pickle file with this path with
+        ``.sqlcache.pkl`` appended to the file name.
+    load_cache_file : str or None
+        If present, will first attempt to load and use a cache from a file with this
+        path with ``.sqlcache.pkl`` appended to the file name.
     verbose : bool
         If True, will print out statements on computational progress.
 
@@ -108,12 +117,21 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
     """
     events = None
     if not reload_cache:
-        if verbose:
-            print('Checking cache...')
-        events = _squigglepy_internal_bayesnet_caches.get(event_fn)
+        if load_cache_file:
+            if verbose:
+                print('Loading from cache file...')
+            cache_path = load_cache_file + '.sqcache.pkl'
+            if os.path.exists(cache_path):
+                events = pickle.load(open(cache_path, 'rb'))
+            elif verbose:
+                print('...Cache file not found')
+        else:
+            if verbose:
+                print('Checking cache...')
+            events = _squigglepy_internal_bayesnet_caches.get(event_fn)
         if events:
             if events['metadata']['n'] < n:
-                raise ValueError(('{} results cached but ' +
+                raise ValueError(('insufficient samples - {} results cached but ' +
                                   'requested {}').format(events['metadata']['n'], n))
             else:
                 if verbose:
@@ -130,12 +148,16 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             events = [event_fn() for _ in range(n)]
         if verbose:
             print('...Generated')
-        if cache:
+        if cache or dump_cache_file:
             if verbose:
                 print('Caching...')
             metadata = {'n': n, 'last_generated': datetime.now()}
             _squigglepy_internal_bayesnet_caches[event_fn] = {'events': events,
                                                               'metadata': metadata}
+            if dump_cache_file:
+                cache_path = dump_cache_file + '.sqcache.pkl'
+                dump_cache_file = open(cache_path, 'wb')
+                pickle.dump(_squigglepy_internal_bayesnet_caches[event_fn], dump_cache_file)
             if verbose:
                 print('...Cached')
 

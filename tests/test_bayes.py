@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from ..squigglepy.bayes import simple_bayes, bayesnet, update, average
@@ -208,6 +209,76 @@ def test_bayesnet_insufficent_samples_error():
                  find=lambda e: e['a'],
                  conditional_on=lambda e: e['b'] == 3,
                  n=100)
+    assert 'insufficient samples' in str(excinfo.value)
+
+
+@pytest.fixture
+def cachefile():
+    cachefile = 'testcache'
+    yield cachefile
+    os.remove(cachefile + '.sqcache.pkl')
+
+
+def test_bayesnet_cachefile(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+
+    def define_event():
+        return {'a': 1, 'b': 2}
+
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             dump_cache_file=cachefile,
+             n=100)
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   raw=True,
+                   n=100)
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+    assert set(out) == set([1])
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   conditional_on=lambda e: e['b'] == 2,
+                   raw=True,
+                   n=100)
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+    assert set(out) == set([1])
+
+    def define_event():
+        return {'a': 2, 'b': 3}
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   load_cache_file=cachefile,
+                   raw=True,
+                   n=100)
+    assert set(out) == set([1])
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   raw=True,
+                   n=100)
+    assert set(out) == set([2])
+
+
+def test_bayesnet_cachefile_insufficent_samples_error(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+
+    def define_event():
+        return {'a': 1, 'b': 2}
+
+    bayesnet(define_event,
+             find=lambda e: e['a'],
+             dump_cache_file=cachefile,
+             n=100)
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+
+    with pytest.raises(ValueError) as excinfo:
+        bayesnet(define_event,
+                 load_cache_file=cachefile,
+                 find=lambda e: e['a'],
+                 n=1000)
     assert 'insufficient samples' in str(excinfo.value)
 
 
