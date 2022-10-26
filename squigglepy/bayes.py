@@ -133,19 +133,20 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             if verbose:
                 print('Loading from cache file...')
             events = pickle.load(open(cache_path, 'rb'))
+
         elif has_in_mem_cache:
             if verbose:
-                print('Checking in-memory cache...')
+                print('Loading from in-memory cache...')
             events = _squigglepy_internal_bayesnet_caches.get(event_fn)
 
         if events:
             if events['metadata']['n'] < n:
                 raise ValueError(('insufficient samples - {} results cached but ' +
                                   'requested {}').format(events['metadata']['n'], n))
-            else:
-                if verbose:
-                    print('...Cached data found. Using it.')
-                events = events['events']
+
+            events = events['events']
+            if verbose:
+                print('...Loaded')
 
     elif verbose:
         print('Reloading cache...')
@@ -193,6 +194,8 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             print('...Reducing')
         return events if reduce_fn is None else reduce_fn(events)
     else:
+        if verbose:
+            print('...Finding')
         events = [find(e) for e in events]
         if raw:
             return events
