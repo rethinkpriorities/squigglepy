@@ -183,7 +183,7 @@ def test_bayesnet_dont_use_cache():
         return {'a': 1, 'b': 2}
     bayesnet(define_event,
              find=lambda e: e['a'],
-             cache=False,
+             memcache=False,
              n=100)
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
@@ -260,6 +260,64 @@ def test_bayesnet_cachefile(cachefile):
                    raw=True,
                    n=100)
     assert set(out) == set([2])
+
+
+def test_bayesnet_cachefile_primary(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches = len(_squigglepy_internal_bayesnet_caches)
+
+    def define_event():
+        return {'a': 1, 'b': 2}
+
+    bayesnet(define_event, find=lambda e: e['a'], n=100)
+
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches2 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches2 == n_caches + 1
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+
+    def define_event2():
+        return {'a': 2, 'b': 3}
+
+    bayesnet(define_event2,
+             find=lambda e: e['a'],
+             dump_cache_file=cachefile,
+             memcache=False,
+             n=100)
+
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches3 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches3 == n_caches2
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   raw=True,
+                   n=100)
+    assert set(out) == set([1])
+
+    out = bayesnet(define_event,
+                   load_cache_file=cachefile,
+                   cache_file_primary=False,
+                   find=lambda e: e['a'],
+                   raw=True,
+                   n=100)
+    assert set(out) == set([1])
+
+    out = bayesnet(define_event,
+                   load_cache_file=cachefile,
+                   cache_file_primary=True,
+                   find=lambda e: e['a'],
+                   raw=True,
+                   n=100)
+    assert set(out) == set([2])
+
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches4 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches4 == n_caches2
+    assert os.path.exists(cachefile + '.sqcache.pkl')
 
 
 def test_bayesnet_cachefile_insufficent_samples_error(cachefile):
