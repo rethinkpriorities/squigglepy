@@ -251,12 +251,14 @@ def test_bayesnet_cachefile(cachefile):
     out = bayesnet(define_event,
                    find=lambda e: e['a'],
                    load_cache_file=cachefile,
+                   memcache=False,
                    raw=True,
                    n=100)
     assert set(out) == set([1])
 
     out = bayesnet(define_event,
                    find=lambda e: e['a'],
+                   memcache=False,
                    raw=True,
                    n=100)
     assert set(out) == set([2])
@@ -318,6 +320,41 @@ def test_bayesnet_cachefile_primary(cachefile):
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches4 == n_caches2
     assert os.path.exists(cachefile + '.sqcache.pkl')
+
+
+def test_bayesnet_cachefile_will_also_memcache(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches = len(_squigglepy_internal_bayesnet_caches)
+
+    def define_event():
+        return {'a': 1, 'b': 2}
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   dump_cache_file=cachefile,
+                   memcache=False,
+                   raw=True,
+                   n=100)
+
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+    assert set(out) == set([1])
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches2 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches2 == n_caches
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   dump_cache_file=cachefile,
+                   memcache=True,
+                   raw=True,
+                   n=100)
+
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+    assert set(out) == set([1])
+    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    n_caches3 = len(_squigglepy_internal_bayesnet_caches)
+    assert n_caches3 == n_caches + 1
 
 
 def test_bayesnet_cachefile_insufficent_samples_error(cachefile):

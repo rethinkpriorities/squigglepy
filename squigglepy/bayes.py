@@ -137,6 +137,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             if verbose:
                 print('Checking in-memory cache...')
             events = _squigglepy_internal_bayesnet_caches.get(event_fn)
+
         if events:
             if events['metadata']['n'] < n:
                 raise ValueError(('insufficient samples - {} results cached but ' +
@@ -145,8 +146,10 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
                 if verbose:
                     print('...Cached data found. Using it.')
                 events = events['events']
+
     elif verbose:
         print('Reloading cache...')
+
 
     if events is None:
         if verbose:
@@ -156,24 +159,24 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         else:
             events = [event_fn() for _ in range(n)]
 
-        metadata = {'n': n,
-                    'last_generated': datetime.now()}
-        cache_data = {'events': events, 'metadata': metadata}
-        if memcache:
-            if verbose:
-                print('Caching in-memory...')
-            _squigglepy_internal_bayesnet_caches[event_fn] = cache_data
-            if verbose:
-                print('...Cached')
+    metadata = {'n': n,
+                'last_generated': datetime.now()}
+    cache_data = {'events': events, 'metadata': metadata}
+    if memcache and (not has_in_mem_cache or reload_cache):
+        if verbose:
+            print('Caching in-memory...')
+        _squigglepy_internal_bayesnet_caches[event_fn] = cache_data
+        if verbose:
+            print('...Cached')
 
-        if dump_cache_file:
-            cache_path = dump_cache_file + '.sqcache.pkl'
-            if verbose:
-                print('Writing cache to file `{}`...'.format(cache_path))
-            dump_cache_file = open(cache_path, 'wb')
-            pickle.dump(cache_data, dump_cache_file)
-            if verbose:
-                print('...Cached')
+    if dump_cache_file:
+        cache_path = dump_cache_file + '.sqcache.pkl'
+        if verbose:
+            print('Writing cache to file `{}`...'.format(cache_path))
+        dump_cache_file = open(cache_path, 'wb')
+        pickle.dump(cache_data, dump_cache_file)
+        if verbose:
+            print('...Cached')
 
     if conditional_on is not None:
         if verbose:
