@@ -150,7 +150,6 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
     elif verbose:
         print('Reloading cache...')
 
-
     if events is None:
         if verbose:
             print('Generating Bayes net...')
