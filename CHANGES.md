@@ -2,6 +2,7 @@
 
 * **[Breaking change]** `bayesnet` function now refers to parameter `memcache` where previously this parameter was called `cache`.
 * `bayesnet` results can now be cached to a file. Use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
+* `discrete` now works with numpy arrays in addition to lists.
 * Distributions can now be compared with `==` and `!=`.
 
 

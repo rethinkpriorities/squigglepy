@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular, chisquare,
@@ -496,6 +497,18 @@ def test_discrete():
     assert obj.type == 'discrete'
     assert obj.items == [0, 1]
     assert str(obj) == '<Distribution> discrete'
+
+
+def test_discrete_list():
+    obj = discrete([1, 2, 3])
+    assert obj.type == 'discrete'
+    assert obj.items == [1, 2, 3]
+
+
+def test_discrete_works_on_numpy():
+    obj = discrete(np.array([1, 2, 3]))
+    assert obj.type == 'discrete'
+    assert obj.items == [1, 2, 3]
 
 
 def test_discrete_raises_on_wrong_type():

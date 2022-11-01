@@ -2,7 +2,7 @@ import operator
 import numpy as np
 from scipy import stats
 
-from .utils import _process_weights_values
+from .utils import _process_weights_values, _is_numpy
 from .samplers import sample
 
 
@@ -845,9 +845,11 @@ def bernoulli(p):
 class DiscreteDistribution(OperableDistribution):
     def __init__(self, items):
         super().__init__()
-        if not isinstance(items, dict) and not isinstance(items, list):
+        if (not isinstance(items, dict) and
+            not isinstance(items, list) and
+            not _is_numpy(items)):
             raise ValueError('inputs to discrete must be a dict or list')
-        self.items = items
+        self.items = list(items) if _is_numpy(items) else items
         self.type = 'discrete'
 
 

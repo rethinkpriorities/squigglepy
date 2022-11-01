@@ -45,6 +45,10 @@ def _process_weights_values(weights, values):
     return weights, values
 
 
+def _is_numpy(a):
+    return type(a).__module__ == np.__name__
+
+
 def event_occurs(p):
     """
     Return True with probability ``p`` and False with probability ``1 - p``.
