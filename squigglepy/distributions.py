@@ -846,8 +846,8 @@ class DiscreteDistribution(OperableDistribution):
     def __init__(self, items):
         super().__init__()
         if (not isinstance(items, dict) and
-            not isinstance(items, list) and
-            not _is_numpy(items)):
+           not isinstance(items, list) and
+           not _is_numpy(items)):
             raise ValueError('inputs to discrete must be a dict or list')
         self.items = list(items) if _is_numpy(items) else items
         self.type = 'discrete'
