@@ -181,6 +181,7 @@ def get_percentiles(data,
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
+    percentiles = percentiles if isinstance(percentiles, list) else [percentiles]
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
     percentiles = np.percentile(data, percentiles)
     percentiles = [_round(p, digits) for p in percentiles]

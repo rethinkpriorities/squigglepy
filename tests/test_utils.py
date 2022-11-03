@@ -195,6 +195,8 @@ def test_get_percentiles_digits():
 def test_get_percentiles_length_one():
     test = get_percentiles(range(1, 901), percentiles=[25], digits=1)
     assert test == 225.8
+    test = get_percentiles(range(1, 901), percentiles=25, digits=1)
+    assert test == 225.8
 
 
 def test_get_percentiles_zero_digits():
@@ -248,6 +250,11 @@ def test_get_log_percentiles_zero_digits():
 def test_get_log_percentiles_length_one():
     test = get_log_percentiles([10 ** x for x in range(1, 10)],
                                percentiles=[20],
+                               display=False,
+                               digits=0)
+    assert test == 3
+    test = get_log_percentiles([10 ** x for x in range(1, 10)],
+                               percentiles=20,
                                display=False,
                                digits=0)
     assert test == 3
