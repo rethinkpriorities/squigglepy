@@ -430,7 +430,7 @@ kelly_data['expected_roi']  # What is the expected ROI of this bet?
 
 ### More examples
 
-You can see more examples of squiggelpy in action [here](https://github.com/peterhurford/public-botecs).
+You can see more examples of squigglepy in action [here](https://github.com/peterhurford/public-botecs).
 
 
 ## Run tests
