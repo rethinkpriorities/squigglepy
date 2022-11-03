@@ -2,7 +2,7 @@ import operator
 import numpy as np
 from scipy import stats
 
-from .utils import _process_weights_values, _is_numpy
+from .utils import _process_weights_values, _is_numpy, _round
 from .samplers import sample
 
 
@@ -273,13 +273,6 @@ def dist_min(dist1, dist2):
     <Distribution> min(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
     """
     return dist_fn(dist1, dist2, min)
-
-
-def _round(x, digits=0):
-    x = round(x, digits)
-    if digits == 0:
-        x = int(x)
-    return x
 
 
 def dist_round(dist1, digits=0):

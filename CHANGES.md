@@ -1,8 +1,10 @@
 ## v0.15
 
 * **[Breaking change]** `bayesnet` function now refers to parameter `memcache` where previously this parameter was called `cache`.
+* Fixed a bug where `get_percentiles` would not round correctly.
 * `bayesnet` results can now be cached to a file. Use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
 * `discrete` now works with numpy arrays in addition to lists.
+* Added `one_in` as a shorthand to convert percentages into "1 in X" notation.
 * Distributions can now be compared with `==` and `!=`.
 
 

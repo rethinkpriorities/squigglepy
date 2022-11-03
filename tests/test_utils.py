@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from ..squigglepy.utils import (_process_weights_values, event_occurs, event_happens,
                                 event, get_percentiles, get_log_percentiles, geomean,
                                 p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
-                                flip_coin, kelly, full_kelly, half_kelly, quarter_kelly)
+                                flip_coin, kelly, full_kelly, half_kelly, quarter_kelly,
+                                one_in)
 from ..squigglepy.rng import set_seed
 from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
 
@@ -143,6 +144,23 @@ def test_event():
     assert not event(0.1)
 
 
+def test_one_in():
+    assert one_in(0.1) == "1 in 10"
+    assert one_in(0.02) == "1 in 50"
+    assert one_in(0.00002) == "1 in 50,000"
+
+
+def test_one_in_w_rounding():
+    assert one_in(0.1415) == "1 in 7"
+    assert one_in(0.1415, digits=1) == "1 in 7.1"
+    assert one_in(0.1415, digits=2) == "1 in 7.07"
+    assert one_in(0.1415, digits=3) == "1 in 7.067"
+
+
+def test_one_in_not_verbose():
+    assert one_in(0.1415, digits=3, verbose=False) == 7.067
+
+
 def test_get_percentiles():
     test = get_percentiles(range(1, 901))
     expected = {1: 9.99, 5: 45.95, 10: 90.9, 20: 180.8,
@@ -176,7 +194,7 @@ def test_get_percentiles_digits():
 
 def test_get_percentiles_zero_digits():
     test = get_percentiles(range(1, 901), percentiles=[25, 75], digits=0)
-    expected = {25: 225, 75: 675}
+    expected = {25: 226, 75: 675}
     assert test == expected
     assert isinstance(expected[25], int)
     assert isinstance(expected[75], int)

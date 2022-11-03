@@ -49,6 +49,14 @@ def _is_numpy(a):
     return type(a).__module__ == np.__name__
 
 
+def _round(x, digits=0):
+    if digits is None:
+        return x
+    else:
+        x = round(x, digits)
+        return int(x) if digits == 0 else x
+
+
 def event_occurs(p):
     """
     Return True with probability ``p`` and False with probability ``1 - p``.
@@ -116,6 +124,33 @@ def event(p):
     return event_occurs(p)
 
 
+def one_in(p, digits=0, verbose=True):
+    """
+    Convert a probability into "1 in X" notation.
+
+    Parameters
+    ----------
+    p : float
+        The probability to convert.
+    digits : int
+        The number of digits to round the result to. Defaults to 0. If ``digits``
+        is 0, the result will be converted to int instead of float.
+    verbose : logical
+        If True, will return a string with "1 in X". If False, will just return X.
+
+    Returns
+    -------
+    str if ``verbose`` is True. Otherwise, int if ``digits`` is 0 or float if ``digits`` > 0.
+
+    Examples
+    --------
+    >>> one_in(0.1)
+    "1 in 10"
+    """
+    p = _round(1 / p, digits)
+    return '1 in {:,}'.format(p) if verbose else p
+
+
 def get_percentiles(data,
                     percentiles=[1, 5, 10, 20, 30, 40, 50,
                                  60, 70, 80, 90, 95, 99],
@@ -148,11 +183,7 @@ def get_percentiles(data,
     """
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
     percentiles = np.percentile(data, percentiles)
-    if digits is not None:
-        if digits == 0:
-            percentiles = [int(p) for p in percentiles]
-        else:
-            percentiles = np.round(percentiles, digits)
+    percentiles = [_round(p, digits) for p in percentiles]
     return dict(list(zip(percentile_labels, percentiles)))
 
 
