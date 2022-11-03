@@ -184,7 +184,10 @@ def get_percentiles(data,
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
     percentiles = np.percentile(data, percentiles)
     percentiles = [_round(p, digits) for p in percentiles]
-    return dict(list(zip(percentile_labels, percentiles)))
+    if len(percentile_labels) == 1:
+        return percentiles[0]
+    else:
+        return dict(list(zip(percentile_labels, percentiles)))
 
 
 def get_log_percentiles(data,
@@ -223,12 +226,18 @@ def get_log_percentiles(data,
                                   percentiles=percentiles,
                                   reverse=reverse,
                                   digits=digits)
-    if display:
-        return dict([(k, '10^{}'.format(np.round(np.log10(v), digits))) for
-                     k, v in percentiles.items()])
+    if isinstance(percentiles, dict):
+        if display:
+            return dict([(k, '10^{}'.format(_round(np.log10(v), digits))) for
+                         k, v in percentiles.items()])
+        else:
+            return dict([(k, _round(np.log10(v), digits)) for
+                        k, v in percentiles.items()])
     else:
-        return dict([(k, np.round(np.log10(v), digits)) for
-                    k, v in percentiles.items()])
+        if display:
+            return '10^{}'.format(_round(np.log10(percentiles), digits))
+        else:
+            return _round(np.log10(percentiles), digits)
 
 
 def geomean(a, weights=None):

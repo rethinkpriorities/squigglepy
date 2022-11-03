@@ -1,6 +1,7 @@
 ## v0.15
 
 * **[Breaking change]** `bayesnet` function now refers to parameter `memcache` where previously this parameter was called `cache`.
+* **[Breaking change]** If `get_percentiles` or `get_log_percentiles` is called with just one elemement for `percentiles`, it will return that value instead of a dict.
 * Fixed a bug where `get_percentiles` would not round correctly.
 * `bayesnet` results can now be cached to a file. Use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
 * `discrete` now works with numpy arrays in addition to lists.

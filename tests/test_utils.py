@@ -192,6 +192,11 @@ def test_get_percentiles_digits():
     assert test == expected
 
 
+def test_get_percentiles_length_one():
+    test = get_percentiles(range(1, 901), percentiles=[25], digits=1)
+    assert test == 225.8
+
+
 def test_get_percentiles_zero_digits():
     test = get_percentiles(range(1, 901), percentiles=[25, 75], digits=0)
     expected = {25: 226, 75: 675}
@@ -238,6 +243,14 @@ def test_get_log_percentiles_zero_digits():
                                digits=0)
     expected = {20: 3, 80: 8}
     assert test == expected
+
+
+def test_get_log_percentiles_length_one():
+    test = get_log_percentiles([10 ** x for x in range(1, 10)],
+                               percentiles=[20],
+                               display=False,
+                               digits=0)
+    assert test == 3
 
 
 def test_geomean():
