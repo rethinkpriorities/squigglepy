@@ -10,7 +10,7 @@
 
 ## Usage
 
-### Core Features
+### Piano Tuners Example
 
 Here's the Squigglepy implementation of [the example from Squiggle Docs](https://www.squiggle-language.com/docs/Overview):
 
@@ -77,7 +77,8 @@ sq.get_percentiles(total_tuners_at_time(2030-2022) @ 1000)  # Note: `@ 1000` is 
 
 **WARNING:** Be careful about using `K` to get sample counts. Use `sq.norm(2, 3) @ (2*K)`... `sq.norm(2, 3) @ 2*K` will return only two samples, multiplied by 1000.
 
-### Additional Features
+
+### Distributions
 
 ```Python
 import squigglepy as sq
@@ -137,6 +138,13 @@ sq.mixture([sq.norm(1, 3),
 sq.mixture([[0.3, sq.norm(1,3)],
             [0.3, sq.norm(4,10)],
             [0.4, sq.lognorm(1,10)]]))
+```
+
+
+### Additional Features
+
+```Python
+import squigglepy as sq
 
 # You can add and subtract distributions
 (sq.norm(1,3) + sq.norm(4,5)) @ 100
@@ -158,7 +166,7 @@ sq.norm(0, 3) >> sq.clip(0, 5)
 ```
 
 
-### Rolling a Die
+#### Example: Rolling a Die
 
 An example of how to use distributions to build tools:
 
@@ -258,7 +266,7 @@ print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_
 ```
 
 
-### Alarm net
+#### Example: Alarm net
 
 This is the alarm network from [Bayesian Artificial Intelligence - Section 2.5.1](https://bayesian-intelligence.com/publications/bai/book/BAI_Chapter2.pdf):
 
@@ -332,7 +340,7 @@ bayes.bayesnet(define_event,
 Note that the amount of Bayesian analysis that squigglepy can do is pretty limited. For more complex bayesian analysis, consider [sorobn](https://github.com/MaxHalford/sorobn), [pomegranate](https://github.com/jmschrei/pomegranate), [bnlearn](https://github.com/erdogant/bnlearn), or [pyMC](https://github.com/pymc-devs/pymc).
 
 
-### A Demonstration of the Monte Hall Problem
+#### Example: A Demonstration of the Monte Hall Problem
 
 ```Python
 import squigglepy as sq
@@ -379,7 +387,7 @@ print('Win {}% of the time when not switching'.format(int(r * 100)))
 ```
 
 
-### More complex coin/dice interactions
+#### Example: More complex coin/dice interactions
 
 > Imagine that I flip a coin. If heads, I take a random die out of my blue bag. If tails, I take a random die out of my red bag.
 > The blue bag contains only 6-sided dice. The red bag contains a 4-sided die, a 6-sided die, a 10-sided die, and a 20-sided die.
