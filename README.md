@@ -138,6 +138,10 @@ sq.mixture([sq.norm(1, 3),
 sq.mixture([[0.3, sq.norm(1,3)],
             [0.3, sq.norm(4,10)],
             [0.4, sq.lognorm(1,10)]]))
+
+# Make a zero-inflated distribution
+# 60% chance of returning 0, 40% chance of sampling from `norm(1, 2)`.
+sq.zero_inflated(0.6, norm(1, 2))
 ```
 
 

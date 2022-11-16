@@ -5,7 +5,8 @@ from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         tdist, log_tdist, triangular, chisquare,
                                         poisson, exponential, gamma, mixture,
                                         lclip, rclip, clip, dist_round, dist_fn,
-                                        dist_max, dist_ceil, dist_floor)
+                                        dist_max, dist_ceil, dist_floor, zero_inflated,
+                                        inf0)
 
 
 def test_to_is_log_when_all_positive():
@@ -585,6 +586,26 @@ def test_mixture_can_be_discrete():
     assert obj.dists == [0, 1]
     assert obj.weights == [0.5, 0.5]
     assert str(obj) == '<Distribution> mixture'
+
+
+def test_zero_inflated():
+    obj = zero_inflated(0.6, norm(1, 2))
+    assert obj.type == 'mixture'
+    assert obj.dists == [0, norm(1, 2)]
+    assert obj.weights == [0.6, 0.4]
+
+
+def test_inf0():
+    obj = inf0(0.6, norm(1, 2))
+    assert obj.type == 'mixture'
+    assert obj.dists == [0, norm(1, 2)]
+    assert obj.weights == [0.6, 0.4]
+
+
+def test_zero_inflated_raises_error():
+    with pytest.raises(ValueError) as execinfo:
+        zero_inflated(1.1, norm(1, 2))
+    assert 'must be between 0 and 1' in str(execinfo.value)
 
 
 def test_lt_distribution():

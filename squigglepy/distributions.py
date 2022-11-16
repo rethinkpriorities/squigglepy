@@ -1279,3 +1279,53 @@ def mixture(dists, weights=None, lclip=None, rclip=None):
     <Distribution> mixture
     """
     return MixtureDistribution(dists=dists, weights=weights, lclip=lclip, rclip=rclip)
+
+
+def zero_inflated(p_zero, dist):
+    """
+    Initialize an arbitrary zero-inflated distribution.
+
+    Parameters
+    ----------
+    p_zero : float
+        The chance of the distribution returning zero
+    dist : Distribution
+        The distribution to sample from when not zero
+
+    Returns
+    -------
+    MixtureDistribution
+
+    Examples
+    --------
+    >>> zero_inflated(0.6, norm(1, 2))
+    <Distribution> mixture
+    """
+    if p_zero > 1 or p_zero < 0 or not isinstance(p_zero, float):
+        raise ValueError('`p_zero` must be between 0 and 1')
+    return MixtureDistribution(dists=[0, dist], weights=p_zero)
+
+
+def inf0(p_zero, dist):
+    """
+    Initialize an arbitrary zero-inflated distribution.
+
+    Alias for ``zero_inflated``.
+
+    Parameters
+    ----------
+    p_zero : float
+        The chance of the distribution returning zero
+    dist : Distribution
+        The distribution to sample from when not zero
+
+    Returns
+    -------
+    MixtureDistribution
+
+    Examples
+    --------
+    >>> inf0(0.6, norm(1, 2))
+    <Distribution> mixture
+    """
+    return zero_inflated(p_zero=p_zero, dist=dist)

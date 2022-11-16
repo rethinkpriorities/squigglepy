@@ -6,8 +6,9 @@ from ..squigglepy.distributions import (const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular, chisquare,
                                         poisson, exponential, gamma, mixture,
-                                        dist_min, dist_max, dist_round, dist_ceil,
-                                        dist_floor, lclip, rclip, clip, dist_fn)
+                                        zero_inflated, inf0, dist_min, dist_max,
+                                        dist_round, dist_ceil, dist_floor, lclip,
+                                        rclip, clip, dist_fn)
 from ..squigglepy import samplers
 from ..squigglepy.samplers import (normal_sample, lognormal_sample, mixture_sample,
                                    discrete_sample, log_t_sample, t_sample, sample)
@@ -414,6 +415,18 @@ def test_sample_mixture_can_be_discrete():
     assert ~mixture([[0.9, 'a'], [0.1, 'b']]) == 'a'
     assert ~mixture({'a': 0.9, 'b': 0.1}) == 'a'
     assert ~mixture([norm(1, 2), norm(3, 4)]) == (1.5, 0.3)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_zero_inflated(mocker):
+    assert ~zero_inflated(0.6, norm(1, 2)) == 0
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_inf0(mocker):
+    assert ~inf0(0.6, norm(1, 2)) == 0
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))

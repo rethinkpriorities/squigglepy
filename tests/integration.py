@@ -195,6 +195,7 @@ sq.sample(lambda: sq.sample(sq.norm(1, 3)) / sq.sample(sq.norm(4, 5)), n=100)
 sq.sample(sq.norm(1, 3, credibility=80))
 sq.sample(sq.norm(0, 3, lclip=0, rclip=5))
 sq.sample(sq.const(4))
+sq.sample(sq.zero_inflated(0.6, sq.norm(1, 2)))
 
 
 def roll_die(sides, n=1):
@@ -256,6 +257,7 @@ sq.norm(1, 3) @ 100
 ~sq.norm(1, 3, credibility=80)
 ~sq.norm(0, 3, lclip=0, rclip=5)
 ~sq.const(4)
+~sq.zero_inflated(0.6, sq.norm(1, 2))
 
 
 def roll_die(sides, n=1):

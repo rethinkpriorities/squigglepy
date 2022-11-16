@@ -1,3 +1,8 @@
+## v0.16
+
+* `zero_inflated` can create an arbitrary zero-inflated distribution.
+
+
 ## v0.15
 
 * **[Breaking change]** `bayesnet` function now refers to parameter `memcache` where previously this parameter was called `cache`.
