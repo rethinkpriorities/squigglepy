@@ -49,12 +49,40 @@ def _is_numpy(a):
     return type(a).__module__ == np.__name__
 
 
+def _is_dist(dist):
+    from .distributions import BaseDistribution
+    return isinstance(dist, BaseDistribution)
+
+
 def _round(x, digits=0):
     if digits is None:
         return x
+
+    x = np.round(x, digits)
+
+    if _safe_len(x) > 1:
+        return np.array([int(y) if digits == 0 else y for y in x])
     else:
-        x = round(x, digits)
         return int(x) if digits == 0 else x
+
+
+def _simplify(a):
+    if _is_numpy(a):
+        a = a.tolist() if a.size == 1 else a
+    if isinstance(a, list):
+        a = a[0] if len(a) == 1 else a
+    return a
+
+
+def _safe_len(a):
+    if _is_numpy(a):
+        return a.size
+    elif isinstance(a, list):
+        return len(a)
+    elif a is None:
+        return 0
+    else:
+        return 1
 
 
 def event_occurs(p):
@@ -72,11 +100,10 @@ def event_occurs(p):
     >>> event_occurs(p=0.5)
     False
     """
-    from .rng import _squigglepy_internal_rng
-    from .samplers import sample
-    from .distributions import BaseDistribution
-    if isinstance(p, BaseDistribution) or callable(p):
+    if _is_dist(p) or callable(p):
+        from .samplers import sample
         p = sample(p)
+    from .rng import _squigglepy_internal_rng
     return _squigglepy_internal_rng.uniform(0, 1) < p
 
 
@@ -427,9 +454,8 @@ def roll_die(sides, n=1):
     >>> roll_die(6)
     5
     """
-    from .samplers import sample
-    from .distributions import BaseDistribution, discrete
-    if isinstance(sides, BaseDistribution) or callable(sides):
+    if _is_dist(sides) or callable(sides):
+        from .samplers import sample
         sides = sample(sides)
     if not isinstance(n, int):
         raise ValueError('can only roll an integer number of times')
@@ -438,6 +464,8 @@ def roll_die(sides, n=1):
     elif not isinstance(sides, int):
         raise ValueError('can only roll an integer number of sides')
     else:
+        from .samplers import sample
+        from .distributions import discrete
         return sample(discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
 
 

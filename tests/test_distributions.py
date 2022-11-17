@@ -37,6 +37,24 @@ def test_const():
     assert str(const(1)) == '<Distribution> const(1)'
 
 
+def test_const_wraps_float():
+    assert const(0.1).type == 'const'
+    assert const(0.1).x == 0.1
+    assert str(const(0.1)) == '<Distribution> const(0.1)'
+
+
+def test_const_wraps_str():
+    assert const('a').type == 'const'
+    assert const('a').x == 'a'
+    assert str(const('a')) == '<Distribution> const(a)'
+
+
+def test_const_wraps_list():
+    assert const([1, 2, 3]).type == 'const'
+    assert const([1, 2, 3]).x == [1, 2, 3]
+    assert str(const([1, 2, 3])) == '<Distribution> const([1, 2, 3])'
+
+
 def test_norm():
     assert norm(1, 2).type == 'norm'
     assert norm(1, 2).x == 1

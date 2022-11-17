@@ -122,9 +122,14 @@ def test_event_occurs():
 def test_event_occurs_can_handle_distributions():
     set_seed(42)
     assert event_occurs(bernoulli(0.9))
+
+
+def test_event_occurs_can_handle_distributions2():
     set_seed(42)
     assert event_occurs(beta(10, 1))
-    set_seed(42)
+
+
+def test_event_occurs_can_handle_distributions_callable():
     def get_p():
         return 0.9
     assert event_occurs(get_p)

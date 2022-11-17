@@ -3,7 +3,8 @@ import numpy as np
 from tqdm import tqdm
 from scipy import stats
 
-from .utils import event_occurs, _process_weights_values
+from .distributions import rclip as fn_rclip, lclip as fn_lclip
+from .utils import _process_weights_values, _is_dist, _simplify, _safe_len
 
 
 def _get_rng():
@@ -11,7 +12,7 @@ def _get_rng():
     return _squigglepy_internal_rng
 
 
-def normal_sample(mean, sd):
+def normal_sample(mean, sd, samples=1):
     """
     Sample a random number according to a normal distribution.
 
@@ -21,6 +22,8 @@ def normal_sample(mean, sd):
         The mean of the normal distribution that is being sampled.
     sd : float
         The standard deviation of the normal distribution that is being sampled.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -34,10 +37,10 @@ def normal_sample(mean, sd):
     >>> normal_sample(0, 1)
     0.30471707975443135
     """
-    return _get_rng().normal(mean, sd)
+    return _simplify(_get_rng().normal(mean, sd, samples))
 
 
-def lognormal_sample(mean, sd):
+def lognormal_sample(mean, sd, samples=1):
     """
     Sample a random number according to a lognormal distribution.
 
@@ -47,6 +50,8 @@ def lognormal_sample(mean, sd):
         The mean of the lognormal distribution that is being sampled.
     sd : float
         The standard deviation of the lognormal distribution that is being sampled.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -60,10 +65,10 @@ def lognormal_sample(mean, sd):
     >>> lognormal_sample(0, 1)
     1.3562412406168636
     """
-    return _get_rng().lognormal(mean, sd)
+    return _simplify(_get_rng().lognormal(mean, sd, samples))
 
 
-def t_sample(low=None, high=None, t=1, credibility=90):
+def t_sample(low=None, high=None, t=1, samples=1, credibility=90):
     """
     Sample a random number according to a t-distribution.
 
@@ -82,6 +87,8 @@ def t_sample(low=None, high=None, t=1, credibility=90):
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
         The number of degrees of freedom of the t-distribution. Defaults to 1.
+    samples : int
+        The number of samples to return.
     credibility : float
         The range of the credibility interval. Defaults to 90.
 
@@ -110,10 +117,11 @@ def t_sample(low=None, high=None, t=1, credibility=90):
         cdf_value = 0.5 + 0.5 * (credibility / 100)
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (high - mu) / normed_sigma
-        return normal_sample(mu, sigma) / ((chi_square_sample(t) / t) ** 0.5)
+        return _simplify(normal_sample(mu, sigma, samples) /
+                         ((chi_square_sample(t, samples) / t) ** 0.5))
 
 
-def log_t_sample(low=None, high=None, t=1, credibility=90):
+def log_t_sample(low=None, high=None, t=1, samples=1, credibility=90):
     """
     Sample a random number according to a log-t-distribution.
 
@@ -132,6 +140,8 @@ def log_t_sample(low=None, high=None, t=1, credibility=90):
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
         The number of degrees of freedom of the t-distribution. Defaults to 1.
+    samples : int
+        The number of samples to return.
     credibility : float
         The range of the credibility interval. Defaults to 90.
 
@@ -162,10 +172,11 @@ def log_t_sample(low=None, high=None, t=1, credibility=90):
         cdf_value = 0.5 + 0.5 * (credibility / 100)
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (log_high - mu) / normed_sigma
-        return np.exp(normal_sample(mu, sigma) / ((chi_square_sample(t) / t) ** 0.5))
+        return _simplify(np.exp(normal_sample(mu, sigma, samples) /
+                         ((chi_square_sample(t, samples) / t) ** 0.5)))
 
 
-def binomial_sample(n, p):
+def binomial_sample(n, p, samples=1):
     """
     Sample a random number according to a binomial distribution.
 
@@ -175,6 +186,8 @@ def binomial_sample(n, p):
         The number of trials.
     p : float
         The probability of success for each trial. Must be between 0 and 1.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -188,10 +201,10 @@ def binomial_sample(n, p):
     >>> binomial_sample(10, 0.1)
     2
     """
-    return _get_rng().binomial(n, p)
+    return _simplify(_get_rng().binomial(n, p, samples))
 
 
-def beta_sample(a, b):
+def beta_sample(a, b, samples=1):
     """
     Sample a random number according to a beta distribution.
 
@@ -203,6 +216,8 @@ def beta_sample(a, b):
     b : float
         The beta shape value of the distribution. Typically takes the value of the
         number of trials that resulted in a failure.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -216,10 +231,10 @@ def beta_sample(a, b):
     >>> beta_sample(1, 1)
     0.22145847498048798
     """
-    return _get_rng().beta(a, b)
+    return _simplify(_get_rng().beta(a, b, samples))
 
 
-def bernoulli_sample(p):
+def bernoulli_sample(p, samples=1):
     """
     Sample 1 with probability ``p`` and 0 otherwise.
 
@@ -227,6 +242,8 @@ def bernoulli_sample(p):
     ----------
     p : float
         The probability of success. Must be between 0 and 1.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -239,10 +256,14 @@ def bernoulli_sample(p):
     >>> bernoulli_sample(0.5)
     0
     """
-    return int(event_occurs(p))
+    a = uniform_sample(0, 1, samples)
+    if _safe_len(a) == 1:
+        return int(a < p)
+    else:
+        return (a < p).astype(int)
 
 
-def triangular_sample(left, mode, right):
+def triangular_sample(left, mode, right, samples=1):
     """
     Sample a random number according to a triangular distribution.
 
@@ -254,6 +275,8 @@ def triangular_sample(left, mode, right):
         The most common value of the triangular distribution.
     right : float
         The largest value of the triangular distribution.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -266,10 +289,10 @@ def triangular_sample(left, mode, right):
     >>> triangular_sample(1, 2, 3)
     2.327625176788963
     """
-    return _get_rng().triangular(left, mode, right)
+    return _simplify(_get_rng().triangular(left, mode, right, samples))
 
 
-def poisson_sample(lam):
+def poisson_sample(lam, samples=1):
     """
     Sample a random number according to a poisson distribution.
 
@@ -277,6 +300,8 @@ def poisson_sample(lam):
     ----------
     lam : float
         The lambda value of the poisson distribution.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -289,10 +314,10 @@ def poisson_sample(lam):
     >>> poisson_sample(10)
     13
     """
-    return _get_rng().poisson(lam)
+    return _simplify(_get_rng().poisson(lam, samples))
 
 
-def exponential_sample(scale):
+def exponential_sample(scale, samples=1):
     """
     Sample a random number according to an exponential distribution.
 
@@ -300,6 +325,8 @@ def exponential_sample(scale):
     ----------
     scale : float
         The scale value of the exponential distribution.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -312,10 +339,10 @@ def exponential_sample(scale):
     >>> exponential_sample(10)
     24.042086039659946
     """
-    return _get_rng().exponential(scale)
+    return _simplify(_get_rng().exponential(scale, samples))
 
 
-def gamma_sample(shape, scale):
+def gamma_sample(shape, scale, samples=1):
     """
     Sample a random number according to a gamma distribution.
 
@@ -325,6 +352,8 @@ def gamma_sample(shape, scale):
         The shape value of the exponential distribution.
     scale : float
         The scale value of the exponential distribution. Defaults to 1.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -337,10 +366,10 @@ def gamma_sample(shape, scale):
     >>> gamma_sample(10, 2)
     21.290716894247602
     """
-    return _get_rng().gamma(shape, scale)
+    return _simplify(_get_rng().gamma(shape, scale, samples))
 
 
-def uniform_sample(low, high):
+def uniform_sample(low, high, samples=1):
     """
     Sample a random number according to a uniform distribution.
 
@@ -350,6 +379,8 @@ def uniform_sample(low, high):
         The smallest value the uniform distribution will return.
     high : float
         The largest value the uniform distribution will return.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -363,10 +394,10 @@ def uniform_sample(low, high):
     >>> uniform_sample(0, 1)
     0.7739560485559633
     """
-    return _get_rng().uniform(low, high)
+    return _simplify(_get_rng().uniform(low, high, samples))
 
 
-def chi_square_sample(df):
+def chi_square_sample(df, samples=1):
     """
     Sample a random number according to a chi-square distribution.
 
@@ -374,6 +405,8 @@ def chi_square_sample(df):
     ----------
     df : float
         The number of degrees of freedom
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -386,10 +419,10 @@ def chi_square_sample(df):
     >>> chi_square_sample(2)
     4.808417207931989
     """
-    return _get_rng().chisquare(df)
+    return _simplify(_get_rng().chisquare(df, samples))
 
 
-def discrete_sample(items):
+def discrete_sample(items, samples=1):
     """
     Sample a random value from a discrete distribution (aka categorical distribution).
 
@@ -398,6 +431,8 @@ def discrete_sample(items):
     items : list or dict
         The values that the discrete distribution will return and their associated
         weights (or likelihoods of being returned when sampled).
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -420,10 +455,10 @@ def discrete_sample(items):
     weights, values = _process_weights_values(None, items)
     from .distributions import const
     values = [const(v) for v in values]
-    return mixture_sample(values, weights)
+    return mixture_sample(values, weights, samples)
 
 
-def mixture_sample(values, weights=None):
+def mixture_sample(values, weights=None, samples=1):
     """
     Sample a ranom number from a mixture distribution.
 
@@ -433,6 +468,8 @@ def mixture_sample(values, weights=None):
         The distributions to mix. Can also be defined as a list of weights and distributions.
     weights : list or None
         The weights for each distribution.
+    samples : int
+        The number of samples to return.
 
     Returns
     -------
@@ -453,17 +490,18 @@ def mixture_sample(values, weights=None):
     weights, values = _process_weights_values(weights, values)
 
     if len(values) == 1:
-        return sample(values[0])
+        return sample(values[0], n=samples)
 
-    r_ = uniform_sample(0, 1)
+    def _run_mixture(values, weights):
+        r_ = uniform_sample(0, 1)
+        for i, dist in enumerate(values):
+            weight = weights[i]
+            if r_ <= weight:
+                return sample(dist)
+        return sample(dist)
+
     weights = np.cumsum(weights)
-
-    for i, dist in enumerate(values):
-        weight = weights[i]
-        if r_ <= weight:
-            return sample(dist)
-
-    return sample(dist)
+    return _simplify(np.array([_run_mixture(values, weights) for _ in range(samples)]))
 
 
 def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
@@ -498,99 +536,12 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
     array([6.10817361, 3.        , 3.        , 3.45828454, 3.        ])
     """
     n = int(n)
-    if n > 1:
-        if verbose:
-            return np.array([sample(dist,
-                                    n=1,
-                                    lclip=lclip,
-                                    rclip=rclip) for _ in tqdm(range(n))])
-        else:
-            return np.array([sample(dist,
-                                    n=1,
-                                    lclip=lclip,
-                                    rclip=rclip) for _ in range(n)])
-    elif n <= 0:
+    if n <= 0:
         raise ValueError('n must be >= 1')
-
-    from .distributions import BaseDistribution
-
-    if callable(dist):
-        out = dist()
-        if isinstance(out, BaseDistribution) or callable(out):
-            return sample(out)
-
-    elif (isinstance(dist, float) or
-          isinstance(dist, int) or
-          isinstance(dist, str) or
-          dist is None):
-        return dist
-
-    elif not isinstance(dist, BaseDistribution):
-        raise ValueError('input to sample is malformed - must ' +
-                         'be a distribution but got {}'.format(type(dist)))
-
-    elif dist.type == 'const':
-        return dist.x
-
-    elif dist.type == 'uniform':
-        out = uniform_sample(dist.x, dist.y)
-
-    elif dist.type == 'discrete':
-        out = discrete_sample(dist.items)
-
-    elif dist.type == 'norm':
-        out = normal_sample(mean=dist.mean, sd=dist.sd)
-
-    elif dist.type == 'lognorm':
-        out = lognormal_sample(mean=dist.mean, sd=dist.sd)
-
-    elif dist.type == 'binomial':
-        out = binomial_sample(n=dist.n, p=dist.p)
-
-    elif dist.type == 'beta':
-        out = beta_sample(a=dist.a, b=dist.b)
-
-    elif dist.type == 'bernoulli':
-        out = bernoulli_sample(p=dist.p)
-
-    elif dist.type == 'poisson':
-        out = poisson_sample(lam=dist.lam)
-
-    elif dist.type == 'chisquare':
-        out = chi_square_sample(df=dist.df)
-
-    elif dist.type == 'exponential':
-        out = exponential_sample(scale=dist.scale)
-
-    elif dist.type == 'gamma':
-        out = gamma_sample(shape=dist.shape, scale=dist.scale)
-
-    elif dist.type == 'triangular':
-        out = triangular_sample(dist.left, dist.mode, dist.right)
-
-    elif dist.type == 'tdist':
-        out = t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility)
-
-    elif dist.type == 'log_tdist':
-        out = log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility)
-
-    elif dist.type == 'mixture':
-        out = mixture_sample(dist.dists, dist.weights)
-
-    elif dist.type == 'complex':
-        if dist.right is None:
-            out = dist.fn(sample(dist.left))
-        else:
-            out = dist.fn(sample(dist.left), sample(dist.right))
-        if isinstance(out, BaseDistribution) or callable(out):
-            return sample(out)
-
-    else:
-        raise ValueError('{} sampler not found'.format(dist.type))
 
     lclip_ = None
     rclip_ = None
-    if not callable(dist):
+    if _is_dist(dist):
         lclip_ = dist.lclip
         rclip_ = dist.rclip
 
@@ -603,9 +554,90 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
     if rclip is not None and rclip_ is not None:
         rclip = min(rclip, rclip_)
 
-    if lclip is not None and out < lclip:
-        return lclip
-    elif rclip is not None and out > rclip:
-        return rclip
+    if lclip is not None or rclip is not None:
+        dist.lclip = None
+        dist.rclip = None
+        if rclip:
+            dist = fn_rclip(dist, rclip)
+        if lclip:
+            dist = fn_lclip(dist, lclip)
+
+    if callable(dist):
+        if n > 1:
+            out = np.array([dist() for _ in (tqdm(range(n)) if verbose else range(n))])
+        else:
+            out = [dist()]
+
+        return _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o for o in out]))
+
+    elif (isinstance(dist, float) or
+          isinstance(dist, int) or
+          isinstance(dist, str) or
+          dist is None):
+        return _simplify(np.array([dist for _ in range(n)]))
+
+    elif not _is_dist(dist):
+        raise ValueError('input to sample is malformed - must ' +
+                         'be a distribution but got {}'.format(type(dist)))
+
+    elif dist.type == 'const':
+        return _simplify(np.array([dist.x for _ in range(n)]))
+
+    elif dist.type == 'uniform':
+        return uniform_sample(dist.x, dist.y, samples=n)
+
+    elif dist.type == 'discrete':
+        return discrete_sample(dist.items, samples=n)
+
+    elif dist.type == 'norm':
+        return normal_sample(mean=dist.mean, sd=dist.sd, samples=n)
+
+    elif dist.type == 'lognorm':
+        return lognormal_sample(mean=dist.mean, sd=dist.sd, samples=n)
+
+    elif dist.type == 'binomial':
+        return binomial_sample(n=dist.n, p=dist.p, samples=n)
+
+    elif dist.type == 'beta':
+        return beta_sample(a=dist.a, b=dist.b, samples=n)
+
+    elif dist.type == 'bernoulli':
+        return bernoulli_sample(p=dist.p, samples=n)
+
+    elif dist.type == 'poisson':
+        return poisson_sample(lam=dist.lam, samples=n)
+
+    elif dist.type == 'chisquare':
+        return chi_square_sample(df=dist.df, samples=n)
+
+    elif dist.type == 'exponential':
+        return exponential_sample(scale=dist.scale, samples=n)
+
+    elif dist.type == 'gamma':
+        return gamma_sample(shape=dist.shape, scale=dist.scale, samples=n)
+
+    elif dist.type == 'triangular':
+        return triangular_sample(dist.left, dist.mode, dist.right, samples=n)
+
+    elif dist.type == 'tdist':
+        return t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
+
+    elif dist.type == 'log_tdist':
+        return log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
+
+    elif dist.type == 'mixture':
+        return mixture_sample(dist.dists, dist.weights, samples=n)
+
+    elif dist.type == 'complex':
+        if dist.right is None:
+            out = dist.fn(sample(dist.left, n=n))
+        else:
+            out = dist.fn(sample(dist.left, n=n), sample(dist.right, n=n))
+
+        if _is_dist(out) or callable(out):
+            return sample(out, n=n)
+        else:
+            return out
+
     else:
-        return out
+        raise ValueError('{} sampler not found'.format(dist.type))

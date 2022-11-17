@@ -3,7 +3,6 @@ import numpy as np
 from scipy import stats
 
 from .utils import _process_weights_values, _is_numpy, _round
-from .samplers import sample
 
 
 class BaseDistribution:
@@ -47,10 +46,12 @@ class OperableDistribution(BaseDistribution):
         self.type = 'base'
 
     def __invert__(self):
+        from .samplers import sample
         return sample(self)
 
     def __matmul__(self, n):
         if isinstance(n, int):
+            from .samplers import sample
             return sample(self, n=n)
         else:
             raise ValueError
@@ -246,7 +247,7 @@ def dist_max(dist1, dist2):
     >>> dist_max(norm(0, 1), norm(1, 2))
     <Distribution> max(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
     """
-    return dist_fn(dist1, dist2, max)
+    return dist_fn(dist1, dist2, np.maximum, name='max')
 
 
 def dist_min(dist1, dist2):
@@ -272,7 +273,7 @@ def dist_min(dist1, dist2):
     >>> dist_min(norm(0, 1), norm(1, 2))
     <Distribution> min(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
     """
-    return dist_fn(dist1, dist2, min)
+    return dist_fn(dist1, dist2, np.minimum, name='min')
 
 
 def dist_round(dist1, digits=0):
@@ -352,8 +353,12 @@ def dist_floor(dist1):
     return dist_fn(dist1, None, np.floor)
 
 
-def _lclip(n, val):
-    return val if n < val else n
+@np.vectorize
+def _lclip(n, val=None):
+    if val is None:
+        return n
+    else:
+        return val if n < val else n
 
 
 def lclip(dist1, val=None):
@@ -386,8 +391,12 @@ def lclip(dist1, val=None):
         return dist_fn(dist1, val, _lclip, name='lclip')
 
 
-def _rclip(n, val):
-    return val if n > val else n
+@np.vectorize
+def _rclip(n, val=None):
+    if val is None:
+        return n
+    else:
+        return val if n > val else n
 
 
 def rclip(dist1, val=None):

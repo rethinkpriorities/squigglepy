@@ -1,6 +1,9 @@
 ## v0.16
 
 * `zero_inflated` can create an arbitrary zero-inflated distribution.
+* Individual sampling functions (`normal_sample`, `lognormal_sample`, etc.) can now take an argument `samples` to generate multiple samples.
+* A large speedup has been achieved to sampling from the same distribution multiple times.
+* `requirements.txt` has been updated.
 
 
 ## v0.15
