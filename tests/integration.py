@@ -83,7 +83,7 @@ if out != expected:
     print('ERROR 1')
     import pdb
     pdb.set_trace()
-_mark_time(start1, 0.024, 'Test 1 complete')
+_mark_time(start1, 0.045, 'Test 1 complete')
 
 
 sq.set_seed(42)
@@ -111,7 +111,7 @@ if out != expected:
     print('ERROR 2')
     import pdb
     pdb.set_trace()
-_mark_time(start2, 0.0335, 'Test 2 complete')
+_mark_time(start2, 0.061, 'Test 2 complete')
 
 
 sq.set_seed(42)
@@ -137,14 +137,14 @@ def total_tuners_at_time(t):
 
 # Get total piano tuners at 2030
 out = sq.get_percentiles(total_tuners_at_time(2030-2022) @ 100, digits=1)
-expected = {1: 0.7, 5: 1.0, 10: 1.3, 20: 2.1, 30: 2.7, 40: 3.4, 50: 4.3, 60: 6.0,
-            70: 7.4, 80: 9.4, 90: 14.1, 95: 19.6, 99: 24.4}
+expected = {1: 0.5, 5: 0.6, 10: 1.1, 20: 1.5, 30: 1.8, 40: 2.4, 50: 3.1, 60: 4.4,
+		    70: 7.3, 80: 9.8, 90: 16.6, 95: 28.4, 99: 85.4}
 
 if out != expected:
     print('ERROR 3')
     import pdb
     pdb.set_trace()
-_mark_time(start3, 0.028, 'Test 3 complete')
+_mark_time(start3, 0.045, 'Test 3 complete')
 
 
 sq.set_seed(42)
@@ -203,7 +203,7 @@ def roll_die(sides, n=1):
 
 
 roll_die(sides=6, n=10)
-_mark_time(start4, 0.088, 'Test 4 complete')
+_mark_time(start4, 0.176, 'Test 4 complete')
 
 
 sq.set_seed(42)
@@ -292,7 +292,7 @@ if round(out, 2) != expected:
     print('ERROR 6')
     import pdb
     pdb.set_trace()
-_mark_time(start6, 0.13, 'Test 6 complete')
+_mark_time(start6, 0.285, 'Test 6 complete')
 
 
 sq.set_seed(42)
@@ -330,7 +330,7 @@ if round(out[0], 2) != 2.75 and round(out[1], 2) != 0.94:
     print('ERROR 9')
     import pdb
     pdb.set_trace()
-_mark_time(start9, 0.014, 'Test 9 complete')
+_mark_time(start9, 0.019, 'Test 9 complete')
 
 
 sq.set_seed(42)
@@ -380,7 +380,7 @@ if round(out, 2) != 0.19:
     print('ERROR 10')
     import pdb
     pdb.set_trace()
-_mark_time(start10, 0.93, 'Test 10 complete')
+_mark_time(start10, 1.21, 'Test 10 complete')
 
 
 sq.set_seed(42)
@@ -432,7 +432,7 @@ if round(out, 2) != 0.67:
     print('ERROR 12')
     import pdb
     pdb.set_trace()
-_mark_time(start12, 0.54, 'Test 12 complete')
+_mark_time(start12, 2.54, 'Test 12 complete')
 
 
 sq.set_seed(42)
@@ -446,7 +446,7 @@ if round(out, 2) != 0.34:
     print('ERROR 13')
     import pdb
     pdb.set_trace()
-_mark_time(start13, 0.002, 'Test 13 complete')
+_mark_time(start13, 0.003, 'Test 13 complete')
 
 
 sq.set_seed(42)
@@ -497,13 +497,13 @@ if not all(isinstance(s, np.int64) for s in samples):
     print('ERROR 15')
     import pdb
     pdb.set_trace()
-_mark_time(start15, 0.187, 'Test 15 complete')
+_mark_time(start15, 0.591, 'Test 15 complete')
 
 
 sq.set_seed(42)
 start16 = time.time()
 print('Test 16...')
-ts = [10, 20, 50]
+ts = [20, 40, 50]
 vals = [[1, 10], [0, 3], [-4, 4], [5, 10], [100, 200]]
 credibilities = [80, 90]
 tqdm_ = tqdm(total=len(ts) * len(vals) * len(credibilities) * 2)
@@ -519,14 +519,20 @@ for t in ts:
                     tol = 140 / t if dist.type == 'log_tdist' else 1.35
                     if (not _within(pctiles[(100 - credibility) / 2], val[0], tol, tol) or
                         not _within(pctiles[100 - ((100 - credibility) / 2)], val[1], tol, tol)):
-                        print('ERROR 15 on {}'.format(str(dist)))
+                        print('ERROR 16 on {}'.format(str(dist)))
                         print(pctiles)
                         import pdb
                         pdb.set_trace()
                 tqdm_.update(1)
 tqdm_.close()
-_mark_time(start16, 107.2, 'Test 16 complete')
+_mark_time(start16, 0.189, 'Test 16 complete')
 
 
-_mark_time(start1, 109.66, 'Integration tests complete')
+start17 = time.time()
+print('Test 17...')
+(sq.norm(1, 3) + ~sq.norm(4, 5)) @ 1*M
+_mark_time(start17, 0.0009, 'Test 17 complete')
+
+
+_mark_time(start1, 8.41, 'Integration tests complete')
 print('DONE! INTEGRATION TEST SUCCESS!')
