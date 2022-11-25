@@ -422,7 +422,7 @@ def chi_square_sample(df, samples=1):
     return _simplify(_get_rng().chisquare(df, samples))
 
 
-def discrete_sample(items, samples=1):
+def discrete_sample(items, samples=1, verbose=False):
     """
     Sample a random value from a discrete distribution (aka categorical distribution).
 
@@ -433,6 +433,8 @@ def discrete_sample(items, samples=1):
         weights (or likelihoods of being returned when sampled).
     samples : int
         The number of samples to return.
+    verbose : bool
+        If True, will print out statements on computational progress.
 
     Returns
     -------
@@ -455,10 +457,13 @@ def discrete_sample(items, samples=1):
     weights, values = _process_weights_values(None, items)
     from .distributions import const
     values = [const(v) for v in values]
-    return mixture_sample(values, weights, samples)
+    return mixture_sample(values=values,
+                          weights=weights,
+                          samples=samples,
+                          verbose=verbose)
 
 
-def mixture_sample(values, weights=None, samples=1):
+def mixture_sample(values, weights=None, samples=1, verbose=False):
     """
     Sample a ranom number from a mixture distribution.
 
@@ -470,6 +475,8 @@ def mixture_sample(values, weights=None, samples=1):
         The weights for each distribution.
     samples : int
         The number of samples to return.
+    verbose : bool
+        If True, will print out statements on computational progress.
 
     Returns
     -------
@@ -501,7 +508,7 @@ def mixture_sample(values, weights=None, samples=1):
         return sample(dist)
 
     weights = np.cumsum(weights)
-    return _simplify(np.array([_run_mixture(values, weights) for _ in range(samples)]))
+    return _simplify(np.array([_run_mixture(values, weights) for _ in (tqdm(range(samples)) if verbose else range(samples))]))
 
 
 def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
@@ -568,13 +575,13 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
         else:
             out = [dist()]
 
-        return _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o for o in out]))
+        return _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o for o in (tqdm(out) if verbose else out)]))
 
     elif (isinstance(dist, float) or
           isinstance(dist, int) or
           isinstance(dist, str) or
           dist is None):
-        return _simplify(np.array([dist for _ in range(n)]))
+        return _simplify(np.array([dist for _ in (tqdm(range(n)) if verbose else range(n))]))
 
     elif not _is_dist(dist):
         raise ValueError('input to sample is malformed - must ' +
@@ -626,13 +633,14 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
         return log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
 
     elif dist.type == 'mixture':
-        return mixture_sample(dist.dists, dist.weights, samples=n)
+        return mixture_sample(dist.dists, dist.weights, samples=n, verbose=verbose)
 
     elif dist.type == 'complex':
         if dist.right is None:
-            out = dist.fn(sample(dist.left, n=n))
+            out = dist.fn(sample(dist.left, n=n, verbose=verbose))
         else:
-            out = dist.fn(sample(dist.left, n=n), sample(dist.right, n=n))
+            out = dist.fn(sample(dist.left, n=n, verbose=verbose),
+                          sample(dist.right, n=n, verbose=verbose))
 
         if _is_dist(out) or callable(out):
             return sample(out, n=n)
