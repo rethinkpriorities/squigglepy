@@ -1,6 +1,6 @@
 ## v0.17
 
-* When `verbose=True` is used in `sample`, the progress bar now pops up in more relevant places and is much likely to never get triggered, whereas previously it would not pop up in some situations.
+* When `verbose=True` is used in `sample`, the progress bar now pops up in more relevant places and is much more likely to get triggered when relevant.
 * `discrete_sample` and `mixture_sample` now can take `verbose` parameter.
 
 
