@@ -508,7 +508,8 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
         return sample(dist)
 
     weights = np.cumsum(weights)
-    return _simplify(np.array([_run_mixture(values, weights) for _ in (tqdm(range(samples)) if verbose else range(samples))]))
+    r_ = tqdm(range(samples)) if verbose else range(samples)
+    return _simplify(np.array([_run_mixture(values, weights) for _ in r_]))
 
 
 def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
@@ -575,7 +576,8 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
         else:
             out = [dist()]
 
-        return _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o for o in (tqdm(out) if verbose else out)]))
+        r_ = tqdm(out) if verbose else out
+        return _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o for o in r_]))
 
     elif (isinstance(dist, float) or
           isinstance(dist, int) or
