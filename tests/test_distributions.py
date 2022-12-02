@@ -299,11 +299,11 @@ def test_default_pure_tdist():
     assert tdist().type == 'tdist'
     assert tdist().x is None
     assert tdist().y is None
-    assert tdist().t == 1
+    assert tdist().t == 20
     assert tdist().credibility is None
     assert tdist().lclip is None
     assert tdist().rclip is None
-    assert str(tdist()) == '<Distribution> tdist(t=1)'
+    assert str(tdist()) == '<Distribution> tdist(t=20)'
 
 
 def test_tdist_passes_lclip_rclip():

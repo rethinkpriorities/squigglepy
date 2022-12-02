@@ -884,7 +884,7 @@ def discrete(items):
 
 
 class TDistribution(OperableDistribution):
-    def __init__(self, x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
+    def __init__(self, x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -918,7 +918,7 @@ class TDistribution(OperableDistribution):
         return out
 
 
-def tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
+def tdist(x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
     """
     Initialize a t-distribution.
 
@@ -936,7 +936,7 @@ def tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
     y : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
-        The number of degrees of freedom of the t-distribution. Defaults to 1.
+        The number of degrees of freedom of the t-distribution. Defaults to 20.
     credibility : float
         The range of the credibility interval. Defaults to 90.
     lclip : float or None

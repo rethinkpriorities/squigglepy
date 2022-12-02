@@ -1,3 +1,7 @@
+## v0.18
+
+* **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
+
 ## v0.17
 
 * When `verbose=True` is used in `sample`, the progress bar now pops up in more relevant places and is much more likely to get triggered when relevant.

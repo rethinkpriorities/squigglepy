@@ -68,7 +68,7 @@ def lognormal_sample(mean, sd, samples=1):
     return _simplify(_get_rng().lognormal(mean, sd, samples))
 
 
-def t_sample(low=None, high=None, t=1, samples=1, credibility=90):
+def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     """
     Sample a random number according to a t-distribution.
 
@@ -86,7 +86,7 @@ def t_sample(low=None, high=None, t=1, samples=1, credibility=90):
     high : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
-        The number of degrees of freedom of the t-distribution. Defaults to 1.
+        The number of degrees of freedom of the t-distribution. Defaults to 20.
     samples : int
         The number of samples to return.
     credibility : float
@@ -121,7 +121,7 @@ def t_sample(low=None, high=None, t=1, samples=1, credibility=90):
                          ((chi_square_sample(t, samples) / t) ** 0.5))
 
 
-def log_t_sample(low=None, high=None, t=1, samples=1, credibility=90):
+def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     """
     Sample a random number according to a log-t-distribution.
 
@@ -139,7 +139,7 @@ def log_t_sample(low=None, high=None, t=1, samples=1, credibility=90):
     high : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
-        The number of degrees of freedom of the t-distribution. Defaults to 1.
+        The number of degrees of freedom of the t-distribution. Defaults to 20.
     samples : int
         The number of samples to return.
     credibility : float
