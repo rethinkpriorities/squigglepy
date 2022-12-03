@@ -1,6 +1,7 @@
 ## v0.18
 
 * **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
+* `sample` results can now be cached in-memory using `memcache=True`. They can also be cached to a file -- use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
 
 ## v0.17
 

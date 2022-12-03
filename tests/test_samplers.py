@@ -1,3 +1,4 @@
+import os
 import pytest
 import numpy as np
 from unittest.mock import patch, Mock
@@ -755,3 +756,86 @@ def test_rclip():
 @patch.object(samplers, 'normal_sample', Mock(return_value=10))
 def test_clip():
     assert ~clip(norm(0, 1), 0.5, 0.9) == 0.9
+
+
+def test_sample_cache():
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches = len(_squigglepy_internal_sample_caches)
+
+    sample(norm(1, 2), memcache=True)
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches2 = len(_squigglepy_internal_sample_caches)
+    assert n_caches < n_caches2
+
+    sample(norm(1, 2), memcache=True)
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches3 = len(_squigglepy_internal_sample_caches)
+    assert n_caches2 == n_caches3
+
+    sample(norm(1, 2))
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches4 = len(_squigglepy_internal_sample_caches)
+    assert n_caches2 == n_caches4
+
+    sample(norm(3, 4))
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches5 = len(_squigglepy_internal_sample_caches)
+    assert n_caches2 == n_caches5
+
+    sample(norm(3, 4), memcache=True)
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches6 = len(_squigglepy_internal_sample_caches)
+    assert n_caches6 > n_caches5
+
+
+def test_sample_reload_cache():
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches = len(_squigglepy_internal_sample_caches)
+
+    out1 = sample(norm(5, 6), memcache=True)
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches2 = len(_squigglepy_internal_sample_caches)
+    assert n_caches < n_caches2
+
+    out2 = sample(norm(5, 6), memcache=True)
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches3 = len(_squigglepy_internal_sample_caches)
+    assert n_caches2 == n_caches3
+    assert out1 == out2
+
+    out3 = sample(norm(5, 6), memcache=True, reload_cache=True)
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches4 = len(_squigglepy_internal_sample_caches)
+    assert n_caches3 == n_caches4
+    assert out3 != out2
+
+
+@pytest.fixture
+def cachefile():
+    cachefile = 'testcache'
+    yield cachefile
+    os.remove(cachefile + '.sqcache.pkl')
+
+
+def test_sample_cachefile(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+    sample(norm(1, 2), dump_cache_file=cachefile)
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+
+
+def test_sample_cachefile_primary(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches = len(_squigglepy_internal_sample_caches)
+
+    sample(norm(10, 20), dump_cache_file=cachefile, memcache=True)
+
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches2 = len(_squigglepy_internal_sample_caches)
+    assert n_caches2 == n_caches + 1
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+
+    o1 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=True)
+    o2 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=False)
+    assert o1 == o2

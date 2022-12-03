@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import numpy as np
 
 from tqdm import tqdm
@@ -5,6 +8,9 @@ from scipy import stats
 
 from .distributions import rclip as fn_rclip, lclip as fn_lclip
 from .utils import _process_weights_values, _is_dist, _simplify, _safe_len
+
+
+_squigglepy_internal_sample_caches = {}
 
 
 def _get_rng():
@@ -512,7 +518,9 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
     return _simplify(np.array([_run_mixture(values, weights) for _ in r_]))
 
 
-def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
+def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False,
+           dump_cache_file=None, load_cache_file=None, cache_file_primary=False,
+           verbose=False):
     """
     Sample random numbers from a given distribution.
 
@@ -526,6 +534,22 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
         If not None, any value below ``lclip`` will be coerced to ``lclip``.
     rclip : float or None
         If not None, any value below ``rclip`` will be coerced to ``rclip``.
+    memcache : bool
+        If True, will attempt to load the results in-memory for future calculations if
+        a cache is present. Otherwise will save the results to an in-memory cache. Each cache
+        will be matched based on ``dist``. Default ``False``.
+    reload_cache : bool
+        If True, any existing cache will be ignored and recalculated. Default ``False``.
+    dump_cache_file : str or None
+        If present, will write out the cache to a pickle file with this path with
+        ``.sqlcache.pkl`` appended to the file name.
+    load_cache_file : str or None
+        If present, will first attempt to load and use a cache from a file with this
+        path with ``.sqlcache.pkl`` appended to the file name.
+    cache_file_primary : bool
+        If both an in-memory cache and file cache are present, the file
+        cache will be used for the cache if this is True, and the in-memory cache
+        will be used otherwise. Defaults to False.
     verbose : bool
         If True, will print out statements on computational progress.
 
@@ -547,6 +571,29 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
     if n <= 0:
         raise ValueError('n must be >= 1')
 
+    # Handle loading from cache
+    samples = None
+    if memcache:
+        has_in_mem_cache = str(dist) in _squigglepy_internal_sample_caches
+    if load_cache_file:
+        cache_path = load_cache_file + '.sqcache.pkl'
+        has_file_cache = os.path.exists(cache_path) if load_cache_file else False
+
+    if load_cache_file and not has_file_cache and verbose:
+        print('Warning: cache file `{}.sqcache.pkl` not found.'.format(load_cache_file))
+
+    if (load_cache_file or memcache) and not reload_cache:
+        if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
+            if verbose:
+                print('Loading from cache file...')
+            samples = pickle.load(open(cache_path, 'rb'))
+
+        elif memcache and has_in_mem_cache:
+            if verbose:
+                print('Loading from in-memory cache...')
+            samples = _squigglepy_internal_sample_caches.get(str(dist))
+
+    # Handle lclip/rclip
     lclip_ = None
     rclip_ = None
     if _is_dist(dist):
@@ -570,84 +617,106 @@ def sample(dist, n=1, lclip=None, rclip=None, verbose=False):
         if lclip:
             dist = fn_lclip(dist, lclip)
 
-    if callable(dist):
-        if n > 1:
-            out = np.array([dist() for _ in (tqdm(range(n)) if verbose else range(n))])
+    # Start sampling
+    if samples is None:
+        if callable(dist):
+            if n > 1:
+                out = np.array([dist() for _ in (tqdm(range(n)) if verbose else range(n))])
+            else:
+                out = [dist()]
+
+            r_ = tqdm(out) if verbose else out
+            samples = _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o
+                                for o in r_]))
+
+        elif (isinstance(dist, float) or
+              isinstance(dist, int) or
+              isinstance(dist, str) or
+              dist is None):
+            r_ = tqdm(range(n)) if verbose else range(n)
+            samples = _simplify(np.array([dist for _ in r_]))
+
+        elif not _is_dist(dist):
+            raise ValueError('input to sample is malformed - must ' +
+                             'be a distribution but got {}'.format(type(dist)))
+
+        elif dist.type == 'const':
+            samples = _simplify(np.array([dist.x for _ in range(n)]))
+
+        elif dist.type == 'uniform':
+            samples = uniform_sample(dist.x, dist.y, samples=n)
+
+        elif dist.type == 'discrete':
+            samples = discrete_sample(dist.items, samples=n)
+
+        elif dist.type == 'norm':
+            samples = normal_sample(mean=dist.mean, sd=dist.sd, samples=n)
+
+        elif dist.type == 'lognorm':
+            samples = lognormal_sample(mean=dist.mean, sd=dist.sd, samples=n)
+
+        elif dist.type == 'binomial':
+            samples = binomial_sample(n=dist.n, p=dist.p, samples=n)
+
+        elif dist.type == 'beta':
+            samples = beta_sample(a=dist.a, b=dist.b, samples=n)
+
+        elif dist.type == 'bernoulli':
+            samples = bernoulli_sample(p=dist.p, samples=n)
+
+        elif dist.type == 'poisson':
+            samples = poisson_sample(lam=dist.lam, samples=n)
+
+        elif dist.type == 'chisquare':
+            samples = chi_square_sample(df=dist.df, samples=n)
+
+        elif dist.type == 'exponential':
+            samples = exponential_sample(scale=dist.scale, samples=n)
+
+        elif dist.type == 'gamma':
+            samples = gamma_sample(shape=dist.shape, scale=dist.scale, samples=n)
+
+        elif dist.type == 'triangular':
+            samples = triangular_sample(dist.left, dist.mode, dist.right, samples=n)
+
+        elif dist.type == 'tdist':
+            samples = t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
+
+        elif dist.type == 'log_tdist':
+            samples = log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
+
+        elif dist.type == 'mixture':
+            samples = mixture_sample(dist.dists, dist.weights, samples=n, verbose=verbose)
+
+        elif dist.type == 'complex':
+            if dist.right is None:
+                samples = dist.fn(sample(dist.left, n=n, verbose=verbose))
+            else:
+                samples = dist.fn(sample(dist.left, n=n, verbose=verbose),
+                                  sample(dist.right, n=n, verbose=verbose))
+
+            if _is_dist(samples) or callable(samples):
+                samples = sample(samples, n=n)
+
         else:
-            out = [dist()]
+            raise ValueError('{} sampler not found'.format(dist.type))
 
-        r_ = tqdm(out) if verbose else out
-        return _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o for o in r_]))
+    # Save to cache
+    if memcache and (not has_in_mem_cache or reload_cache):
+        if verbose:
+            print('Caching in-memory...')
+        _squigglepy_internal_sample_caches[str(dist)] = samples
+        if verbose:
+            print('...Cached')
 
-    elif (isinstance(dist, float) or
-          isinstance(dist, int) or
-          isinstance(dist, str) or
-          dist is None):
-        return _simplify(np.array([dist for _ in (tqdm(range(n)) if verbose else range(n))]))
+    if dump_cache_file:
+        cache_path = dump_cache_file + '.sqcache.pkl'
+        if verbose:
+            print('Writing cache to file `{}`...'.format(cache_path))
+        dump_cache_file = open(cache_path, 'wb')
+        pickle.dump(samples, dump_cache_file)
+        if verbose:
+            print('...Cached')
 
-    elif not _is_dist(dist):
-        raise ValueError('input to sample is malformed - must ' +
-                         'be a distribution but got {}'.format(type(dist)))
-
-    elif dist.type == 'const':
-        return _simplify(np.array([dist.x for _ in range(n)]))
-
-    elif dist.type == 'uniform':
-        return uniform_sample(dist.x, dist.y, samples=n)
-
-    elif dist.type == 'discrete':
-        return discrete_sample(dist.items, samples=n)
-
-    elif dist.type == 'norm':
-        return normal_sample(mean=dist.mean, sd=dist.sd, samples=n)
-
-    elif dist.type == 'lognorm':
-        return lognormal_sample(mean=dist.mean, sd=dist.sd, samples=n)
-
-    elif dist.type == 'binomial':
-        return binomial_sample(n=dist.n, p=dist.p, samples=n)
-
-    elif dist.type == 'beta':
-        return beta_sample(a=dist.a, b=dist.b, samples=n)
-
-    elif dist.type == 'bernoulli':
-        return bernoulli_sample(p=dist.p, samples=n)
-
-    elif dist.type == 'poisson':
-        return poisson_sample(lam=dist.lam, samples=n)
-
-    elif dist.type == 'chisquare':
-        return chi_square_sample(df=dist.df, samples=n)
-
-    elif dist.type == 'exponential':
-        return exponential_sample(scale=dist.scale, samples=n)
-
-    elif dist.type == 'gamma':
-        return gamma_sample(shape=dist.shape, scale=dist.scale, samples=n)
-
-    elif dist.type == 'triangular':
-        return triangular_sample(dist.left, dist.mode, dist.right, samples=n)
-
-    elif dist.type == 'tdist':
-        return t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
-
-    elif dist.type == 'log_tdist':
-        return log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
-
-    elif dist.type == 'mixture':
-        return mixture_sample(dist.dists, dist.weights, samples=n, verbose=verbose)
-
-    elif dist.type == 'complex':
-        if dist.right is None:
-            out = dist.fn(sample(dist.left, n=n, verbose=verbose))
-        else:
-            out = dist.fn(sample(dist.left, n=n, verbose=verbose),
-                          sample(dist.right, n=n, verbose=verbose))
-
-        if _is_dist(out) or callable(out):
-            return sample(out, n=n)
-        else:
-            return out
-
-    else:
-        raise ValueError('{} sampler not found'.format(dist.type))
+    # Return
+    return samples

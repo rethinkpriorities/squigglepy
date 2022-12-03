@@ -78,9 +78,9 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         If True, just return the results of each simulation without aggregating.
     memcache : bool
         If True, cache the results in-memory for future calculations. Each cache
-        will be matched based on the ``event_fn``.
+        will be matched based on the ``event_fn``. Default ``True``.
     reload_cache : bool
-        If True, any existing cache will be ignored and recalculated.
+        If True, any existing cache will be ignored and recalculated. Default ``False``.
     dump_cache_file : str or None
         If present, will write out the cache to a pickle file with this path with
         ``.sqlcache.pkl`` appended to the file name.
