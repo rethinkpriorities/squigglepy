@@ -112,6 +112,18 @@ def test_process_weights_values_length_mismatch_error():
     assert 'weights and values not same length' in str(excinfo.value)
 
 
+def test_process_weights_values_negative_weights():
+    with pytest.raises(ValueError) as excinfo:
+        _process_weights_values([-0.1, 0.2, 0.9], [2, 3, 4])
+    assert 'weight cannot be negative' in str(excinfo.value)
+
+
+def test_process_weights_values_remove_zero_weights():
+    test = _process_weights_values([0, 0.3, 0, 0.7, 0], [1, 2, 3, 4, 5])
+    expected = ([0.3, 0.7], [2, 4])
+    assert test == expected
+
+
 def test_event_occurs():
     set_seed(42)
     assert event_occurs(0.9)

@@ -42,7 +42,16 @@ def _process_weights_values(weights, values):
     if len(weights) != len(values):
         raise ValueError('weights and values not same length')
 
-    return weights, values
+    new_weights = []
+    new_values = []
+    for i, w in enumerate(weights):
+        if w < 0:
+            raise ValueError('weight cannot be negative')
+        if w > 0:
+            new_weights.append(w)
+            new_values.append(values[i])
+
+    return new_weights, new_values
 
 
 def _is_numpy(a):
