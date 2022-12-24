@@ -153,6 +153,15 @@ class ComplexDistribution(OperableDistribution):
         return out
 
 
+def _get_fname(f, name):
+    if name is None:
+        if isinstance(f, np.vectorize):
+            name = f.pyfunc.__name__
+        else:
+            name = f.__name__
+    return name
+
+
 def dist_fn(dist1, dist2=None, fn=None, name=None):
     """
     Initialize a distribution that has a custom function applied to the result.
@@ -195,8 +204,11 @@ def dist_fn(dist1, dist2=None, fn=None, name=None):
         def out_fn(d):
             out = d
             for f in fn:
-                name_ = f.__name__ if name is None else name
-                out = ComplexDistribution(out, None, fn=f, fn_str=name_, infix=False)
+                out = ComplexDistribution(out,
+                                          None,
+                                          fn=f,
+                                          fn_str=_get_fname(f, name),
+                                          infix=False)
             return out
 
         return out_fn
@@ -217,8 +229,11 @@ def dist_fn(dist1, dist2=None, fn=None, name=None):
 
     out = dist1
     for f in fn:
-        name_ = f.__name__ if name is None else name
-        out = ComplexDistribution(out, dist2, fn=f, fn_str=name_, infix=False)
+        out = ComplexDistribution(out,
+                                  dist2,
+                                  fn=f,
+                                  fn_str=_get_fname(f, name),
+                                  infix=False)
 
     return out
 

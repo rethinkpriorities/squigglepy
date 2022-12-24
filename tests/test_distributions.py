@@ -866,6 +866,19 @@ def test_dist_fn():
     assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
 
 
+def test_dist_fn_vectorize():
+    @np.vectorize
+    def mirror(x):
+        return 1 - x if x > 0.5 else x
+
+    obj = dist_fn(norm(0, 1), mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
+    obj = norm(0, 1) >> dist_fn(mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
+
+
 def test_dist_fn2():
     def mirror(x, y):
         return 1 - x if x > y else x
