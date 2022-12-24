@@ -517,7 +517,7 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
     return _simplify(np.array([_run_mixture(values, weights) for _ in r_]))
 
 
-def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False,
+def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False,
            dump_cache_file=None, load_cache_file=None, cache_file_primary=False,
            verbose=None):
     """
@@ -576,8 +576,7 @@ def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False
 
     # Handle loading from cache
     samples = None
-    if memcache:
-        has_in_mem_cache = str(dist) in _squigglepy_internal_sample_caches
+    has_in_mem_cache = str(dist) in _squigglepy_internal_sample_caches
     if load_cache_file:
         cache_path = load_cache_file + '.sqcache.pkl'
         has_file_cache = os.path.exists(cache_path) if load_cache_file else False

@@ -54,6 +54,10 @@ class FakeRNG:
         return df
 
 
+def test_noop(mocker):
+    assert sample() is None
+
+
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_norm(mocker):
     assert normal_sample(1, 2) == (1, 2)
@@ -897,7 +901,10 @@ def test_sample_reload_cache():
 def cachefile():
     cachefile = 'testcache'
     yield cachefile
-    os.remove(cachefile + '.sqcache.pkl')
+    try:
+        os.remove(cachefile + '.sqcache.pkl')
+    except FileNotFoundError:
+        pass
 
 
 def test_sample_cachefile(cachefile):
@@ -922,3 +929,25 @@ def test_sample_cachefile_primary(cachefile):
     o1 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=True)
     o2 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=False)
     assert o1 == o2
+
+
+def test_sample_load_noop_cachefile(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches = len(_squigglepy_internal_sample_caches)
+
+    o1 = sample(norm(100, 200), dump_cache_file=cachefile, memcache=True)
+
+    from ..squigglepy.samplers import _squigglepy_internal_sample_caches
+    n_caches2 = len(_squigglepy_internal_sample_caches)
+    assert n_caches2 == n_caches + 1
+    assert os.path.exists(cachefile + '.sqcache.pkl')
+
+    o2 = sample(load_cache_file=cachefile)
+    assert o1 == o2
+
+
+def test_sample_load_noop_nonexisting_cachefile(cachefile):
+    assert not os.path.exists(cachefile + '.sqcache.pkl')
+    assert sample(load_cache_file=cachefile) is None
