@@ -6,7 +6,6 @@ import numpy as np
 from tqdm import tqdm
 from scipy import stats
 
-from .distributions import rclip as fn_rclip, lclip as fn_lclip
 from .utils import _process_weights_values, _is_dist, _simplify, _safe_len
 
 
@@ -520,7 +519,7 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
 
 def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False,
            dump_cache_file=None, load_cache_file=None, cache_file_primary=False,
-           verbose=False):
+           verbose=None):
     """
     Sample random numbers from a given distribution.
 
@@ -551,7 +550,8 @@ def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False
         cache will be used for the cache if this is True, and the in-memory cache
         will be used otherwise. Defaults to False.
     verbose : bool
-        If True, will print out statements on computational progress.
+        If True, will print out statements on computational progress. If False, will not.
+        If None (default), will be True when ``n`` is greater than or equal to 1M.
 
     Returns
     -------
@@ -570,6 +570,9 @@ def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False
     n = int(n)
     if n <= 0:
         raise ValueError('n must be >= 1')
+
+    if verbose is None:
+        verbose = (n >= 1000000)
 
     # Handle loading from cache
     samples = None
@@ -602,20 +605,13 @@ def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False
 
     if lclip is None and lclip_ is not None:
         lclip = lclip_
+    elif lclip is not None and lclip_ is not None:
+        lclip = max(lclip, lclip_)
+
     if rclip is None and rclip_ is not None:
         rclip = rclip_
-    if lclip is not None and lclip_ is not None:
-        lclip = max(lclip, lclip_)
-    if rclip is not None and rclip_ is not None:
+    elif rclip is not None and rclip_ is not None:
         rclip = min(rclip, rclip_)
-
-    if lclip is not None or rclip is not None:
-        dist.lclip = None
-        dist.rclip = None
-        if rclip:
-            dist = fn_rclip(dist, rclip)
-        if lclip:
-            dist = fn_lclip(dist, lclip)
 
     # Start sampling
     if samples is None:
@@ -700,6 +696,18 @@ def sample(dist, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False
 
         else:
             raise ValueError('{} sampler not found'.format(dist.type))
+
+    # Use lclip / rclip
+    if _safe_len(samples) > 1:
+        if lclip is not None:
+            samples = np.array([lclip if s < lclip else s for s in samples])
+        if rclip is not None:
+            samples = np.array([rclip if s > rclip else s for s in samples])
+    else:
+        if lclip is not None:
+            samples = lclip if samples < lclip else samples
+        if rclip is not None:
+            samples = rclip if samples > rclip else samples
 
     # Save to cache
     if memcache and (not has_in_mem_cache or reload_cache):

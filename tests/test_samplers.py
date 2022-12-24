@@ -98,6 +98,22 @@ def test_sample_norm_passes_lclip_rclip():
     assert ~norm(1, 2, lclip=1, rclip=3) == 3
 
 
+@patch.object(samplers, 'normal_sample', Mock(return_value=100))
+def test_sample_norm_competing_clip():
+    assert sample(norm(1, 2)) == 100
+    assert sample(norm(1, 2, rclip=3)) == 3
+    assert sample(norm(1, 2, rclip=3), rclip=2) == 2
+    assert sample(norm(1, 2, rclip=2), rclip=3) == 2
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=100))
+def test_sample_norm_competing_clip_multiple_values():
+    assert all(sample(norm(1, 2), n=3) == np.array([100, 100, 100]))
+    assert all(sample(norm(1, 2, rclip=3), n=3) == np.array([3, 3, 3]))
+    assert all(sample(norm(1, 2, rclip=3), rclip=2, n=3) == np.array([2, 2, 2]))
+    assert all(sample(norm(1, 2, rclip=2), rclip=3, n=3) == np.array([2, 2, 2]))
+
+
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 def test_lognorm(mocker):
     assert lognormal_sample(1, 2) == (1, 2)
@@ -398,11 +414,78 @@ def test_sample_mixture_alt_format(mocker):
     assert all(sample(mixture([[0.2, norm(1, 2)], [0.8, norm(3, 4)]]))[0] == (1.5, 0.3))
 
 
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_lclip(mocker):
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == 1
+    assert sample(mixture([norm(1, 2, lclip=3), norm(3, 4)], [0.2, 0.8])) == 3
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8], lclip=3)) == 3
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8]), lclip=3) == 3
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_lclip_multiple_values(mocker):
+    assert all(sample(mixture([norm(1, 2), norm(3, 4)],
+                              [0.2, 0.8]), n=3) == np.array([1, 1, 1]))
+    assert all(sample(mixture([norm(1, 2, lclip=3), norm(3, 4)],
+                              [0.2, 0.8])) == np.array([3, 3, 3]))
+    assert all(sample(mixture([norm(1, 2), norm(3, 4)],
+                              [0.2, 0.8], lclip=3)) == np.array([3, 3, 3]))
+    assert all(sample(mixture([norm(1, 2), norm(3, 4)],
+                              [0.2, 0.8]), lclip=3) == np.array([3, 3, 3]))
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_lclip_alt_format(mocker):
+    assert sample(mixture([[0.2, norm(1, 2, lclip=3)],
+                           [0.8, norm(3, 4)]])) == 3
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_mixture_sample_lclip_alt_format_multiple_values(mocker):
+    assert all(mixture_sample([[0.2, norm(1, 2, lclip=3)],
+                               [0.8, norm(3, 4)]], samples=3) == np.array([3, 3, 3]))
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_lclip_alt_format_multiple_values(mocker):
+    assert all(sample(mixture([[0.2, norm(1, 2, lclip=3)],
+                               [0.8, norm(3, 4)]]), n=3) == np.array([3, 3, 3]))
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_lclip_alt_format2(mocker):
+    assert ~mixture([[0.2, norm(1, 2, lclip=3)],
+                     [0.8, norm(3, 4)]]) == 3
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=1))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_lclip_alt_format2_multiple_values(mocker):
+    assert all(mixture([[0.2, norm(1, 2, lclip=3)],
+                        [0.8, norm(3, 4)]]) @ 3 == np.array([3, 3, 3]))
+
+
 @patch.object(samplers, 'normal_sample', Mock(return_value=100))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_rclip_lclip(mocker):
+def test_sample_mixture_rclip(mocker):
     assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == 100
     assert sample(mixture([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8])) == 3
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8], rclip=3)) == 3
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8]), rclip=3) == 3
+
+
+@patch.object(samplers, 'normal_sample', Mock(return_value=100))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_competing_clip(mocker):
+    assert sample(mixture([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8])) == 3
+    assert sample(mixture([norm(1, 2, rclip=2), norm(3, 4)], [0.2, 0.8], rclip=3)) == 2
+    assert sample(mixture([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8]), rclip=2) == 2
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))

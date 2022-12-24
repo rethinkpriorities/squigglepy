@@ -1,8 +1,9 @@
 ## v0.18
 
 * **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
+* Fixes a bug where `lclip` and/or `rclip` on `mixture` distribution were not working correctly.
 * `sample` results can now be cached in-memory using `memcache=True`. They can also be cached to a file -- use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
-* _(Non-visible backend change)_ Weights that are set to 0 are now dropped entirely.
+* _(Non-visible backend change)_ Weights that are set to 0 are now dropped entirely, for a potential speedup.
 
 
 ## v0.17

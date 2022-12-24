@@ -567,7 +567,7 @@ if any(samps < 0):
     print('ERROR ON 18')
     import pdb
     pdb.set_trace()
-_mark_time(start18, 0.0009, 'Test 18 complete')
+_mark_time(start18, 11.55, 'Test 18 complete')
 
 
 ## TEST 19 -- RCLIP FIDELITY, 1M SAMPLES
@@ -577,12 +577,12 @@ dist = sq.mixture([[0.1, 0],
                    [0.1, sq.norm(0,3)],
                    [0.8, sq.norm(7,11)]], rclip=3)
 samps = dist @ (1*M)
-if any(samps < 0):
+if any(samps > 3):
     print('ERROR ON 19')
     import pdb
     pdb.set_trace()
-_mark_time(start18, 0.0009, 'Test 19 complete')
+_mark_time(start18, 11.7, 'Test 19 complete')
 
 
-_mark_time(start1, 8.41, 'Integration tests complete')
+_mark_time(start1, 26.96, 'Integration tests complete')
 print('DONE! INTEGRATION TEST SUCCESS!')
