@@ -53,6 +53,7 @@ def _mark_time(start, expected_sec, label, tolerance_ratio=1.05, tolerance_ms_th
     return {'timing(sec)': delta_sec, 'deviation': deviation}
 
 
+## TEST 1 - PIANO TUNERS, NO TIME, LONG FORMAT
 sq.set_seed(42)
 start1 = time.time()
 print('Test 1...')
@@ -86,6 +87,7 @@ if out != expected:
 _mark_time(start1, 0.045, 'Test 1 complete')
 
 
+## TEST 2 -- PIANO TUNERS, TIME COMPONENT, LONG FORMAT
 sq.set_seed(42)
 start2 = time.time()
 print('Test 2...')
@@ -114,6 +116,7 @@ if out != expected:
 _mark_time(start2, 0.061, 'Test 2 complete')
 
 
+## TEST 3 -- PIANO TUNERS, TIME COMPONENT, SHORT FORMAT
 sq.set_seed(42)
 start3 = time.time()
 print('Test 3...')
@@ -147,6 +150,7 @@ if out != expected:
 _mark_time(start3, 0.045, 'Test 3 complete')
 
 
+## TEST 4 -- VARIOUS DISTRIBUTIONS, LONG FORMAT
 sq.set_seed(42)
 start4 = time.time()
 print('Test 4...')
@@ -206,6 +210,7 @@ roll_die(sides=6, n=10)
 _mark_time(start4, 0.176, 'Test 4 complete')
 
 
+## TEST 5 -- DISTRIBUTIONS, SHORT FORMAT
 sq.set_seed(42)
 start5 = time.time()
 print('Test 5...')
@@ -268,6 +273,7 @@ roll_die(sides=6, n=10)
 _mark_time(start5, 0.0093, 'Test 5 complete')
 
 
+## TEST 6 -- MAMMOGRAPHY BAYES
 sq.set_seed(42)
 start6 = time.time()
 print('Test 6...')
@@ -295,6 +301,7 @@ if round(out, 2) != expected:
 _mark_time(start6, 0.285, 'Test 6 complete')
 
 
+## TEST 7 -- SIMPLE BAYES
 sq.set_seed(42)
 start7 = time.time()
 print('Test 7...')
@@ -307,6 +314,7 @@ if round(out, 2) != 0.08:
 _mark_time(start7, 0.00001, 'Test 7 complete')
 
 
+## TEST 8 -- BAYESIAN UPDATE
 sq.set_seed(42)
 start8 = time.time()
 print('Test 8...')
@@ -320,6 +328,7 @@ if round(posterior.mean, 2) != 2.53 and round(posterior.sd, 2) != 0.3:
 _mark_time(start8, 0.0004, 'Test 8 complete')
 
 
+## TEST 9 -- BAYESIAN AVERAGE
 sq.set_seed(42)
 start9 = time.time()
 print('Test 9...')
@@ -333,6 +342,7 @@ if round(out[0], 2) != 2.75 and round(out[1], 2) != 0.94:
 _mark_time(start9, 0.019, 'Test 9 complete')
 
 
+## TEST 10 -- ALARM NET
 sq.set_seed(42)
 start10 = time.time()
 print('Test 10...')
@@ -383,6 +393,7 @@ if round(out, 2) != 0.19:
 _mark_time(start10, 1.21, 'Test 10 complete')
 
 
+## TEST 11 -- ALARM NET II
 sq.set_seed(42)
 start11 = time.time()
 print('Test 11...')
@@ -398,6 +409,7 @@ if round(out, 2) != 0.35:
 _mark_time(start11, 0.0025, 'Test 11 complete')
 
 
+## TEST 12 -- MONTE HALL
 sq.set_seed(42)
 start12 = time.time()
 print('Test 12...')
@@ -435,6 +447,7 @@ if round(out, 2) != 0.67:
 _mark_time(start12, 2.54, 'Test 12 complete')
 
 
+## TEST 13 -- MONTE HALL II
 sq.set_seed(42)
 start13 = time.time()
 print('Test 13...')
@@ -449,6 +462,7 @@ if round(out, 2) != 0.34:
 _mark_time(start13, 0.003, 'Test 13 complete')
 
 
+## TEST 14 -- COINS AND DICE
 sq.set_seed(42)
 start14 = time.time()
 print('Test 14...')
@@ -473,6 +487,7 @@ if round(out, 2) != 0.12:
 _mark_time(start14, 0.637, 'Test 14 complete')
 
 
+## TEST 15 -- PIPES
 sq.set_seed(42)
 start15 = time.time()
 print('Test 15...')
@@ -500,9 +515,11 @@ if not all(isinstance(s, np.int64) for s in samples):
 _mark_time(start15, 0.591, 'Test 15 complete')
 
 
+## TEST 16 -- T DIST
 sq.set_seed(42)
 start16 = time.time()
 print('Test 16...')
+# TODO: Accuracy with t<20
 ts = [20, 40, 50]
 vals = [[1, 10], [0, 3], [-4, 4], [5, 10], [100, 200]]
 credibilities = [80, 90]
@@ -528,10 +545,43 @@ tqdm_.close()
 _mark_time(start16, 0.189, 'Test 16 complete')
 
 
+## TEST 17 -- SPEED TEST, 10M SAMPLES
 start17 = time.time()
 print('Test 17...')
-(sq.norm(1, 3) + ~sq.norm(4, 5)) @ 1*M
+samps = (sq.norm(1, 3) + sq.norm(4, 5)) @ (10*M)
+if len(samps) != (10*M):
+    print('ERROR ON 17')
+    import pdb
+    pdb.set_trace()
 _mark_time(start17, 0.0009, 'Test 17 complete')
+
+
+## TEST 18 -- LCLIP FIDELITY, 1M SAMPLES
+start18 = time.time()
+print('Test 18...')
+dist = sq.mixture([[0.1, 0],
+                   [0.8, sq.norm(0,3)],
+                   [0.1, sq.norm(7,11)]], lclip=0)
+samps = dist @ (1*M)
+if any(samps < 0):
+    print('ERROR ON 18')
+    import pdb
+    pdb.set_trace()
+_mark_time(start18, 0.0009, 'Test 18 complete')
+
+
+## TEST 19 -- RCLIP FIDELITY, 1M SAMPLES
+start18 = time.time()
+print('Test 19...')
+dist = sq.mixture([[0.1, 0],
+                   [0.1, sq.norm(0,3)],
+                   [0.8, sq.norm(7,11)]], rclip=3)
+samps = dist @ (1*M)
+if any(samps < 0):
+    print('ERROR ON 19')
+    import pdb
+    pdb.set_trace()
+_mark_time(start18, 0.0009, 'Test 19 complete')
 
 
 _mark_time(start1, 8.41, 'Integration tests complete')
