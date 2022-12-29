@@ -107,17 +107,8 @@ def mammography(has_cancer):
 
 def mammography_event():
     cancer = ~sq.bernoulli(0.01)
-    return ({'mammography': mammography(cancer),
-             'cancer': cancer})
-
-
-def mammography_event2(core):
-    cancer = sq.sample(sq.bernoulli(0.01), n=2000000, verbose=False)
-    mammography_result = [mammography(c) for c in cancer]
-    payload = [{'mammography': int(mammography_result[i]),
-                'cancer': int(cancer[i])} for i in range(len(mammography_result))]
-    with open('test-core-{}.sqcache.json'.format(core), 'w') as outfile:
-        json.dump(payload, outfile)
+    return {'mammography': mammography(cancer),
+            'cancer': cancer}
 
 
 def p_alarm_goes_off(burglary, earthquake):
@@ -200,10 +191,9 @@ def model():
 
 
 if __name__ == '__main__':
-## TEST 1 - PIANO TUNERS, NO TIME, LONG FORMAT
+    print('Test 1 (PIANO TUNERS, NO TIME, LONG FORMAT)...')
     sq.set_seed(42)
     start1 = time.time()
-    print('Test 1...')
     pop_of_ny_2022 = sq.to(8.1*M, 8.4*M)
     out = sq.get_percentiles(sq.sample(total_tuners_in_2022, n=100), digits=1)
     expected = {1: 0.6, 5: 0.9, 10: 1.1, 20: 2.0, 30: 2.6, 40: 3.1,
@@ -216,10 +206,9 @@ if __name__ == '__main__':
     _mark_time(start1, 0.033, 'Test 1 complete')
 
 
-## TEST 2 -- PIANO TUNERS, TIME COMPONENT, LONG FORMAT
+    print('Test 2 (PIANO TUNERS, TIME COMPONENT, LONG FORMAT)...')
     sq.set_seed(42)
     start2 = time.time()
-    print('Test 2...')
     out = sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030-2022), n=100), digits=1)
     expected = {1: 0.7, 5: 1.0, 10: 1.3, 20: 2.1, 30: 2.7, 40: 3.4, 50: 4.3, 60: 6.0,
                 70: 7.4, 80: 9.4, 90: 14.1, 95: 19.6, 99: 24.4}
@@ -231,13 +220,9 @@ if __name__ == '__main__':
     _mark_time(start2, 0.046, 'Test 2 complete')
 
 
-## TEST 3 -- PIANO TUNERS, TIME COMPONENT, SHORT FORMAT
+    print('Test 3 (PIANO TUNERS, TIME COMPONENT, SHORT FORMAT)...')
     sq.set_seed(42)
     start3 = time.time()
-    print('Test 3...')
-
-
-# Get total piano tuners at 2030
     out = sq.get_percentiles(total_tuners_at_time2(2030-2022) @ 100, digits=1)
     expected = {1: 0.5, 5: 0.6, 10: 1.1, 20: 1.5, 30: 1.8, 40: 2.4, 50: 3.1, 60: 4.4,
                 70: 7.3, 80: 9.8, 90: 16.6, 95: 28.4, 99: 85.4}
@@ -249,10 +234,9 @@ if __name__ == '__main__':
     _mark_time(start3, 0.001, 'Test 3 complete')
 
 
-## TEST 4 -- VARIOUS DISTRIBUTIONS, LONG FORMAT
+    print('Test 4 (VARIOUS DISTRIBUTIONS, LONG FORMAT)...')
     sq.set_seed(42)
     start4 = time.time()
-    print('Test 4...')
     sq.sample(sq.norm(1, 3))  # 90% interval from 1 to 3
     sq.sample(sq.norm(mean=0, sd=1))
     sq.sample(sq.norm(-1.67, 1.67))  # This is equivalent to mean=0, sd=1
@@ -282,25 +266,21 @@ if __name__ == '__main__':
     sq.sample(sq.mixture([[0.3, sq.norm(1, 3)],
                           [0.3, sq.norm(4, 10)],
                           [0.4, sq.lognorm(1, 10)]]))
-
     sq.sample(lambda: sq.sample(sq.norm(1, 3)) + sq.sample(sq.norm(4, 5)), n=100)
     sq.sample(lambda: sq.sample(sq.norm(1, 3)) - sq.sample(sq.norm(4, 5)), n=100)
     sq.sample(lambda: sq.sample(sq.norm(1, 3)) * sq.sample(sq.norm(4, 5)), n=100)
     sq.sample(lambda: sq.sample(sq.norm(1, 3)) / sq.sample(sq.norm(4, 5)), n=100)
-
     sq.sample(sq.norm(1, 3, credibility=80))
     sq.sample(sq.norm(0, 3, lclip=0, rclip=5))
     sq.sample(sq.const(4))
     sq.sample(sq.zero_inflated(0.6, sq.norm(1, 2)))
-
     roll_die(sides=6, n=10)
     _mark_time(start4, 0.110, 'Test 4 complete')
 
 
-## TEST 5 -- DISTRIBUTIONS, SHORT FORMAT
+    print('Test 5 (VARIOUS DISTRIBUTIONS, SHORT FORMAT)...')
     sq.set_seed(42)
     start5 = time.time()
-    print('Test 5...')
     ~sq.norm(1, 3)
     ~sq.norm(mean=0, sd=1)
     ~sq.norm(-1.67, 1.67)
@@ -330,35 +310,29 @@ if __name__ == '__main__':
     ~sq.mixture([[0.3, sq.norm(1, 3)],
                  [0.3, sq.norm(4, 10)],
                  [0.4, sq.lognorm(1, 10)]])
-
     ~sq.norm(1, 3) + ~sq.norm(4, 5)
     ~sq.norm(1, 3) - ~sq.norm(4, 5)
     ~sq.norm(1, 3) / ~sq.norm(4, 5)
     ~sq.norm(1, 3) * ~sq.norm(4, 5)
-
     ~(sq.norm(1, 3) + ~sq.norm(4, 5))
     ~(sq.norm(1, 3) - ~sq.norm(4, 5))
     ~(sq.norm(1, 3) / ~sq.norm(4, 5))
     ~(sq.norm(1, 3) * ~sq.norm(4, 5))
-
     (sq.norm(1, 3) + ~sq.norm(4, 5)) @ 100
     (sq.norm(1, 3) - ~sq.norm(4, 5)) @ 100
     (sq.norm(1, 3) / ~sq.norm(4, 5)) @ 100
     (sq.norm(1, 3) * ~sq.norm(4, 5)) @ 100
-
     ~sq.norm(1, 3, credibility=80)
     ~sq.norm(0, 3, lclip=0, rclip=5)
     ~sq.const(4)
     ~sq.zero_inflated(0.6, sq.norm(1, 2))
-
     roll_die2(sides=6, n=10)
     _mark_time(start5, 0.005, 'Test 5 complete')
 
 
-## TEST 6 -- MAMMOGRAPHY BAYES
+    print('Test 6 (MAMMOGRAPHY BAYES)...')
     sq.set_seed(42)
     start6 = time.time()
-    print('Test 6...')
     out = bayes.bayesnet(mammography_event,
                          find=lambda e: e['cancer'],
                          conditional_on=lambda e: e['mammography'],
@@ -372,10 +346,9 @@ if __name__ == '__main__':
     test_6_mark = _mark_time(start6, 0.186, 'Test 6 complete')
 
 
-## TEST 7 -- SIMPLE BAYES
+    print('Test 7 (SIMPLE BAYES)...')
     sq.set_seed(42)
     start7 = time.time()
-    print('Test 7...')
     out = bayes.simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
     expected = None
     if round(out, 2) != 0.08:
@@ -385,10 +358,9 @@ if __name__ == '__main__':
     _mark_time(start7, 0.00001, 'Test 7 complete')
 
 
-## TEST 8 -- BAYESIAN UPDATE
+    print('Test 8 (BAYESIAN UPDATE)...')
     sq.set_seed(42)
     start8 = time.time()
-    print('Test 8...')
     prior = sq.norm(1, 5)
     evidence = sq.norm(2, 3)
     posterior = bayes.update(prior, evidence)
@@ -399,10 +371,9 @@ if __name__ == '__main__':
     _mark_time(start8, 0.0004, 'Test 8 complete')
 
 
-## TEST 9 -- BAYESIAN AVERAGE
+    print('Test 9 (BAYESIAN AVERAGE)...')
     sq.set_seed(42)
     start9 = time.time()
-    print('Test 9...')
     average = bayes.average(prior, evidence)
     average_samples = sq.sample(average, n=K)
     out = (np.mean(average_samples), np.std(average_samples))
@@ -413,10 +384,9 @@ if __name__ == '__main__':
     _mark_time(start9, 0.019, 'Test 9 complete')
 
 
-## TEST 10 -- ALARM NET
+    print('Test 10 (ALARM NET)...')
     sq.set_seed(42)
     start10 = time.time()
-    print('Test 10...')
     out = bayes.bayesnet(alarm_net,
                          n=RUNS * 3,
                          find=lambda e: (e['mary_calls'] and e['john_calls']),
@@ -428,10 +398,9 @@ if __name__ == '__main__':
     _mark_time(start10, 0.68, 'Test 10 complete')
 
 
-## TEST 11 -- ALARM NET II
+    print('Test 11 (ALARM NET II)...')
     sq.set_seed(42)
     start11 = time.time()
-    print('Test 11...')
     out = bayes.bayesnet(alarm_net,
                          n=RUNS * 3,
                          find=lambda e: e['burglary'],
@@ -443,10 +412,9 @@ if __name__ == '__main__':
     _mark_time(start11, 0.0025, 'Test 11 complete')
 
 
-## TEST 12 -- MONTE HALL
+    print('Test 12 (MONTE HALL)...')
     sq.set_seed(42)
     start12 = time.time()
-    print('Test 12...')
     out = bayes.bayesnet(monte_hall_event,
                          find=lambda e: e['won'],
                          conditional_on=lambda e: e['switched'],
@@ -458,10 +426,9 @@ if __name__ == '__main__':
     _mark_time(start12, 1.26, 'Test 12 complete')
 
 
-## TEST 13 -- MONTE HALL II
+    print('Test 13 (MONTE HALL II)...')
     sq.set_seed(42)
     start13 = time.time()
-    print('Test 13...')
     out = bayes.bayesnet(monte_hall_event,
                          find=lambda e: e['won'],
                          conditional_on=lambda e: not e['switched'],
@@ -473,10 +440,9 @@ if __name__ == '__main__':
     _mark_time(start13, 0.003, 'Test 13 complete')
 
 
-## TEST 14 -- COINS AND DICE
+    print('Test 14 (COINS AND DICE)...')
     sq.set_seed(42)
     start14 = time.time()
-    print('Test 14...')
     out = bayes.bayesnet(coins_and_dice,
                          find=lambda e: e == 6,
                          n=RUNS)
@@ -487,10 +453,9 @@ if __name__ == '__main__':
     _mark_time(start14, 1.24, 'Test 14 complete')
 
 
-## TEST 15 -- PIPES
+    print('Test 15 (PIPES)...')
     sq.set_seed(42)
     start15 = time.time()
-    print('Test 15...')
     samples = sq.sample(model, n=1000)
     if not all(isinstance(s, np.int64) for s in samples):
         print('ERROR 15')
@@ -499,10 +464,9 @@ if __name__ == '__main__':
     _mark_time(start15, 0.247, 'Test 15 complete')
 
 
-## TEST 16 -- T DIST
+    print('Test 16 (T TEST)...')
     sq.set_seed(42)
     start16 = time.time()
-    print('Test 16...')
 # TODO: Accuracy with t<20
     ts = [20, 40, 50]
     vals = [[1, 10], [0, 3], [-4, 4], [5, 10], [100, 200]]
@@ -529,10 +493,10 @@ if __name__ == '__main__':
     _mark_time(start16, 0.082, 'Test 16 complete')
 
 
-## TEST 17 -- SPEED TEST, 10M SAMPLES
+    print('Test 17 (SPEED TEST, 10M SAMPLES)...')
     start17 = time.time()
-    print('Test 17...')
     samps = (sq.norm(1, 3) + sq.norm(4, 5)) @ (10*M)
+# TODO: Why not verbose?
     if len(samps) != (10*M):
         print('ERROR ON 17')
         import pdb
@@ -540,9 +504,8 @@ if __name__ == '__main__':
     _mark_time(start17, 0.327, 'Test 17 complete')
 
 
-## TEST 18 -- LCLIP FIDELITY, 1M SAMPLES
+    print('Test 18 (LCLIP FIDELITY, 1M SAMPLES)...')
     start18 = time.time()
-    print('Test 18...')
     dist = sq.mixture([[0.1, 0],
                        [0.8, sq.norm(0,3)],
                        [0.1, sq.norm(7,11)]], lclip=0)
@@ -554,9 +517,8 @@ if __name__ == '__main__':
     _mark_time(start18, 18.9, 'Test 18 complete')
 
 
-## TEST 19 -- RCLIP FIDELITY, 1M SAMPLES
+    print('Test 19 (RCLIP FIDELITY, 1M SAMPLES)...')
     start19 = time.time()
-    print('Test 19...')
     dist = sq.mixture([[0.1, 0],
                        [0.1, sq.norm(0,3)],
                        [0.8, sq.norm(7,11)]], rclip=3)
@@ -565,31 +527,45 @@ if __name__ == '__main__':
         print('ERROR ON 19')
         import pdb
         pdb.set_trace()
-    _mark_time(start19, 18.9, 'Test 19 complete')
+    test_19_mark = _mark_time(start19, 18.9, 'Test 19 complete')
 
 
-## TEST 20 -- MAMMOGRAPHY BAYES MULTICORE
-    sq.set_seed(42)
+    print('Test 20 (MULTICORE SAMPLE, 10M SAMPLES)...')
     start20 = time.time()
-    print('Test 20...')
-    out = bayes.bayesnet(mammography_event2,
-                         find=lambda e: e['cancer'],
-                         conditional_on=lambda e: e['mammography'],
-                         n=RUNS * K,
-                         verbose=True,
-                         memcache=False,
-                         cores=5)
-    expected = 0.08
-    if round(out, 2) != expected:
+    dist = sq.mixture([[0.1, 0],
+                       [0.1, sq.norm(0,3)],
+                       [0.8, sq.norm(7,11)]], rclip=3)
+    samps = sq.sample(dist, cores=7, n=10*M, verbose=True)
+    if len(samps) != (10*M) or any(samps > 3):
         print('ERROR ON 20')
         import pdb
         pdb.set_trace()
-    test_20_mark = _mark_time(start20, 37.05, 'Test 20 complete')
-    print('1 core {} RUNS expected {}sec'.format(RUNS * K,
-                                                 round(test_6_mark['timing(sec)'] * K, 1)))
-    print('5 core {} RUNS ideal {}sec'.format(RUNS * K,
-                                              round(test_6_mark['timing(sec)'] * K / 5, 1)))
-    print('5 core {} RUNS actual {}sec'.format(RUNS * K,
-                                               round(test_20_mark['timing(sec)'], 1)))
+    test_20_mark = _mark_time(start20, 18.9, 'Test 20 complete')
+    print('1 core 10M RUNS expected {}sec'.format(round(test_19_mark['timing(sec)'] * 10, 1)))
+    print('7 core 10M RUNS ideal {}sec'.format(round(test_19_mark['timing(sec)'] * 10 / 7, 1)))
+    print('7 core 10M RUNS actual {}sec'.format(round(test_20_mark['timing(sec)'], 1)))
+
+
+    print('Test 21 (MAMMOGRAPHY BAYES MULTICORE)...')
+    sq.set_seed(42)
+    start21 = time.time()
+    out = bayes.bayesnet(mammography_event,
+                         find=lambda e: e['cancer'],
+                         conditional_on=lambda e: e['mammography'],
+                         n=10*M,
+                         verbose=True,
+                         memcache=False,
+                         cores=7)
+    expected = 0.08
+    if round(out, 2) != expected:
+        print('ERROR ON 21')
+        import pdb
+        pdb.set_trace()
+    test_21_mark = _mark_time(start21, 37.05, 'Test 21 complete')
+    print('1 core 10M RUNS expected {}sec'.format(round(test_6_mark['timing(sec)'] * K, 1)))
+    print('7 core 10M RUNS ideal {}sec'.format(round(test_6_mark['timing(sec)'] * K / 7, 1)))
+    print('7 core 10M RUNS actual {}sec'.format(round(test_21_mark['timing(sec)'], 1)))
+
+# END
     _mark_time(start1, 84.3, 'Integration tests complete')
     print('DONE! INTEGRATION TEST SUCCESS!')

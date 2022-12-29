@@ -4,12 +4,13 @@ import math
 import pickle
 
 import numpy as np
+import pathos.multiprocessing as mp
 
 from tqdm import tqdm
 from datetime import datetime
-from multiprocessing import Pool
 
 from .distributions import norm, beta, mixture
+from .utils import _core_cuts
 
 
 _squigglepy_internal_bayesnet_caches = {}
@@ -163,20 +164,23 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
                 events = [event_fn() for _ in tqdm(range(n))]
             else:
                 print('Generating Bayes net with {} cores...'.format(cores))
-                pool = Pool(cores)
-                # TODO: tqdm?
-                pool.map(event_fn, range(cores))
-                pool.close()
-                pool.join()
+                with mp.ProcessingPool(cores) as pool:
+                    cuts = _core_cuts(n, cores)
+
+                    def multicore_event_fn(core):
+                        batch = [event_fn() for _ in range(cuts[core])]
+                        with open('test-core-{}.sqcache.json'.format(core), 'w') as outfile:
+                            json.dump(batch, outfile)
+
+                    # TODO: tqdm?
+                    pool.map(multicore_event_fn, range(cores))
             print('...Generated')
         else:
             if cores == 1:
                 events = [event_fn() for _ in range(n)]
             else:
-                pool = Pool(cores)
-                pool.map(event_fn, range(cores))
-                pool.close()
-                pool.join()
+                # TODO:
+                raise ValueError('Temporarily offline')
         if cores > 1:
             events = []
             for c in range(cores):

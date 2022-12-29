@@ -1,3 +1,4 @@
+import math
 import numpy as np
 
 from scipy import stats
@@ -92,6 +93,13 @@ def _safe_len(a):
         return 0
     else:
         return 1
+
+
+def _core_cuts(n, cores):
+    cuts = [math.floor(n / cores) for _ in range(cores)]
+    delta = n - sum(cuts)
+    cuts[-1] += delta
+    return cuts
 
 
 def event_occurs(p):

@@ -2,11 +2,12 @@ import os
 import pickle
 
 import numpy as np
+import pathos.multiprocessing as mp
 
 from tqdm import tqdm
 from scipy import stats
 
-from .utils import _process_weights_values, _is_dist, _simplify, _safe_len
+from .utils import _process_weights_values, _is_dist, _simplify, _safe_len, _core_cuts
 
 
 _squigglepy_internal_sample_caches = {}
@@ -519,7 +520,7 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
 
 def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False,
            dump_cache_file=None, load_cache_file=None, cache_file_primary=False,
-           verbose=None):
+           verbose=None, cores=1):
     """
     Sample random numbers from a given distribution.
 
@@ -552,6 +553,9 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     verbose : bool
         If True, will print out statements on computational progress. If False, will not.
         If None (default), will be True when ``n`` is greater than or equal to 1M.
+    cores : int
+        If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
+        pool with that many cores / processes.
 
     Returns
     -------
@@ -595,22 +599,51 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
                 print('Loading from in-memory cache...')
             samples = _squigglepy_internal_sample_caches.get(str(dist))
 
+    # Handle multicore
+    if samples is None and cores > 1:
+        if verbose:
+            print('Generating samples with {} cores...'.format(cores))
+        with mp.ProcessingPool(cores) as pool:
+            cuts = _core_cuts(n, cores)
+
+            def multicore_sample(core):
+                batch = sample(dist=dist,
+                               n=cuts[core],
+                               lclip=lclip,
+                               rclip=rclip,
+                               memcache=False,
+                               verbose=False,
+                               cores=1)
+                with open('test-core-{}.npy'.format(core), 'wb') as f:
+                    np.save(f, batch)
+                return None
+
+            pool.map(multicore_sample, range(cores))
+        # TODO: tqdm?
+        samples = np.array([])
+        for core in range(cores):
+            with open('test-core-{}.npy'.format(core), 'rb') as f:
+                samples = np.concatenate((samples, np.load(f)), axis=None)
+            os.remove('test-core-{}.npy'.format(core))
+
+
     # Handle lclip/rclip
-    lclip_ = None
-    rclip_ = None
-    if _is_dist(dist):
-        lclip_ = dist.lclip
-        rclip_ = dist.rclip
+    if samples is None:
+        lclip_ = None
+        rclip_ = None
+        if _is_dist(dist):
+            lclip_ = dist.lclip
+            rclip_ = dist.rclip
 
-    if lclip is None and lclip_ is not None:
-        lclip = lclip_
-    elif lclip is not None and lclip_ is not None:
-        lclip = max(lclip, lclip_)
+        if lclip is None and lclip_ is not None:
+            lclip = lclip_
+        elif lclip is not None and lclip_ is not None:
+            lclip = max(lclip, lclip_)
 
-    if rclip is None and rclip_ is not None:
-        rclip = rclip_
-    elif rclip is not None and rclip_ is not None:
-        rclip = min(rclip, rclip_)
+        if rclip is None and rclip_ is not None:
+            rclip = rclip_
+        elif rclip is not None and rclip_ is not None:
+            rclip = min(rclip, rclip_)
 
     # Start sampling
     if samples is None:
