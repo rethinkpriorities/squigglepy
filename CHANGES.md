@@ -4,7 +4,7 @@
 * Fixes a bug where `lclip` and/or `rclip` on `mixture` distribution were not working correctly.
 * Fixes a bug where `dist_fn` did not work with `np.vectorize` functions.
 * Fixes a bug where in-memory caching was invoked for `bayesnet` when not desired.
-* `bayesnet` now takes an argument `cores` (default 1). If greater than 1, will run the calculations on multiple cores using the Python `multiprocessing` package.
+* `bayesnet` and `sample` now take an argument `cores` (default 1). If greater than 1, will run the calculations on multiple cores using the pathos package.
 * `sample` results can now be cached in-memory using `memcache=True`. They can also be cached to a file -- use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
 * _(Non-visible backend change)_ Weights that are set to 0 are now dropped entirely, for a potential speedup.
 
