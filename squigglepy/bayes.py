@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import math
 import pickle
@@ -158,30 +159,39 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         print('Reloading cache...')
 
     if events is None:
-        if verbose:
-            if cores == 1:
+        if cores == 1:
+            if verbose:
                 print('Generating Bayes net...')
-                events = [event_fn() for _ in tqdm(range(n))]
-            else:
-                print('Generating Bayes net with {} cores...'.format(cores))
-                with mp.ProcessingPool(cores) as pool:
-                    cuts = _core_cuts(n, cores)
-
-                    def multicore_event_fn(core):
-                        batch = [event_fn() for _ in range(cuts[core])]
-                        with open('test-core-{}.sqcache.json'.format(core), 'w') as outfile:
-                            json.dump(batch, outfile)
-
-                    # TODO: tqdm?
-                    pool.map(multicore_event_fn, range(cores))
-            print('...Generated')
+            r_ = range(n)
+            r_ = tqdm(r_) if verbose else r_
+            events = [event_fn() for _ in r_]
         else:
-            if cores == 1:
-                events = [event_fn() for _ in range(n)]
-            else:
-                # TODO:
-                raise ValueError('Temporarily offline')
+            if verbose:
+                print('Generating Bayes net with {} cores...'.format(cores))
+            with mp.ProcessingPool(cores) as pool:
+                cuts = _core_cuts(n, cores)
+
+                def multicore_event_fn(core, verbose=False):
+                    r_ = range(cuts[core])
+                    r_ = tqdm(r_) if verbose else r_
+                    batch = [event_fn() for _ in r_]
+                    if verbose:
+                        print('Shuffling data...')
+                    with open('test-core-{}.sqcache.json'.format(core), 'w') as outfile:
+                        json.dump(batch, outfile)
+
+                pool_results = pool.amap(multicore_event_fn, range(cores - 1))
+                multicore_event_fn(cores - 1, verbose=verbose)
+                if verbose:
+                    print('Waiting for other cores...')
+                while not pool_results.ready():
+                    if verbose:
+                        print('.', end='', flush=True)
+                    time.sleep(1)
+
         if cores > 1:
+            if verbose:
+                print('Collecting data...')
             events = []
             for c in range(cores):
                 with open('test-core-{}.sqcache.json'.format(c), 'r') as infile:

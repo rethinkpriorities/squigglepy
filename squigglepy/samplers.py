@@ -1,4 +1,5 @@
 import os
+import time
 import pickle
 
 import numpy as np
@@ -606,26 +607,36 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
         with mp.ProcessingPool(cores) as pool:
             cuts = _core_cuts(n, cores)
 
-            def multicore_sample(core):
+            def multicore_sample(core, verbose=False):
                 batch = sample(dist=dist,
                                n=cuts[core],
                                lclip=lclip,
                                rclip=rclip,
                                memcache=False,
-                               verbose=False,
+                               verbose=verbose,
                                cores=1)
+                if verbose:
+                    print('Shuffling data...')
                 with open('test-core-{}.npy'.format(core), 'wb') as f:
                     np.save(f, batch)
                 return None
 
-            pool.map(multicore_sample, range(cores))
-        # TODO: tqdm?
+            pool_results = pool.amap(multicore_sample, range(cores - 1))
+            multicore_sample(cores - 1, verbose=verbose)
+            if verbose:
+                print('Waiting for other cores...')
+            while not pool_results.ready():
+                if verbose:
+                    print('.', end='', flush=True)
+                time.sleep(1)
+
+        if verbose:
+            print('Collecting data...')
         samples = np.array([])
         for core in range(cores):
             with open('test-core-{}.npy'.format(core), 'rb') as f:
                 samples = np.concatenate((samples, np.load(f)), axis=None)
             os.remove('test-core-{}.npy'.format(core))
-
 
     # Handle lclip/rclip
     if samples is None:
