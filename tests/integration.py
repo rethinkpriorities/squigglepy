@@ -591,7 +591,5 @@ if __name__ == '__main__':
                                               round(test_6_mark['timing(sec)'] * K / 5, 1)))
     print('5 core {} RUNS actual {}sec'.format(RUNS * K,
                                                round(test_20_mark['timing(sec)'], 1)))
-    # TODO: Remove json
-
     _mark_time(start1, 84.3, 'Integration tests complete')
     print('DONE! INTEGRATION TEST SUCCESS!')

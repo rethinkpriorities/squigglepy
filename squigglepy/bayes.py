@@ -182,6 +182,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             for c in range(cores):
                 with open('test-core-{}.sqcache.json'.format(c), 'r') as infile:
                     events += json.load(infile)
+                os.remove('test-core-{}.sqcache.json'.format(c))
 
     metadata = {'n': n,
                 'last_generated': datetime.now()}
