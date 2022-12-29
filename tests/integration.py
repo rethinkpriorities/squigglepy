@@ -496,7 +496,6 @@ if __name__ == '__main__':
     print('Test 17 (SPEED TEST, 10M SAMPLES)...')
     start17 = time.time()
     samps = (sq.norm(1, 3) + sq.norm(4, 5)) @ (10*M)
-# TODO: Why not verbose?
     if len(samps) != (10*M):
         print('ERROR ON 17')
         import pdb
