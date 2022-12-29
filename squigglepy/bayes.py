@@ -6,6 +6,7 @@ import numpy as np
 
 from tqdm import tqdm
 from datetime import datetime
+from multiprocessing import Pool
 
 from .distributions import norm, beta, mixture
 
@@ -54,7 +55,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
              reduce_fn=None, raw=False, memcache=True,
              reload_cache=False, dump_cache_file=None,
              load_cache_file=None, cache_file_primary=False,
-             verbose=False):
+             verbose=False, cores=1):
     """
     Calculate a Bayesian network.
 
@@ -93,6 +94,9 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         will be used otherwise. Defaults to False.
     verbose : bool
         If True, will print out statements on computational progress.
+    cores : int
+        If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
+        pool with that many cores / processes.
 
     Returns
     -------
@@ -129,12 +133,12 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         print('Warning: cache file `{}.sqcache.pkl` not found.'.format(load_cache_file))
 
     if not reload_cache:
-        if has_file_cache and (not has_in_mem_cache or cache_file_primary):
+        if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
             if verbose:
                 print('Loading from cache file...')
             events = pickle.load(open(cache_path, 'rb'))
 
-        elif has_in_mem_cache:
+        elif memcache and has_in_mem_cache:
             if verbose:
                 print('Loading from in-memory cache...')
             events = _squigglepy_internal_bayesnet_caches.get(event_fn)
@@ -153,11 +157,24 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
 
     if events is None:
         if verbose:
-            print('Generating Bayes net...')
-            events = [event_fn() for _ in tqdm(range(n))]
+            if cores == 1:
+                print('Generating Bayes net...')
+                events = [event_fn() for _ in tqdm(range(n))]
+            else:
+                print('Generating Bayes net with {} cores...'.format(cores))
+                pool = Pool(cores)
+                events = pool.starmap(event_fn, tqdm([() for _ in range(n)], total=n))
+                pool.close()
+                pool.join()
             print('...Generated')
         else:
-            events = [event_fn() for _ in range(n)]
+            if cores == 1:
+                events = [event_fn() for _ in range(n)]
+            else:
+                pool = Pool(cores)
+                events = pool.starmap(event_fn, [() for _ in range(n)])
+                pool.close()
+                pool.join()
 
     metadata = {'n': n,
                 'last_generated': datetime.now()}
