@@ -1,4 +1,5 @@
 import time
+import json
 import numpy as np
 import squigglepy as sq
 
@@ -104,10 +105,19 @@ def mammography(has_cancer):
     return sq.event(0.8 if has_cancer else 0.096)
 
 
-def define_event():
+def mammography_event():
     cancer = ~sq.bernoulli(0.01)
     return ({'mammography': mammography(cancer),
              'cancer': cancer})
+
+
+def mammography_event2(core):
+    cancer = sq.sample(sq.bernoulli(0.01), n=2000000, verbose=False)
+    mammography_result = [mammography(c) for c in cancer]
+    payload = [{'mammography': int(mammography_result[i]),
+                'cancer': int(cancer[i])} for i in range(len(mammography_result))]
+    with open('test-core-{}.sqcache.json'.format(core), 'w') as outfile:
+        json.dump(payload, outfile)
 
 
 def p_alarm_goes_off(burglary, earthquake):
@@ -349,7 +359,7 @@ if __name__ == '__main__':
     sq.set_seed(42)
     start6 = time.time()
     print('Test 6...')
-    out = bayes.bayesnet(define_event,
+    out = bayes.bayesnet(mammography_event,
                          find=lambda e: e['cancer'],
                          conditional_on=lambda e: e['mammography'],
                          memcache=False,
@@ -530,57 +540,58 @@ if __name__ == '__main__':
     _mark_time(start17, 0.327, 'Test 17 complete')
 
 
-# ## TEST 18 -- LCLIP FIDELITY, 1M SAMPLES
-#     start18 = time.time()
-#     print('Test 18...')
-#     dist = sq.mixture([[0.1, 0],
-#                        [0.8, sq.norm(0,3)],
-#                        [0.1, sq.norm(7,11)]], lclip=0)
-#     samps = dist @ (1*M)
-#     if any(samps < 0):
-#         print('ERROR ON 18')
-#         import pdb
-#         pdb.set_trace()
-#     _mark_time(start18, 18.9, 'Test 18 complete')
+## TEST 18 -- LCLIP FIDELITY, 1M SAMPLES
+    start18 = time.time()
+    print('Test 18...')
+    dist = sq.mixture([[0.1, 0],
+                       [0.8, sq.norm(0,3)],
+                       [0.1, sq.norm(7,11)]], lclip=0)
+    samps = dist @ (1*M)
+    if any(samps < 0):
+        print('ERROR ON 18')
+        import pdb
+        pdb.set_trace()
+    _mark_time(start18, 18.9, 'Test 18 complete')
 
 
-# ## TEST 19 -- RCLIP FIDELITY, 1M SAMPLES
-#     start19 = time.time()
-#     print('Test 19...')
-#     dist = sq.mixture([[0.1, 0],
-#                        [0.1, sq.norm(0,3)],
-#                        [0.8, sq.norm(7,11)]], rclip=3)
-#     samps = dist @ (1*M)
-#     if any(samps > 3):
-#         print('ERROR ON 19')
-#         import pdb
-#         pdb.set_trace()
-#     _mark_time(start19, 18.9, 'Test 19 complete')
+## TEST 19 -- RCLIP FIDELITY, 1M SAMPLES
+    start19 = time.time()
+    print('Test 19...')
+    dist = sq.mixture([[0.1, 0],
+                       [0.1, sq.norm(0,3)],
+                       [0.8, sq.norm(7,11)]], rclip=3)
+    samps = dist @ (1*M)
+    if any(samps > 3):
+        print('ERROR ON 19')
+        import pdb
+        pdb.set_trace()
+    _mark_time(start19, 18.9, 'Test 19 complete')
 
 
 ## TEST 20 -- MAMMOGRAPHY BAYES MULTICORE
     sq.set_seed(42)
     start20 = time.time()
     print('Test 20...')
-    out = bayes.bayesnet(define_event,
+    out = bayes.bayesnet(mammography_event2,
                          find=lambda e: e['cancer'],
                          conditional_on=lambda e: e['mammography'],
                          n=RUNS * K,
                          verbose=True,
                          memcache=False,
-                         cores=7)
+                         cores=5)
     expected = 0.08
     if round(out, 2) != expected:
         print('ERROR ON 20')
         import pdb
         pdb.set_trace()
-    test_20_mark = _mark_time(start20, 73.06, 'Test 20 complete')
+    test_20_mark = _mark_time(start20, 37.05, 'Test 20 complete')
     print('1 core {} RUNS expected {}sec'.format(RUNS * K,
                                                  round(test_6_mark['timing(sec)'] * K, 1)))
-    print('7 core {} RUNS expected {}sec'.format(RUNS * K,
-                                                 round(test_6_mark['timing(sec)'] * K / 7, 1)))
-    print('7 core {} RUNS actual {}sec'.format(RUNS * K,
+    print('5 core {} RUNS ideal {}sec'.format(RUNS * K,
+                                              round(test_6_mark['timing(sec)'] * K / 5, 1)))
+    print('5 core {} RUNS actual {}sec'.format(RUNS * K,
                                                round(test_20_mark['timing(sec)'], 1)))
+    # TODO: Remove json
 
-    _mark_time(start1, 115.19, 'Integration tests complete')
+    _mark_time(start1, 84.3, 'Integration tests complete')
     print('DONE! INTEGRATION TEST SUCCESS!')

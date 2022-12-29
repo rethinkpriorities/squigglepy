@@ -1,4 +1,5 @@
 import os
+import json
 import math
 import pickle
 
@@ -163,7 +164,8 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             else:
                 print('Generating Bayes net with {} cores...'.format(cores))
                 pool = Pool(cores)
-                events = pool.starmap(event_fn, tqdm([() for _ in range(n)], total=n))
+                # TODO: tqdm?
+                pool.map(event_fn, range(cores))
                 pool.close()
                 pool.join()
             print('...Generated')
@@ -172,9 +174,14 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
                 events = [event_fn() for _ in range(n)]
             else:
                 pool = Pool(cores)
-                events = pool.starmap(event_fn, [() for _ in range(n)])
+                pool.map(event_fn, range(cores))
                 pool.close()
                 pool.join()
+        if cores > 1:
+            events = []
+            for c in range(cores):
+                with open('test-core-{}.sqcache.json'.format(c), 'r') as infile:
+                    events += json.load(infile)
 
     metadata = {'n': n,
                 'last_generated': datetime.now()}
