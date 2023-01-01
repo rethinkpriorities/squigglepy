@@ -951,3 +951,8 @@ def test_sample_load_noop_cachefile(cachefile):
 def test_sample_load_noop_nonexisting_cachefile(cachefile):
     assert not os.path.exists(cachefile + '.sqcache.npy')
     assert sample(load_cache_file=cachefile) is None
+
+
+def test_sample_multicore():
+    sample(norm(100, 200), n=100, cores=2)
+    assert not os.path.exists('test-core-0.sqcache')

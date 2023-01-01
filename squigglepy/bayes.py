@@ -1,7 +1,7 @@
 import os
 import time
-import json
 import math
+import msgspec
 
 import numpy as np
 import pathos.multiprocessing as mp
@@ -10,7 +10,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 from .distributions import norm, beta, mixture
-from .utils import _core_cuts, _json_serialize
+from .utils import _core_cuts
 
 
 _squigglepy_internal_bayesnet_caches = {}
@@ -85,11 +85,11 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
     reload_cache : bool
         If True, any existing cache will be ignored and recalculated. Default ``False``.
     dump_cache_file : str or None
-        If present, will write out the cache to a json file with this path with
-        ``.sqlcache.json`` appended to the file name.
+        If present, will write out the cache to a binary file with this path with
+        ``.sqlcache`` appended to the file name.
     load_cache_file : str or None
         If present, will first attempt to load and use a cache from a file with this
-        path with ``.sqlcache.json`` appended to the file name.
+        path with ``.sqlcache`` appended to the file name.
     cache_file_primary : bool
         If both an in-memory cache and file cache are present, the file
         cache will be used for the cache if this is True, and the in-memory cache
@@ -128,18 +128,22 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
     """
     events = None
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
-    cache_path = load_cache_file + '.sqcache.json' if load_cache_file else None
+    cache_path = load_cache_file + '.sqcache' if load_cache_file else None
     has_file_cache = os.path.exists(cache_path) if load_cache_file else False
 
+    if load_cache_file or dump_cache_file or cores > 1:
+        encoder = msgspec.msgpack.Encoder()
+        decoder = msgspec.msgpack.Decoder()
+
     if load_cache_file and not has_file_cache and verbose:
-        print('Warning: cache file `{}.sqcache.json` not found.'.format(load_cache_file))
+        print('Warning: cache file `{}.sqcache` not found.'.format(load_cache_file))
 
     if not reload_cache:
         if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
             if verbose:
                 print('Loading from cache file (`{}`)...'.format(cache_path))
-            with open(cache_path, 'r') as f:
-                events = json.load(f)
+            with open(cache_path, 'rb') as f:
+                events = decoder.decode(f.read())
 
         elif memcache and has_in_mem_cache:
             if verbose:
@@ -180,10 +184,11 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
                     batch = [event_fn() for _ in r_]
                     if verbose:
                         print('Shuffling data...')
-                    with open('test-core-{}.sqcache.json'.format(core), 'w') as outfile:
-                        json.dump(batch, outfile, default=_json_serialize)
+                    with open('test-core-{}.sqcache'.format(core), 'wb') as outfile:
+                        encoder = msgspec.msgpack.Encoder()
+                        outfile.write(encoder.encode(batch))
 
-                pool_results = pool.amap(multicore_event_fn, range(cores - 1))
+                pool_results = pool.amap(multicore_event_fn, list(range(cores - 1)))
                 multicore_event_fn(cores - 1, verbose=verbose)
                 if verbose:
                     print('Waiting for other cores...')
@@ -198,9 +203,9 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
             events = []
             r_ = tqdm(range(cores)) if verbose else range(cores)
             for c in r_:
-                with open('test-core-{}.sqcache.json'.format(c), 'r') as infile:
-                    events += json.load(infile)
-                os.remove('test-core-{}.sqcache.json'.format(c))
+                with open('test-core-{}.sqcache'.format(c), 'rb') as infile:
+                    events += decoder.decode(infile.read())
+                os.remove('test-core-{}.sqcache'.format(c))
             if verbose:
                 print('...Collected!')
 
@@ -215,11 +220,11 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
             print('...Cached!')
 
     if dump_cache_file:
-        cache_path = dump_cache_file + '.sqcache.json'
+        cache_path = dump_cache_file + '.sqcache'
         if verbose:
             print('Writing cache to file `{}`...'.format(cache_path))
-        with open(cache_path, 'w') as f:
-            json.dump(cache_data, f, default=_json_serialize)
+        with open(cache_path, 'wb') as f:
+            f.write(encoder.encode(cache_data))
         if verbose:
             print('...Cached!')
 

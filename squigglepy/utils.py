@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 from scipy import stats
-from datetime import date, datetime
+from datetime import datetime
 
 
 def _process_weights_values(weights, values):
@@ -100,13 +100,6 @@ def _core_cuts(n, cores):
     delta = n - sum(cuts)
     cuts[-1] += delta
     return cuts
-
-
-def _json_serialize(obj):
-    """JSON serializer for objects not serializable by default json code."""
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError('Type %s not serializable' % type(obj))
 
 
 def event_occurs(p):

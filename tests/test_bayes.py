@@ -221,11 +221,11 @@ def test_bayesnet_insufficent_samples_error():
 def cachefile():
     cachefile = 'testcache'
     yield cachefile
-    os.remove(cachefile + '.sqcache.json')
+    os.remove(cachefile + '.sqcache')
 
 
 def test_bayesnet_cachefile(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.json')
+    assert not os.path.exists(cachefile + '.sqcache')
 
     def define_event():
         return {'a': 1, 'b': 2}
@@ -239,7 +239,7 @@ def test_bayesnet_cachefile(cachefile):
                    find=lambda e: e['a'],
                    raw=True,
                    n=100)
-    assert os.path.exists(cachefile + '.sqcache.json')
+    assert os.path.exists(cachefile + '.sqcache')
     assert set(out) == set([1])
 
     out = bayesnet(define_event,
@@ -247,7 +247,7 @@ def test_bayesnet_cachefile(cachefile):
                    conditional_on=lambda e: e['b'] == 2,
                    raw=True,
                    n=100)
-    assert os.path.exists(cachefile + '.sqcache.json')
+    assert os.path.exists(cachefile + '.sqcache')
     assert set(out) == set([1])
 
     def define_event():
@@ -270,7 +270,7 @@ def test_bayesnet_cachefile(cachefile):
 
 
 def test_bayesnet_cachefile_primary(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.json')
+    assert not os.path.exists(cachefile + '.sqcache')
 
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches = len(_squigglepy_internal_bayesnet_caches)
@@ -283,7 +283,7 @@ def test_bayesnet_cachefile_primary(cachefile):
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches + 1
-    assert not os.path.exists(cachefile + '.sqcache.json')
+    assert not os.path.exists(cachefile + '.sqcache')
 
     def define_event2():
         return {'a': 2, 'b': 3}
@@ -297,7 +297,7 @@ def test_bayesnet_cachefile_primary(cachefile):
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches3 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches3 == n_caches2
-    assert os.path.exists(cachefile + '.sqcache.json')
+    assert os.path.exists(cachefile + '.sqcache')
 
     out = bayesnet(define_event,
                    find=lambda e: e['a'],
@@ -324,11 +324,11 @@ def test_bayesnet_cachefile_primary(cachefile):
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches4 == n_caches2
-    assert os.path.exists(cachefile + '.sqcache.json')
+    assert os.path.exists(cachefile + '.sqcache')
 
 
 def test_bayesnet_cachefile_will_also_memcache(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.json')
+    assert not os.path.exists(cachefile + '.sqcache')
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches = len(_squigglepy_internal_bayesnet_caches)
 
@@ -342,7 +342,7 @@ def test_bayesnet_cachefile_will_also_memcache(cachefile):
                    raw=True,
                    n=100)
 
-    assert os.path.exists(cachefile + '.sqcache.json')
+    assert os.path.exists(cachefile + '.sqcache')
     assert set(out) == set([1])
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
@@ -355,7 +355,7 @@ def test_bayesnet_cachefile_will_also_memcache(cachefile):
                    raw=True,
                    n=100)
 
-    assert os.path.exists(cachefile + '.sqcache.json')
+    assert os.path.exists(cachefile + '.sqcache')
     assert set(out) == set([1])
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
     n_caches3 = len(_squigglepy_internal_bayesnet_caches)
@@ -363,7 +363,7 @@ def test_bayesnet_cachefile_will_also_memcache(cachefile):
 
 
 def test_bayesnet_cachefile_insufficent_samples_error(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.json')
+    assert not os.path.exists(cachefile + '.sqcache')
 
     def define_event():
         return {'a': 1, 'b': 2}
@@ -372,7 +372,7 @@ def test_bayesnet_cachefile_insufficent_samples_error(cachefile):
              find=lambda e: e['a'],
              dump_cache_file=cachefile,
              n=100)
-    assert os.path.exists(cachefile + '.sqcache.json')
+    assert os.path.exists(cachefile + '.sqcache')
 
     with pytest.raises(ValueError) as excinfo:
         bayesnet(define_event,
@@ -380,6 +380,18 @@ def test_bayesnet_cachefile_insufficent_samples_error(cachefile):
                  find=lambda e: e['a'],
                  n=1000)
     assert 'insufficient samples' in str(excinfo.value)
+
+
+def test_bayesnet_multicore():
+    def define_event():
+        return {'a': 1, 'b': 2}
+
+    out = bayesnet(define_event,
+                   find=lambda e: e['a'],
+                   cores=2,
+                   n=100)
+    assert out == 1
+    assert not os.path.exists('test-core-0.sqcache')
 
 
 def test_update_normal():
