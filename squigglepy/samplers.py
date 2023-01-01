@@ -1,6 +1,5 @@
 import os
 import time
-import pickle
 
 import numpy as np
 import pathos.multiprocessing as mp
@@ -542,11 +541,11 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     reload_cache : bool
         If True, any existing cache will be ignored and recalculated. Default ``False``.
     dump_cache_file : str or None
-        If present, will write out the cache to a pickle file with this path with
-        ``.sqlcache.pkl`` appended to the file name.
+        If present, will write out the cache to a numpy file with this path with
+        ``.sqlcache.npy`` appended to the file name.
     load_cache_file : str or None
         If present, will first attempt to load and use a cache from a file with this
-        path with ``.sqlcache.pkl`` appended to the file name.
+        path with ``.sqlcache.npy`` appended to the file name.
     cache_file_primary : bool
         If both an in-memory cache and file cache are present, the file
         cache will be used for the cache if this is True, and the in-memory cache
@@ -583,17 +582,18 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     samples = None
     has_in_mem_cache = str(dist) in _squigglepy_internal_sample_caches
     if load_cache_file:
-        cache_path = load_cache_file + '.sqcache.pkl'
+        cache_path = load_cache_file + '.sqcache.npy'
         has_file_cache = os.path.exists(cache_path) if load_cache_file else False
 
     if load_cache_file and not has_file_cache and verbose:
-        print('Warning: cache file `{}.sqcache.pkl` not found.'.format(load_cache_file))
+        print('Warning: cache file `{}.sqcache.npy` not found.'.format(load_cache_file))
 
     if (load_cache_file or memcache) and not reload_cache:
         if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
             if verbose:
-                print('Loading from cache file...')
-            samples = pickle.load(open(cache_path, 'rb'))
+                print('Loading from cache file (`{}`)...'.format(cache_path))
+            with open(cache_path, 'rb') as f:
+                samples = np.load(f)
 
         elif memcache and has_in_mem_cache:
             if verbose:
@@ -633,10 +633,13 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
         if verbose:
             print('Collecting data...')
         samples = np.array([])
-        for core in range(cores):
+        r_ = tqdm(range(cores)) if verbose else range(cores)
+        for core in r_:
             with open('test-core-{}.npy'.format(core), 'rb') as f:
                 samples = np.concatenate((samples, np.load(f, allow_pickle=True)), axis=None)
             os.remove('test-core-{}.npy'.format(core))
+        if verbose:
+            print('...Collected!')
 
     # Handle lclip/rclip
     if samples is None:
@@ -761,11 +764,11 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
             print('...Cached')
 
     if dump_cache_file:
-        cache_path = dump_cache_file + '.sqcache.pkl'
+        cache_path = dump_cache_file + '.sqcache.npy'
         if verbose:
             print('Writing cache to file `{}`...'.format(cache_path))
-        dump_cache_file = open(cache_path, 'wb')
-        pickle.dump(samples, dump_cache_file)
+        with open(cache_path, 'wb') as f:
+            np.save(f, samples)
         if verbose:
             print('...Cached')
 

@@ -902,19 +902,19 @@ def cachefile():
     cachefile = 'testcache'
     yield cachefile
     try:
-        os.remove(cachefile + '.sqcache.pkl')
+        os.remove(cachefile + '.sqcache.npy')
     except FileNotFoundError:
         pass
 
 
 def test_sample_cachefile(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.pkl')
+    assert not os.path.exists(cachefile + '.sqcache.npy')
     sample(norm(1, 2), dump_cache_file=cachefile)
-    assert os.path.exists(cachefile + '.sqcache.pkl')
+    assert os.path.exists(cachefile + '.sqcache.npy')
 
 
 def test_sample_cachefile_primary(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.pkl')
+    assert not os.path.exists(cachefile + '.sqcache.npy')
 
     from ..squigglepy.samplers import _squigglepy_internal_sample_caches
     n_caches = len(_squigglepy_internal_sample_caches)
@@ -924,7 +924,7 @@ def test_sample_cachefile_primary(cachefile):
     from ..squigglepy.samplers import _squigglepy_internal_sample_caches
     n_caches2 = len(_squigglepy_internal_sample_caches)
     assert n_caches2 == n_caches + 1
-    assert os.path.exists(cachefile + '.sqcache.pkl')
+    assert os.path.exists(cachefile + '.sqcache.npy')
 
     o1 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=True)
     o2 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=False)
@@ -932,7 +932,7 @@ def test_sample_cachefile_primary(cachefile):
 
 
 def test_sample_load_noop_cachefile(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.pkl')
+    assert not os.path.exists(cachefile + '.sqcache.npy')
 
     from ..squigglepy.samplers import _squigglepy_internal_sample_caches
     n_caches = len(_squigglepy_internal_sample_caches)
@@ -942,12 +942,12 @@ def test_sample_load_noop_cachefile(cachefile):
     from ..squigglepy.samplers import _squigglepy_internal_sample_caches
     n_caches2 = len(_squigglepy_internal_sample_caches)
     assert n_caches2 == n_caches + 1
-    assert os.path.exists(cachefile + '.sqcache.pkl')
+    assert os.path.exists(cachefile + '.sqcache.npy')
 
     o2 = sample(load_cache_file=cachefile)
     assert o1 == o2
 
 
 def test_sample_load_noop_nonexisting_cachefile(cachefile):
-    assert not os.path.exists(cachefile + '.sqcache.pkl')
+    assert not os.path.exists(cachefile + '.sqcache.npy')
     assert sample(load_cache_file=cachefile) is None

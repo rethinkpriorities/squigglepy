@@ -539,7 +539,7 @@ if __name__ == '__main__':
         print('ERROR ON 20')
         import pdb
         pdb.set_trace()
-    test_20_mark = _mark_time(start20, 18.9, 'Test 20 complete')
+    test_20_mark = _mark_time(start20, 108.2, 'Test 20 complete')
     print('1 core 10M RUNS expected {}sec'.format(round(test_19_mark['timing(sec)'] * 10, 1)))
     print('7 core 10M RUNS ideal {}sec'.format(round(test_19_mark['timing(sec)'] * 10 / 7, 1)))
     print('7 core 10M RUNS actual {}sec'.format(round(test_20_mark['timing(sec)'], 1)))
@@ -560,11 +560,11 @@ if __name__ == '__main__':
         print('ERROR ON 21')
         import pdb
         pdb.set_trace()
-    test_21_mark = _mark_time(start21, 37.05, 'Test 21 complete')
+    test_21_mark = _mark_time(start21, 134.31, 'Test 21 complete')
     print('1 core 10M RUNS expected {}sec'.format(round(test_6_mark['timing(sec)'] * K, 1)))
     print('7 core 10M RUNS ideal {}sec'.format(round(test_6_mark['timing(sec)'] * K / 7, 1)))
     print('7 core 10M RUNS actual {}sec'.format(round(test_21_mark['timing(sec)'], 1)))
 
 # END
-    _mark_time(start1, 84.3, 'Integration tests complete')
+    _mark_time(start1, 289.5, 'Integration tests complete')
     print('DONE! INTEGRATION TEST SUCCESS!')

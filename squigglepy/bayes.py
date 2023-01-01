@@ -2,7 +2,6 @@ import os
 import time
 import json
 import math
-import pickle
 
 import numpy as np
 import pathos.multiprocessing as mp
@@ -11,7 +10,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 from .distributions import norm, beta, mixture
-from .utils import _core_cuts
+from .utils import _core_cuts, _json_serialize
 
 
 _squigglepy_internal_bayesnet_caches = {}
@@ -54,7 +53,7 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
              likelihood_not_h * (1 - prior)))
 
 
-def bayesnet(event_fn, n=1, find=None, conditional_on=None,
+def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
              reduce_fn=None, raw=False, memcache=True,
              reload_cache=False, dump_cache_file=None,
              load_cache_file=None, cache_file_primary=False,
@@ -86,11 +85,11 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
     reload_cache : bool
         If True, any existing cache will be ignored and recalculated. Default ``False``.
     dump_cache_file : str or None
-        If present, will write out the cache to a pickle file with this path with
-        ``.sqlcache.pkl`` appended to the file name.
+        If present, will write out the cache to a json file with this path with
+        ``.sqlcache.json`` appended to the file name.
     load_cache_file : str or None
         If present, will first attempt to load and use a cache from a file with this
-        path with ``.sqlcache.pkl`` appended to the file name.
+        path with ``.sqlcache.json`` appended to the file name.
     cache_file_primary : bool
         If both an in-memory cache and file cache are present, the file
         cache will be used for the cache if this is True, and the in-memory cache
@@ -129,17 +128,18 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
     """
     events = None
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
-    cache_path = load_cache_file + '.sqcache.pkl' if load_cache_file else None
+    cache_path = load_cache_file + '.sqcache.json' if load_cache_file else None
     has_file_cache = os.path.exists(cache_path) if load_cache_file else False
 
     if load_cache_file and not has_file_cache and verbose:
-        print('Warning: cache file `{}.sqcache.pkl` not found.'.format(load_cache_file))
+        print('Warning: cache file `{}.sqcache.json` not found.'.format(load_cache_file))
 
     if not reload_cache:
         if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
             if verbose:
-                print('Loading from cache file...')
-            events = pickle.load(open(cache_path, 'rb'))
+                print('Loading from cache file (`{}`)...'.format(cache_path))
+            with open(cache_path, 'r') as f:
+                events = json.load(f)
 
         elif memcache and has_in_mem_cache:
             if verbose:
@@ -159,6 +159,9 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         print('Reloading cache...')
 
     if events is None:
+        if event_fn is None:
+            return None
+
         if cores == 1:
             if verbose:
                 print('Generating Bayes net...')
@@ -178,7 +181,7 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
                     if verbose:
                         print('Shuffling data...')
                     with open('test-core-{}.sqcache.json'.format(core), 'w') as outfile:
-                        json.dump(batch, outfile)
+                        json.dump(batch, outfile, default=_json_serialize)
 
                 pool_results = pool.amap(multicore_event_fn, range(cores - 1))
                 multicore_event_fn(cores - 1, verbose=verbose)
@@ -193,10 +196,13 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             if verbose:
                 print('Collecting data...')
             events = []
-            for c in range(cores):
+            r_ = tqdm(range(cores)) if verbose else range(cores)
+            for c in r_:
                 with open('test-core-{}.sqcache.json'.format(c), 'r') as infile:
                     events += json.load(infile)
                 os.remove('test-core-{}.sqcache.json'.format(c))
+            if verbose:
+                print('...Collected!')
 
     metadata = {'n': n,
                 'last_generated': datetime.now()}
@@ -206,16 +212,16 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
             print('Caching in-memory...')
         _squigglepy_internal_bayesnet_caches[event_fn] = cache_data
         if verbose:
-            print('...Cached')
+            print('...Cached!')
 
     if dump_cache_file:
-        cache_path = dump_cache_file + '.sqcache.pkl'
+        cache_path = dump_cache_file + '.sqcache.json'
         if verbose:
             print('Writing cache to file `{}`...'.format(cache_path))
-        dump_cache_file = open(cache_path, 'wb')
-        pickle.dump(cache_data, dump_cache_file)
+        with open(cache_path, 'w') as f:
+            json.dump(cache_data, f, default=_json_serialize)
         if verbose:
-            print('...Cached')
+            print('...Cached!')
 
     if conditional_on is not None:
         if verbose:
@@ -226,23 +232,30 @@ def bayesnet(event_fn, n=1, find=None, conditional_on=None,
         raise ValueError('insufficient samples for condition')
 
     if conditional_on and verbose:
-        print('...Done')
+        print('...Filtered!')
 
     if find is None:
         if verbose:
             print('...Reducing')
-        return events if reduce_fn is None else reduce_fn(events)
+        events = events if reduce_fn is None else reduce_fn(events)
+        if verbose:
+            print('...Reduced!')
     else:
         if verbose:
             print('...Finding')
         events = [find(e) for e in events]
-        if raw:
-            return events
-        else:
+        if verbose:
+            print('...Found!')
+        if not raw:
             if verbose:
                 print('...Reducing')
             reduce_fn = np.mean if reduce_fn is None else reduce_fn
-            return reduce_fn(events)
+            events = reduce_fn(events)
+            if verbose:
+                print('...Reduced!')
+    if verbose:
+        print('...All done!')
+    return events
 
 
 def update(prior, evidence, evidence_weight=1):
