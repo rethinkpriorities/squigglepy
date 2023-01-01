@@ -1,6 +1,7 @@
 import math
 import numpy as np
 
+from tqdm import tqdm
 from scipy import stats
 from datetime import datetime
 
@@ -100,6 +101,25 @@ def _core_cuts(n, cores):
     delta = n - sum(cuts)
     cuts[-1] += delta
     return cuts
+
+
+def _init_tqdm(verbose=True, total=None):
+    if verbose:
+        return tqdm(total=total)
+    else:
+        return None
+
+
+def _tick_tqdm(pbar, tick_size=1):
+    if pbar:
+        pbar.update(tick_size)
+    return pbar
+
+
+def _flush_tqdm(pbar):
+    if pbar is not None:
+        pbar.close()
+    return pbar
 
 
 def event_occurs(p):

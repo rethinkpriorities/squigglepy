@@ -4,10 +4,10 @@ import time
 import numpy as np
 import pathos.multiprocessing as mp
 
-from tqdm import tqdm
 from scipy import stats
 
-from .utils import _process_weights_values, _is_dist, _simplify, _safe_len, _core_cuts
+from .utils import (_process_weights_values, _is_dist, _simplify, _safe_len, _core_cuts,
+                    _init_tqdm, _tick_tqdm, _flush_tqdm)
 
 
 _squigglepy_internal_sample_caches = {}
@@ -428,7 +428,8 @@ def chi_square_sample(df, samples=1):
     return _simplify(_get_rng().chisquare(df, samples))
 
 
-def discrete_sample(items, samples=1, verbose=False):
+def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1,
+                    _multicore_tqdm_cores=1):
     """
     Sample a random value from a discrete distribution (aka categorical distribution).
 
@@ -441,6 +442,14 @@ def discrete_sample(items, samples=1, verbose=False):
         The number of samples to return.
     verbose : bool
         If True, will print out statements on computational progress.
+    _multicore_tqdm_n : int
+        The total number of samples to use for printing tqdm's interface. This is meant to only
+        be used internally by squigglepy to make the progress bar printing work well for
+        multicore. This parameter can be safely ignored by the user.
+    _multicore_tqdm_cores : int
+        The total number of cores to use for printing tqdm's interface. This is meant to only
+        be used internally by squigglepy to make the progress bar printing work well for
+        multicore. This parameter can be safely ignored by the user.
 
     Returns
     -------
@@ -466,10 +475,13 @@ def discrete_sample(items, samples=1, verbose=False):
     return mixture_sample(values=values,
                           weights=weights,
                           samples=samples,
-                          verbose=verbose)
+                          verbose=verbose,
+                          _multicore_tqdm_n=_multicore_tqdm_n,
+                          _multicore_tqdm_cores=_multicore_tqdm_cores)
 
 
-def mixture_sample(values, weights=None, samples=1, verbose=False):
+def mixture_sample(values, weights=None, samples=1, verbose=False, _multicore_tqdm_n=1,
+                   _multicore_tqdm_cores=1):
     """
     Sample a ranom number from a mixture distribution.
 
@@ -483,6 +495,14 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
         The number of samples to return.
     verbose : bool
         If True, will print out statements on computational progress.
+    _multicore_tqdm_n : int
+        The total number of samples to use for printing tqdm's interface. This is meant to only
+        be used internally by squigglepy to make the progress bar printing work well for
+        multicore. This parameter can be safely ignored by the user.
+    _multicore_tqdm_cores : int
+        The total number of cores to use for printing tqdm's interface. This is meant to only
+        be used internally by squigglepy to make the progress bar printing work well for
+        multicore. This parameter can be safely ignored by the user.
 
     Returns
     -------
@@ -505,8 +525,9 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
     if len(values) == 1:
         return sample(values[0], n=samples)
 
-    def _run_mixture(values, weights):
+    def _run_mixture(values, weights, pbar=None, tick=1):
         r_ = uniform_sample(0, 1)
+        _tick_tqdm(pbar, tick)
         for i, dist in enumerate(values):
             weight = weights[i]
             if r_ <= weight:
@@ -514,13 +535,19 @@ def mixture_sample(values, weights=None, samples=1, verbose=False):
         return sample(dist)
 
     weights = np.cumsum(weights)
-    r_ = tqdm(range(samples)) if verbose else range(samples)
-    return _simplify(np.array([_run_mixture(values, weights) for _ in r_]))
+    tqdm_samples = samples if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
+    pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
+    out = _simplify(np.array([_run_mixture(values=values,
+                                           weights=weights,
+                                           pbar=pbar,
+                                           tick=_multicore_tqdm_cores) for _ in range(samples)]))
+    _flush_tqdm(pbar)
+    return out
 
 
 def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False,
            dump_cache_file=None, load_cache_file=None, cache_file_primary=False,
-           verbose=None, cores=1):
+           verbose=None, cores=1, _multicore_tqdm_n=1, _multicore_tqdm_cores=1):
     """
     Sample random numbers from a given distribution.
 
@@ -556,6 +583,14 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     cores : int
         If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
         pool with that many cores / processes.
+    _multicore_tqdm_n : int
+        The total number of samples to use for printing tqdm's interface. This is meant to only
+        be used internally by squigglepy to make the progress bar printing work well for
+        multicore. This parameter can be safely ignored by the user.
+    _multicore_tqdm_cores : int
+        The total number of cores to use for printing tqdm's interface. This is meant to only
+        be used internally by squigglepy to make the progress bar printing work well for
+        multicore. This parameter can be safely ignored by the user.
 
     Returns
     -------
@@ -607,9 +642,11 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
         with mp.ProcessingPool(cores) as pool:
             cuts = _core_cuts(n, cores)
 
-            def multicore_sample(core, verbose=False):
+            def multicore_sample(core, total_n=n, total_cores=cores, verbose=False):
                 batch = sample(dist=dist,
                                n=cuts[core],
+                               _multicore_tqdm_n=total_n,
+                               _multicore_tqdm_cores=total_cores,
                                lclip=lclip,
                                rclip=rclip,
                                memcache=False,
@@ -633,11 +670,13 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
         if verbose:
             print('Collecting data...')
         samples = np.array([])
-        r_ = tqdm(range(cores)) if verbose else range(cores)
-        for core in r_:
+        pbar = _init_tqdm(verbose=verbose, total=n)
+        for core in range(cores):
             with open('test-core-{}.npy'.format(core), 'rb') as f:
                 samples = np.concatenate((samples, np.load(f, allow_pickle=True)), axis=None)
             os.remove('test-core-{}.npy'.format(core))
+            _tick_tqdm(pbar, 1)
+        _flush_tqdm(pbar)
         if verbose:
             print('...Collected!')
 
@@ -663,20 +702,36 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     if samples is None:
         if callable(dist):
             if n > 1:
-                out = np.array([dist() for _ in (tqdm(range(n)) if verbose else range(n))])
+                def run_dist(dist, pbar=None, tick=1):
+                    dist = dist()
+                    _tick_tqdm(pbar, tick)
+                    return dist
+
+                tqdm_samples = n if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
+                pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
+                out = np.array([run_dist(dist=dist,
+                                         pbar=pbar,
+                                         tick=_multicore_tqdm_cores) for _ in range(n)])
+                _flush_tqdm(pbar)
             else:
                 out = [dist()]
 
-            r_ = tqdm(out) if verbose else out
-            samples = _simplify(np.array([sample(o) if _is_dist(o) or callable(o) else o
-                                for o in r_]))
+            def run_dist(dist, pbar=None, tick=1):
+                samp = sample(dist) if _is_dist(dist) or callable(dist) else dist
+                _tick_tqdm(pbar, tick)
+                return samp
+
+            pbar = _init_tqdm(verbose=verbose, total=len(out) * _multicore_tqdm_cores)
+            samples = _simplify(np.array([run_dist(dist=o,
+                                                   pbar=pbar,
+                                                   tick=_multicore_tqdm_cores) for o in out]))
+            _flush_tqdm(pbar)
 
         elif (isinstance(dist, float) or
               isinstance(dist, int) or
               isinstance(dist, str) or
               dist is None):
-            r_ = tqdm(range(n)) if verbose else range(n)
-            samples = _simplify(np.array([dist for _ in r_]))
+            samples = _simplify(np.array([dist for _ in range(n)]))
 
         elif not _is_dist(dist):
             raise ValueError('input to sample is malformed - must ' +
@@ -689,7 +744,10 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
             samples = uniform_sample(dist.x, dist.y, samples=n)
 
         elif dist.type == 'discrete':
-            samples = discrete_sample(dist.items, samples=n)
+            samples = discrete_sample(dist.items,
+                                      samples=n,
+                                      _multicore_tqdm_n=_multicore_tqdm_n,
+                                      _multicore_tqdm_cores=_multicore_tqdm_cores)
 
         elif dist.type == 'norm':
             samples = normal_sample(mean=dist.mean, sd=dist.sd, samples=n)
@@ -728,7 +786,12 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
             samples = log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
 
         elif dist.type == 'mixture':
-            samples = mixture_sample(dist.dists, dist.weights, samples=n, verbose=verbose)
+            samples = mixture_sample(dist.dists,
+                                     dist.weights,
+                                     samples=n,
+                                     verbose=verbose,
+                                     _multicore_tqdm_n=_multicore_tqdm_n,
+                                     _multicore_tqdm_cores=_multicore_tqdm_cores)
 
         elif dist.type == 'complex':
             if dist.right is None:

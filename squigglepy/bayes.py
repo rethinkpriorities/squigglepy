@@ -6,11 +6,10 @@ import msgspec
 import numpy as np
 import pathos.multiprocessing as mp
 
-from tqdm import tqdm
 from datetime import datetime
 
 from .distributions import norm, beta, mixture
-from .utils import _core_cuts
+from .utils import _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
 _squigglepy_internal_bayesnet_caches = {}
@@ -166,30 +165,38 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
         if event_fn is None:
             return None
 
+        def run_event_fn(pbar=None, total_cores=1):
+            _tick_tqdm(pbar, total_cores)
+            return event_fn()
+
         if cores == 1:
             if verbose:
                 print('Generating Bayes net...')
             r_ = range(n)
-            r_ = tqdm(r_) if verbose else r_
-            events = [event_fn() for _ in r_]
+            pbar = _init_tqdm(verbose=verbose, total=n)
+            events = [run_event_fn(pbar=pbar, total_cores=1) for _ in r_]
+            _flush_tqdm(pbar)
         else:
             if verbose:
                 print('Generating Bayes net with {} cores...'.format(cores))
             with mp.ProcessingPool(cores) as pool:
                 cuts = _core_cuts(n, cores)
 
-                def multicore_event_fn(core, verbose=False):
+                def multicore_event_fn(core, total_cores=1, verbose=False):
                     r_ = range(cuts[core])
-                    r_ = tqdm(r_) if verbose else r_
-                    batch = [event_fn() for _ in r_]
+                    pbar = _init_tqdm(verbose=verbose, total=n)
+                    batch = [run_event_fn(pbar=pbar, total_cores=total_cores) for _ in r_]
+                    _flush_tqdm(pbar)
+
                     if verbose:
                         print('Shuffling data...')
+
                     with open('test-core-{}.sqcache'.format(core), 'wb') as outfile:
                         encoder = msgspec.msgpack.Encoder()
                         outfile.write(encoder.encode(batch))
 
                 pool_results = pool.amap(multicore_event_fn, list(range(cores - 1)))
-                multicore_event_fn(cores - 1, verbose=verbose)
+                multicore_event_fn(cores - 1, total_cores=cores, verbose=verbose)
                 if verbose:
                     print('Waiting for other cores...')
                 while not pool_results.ready():
@@ -201,11 +208,13 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
             if verbose:
                 print('Collecting data...')
             events = []
-            r_ = tqdm(range(cores)) if verbose else range(cores)
-            for c in r_:
+            pbar = _init_tqdm(verbose=verbose, total=cores)
+            for c in range(cores):
+                _tick_tqdm(pbar, 1)
                 with open('test-core-{}.sqcache'.format(c), 'rb') as infile:
                     events += decoder.decode(infile.read())
                 os.remove('test-core-{}.sqcache'.format(c))
+            _flush_tqdm(pbar)
             if verbose:
                 print('...Collected!')
 
