@@ -635,7 +635,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
         samples = np.array([])
         for core in range(cores):
             with open('test-core-{}.npy'.format(core), 'rb') as f:
-                samples = np.concatenate((samples, np.load(f)), axis=None)
+                samples = np.concatenate((samples, np.load(f, allow_pickle=True)), axis=None)
             os.remove('test-core-{}.npy'.format(core))
 
     # Handle lclip/rclip
