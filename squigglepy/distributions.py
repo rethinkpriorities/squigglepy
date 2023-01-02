@@ -1263,9 +1263,9 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
 
 
 class MixtureDistribution(OperableDistribution):
-    def __init__(self, dists, weights=None, lclip=None, rclip=None):
+    def __init__(self, dists, weights=None, relative_weights=None, lclip=None, rclip=None):
         super().__init__()
-        weights, dists = _process_weights_values(weights, dists)
+        weights, dists = _process_weights_values(weights, relative_weights, dists)
         self.dists = dists
         self.weights = weights
         self.lclip = lclip
@@ -1273,7 +1273,7 @@ class MixtureDistribution(OperableDistribution):
         self.type = 'mixture'
 
 
-def mixture(dists, weights=None, lclip=None, rclip=None):
+def mixture(dists, weights=None, relative_weights=None, lclip=None, rclip=None):
     """
     Initialize a mixture distribution, which is a combination of different distributions.
 
@@ -1283,6 +1283,9 @@ def mixture(dists, weights=None, lclip=None, rclip=None):
         The distributions to mix. Can also be defined as a list of weights and distributions.
     weights : list or None
         The weights for each distribution.
+    relative_weights : list or None
+        Relative weights, which if given will be weights that are normalized
+        to sum to 1.
     lclip : float or None
         If not None, any value below ``lclip`` will be coerced to ``lclip``.
     rclip : float or None
@@ -1302,7 +1305,11 @@ def mixture(dists, weights=None, lclip=None, rclip=None):
     >>>                                    # of happening.
     <Distribution> mixture
     """
-    return MixtureDistribution(dists=dists, weights=weights, lclip=lclip, rclip=rclip)
+    return MixtureDistribution(dists=dists,
+                               weights=weights,
+                               relative_weights=relative_weights,
+                               lclip=lclip,
+                               rclip=rclip)
 
 
 def zero_inflated(p_zero, dist):

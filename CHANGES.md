@@ -1,14 +1,29 @@
 ## v0.18
 
-* **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
-* **[Breaking change]** `bayesnet` caching is now based on json files instead of pickle files.
+#### Bugfixes
+
 * Fixes a bug where `lclip` and/or `rclip` on `mixture` distribution were not working correctly.
 * Fixes a bug where `dist_fn` did not work with `np.vectorize` functions.
 * Fixes a bug where in-memory caching was invoked for `bayesnet` when not desired.
-* `bayesnet` and `sample` now take an argument `cores` (default 1). If greater than 1, will run the calculations on multiple cores using the pathos package.
+
+#### Distributions
+
+* **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
+
+#### Caching and Multicore
+
+* **[Breaking change]** `bayesnet` caching is now based on binary files instead of pickle files (uses `msgspec` as the underlying library).
 * `sample` results can now be cached in-memory using `memcache=True`. They can also be cached to a file -- use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
+* `bayesnet` and `sample` now take an argument `cores` (default 1). If greater than 1, will run the calculations on multiple cores using the pathos package.
+
+#### Other
+
+* Functions that take `weights` now can instead take a parameter `relative_weights` where waits are automatically normalized to sum to 1 (instead of erroring, which is still the behavior if using `weights`).
 * Verbose output for `bayesnet` and `sample` is now clearer (and slightly more verbose).
-* _(Non-visible backend change)_ Weights that are set to 0 are now dropped entirely, for a potential speedup.
+
+#### Non-visible backend changes
+
+* Weights that are set to 0 are now dropped entirely, for a potential speedup.
 
 
 ## v0.17
@@ -95,14 +110,15 @@
 
 ## v0.8
 
-#### Non-visible backend changes
-
-* Distributions are now implemented as classes (rather than lists).
-
 #### Bayesian library updates
+
 * **[Breaking change]** `bayes.update` now updates normal distributions from the distribution rather than from samples.
 * **[Breaking change]** `bayes.update` no longer takes a `type` parameter but can now infer the type from the passed distribution.
 * **[Breaking change]** Corrected a bug in how `bayes.update` implemented `evidence_weight` when updating normal distributions.
+
+#### Non-visible backend changes
+
+* Distributions are now implemented as classes (rather than lists).
 
 
 ## v0.7

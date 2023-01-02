@@ -6,7 +6,17 @@ from scipy import stats
 from datetime import datetime
 
 
-def _process_weights_values(weights, values):
+def _process_weights_values(weights=None, relative_weights=None, values=None):
+    if weights is not None and relative_weights is not None:
+        raise ValueError('can only pass either `weights` or `relative_weights`, not both.')
+    if values is None:
+        raise ValueError('must pass `values`')
+
+    relative = False
+    if relative_weights is not None:
+        weights = relative_weights
+        relative = True
+
     if isinstance(weights, float):
         weights = [weights]
     elif isinstance(weights, np.ndarray):
@@ -35,11 +45,14 @@ def _process_weights_values(weights, values):
 
     sum_weights = sum(weights)
 
-    if len(weights) == len(values) - 1 and sum_weights < 1:
-        weights.append(1 - sum_weights)
-    elif sum_weights <= 0.99 or sum_weights >= 1.01:
-        raise ValueError('weights don\'t sum to 1 -' +
-                         ' they sum to {}'.format(sum_weights))
+    if relative:
+        weights = [w / sum_weights for w in weights]
+    else:
+        if len(weights) == len(values) - 1 and sum_weights < 1:
+            weights.append(1 - sum_weights)
+        elif sum_weights <= 0.99 or sum_weights >= 1.01:
+            raise ValueError('weights don\'t sum to 1 -' +
+                             ' they sum to {}'.format(sum_weights))
 
     if len(weights) != len(values):
         raise ValueError('weights and values not same length')
@@ -305,7 +318,7 @@ def get_log_percentiles(data,
             return _round(np.log10(percentiles), digits)
 
 
-def geomean(a, weights=None):
+def geomean(a, weights=None, relative_weights=None):
     """
     Calculate the geometric mean.
 
@@ -315,6 +328,9 @@ def geomean(a, weights=None):
         The values to calculate the geometric mean of.
     weights : list or None
         The weights, if a weighted geometric mean is desired.
+    relative_weights : list or None
+        Relative weights, which if given will be weights that are normalized
+        to sum to 1.
 
     Returns
     -------
@@ -325,7 +341,7 @@ def geomean(a, weights=None):
     >>> geomean([1, 3, 10])
     3.1072325059538595
     """
-    weights, a = _process_weights_values(weights, a)
+    weights, a = _process_weights_values(weights, relative_weights, a)
     return stats.mstats.gmean(a, weights=weights)
 
 
@@ -373,7 +389,7 @@ def odds_to_p(odds):
     return odds / (1 + odds)
 
 
-def geomean_odds(a, weights=None):
+def geomean_odds(a, weights=None, relative_weights=None):
     """
     Calculate the geometric mean of odds.
 
@@ -384,6 +400,9 @@ def geomean_odds(a, weights=None):
         before the geometric mean is taken..
     weights : list or None
         The weights, if a weighted geometric mean is desired.
+    relative_weights : list or None
+        Relative weights, which if given will be weights that are normalized
+        to sum to 1.
 
     Returns
     -------
@@ -394,7 +413,7 @@ def geomean_odds(a, weights=None):
     >>> geomean_odds([0.1, 0.3, 0.9])
     0.42985748800076845
     """
-    weights, a = _process_weights_values(weights, a)
+    weights, a = _process_weights_values(weights, relative_weights, a)
     a = p_to_odds(np.array(a))
     return odds_to_p(geomean(a, weights=weights))
 
@@ -423,7 +442,7 @@ def laplace(s, n=None, time_passed=None,
     time_fixed : bool
         This should be False if the time period is variable - that is, if the time period
         was chosen specifically to include the most recent success. Otherwise the time period
-        is fixed and this should be True.
+        is fixed and this should be True. Defaults to False.
 
     Returns
     -------

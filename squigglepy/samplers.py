@@ -469,7 +469,7 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1,
     >>> discrete_sample({'a': 0.1, 'b': 0.9})  # Values do not have to be numbers.
     'b'
     """
-    weights, values = _process_weights_values(None, items)
+    weights, values = _process_weights_values(values=items)
     from .distributions import const
     values = [const(v) for v in values]
     return mixture_sample(values=values,
@@ -480,8 +480,8 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1,
                           _multicore_tqdm_cores=_multicore_tqdm_cores)
 
 
-def mixture_sample(values, weights=None, samples=1, verbose=False, _multicore_tqdm_n=1,
-                   _multicore_tqdm_cores=1):
+def mixture_sample(values, weights=None, relative_weights=None, samples=1, verbose=False,
+                   _multicore_tqdm_n=1, _multicore_tqdm_cores=1):
     """
     Sample a ranom number from a mixture distribution.
 
@@ -491,6 +491,9 @@ def mixture_sample(values, weights=None, samples=1, verbose=False, _multicore_tq
         The distributions to mix. Can also be defined as a list of weights and distributions.
     weights : list or None
         The weights for each distribution.
+    relative_weights : list or None
+        Relative weights, which if given will be weights that are normalized
+        to sum to 1.
     samples : int
         The number of samples to return.
     verbose : bool
@@ -520,7 +523,7 @@ def mixture_sample(values, weights=None, samples=1, verbose=False, _multicore_tq
     >>> mixture_sample([norm(1, 2), norm(3, 4)])
     1.1041655362137777
     """
-    weights, values = _process_weights_values(weights, values)
+    weights, values = _process_weights_values(weights, relative_weights, values)
 
     if len(values) == 1:
         return sample(values[0], n=samples)

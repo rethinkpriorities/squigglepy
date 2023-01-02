@@ -325,7 +325,7 @@ def update(prior, evidence, evidence_weight=1):
         raise ValueError('type `{}` not supported.'.format(prior.type))
 
 
-def average(prior, evidence, weights=[0.5, 0.5]):
+def average(prior, evidence, weights=[0.5, 0.5], relative_weights=None):
     """
     Average two distributions.
 
@@ -339,6 +339,9 @@ def average(prior, evidence, weights=[0.5, 0.5]):
         How much weight to put on ``prior`` versus ``evidence`` when averaging? If
         only one weight is passed, the other weight will be inferred to make the
         total weights sum to 1. Defaults to 50-50 weights.
+    relative_weights : list or None
+        Relative weights, which if given will be weights that are normalized
+        to sum to 1.
 
     Returns
     -------
@@ -352,4 +355,4 @@ def average(prior, evidence, weights=[0.5, 0.5]):
     >> bayes.average(prior, evidence)
     <Distribution> mixture
     """
-    return mixture([prior, evidence], weights)
+    return mixture(dists=[prior, evidence], weights=weights, relative_weights=relative_weights)

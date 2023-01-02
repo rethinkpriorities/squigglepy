@@ -12,114 +12,113 @@ from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
 
 
 def test_process_weights_values_simple_case():
-    test = _process_weights_values([0.1, 0.9], [2, 3])
+    test = _process_weights_values(weights=[0.1, 0.9], values=[2, 3])
     expected = ([0.1, 0.9], [2, 3])
     assert test == expected
 
 
 def test_process_weights_values_numpy_arrays():
-    test = _process_weights_values(np.array([0.1, 0.9]), np.array([2, 3]))
+    test = _process_weights_values(weights=np.array([0.1, 0.9]), values=np.array([2, 3]))
     expected = ([0.1, 0.9], [2, 3])
     assert test == expected
 
 
 def test_process_weights_values_length_one():
-    test = _process_weights_values([1], [2])
+    test = _process_weights_values(weights=[1], values=[2])
     expected = ([1], [2])
     assert test == expected
 
 
 def test_process_weights_values_alt_format():
-    test = _process_weights_values(None,
-                                   [[0.1, 2],
-                                    [0.2, 3],
-                                    [0.3, 4],
-                                    [0.4, 5]])
+    test = _process_weights_values(values=[[0.1, 2],
+                                           [0.2, 3],
+                                           [0.3, 4],
+                                           [0.4, 5]])
     expected = ([0.1, 0.2, 0.3, 0.4], [2, 3, 4, 5])
     assert test == expected
 
 
 def test_process_weights_values_alt2_format():
-    test = _process_weights_values(None,
-                                   {2: 0.1,
-                                    3: 0.2,
-                                    4: 0.3,
-                                    5: 0.4})
+    test = _process_weights_values(values={2: 0.1,
+                                           3: 0.2,
+                                           4: 0.3,
+                                           5: 0.4})
     expected = ([0.1, 0.2, 0.3, 0.4], [2, 3, 4, 5])
     assert test == expected
 
 
 def test_process_weights_values_dict_error():
     with pytest.raises(ValueError) as execinfo:
-        _process_weights_values([0.1, 0.2, 0.3, 0.4],
-                                {2: 0.1, 3: 0.2, 4: 0.3, 5: 0.4})
+        _process_weights_values(weights=[0.1, 0.2, 0.3, 0.4],
+                                values={2: 0.1, 3: 0.2, 4: 0.3, 5: 0.4})
     assert 'cannot pass dict and weights separately' in str(execinfo.value)
 
 
 def test_process_weights_values_entry_error():
     with pytest.raises(ValueError) as execinfo:
-        _process_weights_values(None, 'troll')
+        _process_weights_values(values='troll')
     assert 'passed values must be a list, dict, or array' in str(execinfo.value)
 
 
 def test_process_weights_values_weight_inference():
-    test = _process_weights_values([0.9], [2, 3])
+    test = _process_weights_values(weights=[0.9], values=[2, 3])
     expected = ([0.9, 0.1], [2, 3])
     test[0][1] = round(test[0][1], 1)  # fix floating point errors
     assert test == expected
 
 
 def test_process_weights_values_weight_inference_not_list():
-    test = _process_weights_values(0.9, [2, 3])
+    test = _process_weights_values(weights=0.9, values=[2, 3])
     expected = ([0.9, 0.1], [2, 3])
     test[0][1] = round(test[0][1], 1)  # fix floating point errors
     assert test == expected
 
 
 def test_process_weights_values_weight_inference_no_weights():
-    test = _process_weights_values(None, [2, 3])
+    test = _process_weights_values(values=[2, 3])
     expected = ([0.5, 0.5], [2, 3])
     assert test == expected
 
 
 def test_process_weights_values_weight_inference_no_weights_len4():
-    test = _process_weights_values(None, [2, 3, 4, 5])
+    test = _process_weights_values(values=[2, 3, 4, 5])
     expected = ([0.25, 0.25, 0.25, 0.25], [2, 3, 4, 5])
     assert test == expected
 
 
 def test_process_weights_values_weights_must_be_list_error():
     with pytest.raises(ValueError) as excinfo:
-        _process_weights_values('error', [2, 3])
+        _process_weights_values(weights='error', values=[2, 3])
     assert 'passed weights must be a list' in str(excinfo.value)
 
 
 def test_process_weights_values_values_must_be_list_error():
     with pytest.raises(ValueError) as excinfo:
-        _process_weights_values([0.1, 0.9], 'error')
+        _process_weights_values(weights=[0.1, 0.9], values='error')
     assert 'passed values must be a list' in str(excinfo.value)
 
 
 def test_process_weights_values_weights_must_sum_to_1_error():
     with pytest.raises(ValueError) as excinfo:
-        _process_weights_values([0.2, 0.9], [2, 3])
+        _process_weights_values(weights=[0.2, 0.9], values=[2, 3])
     assert 'weights don\'t sum to 1 - they sum to 1.1' in str(excinfo.value)
 
 
 def test_process_weights_values_length_mismatch_error():
     with pytest.raises(ValueError) as excinfo:
-        _process_weights_values([0.1, 0.9], [2, 3, 4])
+        _process_weights_values(weights=[0.1, 0.9], values=[2, 3, 4])
     assert 'weights and values not same length' in str(excinfo.value)
 
 
 def test_process_weights_values_negative_weights():
     with pytest.raises(ValueError) as excinfo:
-        _process_weights_values([-0.1, 0.2, 0.9], [2, 3, 4])
+        _process_weights_values(weights=[-0.1, 0.2, 0.9], values=[2, 3, 4])
     assert 'weight cannot be negative' in str(excinfo.value)
 
 
 def test_process_weights_values_remove_zero_weights():
-    test = _process_weights_values([0, 0.3, 0, 0.7, 0], [1, 2, 3, 4, 5])
+    test = _process_weights_values(weights=[0, 0.3, 0, 0.7, 0],
+                                   values=[1, 2, 3, 4, 5])
     expected = ([0.3, 0.7], [2, 4])
     assert test == expected
 
