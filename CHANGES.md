@@ -1,4 +1,4 @@
-## v0.18
+## v0.19
 
 #### Bugfixes
 
@@ -6,14 +6,10 @@
 * Fixes a bug where `dist_fn` did not work with `np.vectorize` functions.
 * Fixes a bug where in-memory caching was invoked for `bayesnet` when not desired.
 
-#### Distributions
-
-* **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
-
 #### Caching and Multicore
 
 * **[Breaking change]** `bayesnet` caching is now based on binary files instead of pickle files (uses `msgspec` as the underlying library).
-* `sample` results can now be cached in-memory using `memcache=True`. They can also be cached to a file -- use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
+* **[Breaking change]** `sample` caching is now based on numpy files instead of pickle files.
 * `bayesnet` and `sample` now take an argument `cores` (default 1). If greater than 1, will run the calculations on multiple cores using the pathos package.
 
 #### Other
@@ -21,9 +17,12 @@
 * Functions that take `weights` now can instead take a parameter `relative_weights` where waits are automatically normalized to sum to 1 (instead of erroring, which is still the behavior if using `weights`).
 * Verbose output for `bayesnet` and `sample` is now clearer (and slightly more verbose).
 
-#### Non-visible backend changes
 
-* Weights that are set to 0 are now dropped entirely, for a potential speedup.
+## v0.18
+
+* **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
+* `sample` results can now be cached in-memory using `memcache=True`. They can also be cached to a file -- use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
+* _(Non-visible backend change)_ Weights that are set to 0 are now dropped entirely, for a potential speedup.
 
 
 ## v0.17
