@@ -22,7 +22,7 @@
 
 * **[Breaking change]** The default `t` for t-distributions has changed from 1 to 20.
 * `sample` results can now be cached in-memory using `memcache=True`. They can also be cached to a file -- use `dump_cache_file` to write the file and `load_cache_file` to load from the file.
-* _(Non-visible backend change)_ Weights that are set to 0 are now dropped entirely, for a potential speedup.
+* _(Non-visible backend change)_ Weights that are set to 0 are now dropped entirely.
 
 
 ## v0.17
