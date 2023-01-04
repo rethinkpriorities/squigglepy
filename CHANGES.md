@@ -10,6 +10,7 @@
 
 * **[Breaking change]** `bayesnet` caching is now based on binary files instead of pickle files (uses `msgspec` as the underlying library).
 * **[Breaking change]** `sample` caching is now based on numpy files instead of pickle files.
+* A cache can now be loaded via `sample(load_cache=cachefile)` or `bayesnet(load_cache=cachefile)`, without needing to pass the distribution / function.
 * `bayesnet` and `sample` now take an argument `cores` (default 1). If greater than 1, will run the calculations on multiple cores using the pathos package.
 
 #### Other
