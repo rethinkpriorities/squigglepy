@@ -1,3 +1,8 @@
+## v0.20
+
+* Fixes how package dependencies are handled in `setup.py` an specifies Python >= 3.7 must be used. This should fix install errors.
+
+
 ## v0.19
 
 #### Bugfixes
