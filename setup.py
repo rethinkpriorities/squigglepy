@@ -9,7 +9,7 @@ if sys.version_info < (3, 7):
 
 setuptools.setup(
     name='squigglepy',
-    version='0.19',
+    version='0.20',
     author='Peter Wildeford',
     author_email='peter@peterhurford.com',
     description=('Squiggle programming language for intuitive probabilistic' +
