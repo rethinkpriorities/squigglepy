@@ -1,3 +1,7 @@
+## v0.21
+
+* You can now get the version of squigglepy via `sq.__version__`.
+
 ## v0.20
 
 * Fixes how package dependencies are handled in `setup.py` an specifies Python >= 3.7 must be used. This should fix install errors.
