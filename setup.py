@@ -1,7 +1,7 @@
 import sys
 import setuptools
 
-from version import __version__
+from squigglepy.version import __version__
 
 
 with open('README.md', 'r') as fh:
