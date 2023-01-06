@@ -1,6 +1,9 @@
 import sys
 import setuptools
 
+from version import __version__
+
+
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
@@ -9,7 +12,7 @@ if sys.version_info < (3, 7):
 
 setuptools.setup(
     name='squigglepy',
-    version='0.20',
+    version=__version__,
     author='Peter Wildeford',
     author_email='peter@peterhurford.com',
     description=('Squiggle programming language for intuitive probabilistic' +
