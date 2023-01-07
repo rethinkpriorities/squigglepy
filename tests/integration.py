@@ -565,6 +565,10 @@ if __name__ == '__main__':
     print('7 core 10M RUNS ideal {}sec'.format(round(test_6_mark['timing(sec)'] * K / 7, 1)))
     print('7 core 10M RUNS actual {}sec'.format(round(test_21_mark['timing(sec)'], 1)))
 
+
+    print('Test 22 (VERSION)...')
+    print('Squigglepy version is {}'.format(sq.__version__))
+
 # END
     _mark_time(start1, 218.4, 'Integration tests complete')
     print('DONE! INTEGRATION TEST SUCCESS!')
