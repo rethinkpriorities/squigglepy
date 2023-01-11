@@ -4,6 +4,7 @@
 * You can now get the version of squigglepy via `sq.__version__`.
 * Fixes a bug where the tqdm was displayed with the incorrect count when collecting cores during a multicore `sample`.
 
+
 ## v0.20
 
 * Fixes how package dependencies are handled in `setup.py` an specifies Python >= 3.7 must be used. This should fix install errors.
