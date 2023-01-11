@@ -6,8 +6,8 @@ import pathos.multiprocessing as mp
 
 from scipy import stats
 
-from .utils import (_process_weights_values, _is_dist, _simplify, _safe_len, _core_cuts,
-                    _init_tqdm, _tick_tqdm, _flush_tqdm)
+from .utils import (_process_weights_values, _is_dist, _simplify, _enlist, _safe_len,
+                    _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm)
 
 
 _squigglepy_internal_sample_caches = {}
@@ -528,23 +528,35 @@ def mixture_sample(values, weights=None, relative_weights=None, samples=1, verbo
     if len(values) == 1:
         return sample(values[0], n=samples)
 
-    def _run_mixture(values, weights, pbar=None, tick=1):
-        r_ = uniform_sample(0, 1)
-        _tick_tqdm(pbar, tick)
-        for i, dist in enumerate(values):
-            weight = weights[i]
-            if r_ <= weight:
-                return sample(dist)
-        return sample(dist)
+    def _run_presample(dist, pbar):
+        if _is_dist(dist) and dist.type == 'mixture':
+            raise ValueError(('You cannot nest mixture distributions within ' +
+                              'mixture distributions.'))
+        elif _is_dist(dist) and dist.type == 'discrete':
+            raise ValueError(('You cannot nest discrete distributions within ' +
+                              'mixture distributions.'))
+        _tick_tqdm(pbar)
+        return _enlist(sample(dist, n=samples))
+
+    pbar = _init_tqdm(verbose=verbose, total=len(values))
+    values = [_run_presample(v, pbar) for v in values]
+    _flush_tqdm(pbar)
+
+    def _run_mixture(picker, i, pbar):
+        _tick_tqdm(pbar, _multicore_tqdm_cores)
+        for j, w in enumerate(weights):
+            if picker < w:
+                return values[j][i]
+        return values[-1][i]
 
     weights = np.cumsum(weights)
+    picker = uniform_sample(0, 1, samples=samples)
+
     tqdm_samples = samples if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
     pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
-    out = _simplify(np.array([_run_mixture(values=values,
-                                           weights=weights,
-                                           pbar=pbar,
-                                           tick=_multicore_tqdm_cores) for _ in range(samples)]))
+    out = _simplify([_run_mixture(p, i, pbar) for i, p in enumerate(_enlist(picker))])
     _flush_tqdm(pbar)
+
     return out
 
 
@@ -673,7 +685,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
         if verbose:
             print('Collecting data...')
         samples = np.array([])
-        pbar = _init_tqdm(verbose=verbose, total=n)
+        pbar = _init_tqdm(verbose=verbose, total=cores)
         for core in range(cores):
             with open('test-core-{}.npy'.format(core), 'rb') as f:
                 samples = np.concatenate((samples, np.load(f, allow_pickle=True)), axis=None)
@@ -839,4 +851,4 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
             print('...Cached')
 
     # Return
-    return samples
+    return np.array(samples) if isinstance(samples, list) else samples

@@ -98,6 +98,15 @@ def _simplify(a):
     return a
 
 
+def _enlist(a):
+    if isinstance(a, list):
+        return a
+    elif _is_numpy(a):
+        return a.tolist()
+    else:
+        return [a]
+
+
 def _safe_len(a):
     if _is_numpy(a):
         return a.size

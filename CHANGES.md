@@ -1,6 +1,8 @@
 ## v0.21
 
+* Mixture sampling is now 4-23x faster.
 * You can now get the version of squigglepy via `sq.__version__`.
+* Fixes a bug where the tqdm was displayed with the incorrect count when collecting cores during a multicore `sample`.
 
 ## v0.20
 

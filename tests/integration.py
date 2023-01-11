@@ -377,7 +377,7 @@ if __name__ == '__main__':
     average = bayes.average(prior, evidence)
     average_samples = sq.sample(average, n=K)
     out = (np.mean(average_samples), np.std(average_samples))
-    if round(out[0], 2) != 2.75 and round(out[1], 2) != 0.94:
+    if round(out[0], 2) != 2.76 and round(out[1], 2) != 0.9:
         print('ERROR 9')
         import pdb
         pdb.set_trace()

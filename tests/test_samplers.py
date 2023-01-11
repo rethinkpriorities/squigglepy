@@ -372,13 +372,13 @@ def test_sample_discrete_indirect_mixture():
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_mixture_sample(mocker):
-    assert all(mixture_sample([norm(1, 2), norm(3, 4)], [0.2, 0.8])[0] == (1.5, 0.3))
+    assert mixture_sample([norm(1, 2), norm(3, 4)], [0.2, 0.8]) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_mixture_sample_alt_format(mocker):
-    assert all(mixture_sample([[0.2, norm(1, 2)], [0.8, norm(3, 4)]])[0] == (1.5, 0.3))
+    assert mixture_sample([[0.2, norm(1, 2)], [0.8, norm(3, 4)]]) == (1.5, 0.3)
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=100))
@@ -391,13 +391,13 @@ def test_mixture_sample_rclip_lclip(mocker):
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_mixture_sample_no_weights(mocker):
-    assert all(mixture_sample([norm(1, 2), norm(3, 4)])[0] == (1.5, 0.3))
+    assert mixture_sample([norm(1, 2), norm(3, 4)]) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_mixture_sample_different_distributions(mocker):
-    assert all(mixture_sample([lognorm(1, 2), norm(3, 4)])[0] == (0.35, 0.21))
+    assert mixture_sample([lognorm(1, 2), norm(3, 4)]) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -409,13 +409,13 @@ def test_mixture_sample_with_numbers(mocker):
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_sample_mixture(mocker):
-    assert all(sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8]))[0] == (1.5, 0.3))
+    assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_sample_mixture_alt_format(mocker):
-    assert all(sample(mixture([[0.2, norm(1, 2)], [0.8, norm(3, 4)]]))[0] == (1.5, 0.3))
+    assert sample(mixture([[0.2, norm(1, 2)], [0.8, norm(3, 4)]])) == (1.5, 0.3)
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
@@ -495,13 +495,13 @@ def test_sample_mixture_competing_clip(mocker):
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_sample_mixture_no_weights(mocker):
-    assert all(sample(mixture([norm(1, 2), norm(3, 4)]))[0] == (1.5, 0.3))
+    assert sample(mixture([norm(1, 2), norm(3, 4)])) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_sample_mixture_different_distributions(mocker):
-    assert all(sample(mixture([lognorm(1, 2), norm(3, 4)]))[0] == (0.35, 0.21))
+    assert sample(mixture([lognorm(1, 2), norm(3, 4)])) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
@@ -516,7 +516,7 @@ def test_sample_mixture_can_be_discrete():
     assert ~mixture([0, 1, 2]) == 0
     assert ~mixture([[0.9, 'a'], [0.1, 'b']]) == 'a'
     assert ~mixture({'a': 0.9, 'b': 0.1}) == 'a'
-    assert all((~mixture([norm(1, 2), norm(3, 4)]))[0] == (1.5, 0.3))
+    assert ~mixture([norm(1, 2), norm(3, 4)]) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
