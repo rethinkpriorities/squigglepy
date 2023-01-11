@@ -381,7 +381,7 @@ if __name__ == '__main__':
         print('ERROR 9')
         import pdb
         pdb.set_trace()
-    _mark_time(start9, 0.019, 'Test 9 complete')
+    _mark_time(start9, 0.002, 'Test 9 complete')
 
 
     print('Test 10 (ALARM NET)...')
@@ -513,7 +513,7 @@ if __name__ == '__main__':
         print('ERROR ON 18')
         import pdb
         pdb.set_trace()
-    _mark_time(start18, 18.9, 'Test 18 complete')
+    _mark_time(start18, 2.66, 'Test 18 complete')
 
 
     print('Test 19 (RCLIP FIDELITY, 1M SAMPLES)...')
@@ -526,7 +526,7 @@ if __name__ == '__main__':
         print('ERROR ON 19')
         import pdb
         pdb.set_trace()
-    test_19_mark = _mark_time(start19, 18.9, 'Test 19 complete')
+    test_19_mark = _mark_time(start19, 2.78, 'Test 19 complete')
 
 
     print('Test 20 (MULTICORE SAMPLE, 10M SAMPLES)...')
@@ -539,7 +539,7 @@ if __name__ == '__main__':
         print('ERROR ON 20')
         import pdb
         pdb.set_trace()
-    test_20_mark = _mark_time(start20, 108.2, 'Test 20 complete')
+    test_20_mark = _mark_time(start20, 7.43, 'Test 20 complete')
     print('1 core 10M RUNS expected {}sec'.format(round(test_19_mark['timing(sec)'] * 10, 1)))
     print('7 core 10M RUNS ideal {}sec'.format(round(test_19_mark['timing(sec)'] * 10 / 7, 1)))
     print('7 core 10M RUNS actual {}sec'.format(round(test_20_mark['timing(sec)'], 1)))
@@ -570,5 +570,5 @@ if __name__ == '__main__':
     print('Squigglepy version is {}'.format(sq.__version__))
 
 # END
-    _mark_time(start1, 218.4, 'Integration tests complete')
+    _mark_time(start1, 154.1, 'Integration tests complete')
     print('DONE! INTEGRATION TEST SUCCESS!')
