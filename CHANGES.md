@@ -1,3 +1,8 @@
+## v0.22
+
+* `get_percentiles` now coerces output to integer if `digits` is less than or equal to 0, instead of just exactly 0.
+
+
 ## v0.21
 
 * Mixture sampling is now 4-23x faster.

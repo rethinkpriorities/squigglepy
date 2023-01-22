@@ -223,6 +223,14 @@ def test_get_percentiles_zero_digits():
     assert isinstance(expected[75], int)
 
 
+def test_get_percentiles_negative_one_digits():
+    test = get_percentiles(range(1, 901), percentiles=[25, 75], digits=-1)
+    expected = {25: 230, 75: 680}
+    assert test == expected
+    assert isinstance(expected[25], int)
+    assert isinstance(expected[75], int)
+
+
 def test_get_log_percentiles():
     test = get_log_percentiles([10 ** x for x in range(1, 10)])
     expected = {1: '10^1.2', 5: '10^1.7', 10: '10^1.9', 20: '10^2.8',

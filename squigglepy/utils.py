@@ -87,7 +87,7 @@ def _round(x, digits=0):
     if _safe_len(x) > 1:
         return np.array([int(y) if digits == 0 else y for y in x])
     else:
-        return int(x) if digits == 0 else x
+        return int(x) if digits <= 0 else x
 
 
 def _simplify(a):
