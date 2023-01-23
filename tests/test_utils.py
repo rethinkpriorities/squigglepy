@@ -662,6 +662,7 @@ def test_kelly_with_resolve_date0pt5():
 
 
 def test_extremize():
+   assert round(extremize(p=0.7, e=1), 3) == 0.7
    assert round(extremize(p=0.7, e=1.73), 3) == 0.875
    assert round(extremize(p=0.2, e=1.73), 3) == 0.062
 
