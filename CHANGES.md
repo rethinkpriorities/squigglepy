@@ -1,5 +1,6 @@
 ## v0.22
 
+* Added `extremize` to extremize predictions.
 * `get_percentiles` now coerces output to integer if `digits` is less than or equal to 0, instead of just exactly 0.
 
 

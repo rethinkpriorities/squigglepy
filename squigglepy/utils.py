@@ -827,3 +827,34 @@ def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current
                  resolve_date=resolve_date,
                  current=current,
                  deference=0.75)
+
+
+def extremize(p, e):
+    """
+    Extremize a prediction.
+
+    Parameters
+    ----------
+    p : float
+        The prediction to extremize. Must be within 0-1.
+    e : float
+        The extremization factor.
+
+    Returns
+    -------
+    float
+        The extremized prediction
+
+    Examples
+    --------
+    >>> # Extremizing of 1.73 per https://arxiv.org/abs/2111.03153
+    >>> extremize(p=0.7, e=1.73)
+    0.875428191155692
+    """
+    if p <= 0 or p >= 1:
+        raise ValueError('`p` must be greater than 0 and less than 1')
+
+    if p > 0.5:
+        return 1 - ((1 - p) ** e)
+    else:
+        return p ** e

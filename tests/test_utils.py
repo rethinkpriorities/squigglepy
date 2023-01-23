@@ -6,7 +6,7 @@ from ..squigglepy.utils import (_process_weights_values, event_occurs, event_hap
                                 event, get_percentiles, get_log_percentiles, geomean,
                                 p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
                                 flip_coin, kelly, full_kelly, half_kelly, quarter_kelly,
-                                one_in)
+                                one_in, extremize)
 from ..squigglepy.rng import set_seed
 from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
 
@@ -659,3 +659,15 @@ def test_kelly_with_resolve_date0pt5():
                                            half_year_from_today.day,
                                            0,
                                            0)
+
+
+def test_extremize():
+   assert round(extremize(p=0.7, e=1.73), 3) == 0.875
+   assert round(extremize(p=0.2, e=1.73), 3) == 0.062
+
+
+def test_extremize_out_of_bounds():
+    for p in [-1, 0, 1, 2]:
+        with pytest.raises(ValueError) as execinfo:
+            extremize(p=p, e=1.73)
+        assert 'must be greater than 0 and less than 1' in str(execinfo.value)
