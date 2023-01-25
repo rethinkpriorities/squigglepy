@@ -46,7 +46,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None):
     sum_weights = sum(weights)
 
     if relative:
-        weights = [w / sum_weights for w in weights]
+        weights = normalize(weights)
     else:
         if len(weights) == len(values) - 1 and sum_weights < 1:
             weights.append(1 - sum_weights)
@@ -142,6 +142,29 @@ def _flush_tqdm(pbar):
     if pbar is not None:
         pbar.close()
     return pbar
+
+
+def normalize(lst):
+    """
+    Normalize a list to sum to 1.
+
+    Parameters
+    ----------
+    lst : list
+        The list to normalize.
+
+    Returns
+    -------
+    list
+        A list where each value is normalized such that the list sums to 1.
+
+    Examples
+    --------
+    >>> normalize([0.1, 0.2, 0.2])
+    [0.2, 0.4, 0.4]
+    """
+    sum_lst = sum(lst)
+    return [lx / sum_lst for lx in lst]
 
 
 def event_occurs(p):

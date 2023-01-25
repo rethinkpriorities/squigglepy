@@ -1,6 +1,8 @@
 ## v0.22
 
 * Added `extremize` to extremize predictions.
+* Added `normalize` to normalize a list of numbers to sum to 1.
+* `clip`, `lclip`, and `rclip` can now be used without needing distributions.
 * `get_percentiles` now coerces output to integer if `digits` is less than or equal to 0, instead of just exactly 0.
 
 

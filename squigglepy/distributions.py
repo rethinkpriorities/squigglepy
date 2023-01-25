@@ -402,8 +402,10 @@ def lclip(dist1, val=None):
     """
     if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
         return lambda d: lclip(d, dist1)
-    else:
+    elif isinstance(dist1, BaseDistribution):
         return dist_fn(dist1, val, _lclip, name='lclip')
+    else:
+        return _lclip(dist1, val)
 
 
 @np.vectorize
@@ -440,8 +442,10 @@ def rclip(dist1, val=None):
     """
     if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
         return lambda d: rclip(d, dist1)
-    else:
+    elif isinstance(dist1, BaseDistribution):
         return dist_fn(dist1, val, _rclip, name='rclip')
+    else:
+        return _rclip(dist1, val)
 
 
 def clip(dist1, left, right=None):

@@ -6,7 +6,7 @@ from ..squigglepy.utils import (_process_weights_values, event_occurs, event_hap
                                 event, get_percentiles, get_log_percentiles, geomean,
                                 p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
                                 flip_coin, kelly, full_kelly, half_kelly, quarter_kelly,
-                                one_in, extremize)
+                                one_in, extremize, normalize)
 from ..squigglepy.rng import set_seed
 from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
 
@@ -121,6 +121,10 @@ def test_process_weights_values_remove_zero_weights():
                                    values=[1, 2, 3, 4, 5])
     expected = ([0.3, 0.7], [2, 4])
     assert test == expected
+
+
+def test_normalize():
+    assert normalize([0.1, 0.4]) == [0.2, 0.8]
 
 
 def test_event_occurs():

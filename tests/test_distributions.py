@@ -961,6 +961,8 @@ def test_lclip():
     obj = norm(0, 1) >> lclip(0.5)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)'
+    assert lclip(1, 0.5) == 1
+    assert lclip(0.5, 1) == 1
 
 
 def test_rclip():
@@ -970,6 +972,8 @@ def test_rclip():
     obj = norm(0, 1) >> rclip(0.5)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)'
+    assert rclip(1, 0.5) == 0.5
+    assert rclip(0.5, 1) == 0.5
 
 
 def test_clip():
@@ -979,3 +983,5 @@ def test_clip():
     obj = norm(0, 1) >> clip(0.5, 0.9)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)'
+    assert clip(0.5, 0.7, 1) == 0.7
+    assert clip(1.2, 0.7, 1) == 1
