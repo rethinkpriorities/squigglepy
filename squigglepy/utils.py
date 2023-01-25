@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from scipy import stats
 from datetime import datetime
+from collections.abc import Iterable
 
 
 def _process_weights_values(weights=None, relative_weights=None, values=None):
@@ -21,8 +22,8 @@ def _process_weights_values(weights=None, relative_weights=None, values=None):
         weights = [weights]
     elif isinstance(weights, np.ndarray):
         weights = list(weights)
-    elif not isinstance(weights, list) and weights is not None:
-        raise ValueError('passed weights must be a list or array')
+    elif weights is not None and not _is_iterable(weights):
+        raise ValueError('passed weights must be an iterable')
 
     if isinstance(values, np.ndarray):
         values = list(values)
@@ -32,8 +33,8 @@ def _process_weights_values(weights=None, relative_weights=None, values=None):
             values = list(values.keys())
         else:
             raise ValueError('cannot pass dict and weights separately')
-    elif not isinstance(values, list) and not isinstance(values, dict):
-        raise ValueError('passed values must be a list, dict, or array')
+    elif values is not None and not _is_iterable(values):
+        raise ValueError('passed values must be an iterable')
 
     if weights is None:
         if isinstance(values[0], list) and len(values[0]) == 2:
@@ -71,6 +72,11 @@ def _process_weights_values(weights=None, relative_weights=None, values=None):
 
 def _is_numpy(a):
     return type(a).__module__ == np.__name__
+
+
+def _is_iterable(a):
+    iterx = isinstance(a, dict) or isinstance(a, Iterable)
+    return iterx and not isinstance(a, str)
 
 
 def _is_dist(dist):

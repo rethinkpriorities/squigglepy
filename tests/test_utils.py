@@ -54,12 +54,6 @@ def test_process_weights_values_dict_error():
     assert 'cannot pass dict and weights separately' in str(execinfo.value)
 
 
-def test_process_weights_values_entry_error():
-    with pytest.raises(ValueError) as execinfo:
-        _process_weights_values(values='troll')
-    assert 'passed values must be a list, dict, or array' in str(execinfo.value)
-
-
 def test_process_weights_values_weight_inference():
     test = _process_weights_values(weights=[0.9], values=[2, 3])
     expected = ([0.9, 0.1], [2, 3])
@@ -89,13 +83,13 @@ def test_process_weights_values_weight_inference_no_weights_len4():
 def test_process_weights_values_weights_must_be_list_error():
     with pytest.raises(ValueError) as excinfo:
         _process_weights_values(weights='error', values=[2, 3])
-    assert 'passed weights must be a list' in str(excinfo.value)
+    assert 'passed weights must be an iterable' in str(excinfo.value)
 
 
 def test_process_weights_values_values_must_be_list_error():
     with pytest.raises(ValueError) as excinfo:
         _process_weights_values(weights=[0.1, 0.9], values='error')
-    assert 'passed values must be a list' in str(excinfo.value)
+    assert 'passed values must be an iterable' in str(excinfo.value)
 
 
 def test_process_weights_values_weights_must_sum_to_1_error():
