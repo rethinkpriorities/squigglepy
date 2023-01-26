@@ -3,6 +3,7 @@
 * Added `extremize` to extremize predictions.
 * Added `normalize` to normalize a list of numbers to sum to 1.
 * `clip`, `lclip`, and `rclip` can now be used without needing distributions.
+* Support for working within Pandas is now explicitly added. `pandas` has been added as a requirement.
 * Some functions (e.g, `geomean`) previously only supported lists, dictionaries, and numpy arrays. They have been expanded to support all iterables.
 * `get_percentiles` now coerces output to integer if `digits` is less than or equal to 0, instead of just exactly 0.
 

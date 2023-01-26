@@ -117,6 +117,37 @@ def test_process_weights_values_remove_zero_weights():
     assert test == expected
 
 
+def test_process_weights_values_handle_none():
+    test = _process_weights_values(weights=None,
+                                   values=[1, None, 3, 4, 5])
+    expected = ([0.2, 0.2, 0.2, 0.2, 0.2], [1, None, 3, 4, 5])
+    assert test == expected
+
+
+def test_process_weights_values_can_drop_none():
+    test = _process_weights_values(weights=None,
+                                   values=[1, None, 3, 4, 5],
+                                   drop_na=True)
+    expected = ([0.25, 0.25, 0.25, 0.25], [1, 3, 4, 5])
+    assert test == expected
+
+
+def test_process_weights_values_attempt_drop_none_with_weights_error():
+    with pytest.raises(ValueError) as execinfo:
+        _process_weights_values(weights=[0.2, 0.2, 0.2, 0.2, 0.2],
+                                values=[1, None, 3, 4, 5],
+                                drop_na=True)
+    assert 'cannot drop NA and process weights' in str(execinfo.value)
+
+
+def test_process_weights_values_attempt_drop_none_with_weights_error():
+    with pytest.raises(ValueError) as execinfo:
+        _process_weights_values(relative_weights=[1, 1, 1, 1, 1],
+                                values=[1, None, 3, 4, 5],
+                                drop_na=True)
+    assert 'cannot drop NA and process weights' in str(execinfo.value)
+
+
 def test_normalize():
     assert normalize([0.1, 0.4]) == [0.2, 0.8]
 
@@ -295,6 +326,10 @@ def test_weighted_geomean():
                          weights=[0.5, 0.1, 0.1, 0.1, 0.2]), 2) == 0.19
 
 
+def test_geomean_with_none_value():
+    assert round(geomean([0.1, 0.2, None, 0.3, 0.4, None, 0.5]), 2) == 0.26
+
+
 def test_weighted_geomean_alt_format():
     assert round(geomean([[0.5, 0.1],
                           [0.1, 0.2],
@@ -311,12 +346,40 @@ def test_weighted_geomean_alt2_format():
                           0.5: 0.2}), 2) == 0.19
 
 
+def test_weighted_geomean_errors_with_none_value():
+    with pytest.raises(ValueError) as execinfo:
+        geomean({0.1: 0.5, 0.2: 0.1, 0.3: None, 0.4: 0.1, 0.5: 0.2})
+    assert 'cannot handle NA-like values in weights' in str(execinfo.value)
+
+
+def test_weighted_geomean_errors_with_none_value():
+    with pytest.raises(ValueError) as execinfo:
+        geomean([[0.5, 0.1], [0.1, None], [0.1, 0.3], [0.1, 0.4], [0.2, 0.5]])
+    assert 'cannot drop NA and process weights' in str(execinfo.value)
+
+
 def test_p_to_odds():
     assert round(p_to_odds(0.1), 2) == 0.11
 
 
 def test_odds_to_p():
     assert round(odds_to_p(1/9), 2) == 0.1
+
+
+def test_p_to_odds_handles_none():
+    assert p_to_odds(None) is None
+
+
+def test_odds_to_p_handles_none():
+    assert odds_to_p(None) is None
+
+
+def test_p_to_odds_handles_multiple():
+    assert all(np.round(p_to_odds([0.1, 0.2, 0.3]), 2) == np.array([0.11, 0.25, 0.43]))
+
+
+def test_odds_to_p_handles_multiple():
+    assert all(np.round(odds_to_p([0.1, 0.2, 0.3]), 2) == np.array([0.09, 0.17, 0.23]))
 
 
 def test_geomean_odds():

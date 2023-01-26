@@ -2,6 +2,7 @@ flake8
 flake8-docstrings
 msgspec
 numpy
+pandas
 pathos
 pytest
 pytest-mock

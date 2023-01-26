@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import pandas as pd
 
 from tqdm import tqdm
 from scipy import stats
@@ -7,10 +8,10 @@ from datetime import datetime
 from collections.abc import Iterable
 
 
-def _process_weights_values(weights=None, relative_weights=None, values=None):
+def _process_weights_values(weights=None, relative_weights=None, values=None, drop_na=False):
     if weights is not None and relative_weights is not None:
         raise ValueError('can only pass either `weights` or `relative_weights`, not both.')
-    if values is None:
+    if values is None or _safe_len(values) == 0:
         raise ValueError('must pass `values`')
 
     relative = False
@@ -27,6 +28,8 @@ def _process_weights_values(weights=None, relative_weights=None, values=None):
 
     if isinstance(values, np.ndarray):
         values = list(values)
+    elif isinstance(values, pd.core.series.Series):
+        values = values.values.tolist()
     elif isinstance(values, dict):
         if weights is None:
             weights = list(values.values())
@@ -40,10 +43,18 @@ def _process_weights_values(weights=None, relative_weights=None, values=None):
         if isinstance(values[0], list) and len(values[0]) == 2:
             weights = [v[0] for v in values]
             values = [v[1] for v in values]
+            if drop_na and any([_is_na_like(v) for v in values]):
+                raise ValueError('cannot drop NA and process weights')
         else:
+            if drop_na:
+                values = [v for v in values if not _is_na_like(v)]
             len_ = len(values)
             weights = [1 / len_ for _ in range(len_)]
+    elif drop_na and any([_is_na_like(v) for v in values]):
+        raise ValueError('cannot drop NA and process weights')
 
+    if any([_is_na_like(w) for w in weights]):
+        raise ValueError('cannot handle NA-like values in weights')
     sum_weights = sum(weights)
 
     if relative:
@@ -63,7 +74,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None):
     for i, w in enumerate(weights):
         if w < 0:
             raise ValueError('weight cannot be negative')
-        if w > 0:
+        if w > 0:  # Note that w = 0 is dropped here
             new_weights.append(w)
             new_values.append(values[i])
 
@@ -77,6 +88,10 @@ def _is_numpy(a):
 def _is_iterable(a):
     iterx = isinstance(a, dict) or isinstance(a, Iterable)
     return iterx and not isinstance(a, str)
+
+
+def _is_na_like(a):
+    return a is None or np.isnan(a)
 
 
 def _is_dist(dist):
@@ -105,10 +120,10 @@ def _simplify(a):
 
 
 def _enlist(a):
-    if isinstance(a, list):
-        return a
-    elif _is_numpy(a):
+    if _is_numpy(a) and isinstance(a, np.ndarray):
         return a.tolist()
+    elif _is_iterable(a):
+        return a
     else:
         return [a]
 
@@ -356,7 +371,7 @@ def get_log_percentiles(data,
             return _round(np.log10(percentiles), digits)
 
 
-def geomean(a, weights=None, relative_weights=None):
+def geomean(a, weights=None, relative_weights=None, drop_na=True):
     """
     Calculate the geometric mean.
 
@@ -369,6 +384,8 @@ def geomean(a, weights=None, relative_weights=None):
     relative_weights : list or None
         Relative weights, which if given will be weights that are normalized
         to sum to 1.
+    drop_na : boolean
+        Should NA-like values be dropped when calculating the geomean?
 
     Returns
     -------
@@ -379,7 +396,7 @@ def geomean(a, weights=None, relative_weights=None):
     >>> geomean([1, 3, 10])
     3.1072325059538595
     """
-    weights, a = _process_weights_values(weights, relative_weights, a)
+    weights, a = _process_weights_values(weights, relative_weights, a, drop_na=drop_na)
     return stats.mstats.gmean(a, weights=weights)
 
 
@@ -402,7 +419,13 @@ def p_to_odds(p):
     >>> p_to_odds(0.1)
     0.1111111111111111
     """
-    return p / (1 - p)
+    def _convert(p):
+        if _is_na_like(p):
+            return p
+        if p <= 0 or p >= 1:
+            raise ValueError('p must be between 0 and 1')
+        return p / (1 - p)
+    return _simplify(np.array([_convert(p) for p in _enlist(p)]))
 
 
 def odds_to_p(odds):
@@ -424,10 +447,16 @@ def odds_to_p(odds):
     >>> odds_to_p(0.1)
     0.09090909090909091
     """
-    return odds / (1 + odds)
+    def _convert(o):
+        if _is_na_like(o):
+            return o
+        if o <= 0:
+            raise ValueError('odds must be greater than 0')
+        return o / (1 + o)
+    return _simplify(np.array([_convert(o) for o in _enlist(odds)]))
 
 
-def geomean_odds(a, weights=None, relative_weights=None):
+def geomean_odds(a, weights=None, relative_weights=None, drop_na=True):
     """
     Calculate the geometric mean of odds.
 
@@ -441,6 +470,8 @@ def geomean_odds(a, weights=None, relative_weights=None):
     relative_weights : list or None
         Relative weights, which if given will be weights that are normalized
         to sum to 1.
+    drop_na : boolean
+        Should NA-like values be dropped when calculating the geomean?
 
     Returns
     -------
@@ -451,9 +482,8 @@ def geomean_odds(a, weights=None, relative_weights=None):
     >>> geomean_odds([0.1, 0.3, 0.9])
     0.42985748800076845
     """
-    weights, a = _process_weights_values(weights, relative_weights, a)
-    a = p_to_odds(np.array(a))
-    return odds_to_p(geomean(a, weights=weights))
+    weights, a = _process_weights_values(weights, relative_weights, a, drop_na=drop_na)
+    return odds_to_p(geomean(p_to_odds(a), weights=weights))
 
 
 def laplace(s, n=None, time_passed=None,

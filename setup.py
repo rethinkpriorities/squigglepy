@@ -18,7 +18,7 @@ setuptools.setup(
     description=('Squiggle programming language for intuitive probabilistic' +
                  ' estimation features in Python'),
     python_requires='>=3.7',
-    install_requires=['msgspec', 'numpy', 'pathos', 'scipy', 'tqdm'],
+    install_requires=['msgspec', 'numpy', 'pandas', 'pathos', 'scipy', 'tqdm'],
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/rethinkpriorities/squigglepy',
