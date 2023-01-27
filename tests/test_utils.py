@@ -3,8 +3,8 @@ import numpy as np
 
 from datetime import datetime, timedelta
 from ..squigglepy.utils import (_process_weights_values, event_occurs, event_happens,
-                                event, get_percentiles, get_log_percentiles, geomean,
-                                p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
+                                event, get_percentiles, get_log_percentiles, get_mean_and_ci,
+                                geomean, p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
                                 flip_coin, kelly, full_kelly, half_kelly, quarter_kelly,
                                 one_in, extremize, normalize)
 from ..squigglepy.rng import set_seed
@@ -311,6 +311,16 @@ def test_get_log_percentiles_length_one():
                                display=False,
                                digits=0)
     assert test == 3
+
+
+def test_get_mean_and_ci():
+    test = get_mean_and_ci(range(1, 901), digits=1)
+    assert test == {'mean': 450.5, 'ci_low': 46.0, 'ci_high': 855.0}
+
+
+def test_get_mean_and_80_pct_ci():
+    test = get_mean_and_ci(range(1, 901), digits=1, credibility=80)
+    assert test == {'mean': 450.5, 'ci_low': 90.9, 'ci_high': 810.1}
 
 
 def test_geomean():

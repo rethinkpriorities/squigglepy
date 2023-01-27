@@ -2,6 +2,7 @@
 
 * Added `extremize` to extremize predictions.
 * Added `normalize` to normalize a list of numbers to sum to 1.
+* Added `get_mean_and_ci` to return the mean and a given confidence interval for data.
 * `clip`, `lclip`, and `rclip` can now be used without needing distributions.
 * Support for working within Pandas is now explicitly added. `pandas` has been added as a requirement.
 * Some functions (e.g, `geomean`) previously only supported lists, dictionaries, and numpy arrays. They have been expanded to support all iterables.
