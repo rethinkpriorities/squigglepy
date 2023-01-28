@@ -206,6 +206,27 @@ if __name__ == '__main__':
     _mark_time(start1, 0.033, 'Test 1 complete')
 
 
+    print('Test 1B (PIANO TUNERS, NO TIME, LONG FORMAT)...')
+    sq.set_seed(42)
+    start1b = time.time()
+
+    pop_of_ny_2022 = sq.to(8.1*M, 8.4*M)
+    pct_of_pop_w_pianos_ = sq.to(0.2, 1) * 0.01
+    pianos_per_piano_tuner_ = sq.to(2*K, 50*K)
+    piano_tuners_per_piano_ = 1 / pianos_per_piano_tuner_
+    total_tuners_in_2022 = pop_of_ny_2022 * pct_of_pop_w_pianos_ * piano_tuners_per_piano_
+    samples = total_tuners_in_2022 @ 1000  # Note: `@ 1000` is shorthand to get 1000 samples
+    out = sq.get_percentiles(samples, digits=1)
+    expected = {1: 0.3, 5: 0.5, 10: 0.8, 20: 1.3, 30: 1.9, 40: 2.6,
+                50: 3.5, 60: 4.5, 70: 6.2, 80: 8.6, 90: 14.0,
+                95: 22.1, 99: 48.1}
+    if out != expected:
+        print('ERROR 1B')
+        import pdb
+        pdb.set_trace()
+    _mark_time(start1b, 0.033, 'Test 1B complete')
+
+
     print('Test 2 (PIANO TUNERS, TIME COMPONENT, LONG FORMAT)...')
     sq.set_seed(42)
     start2 = time.time()

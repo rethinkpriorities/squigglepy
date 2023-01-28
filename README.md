@@ -21,28 +21,23 @@ import matplotlib.pyplot as plt
 from squigglepy.numbers import K, M
 from pprint import pprint
 
-pop_of_ny_2022 = sq.to(8.1*M, 8.4*M) # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
+pop_of_ny_2022 = sq.to(8.1*M, 8.4*M)  # This means that you're 90% confident the value is between 8.1 and 8.4 Million.
+pct_of_pop_w_pianos = sq.to(0.2, 1) * 0.01  # We assume there are almost no people with multiple pianos
+pianos_per_piano_tuner = sq.to(2*K, 50*K)
+piano_tuners_per_piano = 1 / pianos_per_piano_tuner
+total_tuners_in_2022 = pop_of_ny_2022 * pct_of_pop_w_pianos * piano_tuners_per_piano
+samples = total_tuners_in_2022 @ 1000  # Note: `@ 1000` is shorthand to get 1000 samples
 
-def pct_of_pop_w_pianos():
-    percentage = sq.to(.2, 1)
-    return percentage * 0.01 # We assume there are almost no people with multiple pianos
-
-def piano_tuners_per_piano():
-    pianos_per_piano_tuner = sq.to(2*K, 50*K)
-    return 1 / pianos_per_piano_tuner
-
-def total_tuners_in_2022():
-    return pop_of_ny_2022 * pct_of_pop_w_pianos * piano_tuners_per_piano
-
-samples = sq.sample(total_tuners_in_2022, n=1000, verbose=True)
-print('-')
+# Get mean and SD
 print('Mean: {}, SD: {}'.format(round(np.mean(samples), 2),
                                 round(np.std(samples), 2)))
-print('-')
+
+# Get percentiles
 pprint(sq.get_percentiles(samples, digits=0))
+
+# Histogram
 plt.hist(samples, bins=200)
 plt.show()
-
 ```
 
 And the version from the Squiggle doc that incorporates time:
@@ -52,25 +47,19 @@ import squigglepy as sq
 from squigglepy.numbers import K, M
 
 pop_of_ny_2022 = sq.to(8.1*M, 8.4*M)
+pct_of_pop_w_pianos = sq.to(0.2, 1) * 0.01
+pianos_per_piano_tuner = sq.to(2*K, 50*K)
+piano_tuners_per_piano = 1 / pianos_per_piano_tuner
 
-def pct_of_pop_w_pianos():
-    percentage = sq.to(.2, 1)
-    return percentage * 0.01
-
-def piano_tuners_per_piano():
-    pianos_per_piano_tuner = sq.to(2*K, 50*K)
-    return 1 / pianos_per_piano_tuner
-
-# Time in years after 2022
-def pop_at_time(t):
-    avg_yearly_pct_change = sq.to(-0.01, 0.05) # We're expecting NYC to continuously grow with an mean of roughly between -1% and +4% per year
+def pop_at_time(t):  # t = Time in years after 2022
+    avg_yearly_pct_change = sq.to(-0.01, 0.05)  # We're expecting NYC to continuously grow with an mean of roughly between -1% and +4% per year
     return pop_of_ny_2022 * ((avg_yearly_pct_change + 1) ** t)
 
 def total_tuners_at_time(t):
     return pop_at_time(t) * pct_of_pop_w_pianos * piano_tuners_per_piano
 
 # Get total piano tuners at 2030
-sq.get_percentiles(total_tuners_at_time(2030-2022) @ 1000)  # Note: `@ 1000` is shorthand to get 1000 samples
+sq.get_percentiles(total_tuners_at_time(2030-2022) @ 1000)
 ```
 
 **WARNING:** Be careful about dividing by `K`, `M`, etc. `1/2*K` = 500 in Python. Use `1/(2*K)` instead to get the expected outcome.
