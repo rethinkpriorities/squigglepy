@@ -2,10 +2,11 @@ import pytest
 import numpy as np
 
 from datetime import datetime, timedelta
-from ..squigglepy.utils import (_process_weights_values, event_occurs, event_happens,
-                                event, get_percentiles, get_log_percentiles, get_mean_and_ci,
-                                geomean, p_to_odds, odds_to_p, geomean_odds, laplace, roll_die,
-                                flip_coin, kelly, full_kelly, half_kelly, quarter_kelly,
+from ..squigglepy.utils import (_process_weights_values, _process_discrete_weights_values,
+                                event_occurs, event_happens, event, get_percentiles,
+                                get_log_percentiles, get_mean_and_ci, geomean, p_to_odds,
+                                odds_to_p, geomean_odds, laplace, roll_die, flip_coin,
+                                kelly, full_kelly, half_kelly, quarter_kelly,
                                 one_in, extremize, normalize)
 from ..squigglepy.rng import set_seed
 from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
@@ -146,6 +147,29 @@ def test_process_weights_values_attempt_drop_none_with_weights_error():
                                 values=[1, None, 3, 4, 5],
                                 drop_na=True)
     assert 'cannot drop NA and process weights' in str(execinfo.value)
+
+
+def test_process_weights_values_numpy_arrays():
+    test = _process_weights_values(weights=np.array([0.1, 0.9]), values=np.array([2, 3]))
+    expected = ([0.1, 0.9], [2, 3])
+    assert test == expected
+
+
+def test_process_discrete_weights_values_simple_case():
+    test = _process_discrete_weights_values([[0.1, 2], [0.9, 3]])
+    expected = ([0.1, 0.9], [2, 3])
+    assert test == expected
+    test = _process_discrete_weights_values({2: 0.1, 3: 0.9})
+    expected = ([0.1, 0.9], [2, 3])
+    assert test == expected
+
+
+def test_process_discrete_weights_values_compress():
+    items = [round((x % 10) / 10, 1) for x in range(1000)]
+    test = _process_discrete_weights_values(items)
+    expected = ([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+                [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+    assert test == expected
 
 
 def test_normalize():

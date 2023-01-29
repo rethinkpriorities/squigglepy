@@ -587,7 +587,26 @@ if __name__ == '__main__':
     print('7 core 10M RUNS actual {}sec'.format(round(test_21_mark['timing(sec)'], 1)))
 
 
-    print('Test 22 (VERSION)...')
+    print('Test 22 (DISCRETE COMPRESSION)...')
+    start22 = time.time()
+    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10*M)
+    dist = sq.discrete(large_array)
+    samps = sq.sample(dist, n=1*M, verbose=True)
+    test_22_mark = _mark_time(start22, 7.43, 'Test 22 complete')
+
+
+    print('Test 23 (DISCRETE COMPRESSION, MULTICORE)...')
+    start23 = time.time()
+    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10*M)
+    dist = sq.discrete(large_array)
+    samps = sq.sample(dist, n=10*M, verbose=True)
+    test_23_mark = _mark_time(start23, 7.43, 'Test 22 complete')
+    print('1 core 10M RUNS expected {}sec'.format(round(test_22_mark['timing(sec)'] * 10, 1)))
+    print('7 core 10M RUNS ideal {}sec'.format(round(test_22_mark['timing(sec)'] * 10 / 7, 1)))
+    print('7 core 10M RUNS actual {}sec'.format(round(test_23_mark['timing(sec)'], 1)))
+
+
+    print('Test 24 (VERSION)...')
     print('Squigglepy version is {}'.format(sq.__version__))
 
 # END

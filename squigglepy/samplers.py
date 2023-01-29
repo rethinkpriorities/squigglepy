@@ -6,8 +6,9 @@ import pathos.multiprocessing as mp
 
 from scipy import stats
 
-from .utils import (_process_weights_values, _is_dist, _simplify, _enlist, _safe_len,
-                    _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm)
+from .utils import (_process_weights_values, _process_discrete_weights_values,
+                    _is_dist, _simplify, _enlist, _safe_len, _core_cuts,
+                    _init_tqdm, _tick_tqdm, _flush_tqdm)
 
 
 _squigglepy_internal_sample_caches = {}
@@ -469,9 +470,11 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1,
     >>> discrete_sample({'a': 0.1, 'b': 0.9})  # Values do not have to be numbers.
     'b'
     """
-    weights, values = _process_weights_values(values=items)
+    weights, values = _process_discrete_weights_values(items)
+
     from .distributions import const
     values = [const(v) for v in values]
+
     return mixture_sample(values=values,
                           weights=weights,
                           samples=samples,

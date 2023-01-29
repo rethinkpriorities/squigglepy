@@ -2,7 +2,7 @@ import operator
 import numpy as np
 from scipy import stats
 
-from .utils import _process_weights_values, _is_numpy, _round
+from .utils import _process_weights_values, _is_numpy, _is_dist, _round
 
 
 class BaseDistribution:
@@ -262,7 +262,7 @@ def dist_max(dist1, dist2=None):
     >>> dist_max(norm(0, 1), norm(1, 2))
     <Distribution> max(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
     """
-    if isinstance(dist1, BaseDistribution) and dist2 is None:
+    if _is_dist(dist1) and dist2 is None:
         return lambda d: dist_fn(d, dist1, np.maximum, name='max')
     else:
         return dist_fn(dist1, dist2, np.maximum, name='max')
@@ -291,7 +291,7 @@ def dist_min(dist1, dist2=None):
     >>> dist_min(norm(0, 1), norm(1, 2))
     <Distribution> min(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
     """
-    if isinstance(dist1, BaseDistribution) and dist2 is None:
+    if _is_dist(dist1) and dist2 is None:
         return lambda d: dist_fn(d, dist1, np.minimum, name='min')
     else:
         return dist_fn(dist1, dist2, np.minimum, name='min')
@@ -408,7 +408,7 @@ def lclip(dist1, val=None):
     """
     if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
         return lambda d: lclip(d, dist1)
-    elif isinstance(dist1, BaseDistribution):
+    elif _is_dist(dist1):
         return dist_fn(dist1, val, _lclip, name='lclip')
     else:
         return _lclip(dist1, val)
@@ -448,7 +448,7 @@ def rclip(dist1, val=None):
     """
     if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
         return lambda d: rclip(d, dist1)
-    elif isinstance(dist1, BaseDistribution):
+    elif _is_dist(dist1):
         return dist_fn(dist1, val, _rclip, name='rclip')
     else:
         return _rclip(dist1, val)

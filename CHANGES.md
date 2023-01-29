@@ -3,8 +3,9 @@
 * Added `extremize` to extremize predictions.
 * Added `normalize` to normalize a list of numbers to sum to 1.
 * Added `get_mean_and_ci` to return the mean and a given confidence interval for data.
-* `clip`, `lclip`, and `rclip` can now be used without needing distributions.
 * Support for working within Pandas is now explicitly added. `pandas` has been added as a requirement.
+* `discrete` sampling now will compress a large array if possible for more efficient sampling.
+* `clip`, `lclip`, and `rclip` can now be used without needing distributions.
 * Some functions (e.g, `geomean`) previously only supported lists, dictionaries, and numpy arrays. They have been expanded to support all iterables.
 * `dist_max` and `dist_min` now support pipes (`>>`)
 * `get_percentiles` now coerces output to integer if `digits` is less than or equal to 0, instead of just exactly 0.

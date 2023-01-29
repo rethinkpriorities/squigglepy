@@ -5,6 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from scipy import stats
 from datetime import datetime
+from collections import Counter
 from collections.abc import Iterable
 
 
@@ -81,6 +82,18 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
     return new_weights, new_values
 
 
+def _process_discrete_weights_values(items):
+    if (len(items) >= 100 and
+       not isinstance(items, dict) and
+       not isinstance(items[0], list) and
+       _safe_len(_safe_set(items)) < _safe_len(items)):
+        vcounter = Counter(items)
+        sumv = sum([v for k, v in vcounter.items()])
+        items = {k: v / sumv for k, v in vcounter.items()}
+
+    return _process_weights_values(values=items)
+
+
 def _is_numpy(a):
     return type(a).__module__ == np.__name__
 
@@ -131,12 +144,30 @@ def _enlist(a):
 def _safe_len(a):
     if _is_numpy(a):
         return a.size
+    elif _is_dist(a):
+        return 1
     elif isinstance(a, list):
         return len(a)
     elif a is None:
         return 0
     else:
         return 1
+
+
+def _safe_set(a):
+    if _is_numpy(a):
+        return set(_enlist(a))
+    elif _is_dist(a):
+        return a
+    elif isinstance(a, list):
+        try:
+            return set(a)
+        except TypeError:
+            return a
+    elif a is None:
+        return None
+    else:
+        return a
 
 
 def _core_cuts(n, cores):
