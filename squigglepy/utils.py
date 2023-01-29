@@ -107,11 +107,6 @@ def _is_na_like(a):
     return a is None or np.isnan(a)
 
 
-def _is_dist(dist):
-    from .distributions import BaseDistribution
-    return isinstance(dist, BaseDistribution)
-
-
 def _round(x, digits=0):
     if digits is None:
         return x
@@ -144,7 +139,7 @@ def _enlist(a):
 def _safe_len(a):
     if _is_numpy(a):
         return a.size
-    elif _is_dist(a):
+    elif is_dist(a):
         return 1
     elif isinstance(a, list):
         return len(a)
@@ -157,7 +152,7 @@ def _safe_len(a):
 def _safe_set(a):
     if _is_numpy(a):
         return set(_enlist(a))
-    elif _is_dist(a):
+    elif is_dist(a):
         return a
     elif isinstance(a, list):
         try:
@@ -194,6 +189,31 @@ def _flush_tqdm(pbar):
     if pbar is not None:
         pbar.close()
     return pbar
+
+
+def is_dist(obj):
+    """
+    Test if a given object is a Squigglepy distribution.
+
+    Parameters
+    ----------
+    obj : object
+        The object to test.
+
+    Returns
+    -------
+    bool
+        True, if the object is a distribution. False if not.
+
+    Examples
+    --------
+    >>> is_dist(norm(0, 1))
+    True
+    >>> is_dist(0)
+    False
+    """
+    from .distributions import BaseDistribution
+    return isinstance(obj, BaseDistribution)
 
 
 def normalize(lst):
@@ -234,7 +254,7 @@ def event_occurs(p):
     >>> event_occurs(p=0.5)
     False
     """
-    if _is_dist(p) or callable(p):
+    if is_dist(p) or callable(p):
         from .samplers import sample
         p = sample(p)
     from .rng import _squigglepy_internal_rng
@@ -640,7 +660,7 @@ def roll_die(sides, n=1):
     >>> roll_die(6)
     5
     """
-    if _is_dist(sides) or callable(sides):
+    if is_dist(sides) or callable(sides):
         from .samplers import sample
         sides = sample(sides)
     if not isinstance(n, int):

@@ -7,7 +7,7 @@ import pathos.multiprocessing as mp
 from scipy import stats
 
 from .utils import (_process_weights_values, _process_discrete_weights_values,
-                    _is_dist, _simplify, _enlist, _safe_len, _core_cuts,
+                    is_dist, _simplify, _enlist, _safe_len, _core_cuts,
                     _init_tqdm, _tick_tqdm, _flush_tqdm)
 
 
@@ -487,10 +487,10 @@ def _mixture_sample_for_large_n(values, weights=None, relative_weights=None,
                                 samples=1, verbose=False, _multicore_tqdm_n=1,
                                 _multicore_tqdm_cores=1):
     def _run_presample(dist, pbar):
-        if _is_dist(dist) and dist.type == 'mixture':
+        if is_dist(dist) and dist.type == 'mixture':
             raise ValueError(('You cannot nest mixture distributions within ' +
                               'mixture distributions.'))
-        elif _is_dist(dist) and dist.type == 'discrete':
+        elif is_dist(dist) and dist.type == 'discrete':
             raise ValueError(('You cannot nest discrete distributions within ' +
                               'mixture distributions.'))
         _tick_tqdm(pbar)
@@ -743,7 +743,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     if samples is None:
         lclip_ = None
         rclip_ = None
-        if _is_dist(dist):
+        if is_dist(dist):
             lclip_ = dist.lclip
             rclip_ = dist.rclip
 
@@ -776,7 +776,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
                 out = [dist()]
 
             def run_dist(dist, pbar=None, tick=1):
-                samp = sample(dist) if _is_dist(dist) or callable(dist) else dist
+                samp = sample(dist) if is_dist(dist) or callable(dist) else dist
                 _tick_tqdm(pbar, tick)
                 return samp
 
@@ -792,7 +792,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
               dist is None):
             samples = _simplify(np.array([dist for _ in range(n)]))
 
-        elif not _is_dist(dist):
+        elif not is_dist(dist):
             raise ValueError('input to sample is malformed - must ' +
                              'be a distribution but got {}'.format(type(dist)))
 
@@ -859,7 +859,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
                 samples = dist.fn(sample(dist.left, n=n, verbose=verbose),
                                   sample(dist.right, n=n, verbose=verbose))
 
-            if _is_dist(samples) or callable(samples):
+            if is_dist(samples) or callable(samples):
                 samples = sample(samples, n=n)
 
         else:

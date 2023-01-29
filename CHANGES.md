@@ -3,6 +3,7 @@
 * Added `extremize` to extremize predictions.
 * Added `normalize` to normalize a list of numbers to sum to 1.
 * Added `get_mean_and_ci` to return the mean and a given confidence interval for data.
+* Added `is_dist` to determine if a value is a Squigglepy distribution object.
 * Support for working within Pandas is now explicitly added. `pandas` has been added as a requirement.
 * `discrete` sampling now will compress a large array if possible for more efficient sampling.
 * `clip`, `lclip`, and `rclip` can now be used without needing distributions.
