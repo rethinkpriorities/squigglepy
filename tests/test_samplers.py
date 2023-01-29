@@ -739,7 +739,7 @@ def test_sample_callable_resolves_fully2():
 def test_sample_invalid_input():
     with pytest.raises(ValueError) as execinfo:
         sample([1, 5])
-    assert 'must be a distribution' in str(execinfo.value)
+    assert 'not a sampleable type' in str(execinfo.value)
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=100))

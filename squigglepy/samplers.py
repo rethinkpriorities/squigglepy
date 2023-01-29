@@ -7,7 +7,7 @@ import pathos.multiprocessing as mp
 from scipy import stats
 
 from .utils import (_process_weights_values, _process_discrete_weights_values,
-                    is_dist, _simplify, _enlist, _safe_len, _core_cuts,
+                    is_dist, is_sampleable, _simplify, _enlist, _safe_len, _core_cuts,
                     _init_tqdm, _tick_tqdm, _flush_tqdm)
 
 
@@ -669,6 +669,10 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     if n <= 0:
         raise ValueError('n must be >= 1')
 
+    if not is_sampleable(dist):
+        error = 'input to sample is malformed - {} is not a sampleable type.'.format(type(dist))
+        raise ValueError(error)
+
     if verbose is None:
         verbose = (n >= 1000000)
 
@@ -791,10 +795,6 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
               isinstance(dist, str) or
               dist is None):
             samples = _simplify(np.array([dist for _ in range(n)]))
-
-        elif not is_dist(dist):
-            raise ValueError('input to sample is malformed - must ' +
-                             'be a distribution but got {}'.format(type(dist)))
 
         elif dist.type == 'const':
             samples = _simplify(np.array([dist.x for _ in range(n)]))

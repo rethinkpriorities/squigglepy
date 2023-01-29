@@ -216,6 +216,40 @@ def is_dist(obj):
     return isinstance(obj, BaseDistribution)
 
 
+def is_sampleable(obj):
+    """
+    Test if a given object can be sampled from.
+
+    This includes distributions, integers, floats, `None`,
+    strings, and callables.
+
+    Parameters
+    ----------
+    obj : object
+        The object to test.
+
+    Returns
+    -------
+    bool
+        True, if the object can be sampled from. False if not.
+
+    Examples
+    --------
+    >>> is_sampleable(norm(0, 1))
+    True
+    >>> is_sampleable(0)
+    True
+    >>> is_sampleable([0, 1])
+    False
+    """
+    return (is_dist(obj) or
+            isinstance(obj, int) or
+            isinstance(obj, float) or
+            isinstance(obj, str) or
+            obj is None or
+            callable(obj))
+
+
 def normalize(lst):
     """
     Normalize a list to sum to 1.
