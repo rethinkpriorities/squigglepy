@@ -224,7 +224,7 @@ if __name__ == '__main__':
         print('ERROR 1B')
         import pdb
         pdb.set_trace()
-    _mark_time(start1b, 0.033, 'Test 1B complete')
+    _mark_time(start1b, 0.001, 'Test 1B complete')
 
 
     print('Test 2 (PIANO TUNERS, TIME COMPONENT, LONG FORMAT)...')
@@ -534,7 +534,7 @@ if __name__ == '__main__':
         print('ERROR ON 18')
         import pdb
         pdb.set_trace()
-    _mark_time(start18, 2.66, 'Test 18 complete')
+    _mark_time(start18, 1.5, 'Test 18 complete')
 
 
     print('Test 19 (RCLIP FIDELITY, 1M SAMPLES)...')
@@ -547,7 +547,7 @@ if __name__ == '__main__':
         print('ERROR ON 19')
         import pdb
         pdb.set_trace()
-    test_19_mark = _mark_time(start19, 2.78, 'Test 19 complete')
+    test_19_mark = _mark_time(start19, 1.5, 'Test 19 complete')
 
 
     print('Test 20 (MULTICORE SAMPLE, 10M SAMPLES)...')
@@ -560,7 +560,7 @@ if __name__ == '__main__':
         print('ERROR ON 20')
         import pdb
         pdb.set_trace()
-    test_20_mark = _mark_time(start20, 7.43, 'Test 20 complete')
+    test_20_mark = _mark_time(start20, 3.6, 'Test 20 complete')
     print('1 core 10M RUNS expected {}sec'.format(round(test_19_mark['timing(sec)'] * 10, 1)))
     print('7 core 10M RUNS ideal {}sec'.format(round(test_19_mark['timing(sec)'] * 10 / 7, 1)))
     print('7 core 10M RUNS actual {}sec'.format(round(test_20_mark['timing(sec)'], 1)))
@@ -581,7 +581,7 @@ if __name__ == '__main__':
         print('ERROR ON 21')
         import pdb
         pdb.set_trace()
-    test_21_mark = _mark_time(start21, 90.6, 'Test 21 complete')
+    test_21_mark = _mark_time(start21, 84.87, 'Test 21 complete')
     print('1 core 10M RUNS expected {}sec'.format(round(test_6_mark['timing(sec)'] * K, 1)))
     print('7 core 10M RUNS ideal {}sec'.format(round(test_6_mark['timing(sec)'] * K / 7, 1)))
     print('7 core 10M RUNS actual {}sec'.format(round(test_21_mark['timing(sec)'], 1)))
@@ -592,7 +592,7 @@ if __name__ == '__main__':
     large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10*M)
     dist = sq.discrete(large_array)
     samps = sq.sample(dist, n=1*M, verbose=True)
-    test_22_mark = _mark_time(start22, 7.43, 'Test 22 complete')
+    test_22_mark = _mark_time(start22, 20.53, 'Test 22 complete')
 
 
     print('Test 23 (DISCRETE COMPRESSION, MULTICORE)...')
@@ -600,7 +600,7 @@ if __name__ == '__main__':
     large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10*M)
     dist = sq.discrete(large_array)
     samps = sq.sample(dist, n=10*M, verbose=True)
-    test_23_mark = _mark_time(start23, 7.43, 'Test 22 complete')
+    test_23_mark = _mark_time(start23, 31, 'Test 22 complete')
     print('1 core 10M RUNS expected {}sec'.format(round(test_22_mark['timing(sec)'] * 10, 1)))
     print('7 core 10M RUNS ideal {}sec'.format(round(test_22_mark['timing(sec)'] * 10 / 7, 1)))
     print('7 core 10M RUNS actual {}sec'.format(round(test_23_mark['timing(sec)'], 1)))
@@ -610,5 +610,5 @@ if __name__ == '__main__':
     print('Squigglepy version is {}'.format(sq.__version__))
 
 # END
-    _mark_time(start1, 154.1, 'Integration tests complete')
+    _mark_time(start1, 150, 'Integration tests complete')
     print('DONE! INTEGRATION TEST SUCCESS!')
