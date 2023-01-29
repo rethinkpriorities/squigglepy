@@ -5,8 +5,20 @@ from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         tdist, log_tdist, triangular, chisquare,
                                         poisson, exponential, gamma, mixture,
                                         lclip, rclip, clip, dist_round, dist_fn,
-                                        dist_max, dist_ceil, dist_floor, zero_inflated,
-                                        inf0)
+                                        dist_max, dist_min, dist_ceil, dist_floor,
+                                        zero_inflated, inf0)
+
+def _mirror(x):
+    return 1 - x if x > 0.5 else x
+
+
+def _mirror2(x):
+    return 1 + x if x > 0.5 else x
+
+
+@np.vectorize
+def _vectorized_mirror(x):
+    return 1 - x if x > 0.5 else x
 
 
 def test_to_is_log_when_all_positive():
@@ -842,68 +854,28 @@ def test_complex_math():
     assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 + lognorm(mean=3.45, sd=0.7) / 11 + 8'
 
 
-def test_pipe():
-    obj = norm(0, 1) >> lclip(2)
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 2)'
-
-
-def test_two_pipes():
-    obj = norm(0, 1) >> lclip(2) >> dist_round
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), 0)'
-
-
 def test_dist_fn():
-    def mirror(x):
-        return 1 - x if x > 0.5 else x
-
-    obj = dist_fn(norm(0, 1), mirror)
+    obj = dist_fn(norm(0, 1), _mirror)
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
-    obj = norm(0, 1) >> dist_fn(mirror)
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
+    assert str(obj) == '<Distribution> _mirror(norm(mean=0.5, sd=0.3))'
 
 
 def test_dist_fn_vectorize():
-    @np.vectorize
-    def mirror(x):
-        return 1 - x if x > 0.5 else x
-
-    obj = dist_fn(norm(0, 1), mirror)
+    obj = dist_fn(norm(0, 1), _vectorized_mirror)
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
-    obj = norm(0, 1) >> dist_fn(mirror)
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror(norm(mean=0.5, sd=0.3))'
+    assert str(obj) == '<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))'
 
 
 def test_dist_fn2():
-    def mirror(x, y):
-        return 1 - x if x > y else x
-
-    obj = dist_fn(norm(0, 10), norm(1, 2), mirror)
+    obj = dist_fn(norm(0, 10), norm(1, 2), _mirror)
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))'
-    obj = norm(0, 10) >> dist_fn(norm(1, 2), mirror)
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))'
+    assert str(obj) == '<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))'
 
 
 def test_dist_fn_list():
-    def mirror(x):
-        return 1 - x if x > 0.5 else x
-
-    def mirror2(x):
-        return 1 + x if x > 0.5 else x
-
-    obj = dist_fn(norm(0, 1), [mirror, mirror2])
+    obj = dist_fn(norm(0, 1), [_mirror, _mirror2])
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror2(mirror(norm(mean=0.5, sd=0.3)))'
-    obj = norm(0, 1) >> dist_fn([mirror, mirror2])
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> mirror2(mirror(norm(mean=0.5, sd=0.3)))'
+    assert str(obj) == '<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))'
 
 
 def test_max():
@@ -922,16 +894,10 @@ def test_round():
     obj = dist_round(norm(0, 1))
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 0)'
-    obj = norm(0, 1) >> dist_round
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 0)'
 
 
 def test_round_two_digits():
     obj = dist_round(norm(0, 1), digits=2)
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 2)'
-    obj = norm(0, 1) >> dist_round(2)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 2)'
 
@@ -940,25 +906,16 @@ def test_ceil():
     obj = dist_ceil(norm(0, 1))
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> ceil(norm(mean=0.5, sd=0.3))'
-    obj = norm(0, 1) >> dist_ceil
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> ceil(norm(mean=0.5, sd=0.3))'
 
 
 def test_floor():
     obj = dist_floor(norm(0, 1))
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> floor(norm(mean=0.5, sd=0.3))'
-    obj = norm(0, 1) >> dist_floor
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> floor(norm(mean=0.5, sd=0.3))'
 
 
 def test_lclip():
     obj = lclip(norm(0, 1), 0.5)
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)'
-    obj = norm(0, 1) >> lclip(0.5)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)'
     assert lclip(1, 0.5) == 1
@@ -969,9 +926,6 @@ def test_rclip():
     obj = rclip(norm(0, 1), 0.5)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)'
-    obj = norm(0, 1) >> rclip(0.5)
-    assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)'
     assert rclip(1, 0.5) == 0.5
     assert rclip(0.5, 1) == 0.5
 
@@ -980,8 +934,92 @@ def test_clip():
     obj = clip(norm(0, 1), 0.5, 0.9)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)'
+
+
+def test_dist_fn_pipe():
+    obj = norm(0, 1) >> dist_fn(_mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> _mirror(norm(mean=0.5, sd=0.3))'
+
+
+def test_dist_fn2_pipe():
+    obj = norm(0, 10) >> dist_fn(norm(1, 2), _mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))'
+
+
+def test_dist_fn_vectorize_pipe():
+    obj = norm(0, 1) >> dist_fn(_vectorized_mirror)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))'
+
+
+def test_lclip_pipe():
+    obj = norm(0, 1) >> lclip(2)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 2)'
+    obj = norm(0, 1) >> lclip(0.5)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)'
+
+
+def test_rclip_pipe():
+    obj = norm(0, 1) >> rclip(2)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> rclip(norm(mean=0.5, sd=0.3), 2)'
+    obj = norm(0, 1) >> rclip(0.5)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)'
+
+
+def test_clip_pipe():
     obj = norm(0, 1) >> clip(0.5, 0.9)
     assert obj.type == 'complex'
     assert str(obj) == '<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)'
     assert clip(0.5, 0.7, 1) == 0.7
     assert clip(1.2, 0.7, 1) == 1
+
+
+def test_max_pipe():
+    obj = norm(0, 1) >> dist_max(lognorm(0.1, 1))
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+
+
+def test_min_pipe():
+    obj = norm(0, 1) >> dist_min(lognorm(0.1, 1))
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> min(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+
+
+def test_round_pipe():
+    obj = norm(0, 1) >> dist_round
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 0)'
+    obj = norm(0, 1) >> dist_round(2)
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(norm(mean=0.5, sd=0.3), 2)'
+
+
+def test_floor_pipe():
+    obj = norm(0, 1) >> dist_floor
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> floor(norm(mean=0.5, sd=0.3))'
+
+
+def test_ceil_pipe():
+    obj = norm(0, 1) >> dist_ceil
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> ceil(norm(mean=0.5, sd=0.3))'
+
+
+def test_two_pipes():
+    obj = norm(0, 1) >> lclip(2) >> dist_round
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), 0)'
+
+
+def test_dist_fn_list_pipe():
+    obj = norm(0, 1) >> dist_fn([_mirror, _mirror2])
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))'
