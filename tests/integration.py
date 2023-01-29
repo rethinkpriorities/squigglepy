@@ -206,7 +206,7 @@ if __name__ == '__main__':
     _mark_time(start1, 0.033, 'Test 1 complete')
 
 
-    print('Test 1B (PIANO TUNERS, NO TIME, LONG FORMAT)...')
+    print('Test 2 (PIANO TUNERS, NO TIME, LONG FORMAT)...')
     sq.set_seed(42)
     start1b = time.time()
 
@@ -224,10 +224,10 @@ if __name__ == '__main__':
         print('ERROR 1B')
         import pdb
         pdb.set_trace()
-    _mark_time(start1b, 0.001, 'Test 1B complete')
+    _mark_time(start1b, 0.001, 'Test 2 complete')
 
 
-    print('Test 2 (PIANO TUNERS, TIME COMPONENT, LONG FORMAT)...')
+    print('Test 3 (PIANO TUNERS, TIME COMPONENT, LONG FORMAT)...')
     sq.set_seed(42)
     start2 = time.time()
     out = sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030-2022), n=100), digits=1)
@@ -238,10 +238,10 @@ if __name__ == '__main__':
         print('ERROR 2')
         import pdb
         pdb.set_trace()
-    _mark_time(start2, 0.046, 'Test 2 complete')
+    _mark_time(start2, 0.046, 'Test 3 complete')
 
 
-    print('Test 3 (PIANO TUNERS, TIME COMPONENT, SHORT FORMAT)...')
+    print('Test 4 (PIANO TUNERS, TIME COMPONENT, SHORT FORMAT)...')
     sq.set_seed(42)
     start3 = time.time()
     out = sq.get_percentiles(total_tuners_at_time2(2030-2022) @ 100, digits=1)
@@ -252,10 +252,10 @@ if __name__ == '__main__':
         print('ERROR 3')
         import pdb
         pdb.set_trace()
-    _mark_time(start3, 0.001, 'Test 3 complete')
+    _mark_time(start3, 0.001, 'Test 4 complete')
 
 
-    print('Test 4 (VARIOUS DISTRIBUTIONS, LONG FORMAT)...')
+    print('Test 5 (VARIOUS DISTRIBUTIONS, LONG FORMAT)...')
     sq.set_seed(42)
     start4 = time.time()
     sq.sample(sq.norm(1, 3))  # 90% interval from 1 to 3
@@ -296,10 +296,10 @@ if __name__ == '__main__':
     sq.sample(sq.const(4))
     sq.sample(sq.zero_inflated(0.6, sq.norm(1, 2)))
     roll_die(sides=6, n=10)
-    _mark_time(start4, 0.110, 'Test 4 complete')
+    _mark_time(start4, 0.110, 'Test 5 complete')
 
 
-    print('Test 5 (VARIOUS DISTRIBUTIONS, SHORT FORMAT)...')
+    print('Test 6 (VARIOUS DISTRIBUTIONS, SHORT FORMAT)...')
     sq.set_seed(42)
     start5 = time.time()
     ~sq.norm(1, 3)
@@ -348,12 +348,12 @@ if __name__ == '__main__':
     ~sq.const(4)
     ~sq.zero_inflated(0.6, sq.norm(1, 2))
     roll_die2(sides=6, n=10)
-    _mark_time(start5, 0.005, 'Test 5 complete')
+    _mark_time(start5, 0.005, 'Test 6 complete')
 
 
-    print('Test 6 (MAMMOGRAPHY BAYES)...')
+    print('Test 7 (MAMMOGRAPHY BAYES)...')
     sq.set_seed(42)
-    start6 = time.time()
+    start7 = time.time()
     out = bayes.bayesnet(mammography_event,
                          find=lambda e: e['cancer'],
                          conditional_on=lambda e: e['mammography'],
@@ -361,134 +361,134 @@ if __name__ == '__main__':
                          n=RUNS)
     expected = 0.09
     if round(out, 2) != expected:
-        print('ERROR 6')
-        import pdb
-        pdb.set_trace()
-    test_6_mark = _mark_time(start6, 0.186, 'Test 6 complete')
-
-
-    print('Test 7 (SIMPLE BAYES)...')
-    sq.set_seed(42)
-    start7 = time.time()
-    out = bayes.simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
-    expected = None
-    if round(out, 2) != 0.08:
         print('ERROR 7')
         import pdb
         pdb.set_trace()
-    _mark_time(start7, 0.00001, 'Test 7 complete')
+    test_7_mark = _mark_time(start7, 0.187, 'Test 7 complete')
 
 
-    print('Test 8 (BAYESIAN UPDATE)...')
+    print('Test 8 (SIMPLE BAYES)...')
     sq.set_seed(42)
     start8 = time.time()
+    out = bayes.simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
+    expected = None
+    if round(out, 2) != 0.08:
+        print('ERROR 8')
+        import pdb
+        pdb.set_trace()
+    _mark_time(start8, 0.00001, 'Test 8 complete')
+
+
+    print('Test 9 (BAYESIAN UPDATE)...')
+    sq.set_seed(42)
+    start9 = time.time()
     prior = sq.norm(1, 5)
     evidence = sq.norm(2, 3)
     posterior = bayes.update(prior, evidence)
     if round(posterior.mean, 2) != 2.53 and round(posterior.sd, 2) != 0.3:
-        print('ERROR 8')
-        import pdb
-        pdb.set_trace()
-    _mark_time(start8, 0.0004, 'Test 8 complete')
-
-
-    print('Test 9 (BAYESIAN AVERAGE)...')
-    sq.set_seed(42)
-    start9 = time.time()
-    average = bayes.average(prior, evidence)
-    average_samples = sq.sample(average, n=K)
-    out = (np.mean(average_samples), np.std(average_samples))
-    if round(out[0], 2) != 2.76 and round(out[1], 2) != 0.9:
         print('ERROR 9')
         import pdb
         pdb.set_trace()
-    _mark_time(start9, 0.002, 'Test 9 complete')
+    _mark_time(start9, 0.0004, 'Test 9 complete')
 
 
-    print('Test 10 (ALARM NET)...')
+    print('Test 10 (BAYESIAN AVERAGE)...')
     sq.set_seed(42)
     start10 = time.time()
+    average = bayes.average(prior, evidence)
+    average_samples = sq.sample(average, n=K)
+    out = (np.mean(average_samples), np.std(average_samples))
+    if round(out[0], 2) != 2.76 and round(out[1], 2) != 0.10:
+        print('ERROR 10')
+        import pdb
+        pdb.set_trace()
+    _mark_time(start10, 0.002, 'Test 10 complete')
+
+
+    print('Test 11 (ALARM NET)...')
+    sq.set_seed(42)
+    start11 = time.time()
     out = bayes.bayesnet(alarm_net,
                          n=RUNS * 3,
                          find=lambda e: (e['mary_calls'] and e['john_calls']),
                          conditional_on=lambda e: e['earthquake'])
     if round(out, 2) != 0.19:
-        print('ERROR 10')
+        print('ERROR 11')
         import pdb
         pdb.set_trace()
-    _mark_time(start10, 0.68, 'Test 10 complete')
+    _mark_time(start11, 0.68, 'Test 11 complete')
 
 
-    print('Test 11 (ALARM NET II)...')
+    print('Test 12 (ALARM NET II)...')
     sq.set_seed(42)
-    start11 = time.time()
+    start12 = time.time()
     out = bayes.bayesnet(alarm_net,
                          n=RUNS * 3,
                          find=lambda e: e['burglary'],
                          conditional_on=lambda e: (e['mary_calls'] and e['john_calls']))
     if round(out, 2) != 0.35:
-        print('ERROR 11')
+        print('ERROR 12')
         import pdb
         pdb.set_trace()
-    _mark_time(start11, 0.0025, 'Test 11 complete')
+    _mark_time(start12, 0.0025, 'Test 12 complete')
 
 
-    print('Test 12 (MONTE HALL)...')
+    print('Test 13 (MONTE HALL)...')
     sq.set_seed(42)
-    start12 = time.time()
+    start13 = time.time()
     out = bayes.bayesnet(monte_hall_event,
                          find=lambda e: e['won'],
                          conditional_on=lambda e: e['switched'],
                          n=RUNS)
     if round(out, 2) != 0.67:
-        print('ERROR 12')
+        print('ERROR 13')
         import pdb
         pdb.set_trace()
-    _mark_time(start12, 1.26, 'Test 12 complete')
+    _mark_time(start13, 1.26, 'Test 13 complete')
 
 
-    print('Test 13 (MONTE HALL II)...')
+    print('Test 14 (MONTE HALL II)...')
     sq.set_seed(42)
-    start13 = time.time()
+    start14 = time.time()
     out = bayes.bayesnet(monte_hall_event,
                          find=lambda e: e['won'],
                          conditional_on=lambda e: not e['switched'],
                          n=RUNS)
     if round(out, 2) != 0.34:
-        print('ERROR 13')
+        print('ERROR 14')
         import pdb
         pdb.set_trace()
-    _mark_time(start13, 0.003, 'Test 13 complete')
+    _mark_time(start14, 0.003, 'Test 14 complete')
 
 
-    print('Test 14 (COINS AND DICE)...')
+    print('Test 15 (COINS AND DICE)...')
     sq.set_seed(42)
-    start14 = time.time()
+    start15 = time.time()
     out = bayes.bayesnet(coins_and_dice,
                          find=lambda e: e == 6,
                          n=RUNS)
     if round(out, 2) != 0.12:
-        print('ERROR 14')
-        import pdb
-        pdb.set_trace()
-    _mark_time(start14, 1.24, 'Test 14 complete')
-
-
-    print('Test 15 (PIPES)...')
-    sq.set_seed(42)
-    start15 = time.time()
-    samples = sq.sample(model, n=1000)
-    if not all(isinstance(s, np.int64) for s in samples):
         print('ERROR 15')
         import pdb
         pdb.set_trace()
-    _mark_time(start15, 0.247, 'Test 15 complete')
+    _mark_time(start15, 1.24, 'Test 15 complete')
 
 
-    print('Test 16 (T TEST)...')
+    print('Test 16 (PIPES)...')
     sq.set_seed(42)
     start16 = time.time()
-# TODO: Accuracy with t<20
+    samples = sq.sample(model, n=1000)
+    if not all(isinstance(s, np.int64) for s in samples):
+        print('ERROR 16')
+        import pdb
+        pdb.set_trace()
+    _mark_time(start16, 0.247, 'Test 16 complete')
+
+
+    print('Test 17 (T TEST)...')
+    sq.set_seed(42)
+    start17 = time.time()
+    # TODO: Accuracy with t<20
     ts = [20, 40, 50]
     vals = [[1, 10], [0, 3], [-4, 4], [5, 10], [100, 200]]
     credibilities = [80, 90]
@@ -505,70 +505,70 @@ if __name__ == '__main__':
                         tol = 140 / t if dist.type == 'log_tdist' else 1.35
                         if (not _within(pctiles[(100 - credibility) / 2], val[0], tol, tol) or
                             not _within(pctiles[100 - ((100 - credibility) / 2)], val[1], tol, tol)):
-                            print('ERROR 16 on {}'.format(str(dist)))
+                            print('ERROR 17 on {}'.format(str(dist)))
                             print(pctiles)
                             import pdb
                             pdb.set_trace()
                     tqdm_.update(1)
     tqdm_.close()
-    _mark_time(start16, 0.082, 'Test 16 complete')
+    _mark_time(start17, 0.082, 'Test 17 complete')
 
 
-    print('Test 17 (SPEED TEST, 10M SAMPLES)...')
-    start17 = time.time()
+    print('Test 18 (SPEED TEST, 10M SAMPLES)...')
+    start18 = time.time()
     samps = (sq.norm(1, 3) + sq.norm(4, 5)) @ (10*M)
     if len(samps) != (10*M):
-        print('ERROR ON 17')
+        print('ERROR ON 18')
         import pdb
         pdb.set_trace()
-    _mark_time(start17, 0.327, 'Test 17 complete')
+    _mark_time(start18, 0.327, 'Test 18 complete')
 
 
-    print('Test 18 (LCLIP FIDELITY, 1M SAMPLES)...')
-    start18 = time.time()
+    print('Test 19 (LCLIP FIDELITY, 1M SAMPLES)...')
+    start19 = time.time()
     dist = sq.mixture([[0.1, 0],
                        [0.8, sq.norm(0,3)],
                        [0.1, sq.norm(7,11)]], lclip=0)
     samps = dist @ (1*M)
     if any(samps < 0):
-        print('ERROR ON 18')
+        print('ERROR ON 19')
         import pdb
         pdb.set_trace()
-    _mark_time(start18, 1.5, 'Test 18 complete')
+    _mark_time(start19, 1.5, 'Test 19 complete')
 
 
-    print('Test 19 (RCLIP FIDELITY, 1M SAMPLES)...')
-    start19 = time.time()
+    print('Test 20 (RCLIP FIDELITY, 1M SAMPLES)...')
+    start20 = time.time()
     dist = sq.mixture([[0.1, 0],
                        [0.1, sq.norm(0,3)],
                        [0.8, sq.norm(7,11)]], rclip=3)
     samps = dist @ (1*M)
     if any(samps > 3):
-        print('ERROR ON 19')
+        print('ERROR ON 20')
         import pdb
         pdb.set_trace()
-    test_19_mark = _mark_time(start19, 1.5, 'Test 19 complete')
+    test_20_mark = _mark_time(start20, 1.5, 'Test 20 complete')
 
 
-    print('Test 20 (MULTICORE SAMPLE, 10M SAMPLES)...')
-    start20 = time.time()
+    print('Test 21 (MULTICORE SAMPLE, 10M SAMPLES)...')
+    start21 = time.time()
     dist = sq.mixture([[0.1, 0],
                        [0.1, sq.norm(0,3)],
                        [0.8, sq.norm(7,11)]], rclip=3)
     samps = sq.sample(dist, cores=7, n=10*M, verbose=True)
     if len(samps) != (10*M) or any(samps > 3):
-        print('ERROR ON 20')
+        print('ERROR ON 21')
         import pdb
         pdb.set_trace()
-    test_20_mark = _mark_time(start20, 3.6, 'Test 20 complete')
-    print('1 core 10M RUNS expected {}sec'.format(round(test_19_mark['timing(sec)'] * 10, 1)))
-    print('7 core 10M RUNS ideal {}sec'.format(round(test_19_mark['timing(sec)'] * 10 / 7, 1)))
-    print('7 core 10M RUNS actual {}sec'.format(round(test_20_mark['timing(sec)'], 1)))
+    test_21_mark = _mark_time(start21, 3.6, 'Test 21 complete')
+    print('1 core 10M RUNS expected {}sec'.format(round(test_20_mark['timing(sec)'] * 10, 1)))
+    print('7 core 10M RUNS ideal {}sec'.format(round(test_20_mark['timing(sec)'] * 10 / 7, 1)))
+    print('7 core 10M RUNS actual {}sec'.format(round(test_21_mark['timing(sec)'], 1)))
 
 
-    print('Test 21 (MAMMOGRAPHY BAYES MULTICORE)...')
+    print('Test 22 (MAMMOGRAPHY BAYES MULTICORE)...')
     sq.set_seed(42)
-    start21 = time.time()
+    start22 = time.time()
     out = bayes.bayesnet(mammography_event,
                          find=lambda e: e['cancer'],
                          conditional_on=lambda e: e['mammography'],
@@ -578,35 +578,35 @@ if __name__ == '__main__':
                          cores=7)
     expected = 0.08
     if round(out, 2) != expected:
-        print('ERROR ON 21')
+        print('ERROR ON 22')
         import pdb
         pdb.set_trace()
-    test_21_mark = _mark_time(start21, 84.87, 'Test 21 complete')
-    print('1 core 10M RUNS expected {}sec'.format(round(test_6_mark['timing(sec)'] * K, 1)))
-    print('7 core 10M RUNS ideal {}sec'.format(round(test_6_mark['timing(sec)'] * K / 7, 1)))
-    print('7 core 10M RUNS actual {}sec'.format(round(test_21_mark['timing(sec)'], 1)))
+    test_22_mark = _mark_time(start22, 84.87, 'Test 22 complete')
+    print('1 core 10M RUNS expected {}sec'.format(round(test_7_mark['timing(sec)'] * K, 1)))
+    print('7 core 10M RUNS ideal {}sec'.format(round(test_7_mark['timing(sec)'] * K / 7, 1)))
+    print('7 core 10M RUNS actual {}sec'.format(round(test_22_mark['timing(sec)'], 1)))
 
 
-    print('Test 22 (DISCRETE COMPRESSION)...')
-    start22 = time.time()
-    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10*M)
-    dist = sq.discrete(large_array)
-    samps = sq.sample(dist, n=1*M, verbose=True)
-    test_22_mark = _mark_time(start22, 20.53, 'Test 22 complete')
-
-
-    print('Test 23 (DISCRETE COMPRESSION, MULTICORE)...')
+    print('Test 23 (DISCRETE COMPRESSION)...')
     start23 = time.time()
     large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10*M)
     dist = sq.discrete(large_array)
+    samps = sq.sample(dist, n=1*M, verbose=True)
+    test_23_mark = _mark_time(start23, 20.53, 'Test 23 complete')
+
+
+    print('Test 24 (DISCRETE COMPRESSION, MULTICORE)...')
+    start24 = time.time()
+    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10*M)
+    dist = sq.discrete(large_array)
     samps = sq.sample(dist, n=10*M, verbose=True)
-    test_23_mark = _mark_time(start23, 31, 'Test 22 complete')
-    print('1 core 10M RUNS expected {}sec'.format(round(test_22_mark['timing(sec)'] * 10, 1)))
-    print('7 core 10M RUNS ideal {}sec'.format(round(test_22_mark['timing(sec)'] * 10 / 7, 1)))
-    print('7 core 10M RUNS actual {}sec'.format(round(test_23_mark['timing(sec)'], 1)))
+    test_24_mark = _mark_time(start24, 31, 'Test 22 complete')
+    print('1 core 10M RUNS expected {}sec'.format(round(test_23_mark['timing(sec)'] * 10, 1)))
+    print('7 core 10M RUNS ideal {}sec'.format(round(test_23_mark['timing(sec)'] * 10 / 7, 1)))
+    print('7 core 10M RUNS actual {}sec'.format(round(test_24_mark['timing(sec)'], 1)))
 
 
-    print('Test 24 (VERSION)...')
+    print('Test 25 (VERSION)...')
     print('Squigglepy version is {}'.format(sq.__version__))
 
 # END
