@@ -527,7 +527,7 @@ def test_discrete():
     obj = discrete([0, 1])
     assert obj.type == 'discrete'
     assert obj.items == [0, 1]
-    assert str(obj) == '<Distribution> discrete'
+    assert str(obj) == '<Distribution> discrete([0, 1])'
 
 
 def test_discrete_list():
@@ -558,7 +558,7 @@ def test_mixture():
     assert obj.dists[1].x == 3
     assert obj.dists[1].y == 4
     assert obj.weights == [0.4, 0.6]
-    assert str(obj) == '<Distribution> mixture'
+    assert '<Distribution> mixture' in str(obj)
 
 
 def test_mixture_different_distributions():
@@ -615,7 +615,7 @@ def test_mixture_can_be_discrete():
     assert obj.type == 'mixture'
     assert obj.dists == [0, 1]
     assert obj.weights == [0.5, 0.5]
-    assert str(obj) == '<Distribution> mixture'
+    assert '<Distribution> mixture' in str(obj)
 
 
 def test_zero_inflated():

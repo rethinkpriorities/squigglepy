@@ -1,3 +1,8 @@
+## v0.23
+
+* `discrete` and `mixture` distributions now give more detail when printed.
+
+
 ## v0.22
 
 * Added `extremize` to extremize predictions.

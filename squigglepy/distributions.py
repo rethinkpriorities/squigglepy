@@ -879,6 +879,9 @@ class DiscreteDistribution(OperableDistribution):
         self.items = list(items) if _is_numpy(items) else items
         self.type = 'discrete'
 
+    def __str__(self):
+        return '<Distribution> {}({})'.format(self.type, self.items)
+
 
 def discrete(items):
     """
@@ -897,13 +900,13 @@ def discrete(items):
     Examples
     --------
     >>> discrete({0: 0.1, 1: 0.9})  # 10% chance of returning 0, 90% chance of returning 1
-    <Distribution> discrete
+    <Distribution> discrete({0: 0.1, 1: 0.9})
     >>> discrete([[0.1, 0], [0.9, 1]])  # Different notation for the same thing.
-    <Distribution> discrete
+    <Distribution> discrete([[0.1, 0], [0.9, 1]])
     >>> discrete([0, 1, 2])  # When no weights are given, all have equal chance of happening.
-    <Distribution> discrete
+    <Distribution> discrete([0, 1, 2])
     >>> discrete({'a': 0.1, 'b': 0.9})  # Values do not have to be numbers.
-    <Distribution> discrete
+    <Distribution> discrete({'a': 0.1, 'b': 0.9})
     """
     return DiscreteDistribution(items)
 
@@ -1282,6 +1285,12 @@ class MixtureDistribution(OperableDistribution):
         self.rclip = rclip
         self.type = 'mixture'
 
+    def __str__(self):
+        out = '<Distribution> {}'.format(self.type)
+        for dist in self.dists:
+            out += '\n - {}'.format(dist)
+        return out
+
 
 def mixture(dists, weights=None, relative_weights=None, lclip=None, rclip=None):
     """
@@ -1309,11 +1318,17 @@ def mixture(dists, weights=None, relative_weights=None, lclip=None, rclip=None):
     --------
     >>> mixture([norm(1, 2), norm(3, 4)], weights=[0.1, 0.9])
     <Distribution> mixture
+     - <Distribution> norm(mean=1.5, sd=0.3)
+     - <Distribution> norm(mean=3.5, sd=0.3)
     >>> mixture([[0.1, norm(1, 2)], [0.9, norm(3, 4)]])  # Different notation for the same thing.
     <Distribution> mixture
+     - <Distribution> norm(mean=1.5, sd=0.3)
+     - <Distribution> norm(mean=3.5, sd=0.3)
     >>> mixture([norm(1, 2), norm(3, 4)])  # When no weights are given, all have equal chance
     >>>                                    # of happening.
     <Distribution> mixture
+     - <Distribution> norm(mean=1.5, sd=0.3)
+     - <Distribution> norm(mean=3.5, sd=0.3)
     """
     return MixtureDistribution(dists=dists,
                                weights=weights,
@@ -1341,6 +1356,8 @@ def zero_inflated(p_zero, dist):
     --------
     >>> zero_inflated(0.6, norm(1, 2))
     <Distribution> mixture
+     - 0
+     - <Distribution> norm(mean=1.5, sd=0.3)
     """
     if p_zero > 1 or p_zero < 0 or not isinstance(p_zero, float):
         raise ValueError('`p_zero` must be between 0 and 1')
@@ -1368,5 +1385,7 @@ def inf0(p_zero, dist):
     --------
     >>> inf0(0.6, norm(1, 2))
     <Distribution> mixture
+     - 0
+     - <Distribution> norm(mean=1.5, sd=0.3)
     """
     return zero_inflated(p_zero=p_zero, dist=dist)
