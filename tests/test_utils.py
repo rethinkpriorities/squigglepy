@@ -4,10 +4,10 @@ import numpy as np
 from datetime import datetime, timedelta
 from ..squigglepy.utils import (_process_weights_values, _process_discrete_weights_values,
                                 event_occurs, event_happens, event, get_percentiles,
-                                get_log_percentiles, get_mean_and_ci, geomean, p_to_odds,
-                                odds_to_p, geomean_odds, laplace, roll_die, flip_coin,
-                                kelly, full_kelly, half_kelly, quarter_kelly,
-                                one_in, extremize, normalize)
+                                get_log_percentiles, get_mean_and_ci, get_median_and_ci,
+                                geomean, p_to_odds, odds_to_p, geomean_odds, laplace,
+                                roll_die, flip_coin, kelly, full_kelly, half_kelly,
+                                quarter_kelly, one_in, extremize, normalize)
 from ..squigglepy.rng import set_seed
 from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
 
@@ -338,13 +338,27 @@ def test_get_log_percentiles_length_one():
 
 
 def test_get_mean_and_ci():
-    test = get_mean_and_ci(range(1, 901), digits=1)
-    assert test == {'mean': 450.5, 'ci_low': 46.0, 'ci_high': 855.0}
+    test1 = get_mean_and_ci(range(1, 901), digits=1)
+    assert test1 == {'mean': 450.5, 'ci_low': 46.0, 'ci_high': 855.0}
+    test2 = get_mean_and_ci([1, 2, 6], digits=1)
+    assert test2 == {'mean': 3, 'ci_low': 1.1, 'ci_high': 5.6}
 
 
 def test_get_mean_and_80_pct_ci():
     test = get_mean_and_ci(range(1, 901), digits=1, credibility=80)
     assert test == {'mean': 450.5, 'ci_low': 90.9, 'ci_high': 810.1}
+
+
+def test_get_median_and_ci():
+    test1 = get_median_and_ci(range(1, 901), digits=1)
+    assert test1 == {'median': 450.5, 'ci_low': 46.0, 'ci_high': 855.0}
+    test2 = get_median_and_ci([1, 2, 6], digits=1)
+    assert test2 == {'median': 2, 'ci_low': 1.1, 'ci_high': 5.6}
+
+
+def test_get_median_and_80_pct_ci():
+    test = get_median_and_ci(range(1, 901), digits=1, credibility=80)
+    assert test == {'median': 450.5, 'ci_low': 90.9, 'ci_high': 810.1}
 
 
 def test_geomean():

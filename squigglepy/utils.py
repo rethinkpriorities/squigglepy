@@ -458,7 +458,7 @@ def get_log_percentiles(data,
 
 def get_mean_and_ci(data, credibility=90, digits=None):
     """
-    Print the percentiles of the data.
+    Return the mean and percentiles of the data.
 
     Parameters
     ----------
@@ -483,6 +483,37 @@ def get_mean_and_ci(data, credibility=90, digits=None):
     ci_high = 100 - ci_low
     percentiles = get_percentiles(data, percentiles=[ci_low, ci_high], digits=digits)
     return {'mean': _round(np.mean(data), digits),
+            'ci_low': percentiles[ci_low],
+            'ci_high': percentiles[ci_high]}
+
+
+def get_median_and_ci(data, credibility=90, digits=None):
+    """
+    Return the median and percentiles of the data.
+
+    Parameters
+    ----------
+    data : list or np.array
+        The data to calculate the mean and CI for.
+    credibility : float
+        The credibility of the interval. Must be values between 0 and 100. Default 90 for 90% CI.
+    digits : int or None
+        The number of digits to display (using rounding).
+
+    Returns
+    -------
+    dict
+        A dictionary with the median and CI.
+
+    Examples
+    --------
+    >>> get_median_and_ci(range(100))
+    {'mean': 49.5, 'ci_low': 4.95, 'ci_high': 94.05}
+    """
+    ci_low = (100 - credibility) / 2
+    ci_high = 100 - ci_low
+    percentiles = get_percentiles(data, percentiles=[ci_low, 50, ci_high], digits=digits)
+    return {'median': percentiles[50],
             'ci_low': percentiles[ci_low],
             'ci_high': percentiles[ci_high]}
 
