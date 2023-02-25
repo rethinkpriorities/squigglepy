@@ -521,6 +521,19 @@ def test_sample_mixture_can_be_discrete():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_contains_discrete(mocker):
+    assert sample(mixture([lognorm(1, 2), discrete([3, 4])])) == (0.35, 0.21)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
+def test_sample_mixture_contains_mixture(mocker):
+    assert sample(mixture([lognorm(1, 2),
+                           mixture([1, discrete([3, 4])])])) == (0.35, 0.21)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+@patch.object(samplers, 'uniform_sample', Mock(return_value=0))
 def test_sample_zero_inflated(mocker):
     assert ~zero_inflated(0.6, norm(1, 2)) == 0
 
