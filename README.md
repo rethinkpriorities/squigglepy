@@ -100,6 +100,7 @@ sq.bernoulli(p=0.5)
 sq.poisson(10)
 sq.chisquare(2)
 sq.gamma(3, 2)
+sq.pareto(1)
 sq.exponential(scale=1)
 
 # Discrete sampling
