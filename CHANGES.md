@@ -1,7 +1,9 @@
 ## v0.23
 
-* `discrete` and `mixture` distributions now give more detail when printed.
+* Added `pareto` distribution.
 * Added `get_median_and_ci` to return the median and a given confidence interval for data.
+* `discrete` and `mixture` distributions now give more detail when printed.
+* Fixed some typos in the documentation.
 
 
 ## v0.22

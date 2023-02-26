@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock
 from ..squigglepy.distributions import (const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular, chisquare,
-                                        poisson, exponential, gamma, mixture,
+                                        poisson, exponential, gamma, pareto, mixture,
                                         zero_inflated, inf0, dist_min, dist_max,
                                         dist_round, dist_ceil, dist_floor, lclip,
                                         rclip, clip, dist_fn)
@@ -37,6 +37,9 @@ class FakeRNG:
 
     def gamma(self, shape, scale, n):
         return shape, scale
+
+    def pareto(self, shape, n):
+        return shape
 
     def poisson(self, lam, n):
         return lam
@@ -306,6 +309,11 @@ def test_sample_gamma():
 def test_sample_gamma_passes_lclip_rclip():
     assert sample(gamma(1, 2)) == 100
     assert sample(gamma(1, 2, lclip=1, rclip=3)) == 3
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_pareto_default():
+    assert sample(pareto(10)) == 10
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))

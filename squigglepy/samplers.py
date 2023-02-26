@@ -356,9 +356,9 @@ def gamma_sample(shape, scale, samples=1):
     Parameters
     ----------
     shape : float
-        The shape value of the exponential distribution.
+        The shape value of the gamma distribution.
     scale : float
-        The scale value of the exponential distribution. Defaults to 1.
+        The scale value of the gamma distribution. Defaults to 1.
     samples : int
         The number of samples to return.
 
@@ -374,6 +374,29 @@ def gamma_sample(shape, scale, samples=1):
     21.290716894247602
     """
     return _simplify(_get_rng().gamma(shape, scale, samples))
+
+
+def pareto_sample(shape, samples=1):
+    """
+    Sample a random number according to a pareto distribution.
+
+    Parameters
+    ----------
+    shape : float
+        The shape value of the pareto distribution.
+
+    Returns
+    -------
+    int
+        A random number sampled from an pareto distribution.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> pareto_sample(1)
+    10.069666324736094
+    """
+    return _simplify(_get_rng().pareto(shape, samples))
 
 
 def uniform_sample(low, high, samples=1):
@@ -834,6 +857,9 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
 
         elif dist.type == 'gamma':
             samples = gamma_sample(shape=dist.shape, scale=dist.scale, samples=n)
+
+        elif dist.type == 'pareto':
+            samples = pareto_sample(shape=dist.shape, samples=n)
 
         elif dist.type == 'triangular':
             samples = triangular_sample(dist.left, dist.mode, dist.right, samples=n)

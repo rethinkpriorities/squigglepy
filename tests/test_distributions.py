@@ -3,7 +3,7 @@ import numpy as np
 from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         binomial, beta, bernoulli, discrete,
                                         tdist, log_tdist, triangular, chisquare,
-                                        poisson, exponential, gamma, mixture,
+                                        poisson, exponential, gamma, pareto, mixture,
                                         lclip, rclip, clip, dist_round, dist_fn,
                                         dist_max, dist_min, dist_ceil, dist_floor,
                                         zero_inflated, inf0)
@@ -518,6 +518,12 @@ def test_gamma_lclip_rclip():
     assert obj.lclip == 10
     assert obj.rclip == 15
     assert str(obj) == '<Distribution> gamma(shape=10, scale=2, lclip=10, rclip=15)'
+
+
+def test_pareto():
+    assert pareto(1).type == 'pareto'
+    assert pareto(1).shape == 1
+    assert pareto(10).shape == 10
 
 
 def test_discrete():

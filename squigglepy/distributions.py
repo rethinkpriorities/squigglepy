@@ -1255,9 +1255,9 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
     Parameters
     ----------
     shape : float
-        The shape value of the exponential distribution.
+        The shape value of the gamma distribution.
     scale : float
-        The scale value of the exponential distribution. Defaults to 1.
+        The scale value of the gamma distribution. Defaults to 1.
     lclip : float or None
         If not None, any value below ``lclip`` will be coerced to ``lclip``.
     rclip : float or None
@@ -1273,6 +1273,37 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
     <Distribution> gamma(shape=10, scale=1)
     """
     return GammaDistribution(shape=shape, scale=scale, lclip=lclip, rclip=rclip)
+
+
+class ParetoDistribution(OperableDistribution):
+    def __init__(self, shape):
+        super().__init__()
+        self.shape = shape
+        self.type = 'pareto'
+
+    def __str__(self):
+        return '<Distribution> {}({})'.format(self.type, self.shape)
+
+
+def pareto(shape):
+    """
+    Initialize a pareto distribution.
+
+    Parameters
+    ----------
+    shape : float
+        The shape value of the pareto distribution.
+
+    Returns
+    -------
+    ParetoDistribution
+
+    Examples
+    --------
+    >>> pareto(1)
+    <Distribution> pareto(1)
+    """
+    return ParetoDistribution(shape=shape)
 
 
 class MixtureDistribution(OperableDistribution):
