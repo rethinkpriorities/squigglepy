@@ -85,6 +85,9 @@ class OperableDistribution(BaseDistribution):
     def __ne__(self, dist):
         return ComplexDistribution(self, dist, operator.le, '!=')
 
+    def __neg__(self):
+        return ComplexDistribution(self, None, operator.neg, '-')
+
     def __add__(self, dist):
         return ComplexDistribution(self, dist, operator.add, '+')
 
@@ -134,8 +137,11 @@ class ComplexDistribution(OperableDistribution):
 
     def __str__(self):
         if self.right is None and self.infix:
-            out = '<Distribution> {} {}'.format(self.fn_str,
-                                                str(self.left).replace('<Distribution> ', ''))
+            if self.fn_str == '-':
+                out = '<Distribution> {}{}'
+            else:
+                out = '<Distribution> {} {}'
+            out = out.format(self.fn_str, str(self.left).replace('<Distribution> ', ''))
         elif self.right is None and not self.infix:
             out = '<Distribution> {}({})'.format(self.fn_str,
                                                  str(self.left).replace('<Distribution> ', ''))

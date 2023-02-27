@@ -1,3 +1,8 @@
+## v0.24
+
+* Distributions can now be negated with `-` (e.g., `-lognorm(0.1, 1)`).
+
+
 ## v0.23
 
 * Added `pareto` distribution.

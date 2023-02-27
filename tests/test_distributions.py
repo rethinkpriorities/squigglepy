@@ -854,10 +854,21 @@ def test_rpow_distribution():
     assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3)'
 
 
-def test_complex_math():
-    obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (lognorm(10, 100) / 11) + 8
+def test_negate_distribution():
+    obj = -norm(0, 1)
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 + lognorm(mean=3.45, sd=0.7) / 11 + 8'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.fn_str == '-'
+    assert obj.right is None
+    assert str(obj) == '<Distribution> -norm(mean=0.5, sd=0.3)'
+
+
+def test_complex_math():
+    obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (-lognorm(10, 100) / 11) + 8
+    assert obj.type == 'complex'
+    assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 + -lognorm(mean=3.45, sd=0.7) / 11 + 8'
 
 
 def test_dist_fn():

@@ -148,6 +148,7 @@ import squigglepy as sq
 
 # You can also do math with numbers
 ~((sq.norm(sd=5) + 2) * 2)
+~(-sq.lognorm(0.1, 1) * sq.pareto(1) / 10)
 
 # You can change the CI from 90% (default) to 80%
 sq.norm(1, 3, credibility=80)

@@ -345,6 +345,7 @@ if __name__ == '__main__':
     (sq.norm(1, 3) - ~sq.norm(4, 5)) @ 100
     (sq.norm(1, 3) / ~sq.norm(4, 5)) @ 100
     (sq.norm(1, 3) * ~sq.norm(4, 5)) @ 100
+    ~(-sq.lognorm(0.1, 1) * sq.pareto(1) / 10)
     ~sq.norm(1, 3, credibility=80)
     ~sq.norm(0, 3, lclip=0, rclip=5)
     ~sq.const(4)
