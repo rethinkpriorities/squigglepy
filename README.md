@@ -114,7 +114,7 @@ sq.discrete([[0.1,  0],
              [0.3,  1],
              [0.3,  2],
              [0.15, 3],
-             [0.15, 4]]))
+             [0.15, 4]])
 
 sq.discrete([0, 1, 2]) # No weights assumes equal weights
 
@@ -122,16 +122,16 @@ sq.discrete([0, 1, 2]) # No weights assumes equal weights
 sq.mixture([sq.norm(1, 3),
             sq.norm(4, 10),
             sq.lognorm(1, 10)],  # Distributions to mix
-           [0.3, 0.3, 0.4]))     # These are the weights on each distribution
+           [0.3, 0.3, 0.4])     # These are the weights on each distribution
 
 # This is equivalent to the above, just a different way of doing the notation
 sq.mixture([[0.3, sq.norm(1,3)],
             [0.3, sq.norm(4,10)],
-            [0.4, sq.lognorm(1,10)]]))
+            [0.4, sq.lognorm(1,10)]])
 
 # Make a zero-inflated distribution
 # 60% chance of returning 0, 40% chance of sampling from `norm(1, 2)`.
-sq.zero_inflated(0.6, norm(1, 2))
+sq.zero_inflated(0.6, sq.norm(1, 2))
 ```
 
 
@@ -224,6 +224,7 @@ import matplotlib.pyplot as plt
 import squigglepy as sq
 from squigglepy import bayes
 from squigglepy.numbers import K
+import numpy as np
 
 print('Prior')
 prior = sq.norm(1,5)
