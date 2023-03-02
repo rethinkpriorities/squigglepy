@@ -1,6 +1,7 @@
 ## v0.24
 
 * Distributions can now be negated with `-` (e.g., `-lognorm(0.1, 1)`).
+* Fixed some typos in the documentation.
 
 
 ## v0.23
