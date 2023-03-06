@@ -680,6 +680,28 @@ def test_sample_shorthand_n_gt_1(mocker):
     assert len(out) == 5
 
 
+def test_sample_shorthand_n_is_var(mocker):
+    n = 2 + 3
+    out = norm(1, 2) @ n
+    assert _is_numpy(out)
+    assert len(out) == n
+
+
+def test_sample_shorthand_n_is_float(mocker):
+    out = norm(1, 2) @ 7.0
+    assert _is_numpy(out)
+    assert len(out) == 7.0
+
+
+def test_sample_shorthand_n_is_numpy_int(mocker):
+    out = norm(1, 2) @ np.int64(4)
+    assert _is_numpy(out)
+    assert len(out) == 4
+    out = norm(1, 2) @ np.int32(4)
+    assert _is_numpy(out)
+    assert len(out) == 4
+
+
 def test_sample_shorthand_n_gt_1_alt(mocker):
     out = 5 @ norm(1, 2)
     assert _is_numpy(out)

@@ -50,11 +50,12 @@ class OperableDistribution(BaseDistribution):
         return sample(self)
 
     def __matmul__(self, n):
-        if isinstance(n, int):
-            from .samplers import sample
-            return sample(self, n=n)
-        else:
-            raise ValueError
+        try:
+            n = int(n)
+        except ValueError:
+            raise ValueError('number of samples must be an integer')
+        from .samplers import sample
+        return sample(self, n=n)
 
     def __rshift__(self, fn):
         if callable(fn):

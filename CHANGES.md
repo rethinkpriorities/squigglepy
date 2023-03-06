@@ -1,6 +1,7 @@
 ## v0.24
 
 * Distributions can now be negated with `-` (e.g., `-lognorm(0.1, 1)`).
+* Numpy ints and floats can now be used for determining the number of samples.
 * Fixed some typos in the documentation.
 
 
