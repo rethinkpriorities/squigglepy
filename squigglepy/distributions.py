@@ -130,7 +130,7 @@ class OperableDistribution(BaseDistribution):
         return ComplexDistribution(self, base, lambda sample, _base: math.log(sample, _base), "log", infix=False)
 
     def exp(self):
-        return ComplexDistribution(self, None, lambda sample: math.exp(sample), "exp", infix=False)
+        return ComplexDistribution(self, None, math.exp, "exp", infix=False)
 
 
 class ComplexDistribution(OperableDistribution):
