@@ -854,6 +854,28 @@ def test_rpow_distribution():
     assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3)'
 
 
+def test_log_distribution():
+    obj = norm(0, 1).log(10)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 10
+    assert obj.fn_str == 'log'
+    assert str(obj) == '<Distribution> log(norm(mean=0.5, sd=0.3), 10)'
+
+
+def test_exp_distribution():
+    obj = norm(0, 1).exp()
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == None
+    assert obj.fn_str == 'exp'
+    assert str(obj) == '<Distribution> exp(norm(mean=0.5, sd=0.3))'
+
+
 def test_negate_distribution():
     obj = -norm(0, 1)
     assert obj.type == 'complex'

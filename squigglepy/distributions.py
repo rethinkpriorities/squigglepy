@@ -1,4 +1,5 @@
 import operator
+import math
 import numpy as np
 from scipy import stats
 
@@ -124,6 +125,12 @@ class OperableDistribution(BaseDistribution):
 
     def __rpow__(self, dist):
         return ComplexDistribution(dist, self, operator.pow, '**')
+
+    def log(self, base=math.e):
+        return ComplexDistribution(self, base, lambda sample, _base: math.log(sample, _base), "log", infix=False)
+
+    def exp(self):
+        return ComplexDistribution(self, None, lambda sample: math.exp(sample), "exp", infix=False)
 
 
 class ComplexDistribution(OperableDistribution):
