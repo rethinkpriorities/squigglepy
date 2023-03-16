@@ -127,7 +127,7 @@ class OperableDistribution(BaseDistribution):
         return ComplexDistribution(dist, self, operator.pow, '**')
 
     def log(self, base=math.e):
-        return ComplexDistribution(self, base, lambda sample, _base: math.log(sample, _base), "log", infix=False)
+        return ComplexDistribution(self, base, math.log, "log", infix=False)
 
     def exp(self):
         return ComplexDistribution(self, None, math.exp, "exp", infix=False)
