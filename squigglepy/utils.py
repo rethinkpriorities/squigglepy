@@ -728,8 +728,9 @@ def growth_rate_to_doubling_time(growth_rate):
     69.66071689357483
     """
     if is_dist(growth_rate):
-        return math.log(2) / (1.0 + growth_rate).log()
-    elif isinstance(growth_rate, np.ndarray):
+        from .distributions import dist_log
+        return math.log(2) / dist_log(1.0 + growth_rate)
+    elif _is_numpy(growth_rate):
         return np.log(2) / np.log(1.0 + growth_rate)
     else:
         return math.log(2) / math.log(1.0 + growth_rate)
@@ -761,8 +762,9 @@ def doubling_time_to_growth_rate(doubling_time):
     0.05946309435929531
     """
     if is_dist(doubling_time):
-        return (math.log(2) / doubling_time).exp() - 1
-    elif isinstance(doubling_time, np.ndarray):
+        from .distributions import dist_exp
+        return dist_exp(math.log(2) / doubling_time) - 1
+    elif _is_numpy(doubling_time):
         return np.exp(np.log(2) / doubling_time) - 1
     else:
         return math.exp(math.log(2) / doubling_time) - 1
