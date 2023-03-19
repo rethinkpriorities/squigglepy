@@ -6,10 +6,12 @@ from ..squigglepy.utils import (_process_weights_values, _process_discrete_weigh
                                 event_occurs, event_happens, event, get_percentiles,
                                 get_log_percentiles, get_mean_and_ci, get_median_and_ci,
                                 geomean, p_to_odds, odds_to_p, geomean_odds, laplace,
-                                roll_die, flip_coin, kelly, full_kelly, half_kelly,
-                                quarter_kelly, one_in, extremize, normalize)
+                                growth_rate_to_doubling_time,
+                                doubling_time_to_growth_rate, roll_die, flip_coin, kelly,
+                                full_kelly, half_kelly, quarter_kelly, one_in, extremize,
+                                normalize)
 from ..squigglepy.rng import set_seed
-from ..squigglepy.distributions import bernoulli, beta, norm, dist_round
+from ..squigglepy.distributions import bernoulli, beta, norm, dist_round, const
 
 
 def test_process_weights_values_simple_case():
@@ -510,6 +512,36 @@ def test_laplace_no_time_passed():
     with pytest.raises(ValueError) as excinfo:
         laplace(3, n=10, time_remaining=1)
     assert 'Must define `time_passed`' in str(excinfo.value)
+
+
+def test_growth_rate_to_doubling_time_float():
+    assert growth_rate_to_doubling_time(0.01) == 69.66071689357483
+    assert growth_rate_to_doubling_time(0.5) == 1.7095112913514547
+    assert growth_rate_to_doubling_time(1.0) == 1.0
+
+
+def test_growth_rate_to_doubling_time_nparray():
+    result = growth_rate_to_doubling_time(np.array([0.01, 0.5, 1.0]))
+    assert np.array_equal(result, np.array([69.66071689357483, 1.7095112913514547, 1.0]))
+
+
+def test_growth_rate_to_doubling_time_dist():
+    assert growth_rate_to_doubling_time(const(0.01)) @ 1 == 69.66071689357483
+
+
+def test_doubling_time_to_growth_rate_float():
+    assert doubling_time_to_growth_rate(12) == 0.05946309435929531
+    assert doubling_time_to_growth_rate(5.5) == 0.13431252219546264
+    assert doubling_time_to_growth_rate(1) == 1.0
+
+
+def test_doubling_time_to_growth_rate_nparray():
+    result = doubling_time_to_growth_rate(np.array([12, 5.5, 1]))
+    assert np.array_equal(result, np.array([0.05946309435929531, 0.13431252219546264, 1.0]))
+
+
+def test_doubling_time_to_growth_rate_dist():
+    assert doubling_time_to_growth_rate(const(12)) @ 1 == 0.05946309435929531
 
 
 def test_roll_die():

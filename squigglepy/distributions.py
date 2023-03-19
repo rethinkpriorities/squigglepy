@@ -1,4 +1,5 @@
 import operator
+import math
 import numpy as np
 from scipy import stats
 
@@ -379,6 +380,54 @@ def dist_floor(dist1):
     <Distribution> floor(norm(mean=0.5, sd=0.3))
     """
     return dist_fn(dist1, None, np.floor)
+
+
+def dist_log(dist1, base=math.e):
+    """
+    Initialize the log of the output of the distribution.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The distribution to sample and then take the log of.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> dist_log(norm(0, 1), 10)
+    <Distribution> log(norm(mean=0.5, sd=0.3), const(10))
+    """
+    return dist_fn(dist1, const(base), math.log)
+
+
+def dist_exp(dist1):
+    """
+    Initialize the exp of the output of the distribution.
+
+    The function won't be applied until the distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The distribution to sample and then take the exp of.
+
+    Returns
+    -------
+    ComplexDistribution or function
+        This will be a lazy evaluation of the desired function that will then be calculated
+
+    Examples
+    --------
+    >>> dist_exp(norm(0, 1))
+    <Distribution> exp(norm(mean=0.5, sd=0.3))
+    """
+    return dist_fn(dist1, None, math.exp)
 
 
 @np.vectorize

@@ -6,7 +6,7 @@ from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         poisson, exponential, gamma, pareto, mixture,
                                         lclip, rclip, clip, dist_round, dist_fn,
                                         dist_max, dist_min, dist_ceil, dist_floor,
-                                        zero_inflated, inf0)
+                                        dist_log, dist_exp, zero_inflated, inf0)
 
 def _mirror(x):
     return 1 - x if x > 0.5 else x
@@ -852,6 +852,28 @@ def test_rpow_distribution():
     assert obj.right.y == 1
     assert obj.fn_str == '**'
     assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3)'
+
+
+def test_log_distribution():
+    obj = dist_log(norm(0, 1), 10)
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == 10
+    assert obj.fn_str == 'log'
+    assert str(obj) == '<Distribution> log(norm(mean=0.5, sd=0.3), const(10))'
+
+
+def test_exp_distribution():
+    obj = dist_exp(norm(0, 1))
+    assert obj.type == 'complex'
+    assert obj.left.type == 'norm'
+    assert obj.left.x == 0
+    assert obj.left.y == 1
+    assert obj.right == None
+    assert obj.fn_str == 'exp'
+    assert str(obj) == '<Distribution> exp(norm(mean=0.5, sd=0.3))'
 
 
 def test_negate_distribution():

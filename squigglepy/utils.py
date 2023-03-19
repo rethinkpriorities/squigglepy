@@ -703,6 +703,73 @@ def laplace(s, n=None, time_passed=None,
         raise ValueError('Fatal logic error - programmer made mistake!')
 
 
+def growth_rate_to_doubling_time(growth_rate):
+    """
+    Convert a positive growth rate (expressed as a number, numpy array or distribution
+    where 0.05 means +5%) to a doubling time. The time unit remains the same, so if we've
+    got +5% annual growth, the returned value is the doubling time in years.
+
+    NOTE: This only works works for numbers, arrays and distributions where all numbers
+    are above 0. (Otherwise it makes no sense to talk about doubling times.)
+
+    Parameters
+    ----------
+    growth_rate : float or np.array or BaseDistribution
+        The growth rate expressed as a fraction (the percentage divided by 100).
+
+    Returns
+    -------
+    float or np.array or ComplexDistribution
+        Returns the doubling time.
+
+    Examples
+    --------
+    >>> growth_rate_to_doubling_time(0.01)
+    69.66071689357483
+    """
+    if is_dist(growth_rate):
+        from .distributions import dist_log
+        return math.log(2) / dist_log(1.0 + growth_rate)
+    elif _is_numpy(growth_rate):
+        return np.log(2) / np.log(1.0 + growth_rate)
+    else:
+        return math.log(2) / math.log(1.0 + growth_rate)
+
+
+def doubling_time_to_growth_rate(doubling_time):
+    """
+    Convert a doubling time (expressed as a number, numpy array or distribution in any
+    time unit) to a growth rate (where e.g. 0.05 means +5%). The time unit remains the
+    same, so if we've got a doubling time of 2 years, the returned value is the annual
+    growth rate.
+
+    NOTE: This only works works for numbers, arrays and distributions where all numbers
+    are above 0. (Otherwise it makes no sense to talk about doubling times.)
+
+    Parameters
+    ----------
+    doubling_time : float or np.array or BaseDistribution
+        The doubling time expressed in any time unit.
+
+    Returns
+    -------
+    float or np.array or ComplexDistribution
+        Returns the growth rate expressed as a fraction (the percentage divided by 100).
+
+    Examples
+    --------
+    >>> doubling_time_to_growth_rate(12)
+    0.05946309435929531
+    """
+    if is_dist(doubling_time):
+        from .distributions import dist_exp
+        return dist_exp(math.log(2) / doubling_time) - 1
+    elif _is_numpy(doubling_time):
+        return np.exp(np.log(2) / doubling_time) - 1
+    else:
+        return math.exp(math.log(2) / doubling_time) - 1
+
+
 def roll_die(sides, n=1):
     """
     Roll a die.
