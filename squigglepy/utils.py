@@ -705,8 +705,10 @@ def laplace(s, n=None, time_passed=None,
 
 def growth_rate_to_doubling_time(growth_rate):
     """
-    Convert a positive growth rate (expressed as a number, numpy array or distribution
-    where 0.05 means +5%) to a doubling time. The time unit remains the same, so if we've
+    Convert a positive growth rate to a doubling rate.
+
+    Growth rate must be expressed as a number, numpy array or distribution
+    where 0.05 means +5% to a doubling time. The time unit remains the same, so if we've
     got +5% annual growth, the returned value is the doubling time in years.
 
     NOTE: This only works works for numbers, arrays and distributions where all numbers
@@ -738,8 +740,10 @@ def growth_rate_to_doubling_time(growth_rate):
 
 def doubling_time_to_growth_rate(doubling_time):
     """
-    Convert a doubling time (expressed as a number, numpy array or distribution in any
-    time unit) to a growth rate (where e.g. 0.05 means +5%). The time unit remains the
+    Convert a doubling time to a growth rate.
+
+    Doubling time is expressed as a number, numpy array or distribution in any
+    time unit. Growth rate is set where e.g. 0.05 means +5%. The time unit remains the
     same, so if we've got a doubling time of 2 years, the returned value is the annual
     growth rate.
 
