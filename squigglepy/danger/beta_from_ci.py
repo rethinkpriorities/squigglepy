@@ -5,7 +5,7 @@ def get_beta_from_ci(ci_lower, ci_upper, ci_length):
 	data = {
 		"ci_lower": ci_lower,
 		"ci_upper": ci_upper,
-		"ci_length": ci_length
+		"ci_length": ci_length # actually optional
 	}
 	response = requests.post(url, json = data)
 	json_response = response.json()
