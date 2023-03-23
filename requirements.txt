@@ -9,3 +9,4 @@ pytest-mock
 scipy
 tqdm
 matplotlib
+requests
