@@ -336,7 +336,7 @@ bayes.bayesnet(define_event,
 Note that the amount of Bayesian analysis that squigglepy can do is pretty limited. For more complex bayesian analysis, consider [sorobn](https://github.com/MaxHalford/sorobn), [pomegranate](https://github.com/jmschrei/pomegranate), [bnlearn](https://github.com/erdogant/bnlearn), or [pyMC](https://github.com/pymc-devs/pymc).
 
 
-#### Example: A Demonstration of the Monte Hall Problem
+#### Example: A Demonstration of the Monty Hall Problem
 
 ```Python
 import squigglepy as sq
@@ -344,7 +344,7 @@ from squigglepy import bayes
 from squigglepy.numbers import K, M, B, T
 
 
-def monte_hall(door_picked, switch=False):
+def monty_hall(door_picked, switch=False):
     doors = ['A', 'B', 'C']
     car_is_behind_door = ~sq.discrete(doors)
     reveal_door = ~sq.discrete([d for d in doors if d != door_picked and d != car_is_behind_door])
@@ -360,7 +360,7 @@ def monte_hall(door_picked, switch=False):
 def define_event():
     door = ~sq.discrete(['A', 'B', 'C'])
     switch = sq.event(0.5)
-    return {'won': monte_hall(door_picked=door, switch=switch),
+    return {'won': monty_hall(door_picked=door, switch=switch),
             'switched': switch}
 
 RUNS = 10*K
