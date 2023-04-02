@@ -1,6 +1,7 @@
 ## v0.25
 
-* Added `log` and `exp` operators on distributions.
+* Added `plot` as a method to more easily plot distributions.
+* Added `dist_log` and `dist_exp` operators on distributions.
 * Added `growth_rate_to_doubling_time` and `doubling_time_to_growth_rate` convenience functions. These take numbers, numpy arrays or distributions. 
 
 
