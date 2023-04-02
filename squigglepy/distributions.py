@@ -1,6 +1,7 @@
 import operator
 import math
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy import stats
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round
@@ -40,6 +41,14 @@ class BaseDistribution:
     def __repr__(self):
         return str(self)
 
+    def plot(self, num_samples=None, bins=None):
+        num_samples = 1000 if num_samples is None else num_samples
+        bins = 200 if bins is None else bins
+
+        samples = self @ num_samples
+
+        plt.hist(samples, bins=bins)
+        plt.show()
 
 class OperableDistribution(BaseDistribution):
     def __init__(self):
