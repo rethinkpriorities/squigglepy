@@ -38,6 +38,9 @@ pprint(sq.get_percentiles(samples, digits=0))
 # Histogram
 plt.hist(samples, bins=200)
 plt.show()
+
+# Shorter histogram
+total_tuners_in_2022.plot()
 ```
 
 And the version from the Squiggle doc that incorporates time:
