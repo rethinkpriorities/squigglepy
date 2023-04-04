@@ -42,6 +42,20 @@ class BaseDistribution:
         return str(self)
 
     def plot(self, num_samples=None, bins=None):
+        """
+        Plot a histogram of the samples.
+
+        Parameters
+        ----------
+        num_samples : int
+            The number of samples to draw for plotting. Defaults to 1000 if not set.
+        bins : int
+            The number of bins to plot. Defaults to 200 if not set.
+
+        Examples
+        --------
+        >>> sq.norm(5, 10).plot()
+        """
         num_samples = 1000 if num_samples is None else num_samples
         bins = 200 if bins is None else bins
 
@@ -49,6 +63,7 @@ class BaseDistribution:
 
         plt.hist(samples, bins=bins)
         plt.show()
+
 
 class OperableDistribution(BaseDistribution):
     def __init__(self):
