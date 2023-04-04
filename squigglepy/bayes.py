@@ -132,9 +132,12 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
     0.07723995880535531
     """
     events = None
-    if memcache:
+    if memcache is True:
         memcache_load = True
         memcache_save = True
+    elif memcache is False:
+        memcache_load = False
+        memcache_save = False
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
     cache_path = load_cache_file + '.sqcache' if load_cache_file else None
     has_file_cache = os.path.exists(cache_path) if load_cache_file else False
