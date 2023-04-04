@@ -53,8 +53,8 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
 
 
 def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
-             reduce_fn=None, raw=False, memcache=True,
-             reload_cache=False, dump_cache_file=None,
+             reduce_fn=None, raw=False, memcache=True, memcache_load=True,
+             memcache_save=True, reload_cache=False, dump_cache_file=None,
              load_cache_file=None, cache_file_primary=False,
              verbose=False, cores=1):
     """
@@ -81,6 +81,12 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
     memcache : bool
         If True, cache the results in-memory for future calculations. Each cache
         will be matched based on the ``event_fn``. Default ``True``.
+    memcache_load : bool
+        If True, load cache from the in-memory. This will be true if ``memcache``
+        is True. Cache will be matched based on the ``event_fn``. Default ``True``.
+    memcache_save : bool
+        If True, save results to an in-memory cache. This will be true if ``memcache``
+        is True. Cache will be matched based on the ``event_fn``. Default ``True``.
     reload_cache : bool
         If True, any existing cache will be ignored and recalculated. Default ``False``.
     dump_cache_file : str or None
@@ -126,6 +132,9 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
     0.07723995880535531
     """
     events = None
+    if memcache:
+        memcache_load = True
+        memcache_save = True
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
     cache_path = load_cache_file + '.sqcache' if load_cache_file else None
     has_file_cache = os.path.exists(cache_path) if load_cache_file else False
@@ -144,7 +153,7 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
             with open(cache_path, 'rb') as f:
                 events = decoder.decode(f.read())
 
-        elif memcache and has_in_mem_cache:
+        elif memcache_load and has_in_mem_cache:
             if verbose:
                 print('Loading from in-memory cache...')
             events = _squigglepy_internal_bayesnet_caches.get(event_fn)
@@ -221,7 +230,7 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
     metadata = {'n': n,
                 'last_generated': datetime.now()}
     cache_data = {'events': events, 'metadata': metadata}
-    if memcache and (not has_in_mem_cache or reload_cache):
+    if memcache_save and (not has_in_mem_cache or reload_cache):
         if verbose:
             print('Caching in-memory...')
         _squigglepy_internal_bayesnet_caches[event_fn] = cache_data
