@@ -444,14 +444,14 @@ def get_log_percentiles(data,
                                   digits=digits)
     if isinstance(percentiles, dict):
         if display:
-            return dict([(k, '10^{}'.format(_round(np.log10(v), digits))) for
+            return dict([(k, ('{:.' + str(digits) + 'e}').format(v)) for
                          k, v in percentiles.items()])
         else:
             return dict([(k, _round(np.log10(v), digits)) for
                         k, v in percentiles.items()])
     else:
         if display:
-            return '10^{}'.format(_round(np.log10(percentiles), digits))
+            return '{:.' + str(digits) + 'e}'.format(v)
         else:
             return _round(np.log10(percentiles), digits)
 

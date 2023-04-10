@@ -288,16 +288,16 @@ def test_get_percentiles_negative_one_digits():
 
 def test_get_log_percentiles():
     test = get_log_percentiles([10 ** x for x in range(1, 10)])
-    expected = {1: '10^1.2', 5: '10^1.7', 10: '10^1.9', 20: '10^2.8',
-                30: '10^3.7', 40: '10^4.4', 50: '10^5.0', 60: '10^5.9',
-                70: '10^6.8', 80: '10^7.7', 90: '10^8.4',
-                95: '10^8.8', 99: '10^9.0'}
+    expected = {1: '1.7e+01', 5: '4.6e+01', 10: '8.2e+01', 20: '6.4e+02',
+                30: '4.6e+03', 40: '2.8e+04', 50: '1.0e+05', 60: '8.2e+05',
+                70: '6.4e+06', 80: '4.6e+07', 90: '2.8e+08',
+                95: '6.4e+08', 99: '9.3e+08'}
     assert test == expected
 
 
 def test_get_log_percentiles_change_percentiles():
     test = get_log_percentiles([10 ** x for x in range(1, 10)], percentiles=[20, 80])
-    expected = {20: '10^2.8', 80: '10^7.7'}
+    expected = {20: '6.4e+02', 80: '4.6e+07'}
     assert test == expected
 
 
@@ -305,7 +305,7 @@ def test_get_log_percentiles_reverse():
     test = get_log_percentiles([10 ** x for x in range(1, 10)],
                                percentiles=[20, 80],
                                reverse=True)
-    expected = {20: '10^7.7', 80: '10^2.8'}
+    expected = {20: '4.6e+07', 80: '6.4e+02'}
     assert test == expected
 
 
