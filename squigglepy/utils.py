@@ -451,7 +451,8 @@ def get_log_percentiles(data,
                         k, v in percentiles.items()])
     else:
         if display:
-            return '{:.' + str(digits) + 'e}'.format(v)
+            digit_str = '{:.' + str(digits) + 'e}'
+            digit_str.format(percentiles)
         else:
             return _round(np.log10(percentiles), digits)
 
