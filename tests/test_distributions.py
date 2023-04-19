@@ -565,6 +565,8 @@ def test_mixture():
     assert obj.dists[1].y == 4
     assert obj.weights == [0.4, 0.6]
     assert '<Distribution> mixture' in str(obj)
+    assert '0.4 weight on <Distribution> norm(mean=1.5, sd=0.3)' in str(obj)
+    assert '0.6 weight on <Distribution> norm(mean=3.5, sd=0.3)' in str(obj)
 
 
 def test_mixture_different_distributions():

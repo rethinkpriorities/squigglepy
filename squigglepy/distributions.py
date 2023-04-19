@@ -1398,8 +1398,8 @@ class MixtureDistribution(OperableDistribution):
 
     def __str__(self):
         out = '<Distribution> {}'.format(self.type)
-        for dist in self.dists:
-            out += '\n - {}'.format(dist)
+        for i in range(len(self.dists)):
+            out += '\n - {} weight on {}'.format(self.weights[i], self.dists[i])
         return out
 
 
