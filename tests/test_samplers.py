@@ -57,27 +57,27 @@ class FakeRNG:
         return df
 
 
-def test_noop(mocker):
+def test_noop():
     assert sample() is None
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_norm(mocker):
+def test_norm():
     assert normal_sample(1, 2) == (1, 2)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_norm(mocker):
+def test_sample_norm():
     assert sample(norm(1, 2)) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_norm_shorthand(mocker):
+def test_sample_norm_shorthand():
     assert ~norm(1, 2) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_norm_with_credibility(mocker):
+def test_sample_norm_with_credibility():
     assert sample(norm(1, 2, credibility=70)) == (1.5, 0.48)
 
 
@@ -122,27 +122,27 @@ def test_sample_norm_competing_clip_multiple_values():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_lognorm(mocker):
+def test_lognorm():
     assert lognormal_sample(1, 2) == (1, 2)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_lognorm(mocker):
+def test_sample_lognorm():
     assert sample(lognorm(1, 2)) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_lognorm_with_credibility(mocker):
+def test_sample_lognorm_with_credibility():
     assert sample(lognorm(1, 2, credibility=70)) == (0.35, 0.33)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_shorthand_lognorm(mocker):
+def test_sample_shorthand_lognorm():
     assert ~lognorm(1, 2) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_shorthand_lognorm_with_credibility(mocker):
+def test_sample_shorthand_lognorm_with_credibility():
     assert ~lognorm(1, 2, credibility=70) == (0.35, 0.33)
 
 
@@ -180,13 +180,13 @@ def test_sample_bernoulli():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
-def test_tdist(mocker):
+def test_tdist():
     assert round(t_sample(1, 2, 3), 2) == 1
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
-def test_tdist_with_credibility(mocker):
+def test_tdist_with_credibility():
     assert round(t_sample(1, 2, 3, credibility=70), 2) == 1
 
 
@@ -198,7 +198,7 @@ def test_tdist_low_gt_high():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
-def test_sample_tdist(mocker):
+def test_sample_tdist():
     assert round(sample(tdist(1, 2, 3)), 2) == 1
 
 
@@ -210,13 +210,13 @@ def test_sample_tdist_passes_lclip_rclip():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
-def test_log_tdist(mocker):
+def test_log_tdist():
     assert round(log_t_sample(1, 2, 3), 2) == 2.72
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
-def test_log_tdist_with_credibility(mocker):
+def test_log_tdist_with_credibility():
     assert round(log_t_sample(1, 2, 3, credibility=70), 2) == 2.72
 
 
@@ -228,7 +228,7 @@ def test_log_tdist_low_gt_high():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
-def teslog_t_sample_log_tdist(mocker):
+def teslog_t_sample_log_tdist():
     assert round(sample(log_tdist(1, 2, 3)), 2) == 1 / 3
 
 
@@ -379,56 +379,56 @@ def test_sample_discrete_indirect_mixture():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample(mocker):
+def test_mixture_sample():
     assert mixture_sample([norm(1, 2), norm(3, 4)], [0.2, 0.8]) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample_alt_format(mocker):
+def test_mixture_sample_alt_format():
     assert mixture_sample([[0.2, norm(1, 2)], [0.8, norm(3, 4)]]) == (1.5, 0.3)
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=100))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample_rclip_lclip(mocker):
+def test_mixture_sample_rclip_lclip():
     assert mixture_sample([norm(1, 2), norm(3, 4)], [0.2, 0.8]) == 100
     assert mixture_sample([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8]) == 3
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample_no_weights(mocker):
+def test_mixture_sample_no_weights():
     assert mixture_sample([norm(1, 2), norm(3, 4)]) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample_different_distributions(mocker):
+def test_mixture_sample_different_distributions():
     assert mixture_sample([lognorm(1, 2), norm(3, 4)]) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample_with_numbers(mocker):
+def test_mixture_sample_with_numbers():
     assert mixture_sample([2, norm(3, 4)]) == 2
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture(mocker):
+def test_sample_mixture():
     assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_alt_format(mocker):
+def test_sample_mixture_alt_format():
     assert sample(mixture([[0.2, norm(1, 2)], [0.8, norm(3, 4)]])) == (1.5, 0.3)
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_lclip(mocker):
+def test_sample_mixture_lclip():
     assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == 1
     assert sample(mixture([norm(1, 2, lclip=3), norm(3, 4)], [0.2, 0.8])) == 3
     assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8], lclip=3)) == 3
@@ -437,7 +437,7 @@ def test_sample_mixture_lclip(mocker):
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_lclip_multiple_values(mocker):
+def test_sample_mixture_lclip_multiple_values():
     assert all(sample(mixture([norm(1, 2), norm(3, 4)],
                               [0.2, 0.8]), n=3) == np.array([1, 1, 1]))
     assert all(sample(mixture([norm(1, 2, lclip=3), norm(3, 4)],
@@ -450,42 +450,42 @@ def test_sample_mixture_lclip_multiple_values(mocker):
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_lclip_alt_format(mocker):
+def test_sample_mixture_lclip_alt_format():
     assert sample(mixture([[0.2, norm(1, 2, lclip=3)],
                            [0.8, norm(3, 4)]])) == 3
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_mixture_sample_lclip_alt_format_multiple_values(mocker):
+def test_mixture_sample_lclip_alt_format_multiple_values():
     assert all(mixture_sample([[0.2, norm(1, 2, lclip=3)],
                                [0.8, norm(3, 4)]], samples=3) == np.array([3, 3, 3]))
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_lclip_alt_format_multiple_values(mocker):
+def test_sample_mixture_lclip_alt_format_multiple_values():
     assert all(sample(mixture([[0.2, norm(1, 2, lclip=3)],
                                [0.8, norm(3, 4)]]), n=3) == np.array([3, 3, 3]))
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_lclip_alt_format2(mocker):
+def test_sample_mixture_lclip_alt_format2():
     assert ~mixture([[0.2, norm(1, 2, lclip=3)],
                      [0.8, norm(3, 4)]]) == 3
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=1))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_lclip_alt_format2_multiple_values(mocker):
+def test_sample_mixture_lclip_alt_format2_multiple_values():
     assert all(mixture([[0.2, norm(1, 2, lclip=3)],
                         [0.8, norm(3, 4)]]) @ 3 == np.array([3, 3, 3]))
 
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=100))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_rclip(mocker):
+def test_sample_mixture_rclip():
     assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8])) == 100
     assert sample(mixture([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8])) == 3
     assert sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8], rclip=3)) == 3
@@ -494,7 +494,7 @@ def test_sample_mixture_rclip(mocker):
 
 @patch.object(samplers, 'normal_sample', Mock(return_value=100))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_competing_clip(mocker):
+def test_sample_mixture_competing_clip():
     assert sample(mixture([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8])) == 3
     assert sample(mixture([norm(1, 2, rclip=2), norm(3, 4)], [0.2, 0.8], rclip=3)) == 2
     assert sample(mixture([norm(1, 2, rclip=3), norm(3, 4)], [0.2, 0.8]), rclip=2) == 2
@@ -502,19 +502,19 @@ def test_sample_mixture_competing_clip(mocker):
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_no_weights(mocker):
+def test_sample_mixture_no_weights():
     assert sample(mixture([norm(1, 2), norm(3, 4)])) == (1.5, 0.3)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_different_distributions(mocker):
+def test_sample_mixture_different_distributions():
     assert sample(mixture([lognorm(1, 2), norm(3, 4)])) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_with_numbers(mocker):
+def test_sample_mixture_with_numbers():
     assert sample(mixture([2, norm(3, 4)])) == 2
 
 
@@ -529,144 +529,144 @@ def test_sample_mixture_can_be_discrete():
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_contains_discrete(mocker):
+def test_sample_mixture_contains_discrete():
     assert sample(mixture([lognorm(1, 2), discrete([3, 4])])) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_mixture_contains_mixture(mocker):
+def test_sample_mixture_contains_mixture():
     assert sample(mixture([lognorm(1, 2),
                            mixture([1, discrete([3, 4])])])) == (0.35, 0.21)
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_zero_inflated(mocker):
+def test_sample_zero_inflated():
     assert ~zero_inflated(0.6, norm(1, 2)) == 0
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
 @patch.object(samplers, 'uniform_sample', Mock(return_value=0))
-def test_sample_inf0(mocker):
+def test_sample_inf0():
     assert ~inf0(0.6, norm(1, 2)) == 0
 
 
-def test_sample_n_gt_1_norm(mocker):
+def test_sample_n_gt_1_norm():
     out = sample(norm(1, 2), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_lognorm(mocker):
+def test_sample_n_gt_1_lognorm():
     out = sample(lognorm(1, 2), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_binomial(mocker):
+def test_sample_n_gt_1_binomial():
     out = sample(binomial(5, 0.1), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_beta(mocker):
+def test_sample_n_gt_1_beta():
     out = sample(beta(5, 10), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_bernoulli(mocker):
+def test_sample_n_gt_1_bernoulli():
     out = sample(bernoulli(0.1), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_poisson(mocker):
+def test_sample_n_gt_1_poisson():
     out = sample(poisson(0.1), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_chisquare(mocker):
+def test_sample_n_gt_1_chisquare():
     out = sample(chisquare(10), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_gamma(mocker):
+def test_sample_n_gt_1_gamma():
     out = sample(gamma(10, 10), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_triangular(mocker):
+def test_sample_n_gt_1_triangular():
     out = sample(triangular(1, 2, 3), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_tdist(mocker):
+def test_sample_n_gt_1_tdist():
     out = sample(tdist(1, 2, 3), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_log_tdist(mocker):
+def test_sample_n_gt_1_log_tdist():
     out = sample(log_tdist(1, 2, 3), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_const(mocker):
+def test_sample_n_gt_1_const():
     out = sample(const(1), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_uniform(mocker):
+def test_sample_n_gt_1_uniform():
     out = sample(uniform(0, 1), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_discrete(mocker):
+def test_sample_n_gt_1_discrete():
     out = sample(discrete([1, 2, 3]), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_mixture(mocker):
+def test_sample_n_gt_1_mixture():
     out = sample(mixture([norm(1, 2), norm(3, 4)]), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_raw_float(mocker):
+def test_sample_n_gt_1_raw_float():
     out = sample(0.1, n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_raw_int(mocker):
+def test_sample_n_gt_1_raw_int():
     out = sample(1, n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_raw_str(mocker):
+def test_sample_n_gt_1_raw_str():
     out = sample('a', n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_complex(mocker):
+def test_sample_n_gt_1_complex():
     out = sample(uniform(0, 1) + 5 >> dist_ceil, n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_n_gt_1_callable(mocker):
+def test_sample_n_gt_1_callable():
     def _fn():
         return norm(1, 2) + norm(3, 4)
     out = sample(_fn, n=5)
@@ -674,26 +674,26 @@ def test_sample_n_gt_1_callable(mocker):
     assert len(out) == 5
 
 
-def test_sample_shorthand_n_gt_1(mocker):
+def test_sample_shorthand_n_gt_1():
     out = norm(1, 2) @ 5
     assert _is_numpy(out)
     assert len(out) == 5
 
 
-def test_sample_shorthand_n_is_var(mocker):
+def test_sample_shorthand_n_is_var():
     n = 2 + 3
     out = norm(1, 2) @ n
     assert _is_numpy(out)
     assert len(out) == n
 
 
-def test_sample_shorthand_n_is_float(mocker):
+def test_sample_shorthand_n_is_float():
     out = norm(1, 2) @ 7.0
     assert _is_numpy(out)
     assert len(out) == 7.0
 
 
-def test_sample_shorthand_n_is_numpy_int(mocker):
+def test_sample_shorthand_n_is_numpy_int():
     out = norm(1, 2) @ np.int64(4)
     assert _is_numpy(out)
     assert len(out) == 4
@@ -702,7 +702,7 @@ def test_sample_shorthand_n_is_numpy_int(mocker):
     assert len(out) == 4
 
 
-def test_sample_shorthand_n_gt_1_alt(mocker):
+def test_sample_shorthand_n_gt_1_alt():
     out = 5 @ norm(1, 2)
     assert _is_numpy(out)
     assert len(out) == 5
