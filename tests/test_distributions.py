@@ -105,12 +105,15 @@ def test_norm_blank_raises_value_error():
     with pytest.raises(ValueError) as execinfo:
         norm()
     assert 'must define either x/y or mean/sd' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        norm(mean=1)
+    assert 'must define either x/y or mean/sd' in str(execinfo.value)
 
 
 def test_norm_overdefinition_value_error():
     with pytest.raises(ValueError) as execinfo:
         norm(x=1, y=2, mean=3, sd=4)
-    assert 'cannot define both' in str(execinfo.value)
+    assert 'must define either' in str(execinfo.value)
 
 
 def test_norm_low_gt_high():
@@ -157,47 +160,95 @@ def test_lognorm():
     assert lognorm(1, 2).type == 'lognorm'
     assert lognorm(1, 2).x == 1
     assert lognorm(1, 2).y == 2
-    assert round(lognorm(1, 2).mean, 2) == 0.35
-    assert round(lognorm(1, 2).sd, 2) == 0.21
+    assert round(lognorm(1, 2).norm_mean, 2) == 0.35
+    assert round(lognorm(1, 2).norm_sd, 2) == 0.21
+    assert round(lognorm(1, 2).lognorm_mean, 2) == 1.45
+    assert round(lognorm(1, 2).lognorm_sd, 2) == 0.31
     assert lognorm(1, 2).credibility == 90
     assert lognorm(1, 2).lclip is None
     assert lognorm(1, 2).rclip is None
-    assert str(lognorm(1, 2)) == '<Distribution> lognorm(mean=0.35, sd=0.21)'
+    assert str(lognorm(1, 2)) == '<Distribution> lognorm(lognorm_mean=1.45, lognorm_sd=0.31, norm_mean=0.35, norm_sd=0.21)'
 
 
-def test_lognorm_with_mean_sd():
-    assert lognorm(mean=1, sd=2).type == 'lognorm'
-    assert lognorm(mean=1, sd=2).x is None
-    assert lognorm(mean=1, sd=2).y is None
-    assert lognorm(mean=1, sd=2).mean == 1
-    assert lognorm(mean=1, sd=2).sd == 2
-    assert lognorm(mean=1, sd=2).credibility == 90
-    assert lognorm(mean=1, sd=2).lclip is None
-    assert lognorm(mean=1, sd=2).rclip is None
-    assert str(lognorm(mean=1, sd=2)) == '<Distribution> lognorm(mean=1, sd=2)'
+def test_lognorm_with_normmean_normsd():
+    assert lognorm(norm_mean=1, norm_sd=2).type == 'lognorm'
+    assert lognorm(norm_mean=1, norm_sd=2).x is None
+    assert lognorm(norm_mean=1, norm_sd=2).y is None
+    assert lognorm(norm_mean=1, norm_sd=2).norm_mean == 1
+    assert lognorm(norm_mean=1, norm_sd=2).norm_sd == 2
+    assert round(lognorm(norm_mean=1, norm_sd=2).lognorm_mean, 2) == 20.09
+    assert round(lognorm(norm_mean=1, norm_sd=2).lognorm_sd, 2) == 147.05
+    assert lognorm(norm_mean=1, norm_sd=2).credibility == 90
+    assert lognorm(norm_mean=1, norm_sd=2).lclip is None
+    assert lognorm(norm_mean=1, norm_sd=2).rclip is None
+    assert str(lognorm(norm_mean=1, norm_sd=2)) == '<Distribution> lognorm(lognorm_mean=20.09, lognorm_sd=147.05, norm_mean=1, norm_sd=2)'
 
 
-def test_lognorm_with_just_sd_infers_zero_mean():
-    assert lognorm(sd=2).type == 'lognorm'
-    assert lognorm(sd=2).x is None
-    assert lognorm(sd=2).y is None
-    assert lognorm(sd=2).mean == 0
-    assert lognorm(sd=2).sd == 2
-    assert lognorm(sd=2).credibility == 90
-    assert lognorm(sd=2).lclip is None
-    assert lognorm(sd=2).rclip is None
+def test_lognorm_with_lognormmean_lognormsd():
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).type == 'lognorm'
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).x is None
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).y is None
+    assert round(lognorm(lognorm_mean=1, lognorm_sd=2).norm_mean, 2) == -0.8
+    assert round(lognorm(lognorm_mean=1, lognorm_sd=2).norm_sd, 2) == 1.27
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).lognorm_mean == 1 
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).lognorm_sd == 2
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).credibility == 90
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).lclip is None
+    assert lognorm(lognorm_mean=1, lognorm_sd=2).rclip is None
+    assert str(lognorm(lognorm_mean=1, lognorm_sd=2)) == '<Distribution> lognorm(lognorm_mean=1, lognorm_sd=2, norm_mean=-0.8, norm_sd=1.27)'
+
+
+def test_lognorm_with_just_normsd_infers_zero_norm_mean():
+    assert lognorm(norm_sd=2).type == 'lognorm'
+    assert lognorm(norm_sd=2).x is None
+    assert lognorm(norm_sd=2).y is None
+    assert lognorm(norm_sd=2).norm_mean == 0
+    assert lognorm(norm_sd=2).norm_sd == 2
+    assert round(lognorm(norm_sd=2).lognorm_mean, 2) == 7.39
+    assert round(lognorm(norm_sd=2).lognorm_sd, 2) == 54.1
+    assert lognorm(norm_sd=2).credibility == 90
+    assert lognorm(norm_sd=2).lclip is None
+    assert lognorm(norm_sd=2).rclip is None
+
+
+def test_lognorm_with_just_lognormsd_infers_unit_lognorm_mean():
+    assert lognorm(lognorm_sd=2).type == 'lognorm'
+    assert lognorm(lognorm_sd=2).x is None
+    assert lognorm(lognorm_sd=2).y is None
+    assert round(lognorm(lognorm_sd=2).norm_mean, 2) == -0.8 
+    assert round(lognorm(lognorm_sd=2).norm_sd, 2) == 1.27
+    assert lognorm(lognorm_sd=2).lognorm_mean == 1
+    assert lognorm(lognorm_sd=2).lognorm_sd == 2
+    assert lognorm(lognorm_sd=2).credibility == 90
+    assert lognorm(lognorm_sd=2).lclip is None
+    assert lognorm(lognorm_sd=2).rclip is None
 
 
 def test_lognorm_blank_raises_value_error():
     with pytest.raises(ValueError) as execinfo:
         lognorm()
-    assert 'must define either x/y or mean/sd' in str(execinfo.value)
+    assert 'must define only one of x/y, norm_mean/norm_sd, or lognorm_mean/lognorm_sd' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(norm_mean=0)
+    assert 'must define only one of x/y, norm_mean/norm_sd, or lognorm_mean/lognorm_sd' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(lognorm_mean=1)
+    assert 'must define only one of x/y, norm_mean/norm_sd, or lognorm_mean/lognorm_sd' in str(execinfo.value)
 
 
 def test_lognorm_overdefinition_value_error():
     with pytest.raises(ValueError) as execinfo:
-        lognorm(x=1, y=2, mean=3, sd=4)
-    assert 'cannot define both' in str(execinfo.value)
+        lognorm(x=1, y=2, norm_mean=3, norm_sd=4)
+    assert 'must define only one of' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(x=1, y=2, lognorm_mean=3, lognorm_sd=4)
+    assert 'must define only one of' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(norm_mean=1, norm_sd=2, lognorm_mean=3, lognorm_sd=4)
+    assert 'must define only one of' in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        lognorm(x=1, y=2, norm_mean=1, norm_sd=2, lognorm_mean=3, lognorm_sd=4)
+    assert 'must define only one of' in str(execinfo.value)
 
 
 def test_lognorm_low_gt_high():
@@ -209,10 +260,10 @@ def test_lognorm_low_gt_high():
 def test_lognorm_must_be_gt_0():
     with pytest.raises(ValueError) as execinfo:
         lognorm(0, 5)
-    assert 'lognormal distribution must have values >= 0' in str(execinfo.value)
+    assert 'lognormal distribution must have values > 0' in str(execinfo.value)
     with pytest.raises(ValueError) as execinfo:
         lognorm(-5, 5)
-    assert 'lognormal distribution must have values >= 0' in str(execinfo.value)
+    assert 'lognormal distribution must have values > 0' in str(execinfo.value)
 
 
 def test_lognorm_passes_lclip_rclip():
@@ -220,27 +271,37 @@ def test_lognorm_passes_lclip_rclip():
     assert obj.type == 'lognorm'
     assert obj.lclip == 1
     assert obj.rclip is None
-    assert str(obj) == '<Distribution> lognorm(mean=0.35, sd=0.21, lclip=1)'
+    assert str(obj) == '<Distribution> lognorm(lognorm_mean=1.45, lognorm_sd=0.31, norm_mean=0.35, norm_sd=0.21, lclip=1)'
     obj = lognorm(1, 2, rclip=1)
     assert obj.type == 'lognorm'
     assert obj.lclip is None
     assert obj.rclip == 1
-    assert str(obj) == '<Distribution> lognorm(mean=0.35, sd=0.21, rclip=1)'
+    assert str(obj) == '<Distribution> lognorm(lognorm_mean=1.45, lognorm_sd=0.31, norm_mean=0.35, norm_sd=0.21, rclip=1)'
     obj = lognorm(1, 2, lclip=0, rclip=3)
     assert obj.type == 'lognorm'
     assert obj.lclip == 0
     assert obj.rclip == 3
-    assert str(obj) == '<Distribution> lognorm(mean=0.35, sd=0.21, lclip=0, rclip=3)'
-    obj = lognorm(mean=1, sd=2, lclip=0, rclip=3)
+    assert str(obj) == '<Distribution> lognorm(lognorm_mean=1.45, lognorm_sd=0.31, norm_mean=0.35, norm_sd=0.21, lclip=0, rclip=3)'
+    obj = lognorm(norm_mean=1, norm_sd=2, lclip=0, rclip=3)
     assert obj.type == 'lognorm'
     assert obj.lclip == 0
     assert obj.rclip == 3
-    assert str(obj) == '<Distribution> lognorm(mean=1, sd=2, lclip=0, rclip=3)'
-    obj = lognorm(sd=2, lclip=0, rclip=3)
+    assert str(obj) == '<Distribution> lognorm(lognorm_mean=20.09, lognorm_sd=147.05, norm_mean=1, norm_sd=2, lclip=0, rclip=3)'
+    obj = lognorm(norm_sd=2, lclip=0, rclip=3)
     assert obj.type == 'lognorm'
     assert obj.lclip == 0
     assert obj.rclip == 3
-    assert str(obj) == '<Distribution> lognorm(mean=0, sd=2, lclip=0, rclip=3)'
+    assert str(obj) == '<Distribution> lognorm(lognorm_mean=7.39, lognorm_sd=54.1, norm_mean=0, norm_sd=2, lclip=0, rclip=3)'
+    obj = lognorm(lognorm_mean=1, lognorm_sd=2, lclip=0, rclip=3)
+    assert obj.type == 'lognorm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    assert str(obj) == '<Distribution> lognorm(lognorm_mean=1, lognorm_sd=2, norm_mean=-0.8, norm_sd=1.27, lclip=0, rclip=3)'
+    obj = lognorm(lognorm_sd=2, lclip=0, rclip=3)
+    assert obj.type == 'lognorm'
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    assert str(obj) == '<Distribution> lognorm(lognorm_mean=1, lognorm_sd=2, norm_mean=-0.8, norm_sd=1.27, lclip=0, rclip=3)'
 
 
 def test_lognorm_passes_credibility():
@@ -892,7 +953,7 @@ def test_negate_distribution():
 def test_complex_math():
     obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (-lognorm(10, 100) / 11) + 8
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 + -lognorm(mean=3.45, sd=0.7) / 11 + 8'
+    assert str(obj) == '<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 + -lognorm(lognorm_mean=40.4, lognorm_sd=32.12, norm_mean=3.45, norm_sd=0.7) / 11 + 8'
 
 
 def test_dist_fn():
@@ -922,13 +983,13 @@ def test_dist_fn_list():
 def test_max():
     obj = dist_max(norm(0, 1), lognorm(0.1, 1))
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(lognorm_mean=0.4, lognorm_sd=0.32, norm_mean=-1.15, norm_sd=0.7))'
 
 
 def test_min():
     obj = dist_max(norm(0, 1), lognorm(0.1, 1))
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(lognorm_mean=0.4, lognorm_sd=0.32, norm_mean=-1.15, norm_sd=0.7))'
 
 
 def test_round():
@@ -1024,13 +1085,13 @@ def test_clip_pipe():
 def test_max_pipe():
     obj = norm(0, 1) >> dist_max(lognorm(0.1, 1))
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+    assert str(obj) == '<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(lognorm_mean=0.4, lognorm_sd=0.32, norm_mean=-1.15, norm_sd=0.7))'
 
 
 def test_min_pipe():
     obj = norm(0, 1) >> dist_min(lognorm(0.1, 1))
     assert obj.type == 'complex'
-    assert str(obj) == '<Distribution> min(norm(mean=0.5, sd=0.3), lognorm(mean=-1.15, sd=0.7))'
+    assert str(obj) == '<Distribution> min(norm(mean=0.5, sd=0.3), lognorm(lognorm_mean=0.4, lognorm_sd=0.32, norm_mean=-1.15, norm_sd=0.7))'
 
 
 def test_round_pipe():

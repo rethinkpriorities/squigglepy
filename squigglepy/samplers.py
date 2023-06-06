@@ -835,7 +835,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
             samples = normal_sample(mean=dist.mean, sd=dist.sd, samples=n)
 
         elif dist.type == 'lognorm':
-            samples = lognormal_sample(mean=dist.mean, sd=dist.sd, samples=n)
+            samples = lognormal_sample(mean=dist.norm_mean, sd=dist.norm_sd, samples=n)
 
         elif dist.type == 'binomial':
             samples = binomial_sample(n=dist.n, p=dist.p, samples=n)

@@ -717,14 +717,17 @@ def norm(x=None, y=None, credibility=90, mean=None, sd=None,
 
 
 class LognormalDistribution(OperableDistribution):
-    def __init__(self, x=None, y=None, mean=None, sd=None,
-                 credibility=90, lclip=None, rclip=None):
+    def __init__(self, x=None, y=None, norm_mean=None, norm_sd=None,
+                 lognorm_mean=None, lognorm_sd=None, credibility=90,
+                 lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
         self.credibility = credibility
-        self.mean = mean
-        self.sd = sd
+        self.norm_mean = norm_mean
+        self.norm_sd = norm_sd
+        self.lognorm_mean = lognorm_mean
+        self.lognorm_sd = lognorm_sd
         self.lclip = lclip
         self.rclip = rclip
         self.type = 'lognorm'
@@ -732,25 +735,46 @@ class LognormalDistribution(OperableDistribution):
         if self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError('`high value` cannot be lower than `low value`')
         if self.x is not None and self.x <= 0:
-            raise ValueError('lognormal distribution must have values >= 0.')
+            raise ValueError('lognormal distribution must have values > 0')
 
-        if (self.x is None or self.y is None) and self.sd is None:
-            raise ValueError('must define either x/y or mean/sd')
-        elif (self.x is not None or self.y is not None) and self.sd is not None:
-            raise ValueError('must define either x/y or mean/sd -- cannot define both')
-        elif self.sd is not None and self.mean is None:
-            self.mean = 0
+        if (self.x is None or self.y is None) and self.norm_sd is None and self.lognorm_sd is None:
+            raise ValueError(('must define only one of x/y, norm_mean/norm_sd, '
+                              'or lognorm_mean/lognorm_sd'))
+        elif ((self.x is not None or self.y is not None) and
+              (self.norm_sd is not None or self.lognorm_sd is not None)):
+            raise ValueError(('must define only one of x/y, norm_mean/norm_sd, '
+                              'or lognorm_mean/lognorm_sd'))
+        elif ((self.norm_sd is not None or self.norm_mean is not None) and
+              (self.lognorm_sd is not None or self.lognorm_mean is not None)):
+            raise ValueError(('must define only one of x/y, norm_mean/norm_sd, '
+                              'or lognorm_mean/lognorm_sd'))
+        elif self.norm_sd is not None and self.norm_mean is None:
+            self.norm_mean = 0
+        elif self.lognorm_sd is not None and self.lognorm_mean is None:
+            self.lognorm_mean = 1
 
-        if self.mean is None and self.sd is None:
-            self.mean = (np.log(self.x) + np.log(self.y)) / 2
+        if self.x is not None:
+            self.norm_mean = (np.log(self.x) + np.log(self.y)) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = stats.norm.ppf(cdf_value)
-            self.sd = (np.log(self.y) - self.mean) / normed_sigma
+            self.norm_sd = (np.log(self.y) - self.norm_mean) / normed_sigma
+
+        if self.lognorm_sd is None:
+            self.lognorm_mean = np.exp(self.norm_mean + self.norm_sd ** 2 / 2)
+            self.lognorm_sd = ((np.exp(self.norm_sd ** 2) - 1) *
+                               np.exp(2 * self.norm_mean + self.norm_sd ** 2)) ** 0.5
+        elif self.norm_sd is None:
+            self.norm_mean = np.log((self.lognorm_mean ** 2 /
+                                     np.sqrt(self.lognorm_sd ** 2 + self.lognorm_mean ** 2)))
+            self.norm_sd = np.sqrt(np.log(1 + self.lognorm_sd ** 2 / self.lognorm_mean ** 2))
 
     def __str__(self):
-        out = '<Distribution> {}(mean={}, sd={}'.format(self.type,
-                                                        round(self.mean, 2),
-                                                        round(self.sd, 2))
+        out = '<Distribution> {}(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}'
+        out = out.format(self.type,
+                         round(self.lognorm_mean, 2),
+                         round(self.lognorm_sd, 2),
+                         round(self.norm_mean, 2),
+                         round(self.norm_sd, 2))
         if self.lclip is not None:
             out += ', lclip={}'.format(self.lclip)
         if self.rclip is not None:
@@ -759,8 +783,8 @@ class LognormalDistribution(OperableDistribution):
         return out
 
 
-def lognorm(x=None, y=None, credibility=90, mean=None, sd=None,
-            lclip=None, rclip=None):
+def lognorm(x=None, y=None, credibility=90, norm_mean=None, norm_sd=None,
+            lognorm_mean=None, lognorm_sd=None, lclip=None, rclip=None):
     """
     Initialize a lognormal distribution.
 
@@ -778,9 +802,13 @@ def lognorm(x=None, y=None, credibility=90, mean=None, sd=None,
     credibility : float
         The range of the credibility interval. Defaults to 90. Ignored if the distribution is
         defined instead by ``mean`` and ``sd``.
-    mean : float or None
-        The mean of the lognormal distribution. If not defined, defaults to 0.
-    sd : float
+    norm_mean : float or None
+        The mean of the underlying normal distribution. If not defined, defaults to 0.
+    norm_sd : float
+        The standard deviation of the underlying normal distribution.
+    lognorm_mean : float or None
+        The mean of the lognormal distribution. If not defined, defaults to 1.
+    lognorm_sd : float
         The standard deviation of the lognormal distribution.
     lclip : float or None
         If not None, any value below ``lclip`` will be coerced to ``lclip``.
@@ -794,12 +822,21 @@ def lognorm(x=None, y=None, credibility=90, mean=None, sd=None,
     Examples
     --------
     >>> lognorm(1, 10)
-    <Distribution> lognorm(mean=1.15, sd=0.7)
-    >>> lognorm(mean=1, sd=2)
-    <Distribution> lognorm(mean=1, sd=2)
+    <Distribution> lognorm(lognorm_mean=4.04, lognorm_sd=3.21, norm_mean=1.15, norm_sd=0.7)
+    >>> lognorm(norm_mean=1, norm_sd=2)
+    <Distribution> lognorm(lognorm_mean=20.09, lognorm_sd=147.05, norm_mean=1, norm_sd=2)
+    >>> lognorm(lognorm_mean=1, lognorm_sd=2)
+    <Distribution> lognorm(lognorm_mean=1, lognorm_sd=2, norm_mean=-0.8, norm_sd=1.27)
     """
-    return LognormalDistribution(x=x, y=y, credibility=credibility, mean=mean, sd=sd,
-                                 lclip=lclip, rclip=rclip)
+    return LognormalDistribution(x=x,
+                                 y=y,
+                                 credibility=credibility,
+                                 norm_mean=norm_mean,
+                                 norm_sd=norm_sd,
+                                 lognorm_mean=lognorm_mean,
+                                 lognorm_sd=lognorm_sd,
+                                 lclip=lclip,
+                                 rclip=rclip)
 
 
 def to(x, y, credibility=90, lclip=None, rclip=None):

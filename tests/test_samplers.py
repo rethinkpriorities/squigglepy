@@ -147,8 +147,13 @@ def test_sample_shorthand_lognorm_with_credibility():
 
 
 @patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
-def test_sample_lognorm_with_just_sd_infers_zero_mean():
-    assert sample(lognorm(sd=2)) == (0, 2)
+def test_sample_lognorm_with_just_normsd_infers_zero_mean():
+    assert sample(lognorm(norm_sd=2)) == (0, 2)
+
+
+@patch.object(samplers, '_get_rng', Mock(return_value=FakeRNG()))
+def test_sample_lognorm_with_just_lognormsd_infers_unit_mean():
+    assert sample(lognorm(lognorm_sd=2)) == (-0.8, 1.27)
 
 
 @patch.object(samplers, 'lognormal_sample', Mock(return_value=100))
