@@ -7,6 +7,8 @@ from ..squigglepy.distributions import (to, const, uniform, norm, lognorm,
                                         lclip, rclip, clip, dist_round, dist_fn,
                                         dist_max, dist_min, dist_ceil, dist_floor,
                                         dist_log, dist_exp, zero_inflated, inf0)
+from ..squigglepy.version import __version__
+
 
 def _mirror(x):
     return 1 - x if x > 0.5 else x
@@ -77,6 +79,10 @@ def test_norm():
     assert norm(1, 2).lclip is None
     assert norm(1, 2).rclip is None
     assert str(norm(1, 2)) == '<Distribution> norm(mean=1.5, sd=0.3)'
+
+
+def test_norm_has_version():
+    assert norm(1, 2)._version == __version__
 
 
 def test_norm_with_mean_sd():

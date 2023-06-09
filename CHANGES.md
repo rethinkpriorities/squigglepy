@@ -1,3 +1,7 @@
+## v0.27
+
+* Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
+
 ## v0.26
 
 * `lognorm` can now be defined either referencing the mean and sd of the underlying normal distribution via `norm_mean` / `norm_sd` or via the mean and sd of the lognormal distribution itself via `lognorm_mean` / `lognorm_sd`. To further disambiguate, `mean` and `sd` are no longer variables that can be passed to `lognorm`.

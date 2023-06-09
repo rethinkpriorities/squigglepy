@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from scipy import stats
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round
+from .version import __version__
 
 
 class BaseDistribution:
@@ -34,6 +35,7 @@ class BaseDistribution:
         self.dists = None
         self.weights = None
         self.type = 'base'
+        self._version = __version__
 
     def __str__(self):
         return '<Distribution> {}'.format(self.type)
