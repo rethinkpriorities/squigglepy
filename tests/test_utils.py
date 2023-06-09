@@ -141,20 +141,12 @@ def test_process_weights_values_attempt_drop_none_with_weights_error():
                                 values=[1, None, 3, 4, 5],
                                 drop_na=True)
     assert 'cannot drop NA and process weights' in str(execinfo.value)
-
-
-def test_process_weights_values_attempt_drop_none_with_weights_error():
     with pytest.raises(ValueError) as execinfo:
         _process_weights_values(relative_weights=[1, 1, 1, 1, 1],
                                 values=[1, None, 3, 4, 5],
                                 drop_na=True)
     assert 'cannot drop NA and process weights' in str(execinfo.value)
 
-
-def test_process_weights_values_numpy_arrays():
-    test = _process_weights_values(weights=np.array([0.1, 0.9]), values=np.array([2, 3]))
-    expected = ([0.1, 0.9], [2, 3])
-    assert test == expected
 
 
 def test_process_discrete_weights_values_simple_case():
@@ -400,9 +392,6 @@ def test_weighted_geomean_errors_with_none_value():
     with pytest.raises(ValueError) as execinfo:
         geomean({0.1: 0.5, 0.2: 0.1, 0.3: None, 0.4: 0.1, 0.5: 0.2})
     assert 'cannot handle NA-like values in weights' in str(execinfo.value)
-
-
-def test_weighted_geomean_errors_with_none_value():
     with pytest.raises(ValueError) as execinfo:
         geomean([[0.5, 0.1], [0.1, None], [0.1, 0.3], [0.1, 0.4], [0.2, 0.5]])
     assert 'cannot drop NA and process weights' in str(execinfo.value)

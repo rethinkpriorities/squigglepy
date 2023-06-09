@@ -1,5 +1,4 @@
 import time
-import json
 import numpy as np
 import squigglepy as sq
 
@@ -507,7 +506,10 @@ if __name__ == '__main__':
                                                                   100 - ((100 - credibility) / 2)])
                         tol = 140 / t if dist.type == 'log_tdist' else 1.35
                         if (not _within(pctiles[(100 - credibility) / 2], val[0], tol, tol) or
-                            not _within(pctiles[100 - ((100 - credibility) / 2)], val[1], tol, tol)):
+                            not _within(pctiles[100 - ((100 - credibility) / 2)],
+                                        val[1],
+                                        tol,
+                                        tol)):
                             print('ERROR 17 on {}'.format(str(dist)))
                             print(pctiles)
                             import pdb

@@ -442,7 +442,7 @@ You can see more examples of squigglepy in action [here](https://github.com/pete
 
 ## Run tests
 
-`flake8 && pytest && pip3 install . && python3 tests/integration.py`
+`ruff check . && pytest && pip3 install . && python3 tests/integration.py`
 
 
 ## Disclaimers

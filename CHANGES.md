@@ -1,6 +1,7 @@
 ## v0.27
 
 * Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
+* Switched from `flake8` to `ruff`.
 
 ## v0.26
 
