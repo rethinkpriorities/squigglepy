@@ -6,9 +6,19 @@ import pathos.multiprocessing as mp
 
 from scipy import stats
 
-from .utils import (_process_weights_values, _process_discrete_weights_values,
-                    is_dist, is_sampleable, _simplify, _enlist, _safe_len, _core_cuts,
-                    _init_tqdm, _tick_tqdm, _flush_tqdm)
+from .utils import (
+    _process_weights_values,
+    _process_discrete_weights_values,
+    is_dist,
+    is_sampleable,
+    _simplify,
+    _enlist,
+    _safe_len,
+    _core_cuts,
+    _init_tqdm,
+    _tick_tqdm,
+    _flush_tqdm,
+)
 
 
 _squigglepy_internal_sample_caches = {}
@@ -16,6 +26,7 @@ _squigglepy_internal_sample_caches = {}
 
 def _get_rng():
     from .rng import _squigglepy_internal_rng
+
     return _squigglepy_internal_rng
 
 
@@ -114,9 +125,9 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     if low is None and high is None:
         return _get_rng().standard_t(t)
     elif low is None or high is None:
-        raise ValueError('must define either both `x` and `y` or neither.')
+        raise ValueError("must define either both `x` and `y` or neither.")
     elif low > high:
-        raise ValueError('`high value` cannot be lower than `low value`')
+        raise ValueError("`high value` cannot be lower than `low value`")
     elif low == high:
         return low
     else:
@@ -124,8 +135,10 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         cdf_value = 0.5 + 0.5 * (credibility / 100)
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (high - mu) / normed_sigma
-        return _simplify(normal_sample(mu, sigma, samples) /
-                         ((chi_square_sample(t, samples) / t) ** 0.5))
+        return _simplify(
+            normal_sample(mu, sigma, samples)
+            / ((chi_square_sample(t, samples) / t) ** 0.5)
+        )
 
 
 def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
@@ -167,9 +180,9 @@ def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     if low is None and high is None:
         return np.exp(_get_rng().standard_t(t))
     elif low > high:
-        raise ValueError('`high value` cannot be lower than `low value`')
+        raise ValueError("`high value` cannot be lower than `low value`")
     elif low < 0:
-        raise ValueError('log_t_sample cannot handle negative values')
+        raise ValueError("log_t_sample cannot handle negative values")
     elif low == high:
         return low
     else:
@@ -179,8 +192,12 @@ def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         cdf_value = 0.5 + 0.5 * (credibility / 100)
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (log_high - mu) / normed_sigma
-        return _simplify(np.exp(normal_sample(mu, sigma, samples) /
-                         ((chi_square_sample(t, samples) / t) ** 0.5)))
+        return _simplify(
+            np.exp(
+                normal_sample(mu, sigma, samples)
+                / ((chi_square_sample(t, samples) / t) ** 0.5)
+            )
+        )
 
 
 def binomial_sample(n, p, samples=1):
@@ -452,8 +469,9 @@ def chi_square_sample(df, samples=1):
     return _simplify(_get_rng().chisquare(df, samples))
 
 
-def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1,
-                    _multicore_tqdm_cores=1):
+def discrete_sample(
+    items, samples=1, verbose=False, _multicore_tqdm_n=1, _multicore_tqdm_cores=1
+):
     """
     Sample a random value from a discrete distribution (aka categorical distribution).
 
@@ -496,26 +514,43 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1,
     weights, values = _process_discrete_weights_values(items)
 
     from .distributions import const
+
     values = [const(v) for v in values]
 
-    return mixture_sample(values=values,
-                          weights=weights,
-                          samples=samples,
-                          verbose=verbose,
-                          _multicore_tqdm_n=_multicore_tqdm_n,
-                          _multicore_tqdm_cores=_multicore_tqdm_cores)
+    return mixture_sample(
+        values=values,
+        weights=weights,
+        samples=samples,
+        verbose=verbose,
+        _multicore_tqdm_n=_multicore_tqdm_n,
+        _multicore_tqdm_cores=_multicore_tqdm_cores,
+    )
 
 
-def _mixture_sample_for_large_n(values, weights=None, relative_weights=None,
-                                samples=1, verbose=False, _multicore_tqdm_n=1,
-                                _multicore_tqdm_cores=1):
+def _mixture_sample_for_large_n(
+    values,
+    weights=None,
+    relative_weights=None,
+    samples=1,
+    verbose=False,
+    _multicore_tqdm_n=1,
+    _multicore_tqdm_cores=1,
+):
     def _run_presample(dist, pbar):
-        if is_dist(dist) and dist.type == 'mixture':
-            raise ValueError(('You cannot nest mixture distributions within ' +
-                              'mixture distributions.'))
-        elif is_dist(dist) and dist.type == 'discrete':
-            raise ValueError(('You cannot nest discrete distributions within ' +
-                              'mixture distributions.'))
+        if is_dist(dist) and dist.type == "mixture":
+            raise ValueError(
+                (
+                    "You cannot nest mixture distributions within "
+                    + "mixture distributions."
+                )
+            )
+        elif is_dist(dist) and dist.type == "discrete":
+            raise ValueError(
+                (
+                    "You cannot nest discrete distributions within "
+                    + "mixture distributions."
+                )
+            )
         _tick_tqdm(pbar)
         return _enlist(sample(dist, n=samples))
 
@@ -541,8 +576,15 @@ def _mixture_sample_for_large_n(values, weights=None, relative_weights=None,
     return out
 
 
-def _mixture_sample_for_small_n(values, weights=None, relative_weights=None, samples=1,
-                                verbose=False, _multicore_tqdm_n=1, _multicore_tqdm_cores=1):
+def _mixture_sample_for_small_n(
+    values,
+    weights=None,
+    relative_weights=None,
+    samples=1,
+    verbose=False,
+    _multicore_tqdm_n=1,
+    _multicore_tqdm_cores=1,
+):
     def _run_mixture(values, weights, pbar=None, tick=1):
         r_ = uniform_sample(0, 1)
         _tick_tqdm(pbar, tick)
@@ -555,16 +597,27 @@ def _mixture_sample_for_small_n(values, weights=None, relative_weights=None, sam
     weights = np.cumsum(weights)
     tqdm_samples = samples if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
     pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
-    out = _simplify([_run_mixture(values=values,
-                                  weights=weights,
-                                  pbar=pbar,
-                                  tick=_multicore_tqdm_cores) for _ in range(samples)])
+    out = _simplify(
+        [
+            _run_mixture(
+                values=values, weights=weights, pbar=pbar, tick=_multicore_tqdm_cores
+            )
+            for _ in range(samples)
+        ]
+    )
     _flush_tqdm(pbar)
     return out
 
 
-def mixture_sample(values, weights=None, relative_weights=None, samples=1, verbose=False,
-                   _multicore_tqdm_n=1, _multicore_tqdm_cores=1):
+def mixture_sample(
+    values,
+    weights=None,
+    relative_weights=None,
+    samples=1,
+    verbose=False,
+    _multicore_tqdm_n=1,
+    _multicore_tqdm_cores=1,
+):
     """
     Sample a ranom number from a mixture distribution.
 
@@ -612,24 +665,40 @@ def mixture_sample(values, weights=None, relative_weights=None, samples=1, verbo
         return sample(values[0], n=samples)
 
     if samples > 100:
-        return _mixture_sample_for_large_n(values=values,
-                                           weights=weights,
-                                           samples=samples,
-                                           verbose=verbose,
-                                           _multicore_tqdm_n=_multicore_tqdm_n,
-                                           _multicore_tqdm_cores=_multicore_tqdm_cores)
+        return _mixture_sample_for_large_n(
+            values=values,
+            weights=weights,
+            samples=samples,
+            verbose=verbose,
+            _multicore_tqdm_n=_multicore_tqdm_n,
+            _multicore_tqdm_cores=_multicore_tqdm_cores,
+        )
     else:
-        return _mixture_sample_for_small_n(values=values,
-                                           weights=weights,
-                                           samples=samples,
-                                           verbose=verbose,
-                                           _multicore_tqdm_n=_multicore_tqdm_n,
-                                           _multicore_tqdm_cores=_multicore_tqdm_cores)
+        return _mixture_sample_for_small_n(
+            values=values,
+            weights=weights,
+            samples=samples,
+            verbose=verbose,
+            _multicore_tqdm_n=_multicore_tqdm_n,
+            _multicore_tqdm_cores=_multicore_tqdm_cores,
+        )
 
 
-def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=False,
-           dump_cache_file=None, load_cache_file=None, cache_file_primary=False,
-           verbose=None, cores=1, _multicore_tqdm_n=1, _multicore_tqdm_cores=1):
+def sample(
+    dist=None,
+    n=1,
+    lclip=None,
+    rclip=None,
+    memcache=False,
+    reload_cache=False,
+    dump_cache_file=None,
+    load_cache_file=None,
+    cache_file_primary=False,
+    verbose=None,
+    cores=1,
+    _multicore_tqdm_n=1,
+    _multicore_tqdm_cores=1,
+):
     """
     Sample random numbers from a given distribution.
 
@@ -690,81 +759,91 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     """
     n = int(n)
     if n <= 0:
-        raise ValueError('n must be >= 1')
+        raise ValueError("n must be >= 1")
 
     if not is_sampleable(dist):
-        error = 'input to sample is malformed - {} is not a sampleable type.'.format(type(dist))
+        error = "input to sample is malformed - {} is not a sampleable type.".format(
+            type(dist)
+        )
         raise ValueError(error)
 
     if verbose is None:
-        verbose = (n >= 1000000)
+        verbose = n >= 1000000
 
     # Handle loading from cache
     samples = None
     has_in_mem_cache = str(dist) in _squigglepy_internal_sample_caches
     if load_cache_file:
-        cache_path = load_cache_file + '.sqcache.npy'
+        cache_path = load_cache_file + ".sqcache.npy"
         has_file_cache = os.path.exists(cache_path) if load_cache_file else False
 
     if load_cache_file and not has_file_cache and verbose:
-        print('Warning: cache file `{}.sqcache.npy` not found.'.format(load_cache_file))
+        print("Warning: cache file `{}.sqcache.npy` not found.".format(load_cache_file))
 
     if (load_cache_file or memcache) and not reload_cache:
-        if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
+        if (
+            load_cache_file
+            and has_file_cache
+            and (not has_in_mem_cache or cache_file_primary)
+        ):
             if verbose:
-                print('Loading from cache file (`{}`)...'.format(cache_path))
-            with open(cache_path, 'rb') as f:
+                print("Loading from cache file (`{}`)...".format(cache_path))
+            with open(cache_path, "rb") as f:
                 samples = np.load(f)
 
         elif memcache and has_in_mem_cache:
             if verbose:
-                print('Loading from in-memory cache...')
+                print("Loading from in-memory cache...")
             samples = _squigglepy_internal_sample_caches.get(str(dist))
 
     # Handle multicore
     if samples is None and cores > 1:
         if verbose:
-            print('Generating samples with {} cores...'.format(cores))
+            print("Generating samples with {} cores...".format(cores))
         with mp.ProcessingPool(cores) as pool:
             cuts = _core_cuts(n, cores)
 
             def multicore_sample(core, total_n=n, total_cores=cores, verbose=False):
-                batch = sample(dist=dist,
-                               n=cuts[core],
-                               _multicore_tqdm_n=total_n,
-                               _multicore_tqdm_cores=total_cores,
-                               lclip=lclip,
-                               rclip=rclip,
-                               memcache=False,
-                               verbose=verbose,
-                               cores=1)
+                batch = sample(
+                    dist=dist,
+                    n=cuts[core],
+                    _multicore_tqdm_n=total_n,
+                    _multicore_tqdm_cores=total_cores,
+                    lclip=lclip,
+                    rclip=rclip,
+                    memcache=False,
+                    verbose=verbose,
+                    cores=1,
+                )
                 if verbose:
-                    print('Shuffling data...')
-                with open('test-core-{}.npy'.format(core), 'wb') as f:
+                    print("Shuffling data...")
+                with open("test-core-{}.npy".format(core), "wb") as f:
                     np.save(f, batch)
                 return None
 
             pool_results = pool.amap(multicore_sample, range(cores - 1))
             multicore_sample(cores - 1, verbose=verbose)
             if verbose:
-                print('Waiting for other cores...')
+                print("Waiting for other cores...")
             while not pool_results.ready():
                 if verbose:
-                    print('.', end='', flush=True)
+                    print(".", end="", flush=True)
                 time.sleep(1)
 
         if verbose:
-            print('Collecting data...')
+            print("Collecting data...")
         samples = np.array([])
         pbar = _init_tqdm(verbose=verbose, total=cores)
         for core in range(cores):
-            with open('test-core-{}.npy'.format(core), 'rb') as f:
-                samples = np.concatenate((samples, np.load(f, allow_pickle=True)), axis=None)
-            os.remove('test-core-{}.npy'.format(core))
+            with open("test-core-{}.npy".format(core), "rb") as f:
+                samples = np.concatenate(
+                    (samples, np.load(f, allow_pickle=True)), axis=None
+                )
+            os.remove("test-core-{}.npy".format(core))
             _tick_tqdm(pbar, 1)
         _flush_tqdm(pbar)
         if verbose:
-            print('...Collected!')
+            print("...Collected!")
 
     # Handle lclip/rclip
     if samples is None:
@@ -788,6 +867,7 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     if samples is None:
         if callable(dist):
             if n > 1:
+
                 def run_dist(dist, pbar=None, tick=1):
                     dist = dist()
                     _tick_tqdm(pbar, tick)
@@ -795,9 +875,12 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
 
                 tqdm_samples = n if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
                 pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
-                out = np.array([run_dist(dist=dist,
-                                         pbar=pbar,
-                                         tick=_multicore_tqdm_cores) for _ in range(n)])
+                out = np.array(
+                    [
+                        run_dist(dist=dist, pbar=pbar, tick=_multicore_tqdm_cores)
+                        for _ in range(n)
+                    ]
+                )
                 _flush_tqdm(pbar)
             else:
                 out = [dist()]
@@ -808,88 +891,105 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
                 return samp
 
             pbar = _init_tqdm(verbose=verbose, total=len(out) * _multicore_tqdm_cores)
-            samples = _simplify(np.array([run_dist(dist=o,
-                                                   pbar=pbar,
-                                                   tick=_multicore_tqdm_cores) for o in out]))
+            samples = _simplify(
+                np.array(
+                    [
+                        run_dist(dist=o, pbar=pbar, tick=_multicore_tqdm_cores)
+                        for o in out
+                    ]
+                )
+            )
             _flush_tqdm(pbar)
 
-        elif (isinstance(dist, float) or
-              isinstance(dist, int) or
-              isinstance(dist, str) or
-              dist is None):
+        elif (
+            isinstance(dist, float)
+            or isinstance(dist, int)
+            or isinstance(dist, str)
+            or dist is None
+        ):
             samples = _simplify(np.array([dist for _ in range(n)]))
 
-        elif dist.type == 'const':
+        elif dist.type == "const":
             samples = _simplify(np.array([dist.x for _ in range(n)]))
 
-        elif dist.type == 'uniform':
+        elif dist.type == "uniform":
             samples = uniform_sample(dist.x, dist.y, samples=n)
 
-        elif dist.type == 'discrete':
-            samples = discrete_sample(dist.items,
-                                      samples=n,
-                                      _multicore_tqdm_n=_multicore_tqdm_n,
-                                      _multicore_tqdm_cores=_multicore_tqdm_cores)
+        elif dist.type == "discrete":
+            samples = discrete_sample(
+                dist.items,
+                samples=n,
+                _multicore_tqdm_n=_multicore_tqdm_n,
+                _multicore_tqdm_cores=_multicore_tqdm_cores,
+            )
 
-        elif dist.type == 'norm':
+        elif dist.type == "norm":
             samples = normal_sample(mean=dist.mean, sd=dist.sd, samples=n)
 
-        elif dist.type == 'lognorm':
+        elif dist.type == "lognorm":
             samples = lognormal_sample(mean=dist.norm_mean, sd=dist.norm_sd, samples=n)
 
-        elif dist.type == 'binomial':
+        elif dist.type == "binomial":
             samples = binomial_sample(n=dist.n, p=dist.p, samples=n)
 
-        elif dist.type == 'beta':
+        elif dist.type == "beta":
             samples = beta_sample(a=dist.a, b=dist.b, samples=n)
 
-        elif dist.type == 'bernoulli':
+        elif dist.type == "bernoulli":
             samples = bernoulli_sample(p=dist.p, samples=n)
 
-        elif dist.type == 'poisson':
+        elif dist.type == "poisson":
             samples = poisson_sample(lam=dist.lam, samples=n)
 
-        elif dist.type == 'chisquare':
+        elif dist.type == "chisquare":
             samples = chi_square_sample(df=dist.df, samples=n)
 
-        elif dist.type == 'exponential':
+        elif dist.type == "exponential":
             samples = exponential_sample(scale=dist.scale, samples=n)
 
-        elif dist.type == 'gamma':
+        elif dist.type == "gamma":
             samples = gamma_sample(shape=dist.shape, scale=dist.scale, samples=n)
 
-        elif dist.type == 'pareto':
+        elif dist.type == "pareto":
             samples = pareto_sample(shape=dist.shape, samples=n)
 
-        elif dist.type == 'triangular':
+        elif dist.type == "triangular":
             samples = triangular_sample(dist.left, dist.mode, dist.right, samples=n)
 
-        elif dist.type == 'tdist':
-            samples = t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
+        elif dist.type == "tdist":
+            samples = t_sample(
+                dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n
+            )
 
-        elif dist.type == 'log_tdist':
-            samples = log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
+        elif dist.type == "log_tdist":
+            samples = log_t_sample(
+                dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n
+            )
 
-        elif dist.type == 'mixture':
-            samples = mixture_sample(dist.dists,
-                                     dist.weights,
-                                     samples=n,
-                                     verbose=verbose,
-                                     _multicore_tqdm_n=_multicore_tqdm_n,
-                                     _multicore_tqdm_cores=_multicore_tqdm_cores)
+        elif dist.type == "mixture":
+            samples = mixture_sample(
+                dist.dists,
+                dist.weights,
+                samples=n,
+                verbose=verbose,
+                _multicore_tqdm_n=_multicore_tqdm_n,
+                _multicore_tqdm_cores=_multicore_tqdm_cores,
+            )
 
-        elif dist.type == 'complex':
+        elif dist.type == "complex":
             if dist.right is None:
                 samples = dist.fn(sample(dist.left, n=n, verbose=verbose))
             else:
-                samples = dist.fn(sample(dist.left, n=n, verbose=verbose),
-                                  sample(dist.right, n=n, verbose=verbose))
+                samples = dist.fn(
+                    sample(dist.left, n=n, verbose=verbose),
+                    sample(dist.right, n=n, verbose=verbose),
+                )
 
             if is_dist(samples) or callable(samples):
                 samples = sample(samples, n=n)
 
         else:
-            raise ValueError('{} sampler not found'.format(dist.type))
+            raise ValueError("{} sampler not found".format(dist.type))
 
     # Use lclip / rclip
     if _safe_len(samples) > 1:
@@ -906,19 +1006,19 @@ def sample(dist=None, n=1, lclip=None, rclip=None, memcache=False, reload_cache=
     # Save to cache
     if memcache and (not has_in_mem_cache or reload_cache):
         if verbose:
-            print('Caching in-memory...')
+            print("Caching in-memory...")
         _squigglepy_internal_sample_caches[str(dist)] = samples
         if verbose:
-            print('...Cached')
+            print("...Cached")
 
     if dump_cache_file:
-        cache_path = dump_cache_file + '.sqcache.npy'
+        cache_path = dump_cache_file + ".sqcache.npy"
         if verbose:
-            print('Writing cache to file `{}`...'.format(cache_path))
-        with open(cache_path, 'wb') as f:
+            print("Writing cache to file `{}`...".format(cache_path))
+        with open(cache_path, "wb") as f:
             np.save(f, samples)
         if verbose:
-            print('...Cached')
+            print("...Cached")
 
     # Return
     return np.array(samples) if isinstance(samples, list) else samples

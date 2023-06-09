@@ -47,16 +47,28 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
     >>> simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
     0.07763975155279504
     """
-    return ((likelihood_h * prior) /
-            (likelihood_h * prior +
-             likelihood_not_h * (1 - prior)))
+    return (likelihood_h * prior) / (
+        likelihood_h * prior + likelihood_not_h * (1 - prior)
+    )
 
 
-def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
-             reduce_fn=None, raw=False, memcache=True, memcache_load=True,
-             memcache_save=True, reload_cache=False, dump_cache_file=None,
-             load_cache_file=None, cache_file_primary=False,
-             verbose=False, cores=1):
+def bayesnet(
+    event_fn=None,
+    n=1,
+    find=None,
+    conditional_on=None,
+    reduce_fn=None,
+    raw=False,
+    memcache=True,
+    memcache_load=True,
+    memcache_save=True,
+    reload_cache=False,
+    dump_cache_file=None,
+    load_cache_file=None,
+    cache_file_primary=False,
+    verbose=False,
+    cores=1,
+):
     """
     Calculate a Bayesian network.
 
@@ -139,7 +151,7 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
         memcache_load = False
         memcache_save = False
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
-    cache_path = load_cache_file + '.sqcache' if load_cache_file else None
+    cache_path = load_cache_file + ".sqcache" if load_cache_file else None
     has_file_cache = os.path.exists(cache_path) if load_cache_file else False
 
     if load_cache_file or dump_cache_file or cores > 1:
@@ -147,31 +159,38 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
         decoder = msgspec.msgpack.Decoder()
 
     if load_cache_file and not has_file_cache and verbose:
-        print('Warning: cache file `{}.sqcache` not found.'.format(load_cache_file))
+        print("Warning: cache file `{}.sqcache` not found.".format(load_cache_file))
 
     if not reload_cache:
-        if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
+        if (
+            load_cache_file
+            and has_file_cache
+            and (not has_in_mem_cache or cache_file_primary)
+        ):
             if verbose:
-                print('Loading from cache file (`{}`)...'.format(cache_path))
-            with open(cache_path, 'rb') as f:
+                print("Loading from cache file (`{}`)...".format(cache_path))
+            with open(cache_path, "rb") as f:
                 events = decoder.decode(f.read())
 
         elif memcache_load and has_in_mem_cache:
             if verbose:
-                print('Loading from in-memory cache...')
+                print("Loading from in-memory cache...")
             events = _squigglepy_internal_bayesnet_caches.get(event_fn)
 
         if events:
-            if events['metadata']['n'] < n:
-                raise ValueError(('insufficient samples - {} results cached but ' +
-                                  'requested {}').format(events['metadata']['n'], n))
+            if events["metadata"]["n"] < n:
+                raise ValueError(
+                    (
+                        "insufficient samples - {} results cached but " + "requested {}"
+                    ).format(events["metadata"]["n"], n)
+                )
 
-            events = events['events']
+            events = events["events"]
             if verbose:
-                print('...Loaded')
+                print("...Loaded")
 
     elif verbose:
-        print('Reloading cache...')
+        print("Reloading cache...")
 
     if events is None:
         if event_fn is None:
@@ -183,104 +202,105 @@ def bayesnet(event_fn=None, n=1, find=None, conditional_on=None,
 
         if cores == 1:
             if verbose:
-                print('Generating Bayes net...')
+                print("Generating Bayes net...")
             r_ = range(n)
             pbar = _init_tqdm(verbose=verbose, total=n)
             events = [run_event_fn(pbar=pbar, total_cores=1) for _ in r_]
             _flush_tqdm(pbar)
         else:
             if verbose:
-                print('Generating Bayes net with {} cores...'.format(cores))
+                print("Generating Bayes net with {} cores...".format(cores))
             with mp.ProcessingPool(cores) as pool:
                 cuts = _core_cuts(n, cores)
 
                 def multicore_event_fn(core, total_cores=1, verbose=False):
                     r_ = range(cuts[core])
                     pbar = _init_tqdm(verbose=verbose, total=n)
-                    batch = [run_event_fn(pbar=pbar, total_cores=total_cores) for _ in r_]
+                    batch = [
+                        run_event_fn(pbar=pbar, total_cores=total_cores) for _ in r_
+                    ]
                     _flush_tqdm(pbar)
 
                     if verbose:
-                        print('Shuffling data...')
+                        print("Shuffling data...")
 
-                    with open('test-core-{}.sqcache'.format(core), 'wb') as outfile:
+                    with open("test-core-{}.sqcache".format(core), "wb") as outfile:
                         encoder = msgspec.msgpack.Encoder()
                         outfile.write(encoder.encode(batch))
 
                 pool_results = pool.amap(multicore_event_fn, list(range(cores - 1)))
                 multicore_event_fn(cores - 1, total_cores=cores, verbose=verbose)
                 if verbose:
-                    print('Waiting for other cores...')
+                    print("Waiting for other cores...")
                 while not pool_results.ready():
                     if verbose:
-                        print('.', end='', flush=True)
+                        print(".", end="", flush=True)
                     time.sleep(1)
 
         if cores > 1:
             if verbose:
-                print('Collecting data...')
+                print("Collecting data...")
             events = []
             pbar = _init_tqdm(verbose=verbose, total=cores)
             for c in range(cores):
                 _tick_tqdm(pbar, 1)
-                with open('test-core-{}.sqcache'.format(c), 'rb') as infile:
+                with open("test-core-{}.sqcache".format(c), "rb") as infile:
                     events += decoder.decode(infile.read())
-                os.remove('test-core-{}.sqcache'.format(c))
+                os.remove("test-core-{}.sqcache".format(c))
             _flush_tqdm(pbar)
             if verbose:
-                print('...Collected!')
+                print("...Collected!")
 
-    metadata = {'n': n,
-                'last_generated': datetime.now()}
-    cache_data = {'events': events, 'metadata': metadata}
+    metadata = {"n": n, "last_generated": datetime.now()}
+    cache_data = {"events": events, "metadata": metadata}
     if memcache_save and (not has_in_mem_cache or reload_cache):
         if verbose:
-            print('Caching in-memory...')
+            print("Caching in-memory...")
         _squigglepy_internal_bayesnet_caches[event_fn] = cache_data
         if verbose:
-            print('...Cached!')
+            print("...Cached!")
 
     if dump_cache_file:
-        cache_path = dump_cache_file + '.sqcache'
+        cache_path = dump_cache_file + ".sqcache"
         if verbose:
-            print('Writing cache to file `{}`...'.format(cache_path))
-        with open(cache_path, 'wb') as f:
+            print("Writing cache to file `{}`...".format(cache_path))
+        with open(cache_path, "wb") as f:
             f.write(encoder.encode(cache_data))
         if verbose:
-            print('...Cached!')
+            print("...Cached!")
 
     if conditional_on is not None:
         if verbose:
-            print('Filtering conditional...')
+            print("Filtering conditional...")
         events = [e for e in events if conditional_on(e)]
 
     if len(events) < 1:
-        raise ValueError('insufficient samples for condition')
+        raise ValueError("insufficient samples for condition")
 
     if conditional_on and verbose:
-        print('...Filtered!')
+        print("...Filtered!")
 
     if find is None:
         if verbose:
-            print('...Reducing')
+            print("...Reducing")
         events = events if reduce_fn is None else reduce_fn(events)
         if verbose:
-            print('...Reduced!')
+            print("...Reduced!")
     else:
         if verbose:
-            print('...Finding')
+            print("...Finding")
         events = [find(e) for e in events]
         if verbose:
-            print('...Found!')
+            print("...Found!")
         if not raw:
             if verbose:
-                print('...Reducing')
+                print("...Reducing")
             reduce_fn = np.mean if reduce_fn is None else reduce_fn
             events = reduce_fn(events)
             if verbose:
-                print('...Reduced!')
+                print("...Reduced!")
     if verbose:
-        print('...All done!')
+        print("...All done!")
     return events
 
 
@@ -315,26 +335,34 @@ def update(prior, evidence, evidence_weight=1):
     >> bayes.update(prior, evidence)
     <Distribution> norm(mean=2.53, sd=0.29)
     """
-    if prior.type == 'norm' and evidence.type == 'norm':
+    if prior.type == "norm" and evidence.type == "norm":
         prior_mean = prior.mean
-        prior_var = prior.sd ** 2
+        prior_var = prior.sd**2
         evidence_mean = evidence.mean
-        evidence_var = evidence.sd ** 2
-        return norm(mean=((evidence_var * prior_mean +
-                           evidence_weight * (prior_var * evidence_mean)) /
-                          (evidence_weight * prior_var + evidence_var)),
-                    sd=math.sqrt((evidence_var * prior_var) /
-                                 (evidence_weight * prior_var + evidence_var)))
-    elif prior.type == 'beta' and evidence.type == 'beta':
+        evidence_var = evidence.sd**2
+        return norm(
+            mean=(
+                (
+                    evidence_var * prior_mean
+                    + evidence_weight * (prior_var * evidence_mean)
+                )
+                / (evidence_weight * prior_var + evidence_var)
+            ),
+            sd=math.sqrt(
+                (evidence_var * prior_var)
+                / (evidence_weight * prior_var + evidence_var)
+            ),
+        )
+    elif prior.type == "beta" and evidence.type == "beta":
         prior_a = prior.a
         prior_b = prior.b
         evidence_a = evidence.a
         evidence_b = evidence.b
         return beta(prior_a + evidence_a, prior_b + evidence_b)
     elif prior.type != evidence.type:
-        raise ValueError('can only update distributions of the same type.')
+        raise ValueError("can only update distributions of the same type.")
     else:
-        raise ValueError('type `{}` not supported.'.format(prior.type))
+        raise ValueError("type `{}` not supported.".format(prior.type))
 
 
 def average(prior, evidence, weights=[0.5, 0.5], relative_weights=None):
@@ -367,4 +395,6 @@ def average(prior, evidence, weights=[0.5, 0.5], relative_weights=None):
     >> bayes.average(prior, evidence)
     <Distribution> mixture
     """
-    return mixture(dists=[prior, evidence], weights=weights, relative_weights=relative_weights)
+    return mixture(
+        dists=[prior, evidence], weights=weights, relative_weights=relative_weights
+    )

@@ -6,12 +6,12 @@ def test_thousand():
 
 
 def test_million():
-    assert M == 10 ** 6
+    assert M == 10**6
 
 
 def test_billion():
-    assert B == 10 ** 9
+    assert B == 10**9
 
 
 def test_trillion():
-    assert T == 10 ** 12
+    assert T == 10**12

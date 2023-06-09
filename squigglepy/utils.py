@@ -9,11 +9,15 @@ from collections import Counter
 from collections.abc import Iterable
 
 
-def _process_weights_values(weights=None, relative_weights=None, values=None, drop_na=False):
+def _process_weights_values(
+    weights=None, relative_weights=None, values=None, drop_na=False
+):
     if weights is not None and relative_weights is not None:
-        raise ValueError('can only pass either `weights` or `relative_weights`, not both.')
+        raise ValueError(
+            "can only pass either `weights` or `relative_weights`, not both."
+        )
     if values is None or _safe_len(values) == 0:
-        raise ValueError('must pass `values`')
+        raise ValueError("must pass `values`")
 
     relative = False
     if relative_weights is not None:
@@ -25,7 +29,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
     elif isinstance(weights, np.ndarray):
         weights = list(weights)
     elif weights is not None and not _is_iterable(weights):
-        raise ValueError('passed weights must be an iterable')
+        raise ValueError("passed weights must be an iterable")
 
     if isinstance(values, np.ndarray):
         values = list(values)
@@ -36,26 +40,26 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
             weights = list(values.values())
             values = list(values.keys())
         else:
-            raise ValueError('cannot pass dict and weights separately')
+            raise ValueError("cannot pass dict and weights separately")
     elif values is not None and not _is_iterable(values):
-        raise ValueError('passed values must be an iterable')
+        raise ValueError("passed values must be an iterable")
 
     if weights is None:
         if isinstance(values[0], list) and len(values[0]) == 2:
             weights = [v[0] for v in values]
             values = [v[1] for v in values]
             if drop_na and any([_is_na_like(v) for v in values]):
-                raise ValueError('cannot drop NA and process weights')
+                raise ValueError("cannot drop NA and process weights")
         else:
             if drop_na:
                 values = [v for v in values if not _is_na_like(v)]
             len_ = len(values)
             weights = [1 / len_ for _ in range(len_)]
     elif drop_na and any([_is_na_like(v) for v in values]):
-        raise ValueError('cannot drop NA and process weights')
+        raise ValueError("cannot drop NA and process weights")
 
     if any([_is_na_like(w) for w in weights]):
-        raise ValueError('cannot handle NA-like values in weights')
+        raise ValueError("cannot handle NA-like values in weights")
     sum_weights = sum(weights)
 
     if relative:
@@ -64,17 +68,18 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
         if len(weights) == len(values) - 1 and sum_weights < 1:
             weights.append(1 - sum_weights)
         elif sum_weights <= 0.99 or sum_weights >= 1.01:
-            raise ValueError('weights don\'t sum to 1 -' +
-                             ' they sum to {}'.format(sum_weights))
+            raise ValueError(
+                "weights don't sum to 1 -" + " they sum to {}".format(sum_weights)
+            )
 
     if len(weights) != len(values):
-        raise ValueError('weights and values not same length')
+        raise ValueError("weights and values not same length")
 
     new_weights = []
     new_values = []
     for i, w in enumerate(weights):
         if w < 0:
-            raise ValueError('weight cannot be negative')
+            raise ValueError("weight cannot be negative")
         if w > 0:  # Note that w = 0 is dropped here
             new_weights.append(w)
             new_values.append(values[i])
@@ -83,10 +88,12 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
 
 
 def _process_discrete_weights_values(items):
-    if (len(items) >= 100 and
-       not isinstance(items, dict) and
-       not isinstance(items[0], list) and
-       _safe_len(_safe_set(items)) < _safe_len(items)):
+    if (
+        len(items) >= 100
+        and not isinstance(items, dict)
+        and not isinstance(items[0], list)
+        and _safe_len(_safe_set(items)) < _safe_len(items)
+    ):
         vcounter = Counter(items)
         sumv = sum([v for k, v in vcounter.items()])
         items = {k: v / sumv for k, v in vcounter.items()}
@@ -213,6 +220,7 @@ def is_dist(obj):
     False
     """
     from .distributions import BaseDistribution
+
     return isinstance(obj, BaseDistribution)
 
 
@@ -242,12 +250,14 @@ def is_sampleable(obj):
     >>> is_sampleable([0, 1])
     False
     """
-    return (is_dist(obj) or
-            isinstance(obj, int) or
-            isinstance(obj, float) or
-            isinstance(obj, str) or
-            obj is None or
-            callable(obj))
+    return (
+        is_dist(obj)
+        or isinstance(obj, int)
+        or isinstance(obj, float)
+        or isinstance(obj, str)
+        or obj is None
+        or callable(obj)
+    )
 
 
 def normalize(lst):
@@ -290,8 +300,10 @@ def event_occurs(p):
     """
     if is_dist(p) or callable(p):
         from .samplers import sample
+
         p = sample(p)
     from .rng import _squigglepy_internal_rng
+
     return _squigglepy_internal_rng.uniform(0, 1) < p
 
 
@@ -363,14 +375,15 @@ def one_in(p, digits=0, verbose=True):
     "1 in 10"
     """
     p = _round(1 / p, digits)
-    return '1 in {:,}'.format(p) if verbose else p
+    return "1 in {:,}".format(p) if verbose else p
 
 
-def get_percentiles(data,
-                    percentiles=[1, 5, 10, 20, 30, 40, 50,
-                                 60, 70, 80, 90, 95, 99],
-                    reverse=False,
-                    digits=None):
+def get_percentiles(
+    data,
+    percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    reverse=False,
+    digits=None,
+):
     """
     Print the percentiles of the data.
 
@@ -406,10 +419,13 @@ def get_percentiles(data,
         return dict(list(zip(percentile_labels, percentiles)))
 
 
-def get_log_percentiles(data,
-                        percentiles=[1, 5, 10, 20, 30, 40, 50,
-                                     60, 70, 80, 90, 95, 99],
-                        reverse=False, display=True, digits=1):
+def get_log_percentiles(
+    data,
+    percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    reverse=False,
+    display=True,
+    digits=1,
+):
     """
     Print the log (base 10) of the percentiles of the data.
 
@@ -438,20 +454,24 @@ def get_log_percentiles(data,
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
-    percentiles = get_percentiles(data,
-                                  percentiles=percentiles,
-                                  reverse=reverse,
-                                  digits=digits)
+    percentiles = get_percentiles(
+        data, percentiles=percentiles, reverse=reverse, digits=digits
+    )
     if isinstance(percentiles, dict):
         if display:
-            return dict([(k, ('{:.' + str(digits) + 'e}').format(v)) for
-                         k, v in percentiles.items()])
+            return dict(
+                [
+                    (k, ("{:." + str(digits) + "e}").format(v))
+                    for k, v in percentiles.items()
+                ]
+            )
         else:
-            return dict([(k, _round(np.log10(v), digits)) for
-                        k, v in percentiles.items()])
+            return dict(
+                [(k, _round(np.log10(v), digits)) for k, v in percentiles.items()]
+            )
     else:
         if display:
-            digit_str = '{:.' + str(digits) + 'e}'
+            digit_str = "{:." + str(digits) + "e}"
             digit_str.format(percentiles)
         else:
             return _round(np.log10(percentiles), digits)
@@ -483,9 +503,11 @@ def get_mean_and_ci(data, credibility=90, digits=None):
     ci_low = (100 - credibility) / 2
     ci_high = 100 - ci_low
     percentiles = get_percentiles(data, percentiles=[ci_low, ci_high], digits=digits)
-    return {'mean': _round(np.mean(data), digits),
-            'ci_low': percentiles[ci_low],
-            'ci_high': percentiles[ci_high]}
+    return {
+        "mean": _round(np.mean(data), digits),
+        "ci_low": percentiles[ci_low],
+        "ci_high": percentiles[ci_high],
+    }
 
 
 def get_median_and_ci(data, credibility=90, digits=None):
@@ -513,10 +535,14 @@ def get_median_and_ci(data, credibility=90, digits=None):
     """
     ci_low = (100 - credibility) / 2
     ci_high = 100 - ci_low
-    percentiles = get_percentiles(data, percentiles=[ci_low, 50, ci_high], digits=digits)
-    return {'median': percentiles[50],
-            'ci_low': percentiles[ci_low],
-            'ci_high': percentiles[ci_high]}
+    percentiles = get_percentiles(
+        data, percentiles=[ci_low, 50, ci_high], digits=digits
+    )
+    return {
+        "median": percentiles[50],
+        "ci_low": percentiles[ci_low],
+        "ci_high": percentiles[ci_high],
+    }
 
 
 def geomean(a, weights=None, relative_weights=None, drop_na=True):
@@ -567,12 +593,14 @@ def p_to_odds(p):
     >>> p_to_odds(0.1)
     0.1111111111111111
     """
+
     def _convert(p):
         if _is_na_like(p):
             return p
         if p <= 0 or p >= 1:
-            raise ValueError('p must be between 0 and 1')
+            raise ValueError("p must be between 0 and 1")
         return p / (1 - p)
+
     return _simplify(np.array([_convert(p) for p in _enlist(p)]))
 
 
@@ -595,12 +623,14 @@ def odds_to_p(odds):
     >>> odds_to_p(0.1)
     0.09090909090909091
     """
+
     def _convert(o):
         if _is_na_like(o):
             return o
         if o <= 0:
-            raise ValueError('odds must be greater than 0')
+            raise ValueError("odds must be greater than 0")
         return o / (1 + o)
+
     return _simplify(np.array([_convert(o) for o in _enlist(odds)]))
 
 
@@ -634,8 +664,7 @@ def geomean_odds(a, weights=None, relative_weights=None, drop_na=True):
     return odds_to_p(geomean(p_to_odds(a), weights=weights))
 
 
-def laplace(s, n=None, time_passed=None,
-            time_remaining=None, time_fixed=False):
+def laplace(s, n=None, time_passed=None, time_remaining=None, time_fixed=False):
     """
     Return probability of success on next trial given Laplace's law of succession.
 
@@ -677,31 +706,36 @@ def laplace(s, n=None, time_passed=None,
     0.012820512820512664
     """
     if n is not None and s > n:
-        raise ValueError('`s` cannot be greater than `n`')
+        raise ValueError("`s` cannot be greater than `n`")
     elif time_passed is None and time_remaining is None and n is not None:
         return (s + 1) / (n + 2)
     elif time_passed is not None and time_remaining is not None and s == 0:
-        return 1 - ((1 + time_remaining/time_passed) ** -1)
-    elif (time_passed is not None and time_remaining is not None
-          and s > 0 and not time_fixed):
-        return 1 - ((1 + time_remaining/time_passed) ** -s)
-    elif (time_passed is not None and time_remaining is not None
-          and s > 0 and time_fixed):
-        return 1 - ((1 + time_remaining/time_passed) ** -(s + 1))
+        return 1 - ((1 + time_remaining / time_passed) ** -1)
+    elif (
+        time_passed is not None
+        and time_remaining is not None
+        and s > 0
+        and not time_fixed
+    ):
+        return 1 - ((1 + time_remaining / time_passed) ** -s)
+    elif (
+        time_passed is not None and time_remaining is not None and s > 0 and time_fixed
+    ):
+        return 1 - ((1 + time_remaining / time_passed) ** -(s + 1))
     elif time_passed is not None and time_remaining is None and s == 0:
-        return 1 - ((1 + 1/time_passed) ** -1)
-    elif (time_passed is not None and time_remaining is None
-          and s > 0 and not time_fixed):
-        return 1 - ((1 + 1/time_passed) ** -s)
-    elif (time_passed is not None and time_remaining is None
-          and s > 0 and time_fixed):
-        return 1 - ((1 + 1/time_passed) ** -(s + 1))
+        return 1 - ((1 + 1 / time_passed) ** -1)
+    elif (
+        time_passed is not None and time_remaining is None and s > 0 and not time_fixed
+    ):
+        return 1 - ((1 + 1 / time_passed) ** -s)
+    elif time_passed is not None and time_remaining is None and s > 0 and time_fixed:
+        return 1 - ((1 + 1 / time_passed) ** -(s + 1))
     elif time_passed is None and n is None:
-        raise ValueError('Must define `time_passed` or `n`')
+        raise ValueError("Must define `time_passed` or `n`")
     elif time_passed is None and time_remaining is not None:
-        raise ValueError('Must define `time_passed`')
+        raise ValueError("Must define `time_passed`")
     else:
-        raise ValueError('Fatal logic error - programmer made mistake!')
+        raise ValueError("Fatal logic error - programmer made mistake!")
 
 
 def growth_rate_to_doubling_time(growth_rate):
@@ -732,6 +766,7 @@ def growth_rate_to_doubling_time(growth_rate):
     """
     if is_dist(growth_rate):
         from .distributions import dist_log
+
         return math.log(2) / dist_log(1.0 + growth_rate)
     elif _is_numpy(growth_rate):
         return np.log(2) / np.log(1.0 + growth_rate)
@@ -768,6 +803,7 @@ def doubling_time_to_growth_rate(doubling_time):
     """
     if is_dist(doubling_time):
         from .distributions import dist_exp
+
         return dist_exp(math.log(2) / doubling_time) - 1
     elif _is_numpy(doubling_time):
         return np.exp(np.log(2) / doubling_time) - 1
@@ -799,16 +835,18 @@ def roll_die(sides, n=1):
     """
     if is_dist(sides) or callable(sides):
         from .samplers import sample
+
         sides = sample(sides)
     if not isinstance(n, int):
-        raise ValueError('can only roll an integer number of times')
+        raise ValueError("can only roll an integer number of times")
     elif sides < 2:
-        raise ValueError('cannot roll less than a 2-sided die.')
+        raise ValueError("cannot roll less than a 2-sided die.")
     elif not isinstance(sides, int):
-        raise ValueError('can only roll an integer number of sides')
+        raise ValueError("can only roll an integer number of sides")
     else:
         from .samplers import sample
         from .distributions import discrete
+
         return sample(discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
 
 
@@ -835,11 +873,13 @@ def flip_coin(n=1):
     rolls = roll_die(2, n=n)
     if isinstance(rolls, int):
         rolls = [rolls]
-    flips = ['heads' if d == 2 else 'tails' for d in rolls]
+    flips = ["heads" if d == 2 else "tails" for d in rolls]
     return flips[0] if len(flips) == 1 else flips
 
 
-def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0):
+def kelly(
+    my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0
+):
     """
     Calculate the Kelly criterion.
 
@@ -895,11 +935,11 @@ def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, cu
      'expected_roi': 0.375, 'expected_arr': None, 'resolve_date': None}
     """
     if market_price >= 1 or market_price <= 0:
-        raise ValueError('market_price must be >0 and <1')
+        raise ValueError("market_price must be >0 and <1")
     if my_price >= 1 or my_price <= 0:
-        raise ValueError('my_price must be >0 and <1')
+        raise ValueError("my_price must be >0 and <1")
     if deference > 1 or deference < 0:
-        raise ValueError('deference must be >=0 and <=1')
+        raise ValueError("deference must be >=0 and <=1")
     adj_price = my_price * (1 - deference) + market_price * deference
     kelly = np.abs(adj_price - ((1 - adj_price) * (market_price / (1 - market_price))))
     target = bankroll * kelly
@@ -907,24 +947,29 @@ def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, cu
     if resolve_date is None:
         expected_arr = None
     else:
-        resolve_date = datetime.strptime(resolve_date, '%Y-%m-%d')
-        expected_arr = ((expected_roi + 1) ** (365 / (resolve_date - datetime.now()).days)) - 1
-    return {'my_price': round(my_price, 2),
-            'market_price': round(market_price, 2),
-            'deference': round(deference, 3),
-            'adj_price': round(adj_price, 2),
-            'delta_price': round(np.abs(market_price - my_price), 2),
-            'adj_delta_price': round(np.abs(market_price - adj_price), 2),
-            'kelly': round(kelly, 3),
-            'target': round(target, 2),
-            'current': round(current, 2),
-            'delta': round(target - current, 2),
-            'max_gain': round(target / market_price, 2),
-            'modeled_gain': round((adj_price * (target / market_price) +
-                                  (1 - adj_price) * -target), 2),
-            'expected_roi': round(expected_roi, 3),
-            'expected_arr': round(expected_arr, 3) if expected_arr is not None else None,
-            'resolve_date': resolve_date}
+        resolve_date = datetime.strptime(resolve_date, "%Y-%m-%d")
+        expected_arr = (
+            (expected_roi + 1) ** (365 / (resolve_date - datetime.now()).days)
+        ) - 1
+    return {
+        "my_price": round(my_price, 2),
+        "market_price": round(market_price, 2),
+        "deference": round(deference, 3),
+        "adj_price": round(adj_price, 2),
+        "delta_price": round(np.abs(market_price - my_price), 2),
+        "adj_delta_price": round(np.abs(market_price - adj_price), 2),
+        "kelly": round(kelly, 3),
+        "target": round(target, 2),
+        "current": round(current, 2),
+        "delta": round(target - current, 2),
+        "max_gain": round(target / market_price, 2),
+        "modeled_gain": round(
+            (adj_price * (target / market_price) + (1 - adj_price) * -target), 2
+        ),
+        "expected_roi": round(expected_roi, 3),
+        "expected_arr": round(expected_arr, 3) if expected_arr is not None else None,
+        "resolve_date": resolve_date,
+    }
 
 
 def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
@@ -979,12 +1024,14 @@ def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
      'current': 0, 'delta': 50.0, 'max_gain': 125.0, 'modeled_gain': 72.5,
      'expected_roi': 0.75, 'expected_arr': None, 'resolve_date': None}
     """
-    return kelly(my_price=my_price,
-                 market_price=market_price,
-                 bankroll=bankroll,
-                 resolve_date=resolve_date,
-                 current=current,
-                 deference=0)
+    return kelly(
+        my_price=my_price,
+        market_price=market_price,
+        bankroll=bankroll,
+        resolve_date=resolve_date,
+        current=current,
+        deference=0,
+    )
 
 
 def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
@@ -1039,12 +1086,14 @@ def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
      'current': 0, 'delta': 25.0, 'max_gain': 62.5, 'modeled_gain': 23.13,
      'expected_roi': 0.375, 'expected_arr': None, 'resolve_date': None}
     """
-    return kelly(my_price=my_price,
-                 market_price=market_price,
-                 bankroll=bankroll,
-                 resolve_date=resolve_date,
-                 current=current,
-                 deference=0.5)
+    return kelly(
+        my_price=my_price,
+        market_price=market_price,
+        bankroll=bankroll,
+        resolve_date=resolve_date,
+        current=current,
+        deference=0.5,
+    )
 
 
 def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
@@ -1099,12 +1148,14 @@ def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current
      'current': 0, 'delta': 12.5, 'max_gain': 31.25, 'modeled_gain': 8.28,
      'expected_roi': 0.188, 'expected_arr': None, 'resolve_date': None}
     """
-    return kelly(my_price=my_price,
-                 market_price=market_price,
-                 bankroll=bankroll,
-                 resolve_date=resolve_date,
-                 current=current,
-                 deference=0.75)
+    return kelly(
+        my_price=my_price,
+        market_price=market_price,
+        bankroll=bankroll,
+        resolve_date=resolve_date,
+        current=current,
+        deference=0.75,
+    )
 
 
 def extremize(p, e):
@@ -1130,9 +1181,9 @@ def extremize(p, e):
     0.875428191155692
     """
     if p <= 0 or p >= 1:
-        raise ValueError('`p` must be greater than 0 and less than 1')
+        raise ValueError("`p` must be greater than 0 and less than 1")
 
     if p > 0.5:
         return 1 - ((1 - p) ** e)
     else:
-        return p ** e
+        return p**e
