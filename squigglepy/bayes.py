@@ -177,7 +177,8 @@ def bayesnet(
                 if events["metadata"]["n"] < n:
                     raise ValueError(
                         (
-                            "insufficient samples - {} results cached but " + "requested {}"
+                            "insufficient samples - {} results cached but "
+                            + "requested {}"
                         ).format(events["metadata"]["n"], n)
                     )
             else:
