@@ -183,7 +183,7 @@ def bayesnet(
             else:
                 raise ValueError("events is malformed")
 
-            events = events.get("events", [])
+            events = events.get("events", {})
             if verbose:
                 print("...Loaded")
 
