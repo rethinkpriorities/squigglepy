@@ -7,15 +7,16 @@ import numpy as np
 import pathos.multiprocessing as mp
 
 from datetime import datetime
+from typing import Callable, List
 
-from .distributions import BetaDistribution, NormalDistribution, norm, beta, mixture
+from .distributions import BetaDistribution, NormalDistribution, MixtureDistribution, norm, beta, mixture
 from .utils import _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
 _squigglepy_internal_bayesnet_caches = {}
 
 
-def simple_bayes(likelihood_h, likelihood_not_h, prior):
+def simple_bayes(likelihood_h: float, likelihood_not_h: float, prior: float) -> float:
     """
     Calculate Bayes rule.
 
@@ -51,21 +52,21 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
 
 
 def bayesnet(
-    event_fn=None,
-    n=1,
-    find=None,
-    conditional_on=None,
-    reduce_fn=None,
-    raw=False,
-    memcache=True,
-    memcache_load=True,
-    memcache_save=True,
-    reload_cache=False,
-    dump_cache_file=None,
-    load_cache_file=None,
-    cache_file_primary=False,
-    verbose=False,
-    cores=1,
+    event_fn: Callable | None = None,
+    n: int = 1,
+    find: Callable | None = None,
+    conditional_on: Callable | None = None,
+    reduce_fn: Callable | None = None,
+    raw: bool = False,
+    memcache: bool = True,
+    memcache_load: bool = True,
+    memcache_save: bool = True,
+    reload_cache: bool = False,
+    dump_cache_file: str = "",
+    load_cache_file: str = "",
+    cache_file_primary: bool = False,
+    verbose: bool = False,
+    cores: int = 1,
 ):
     """
     Calculate a Bayesian network.
@@ -99,10 +100,10 @@ def bayesnet(
         is True. Cache will be matched based on the ``event_fn``. Default ``True``.
     reload_cache : bool
         If True, any existing cache will be ignored and recalculated. Default ``False``.
-    dump_cache_file : str or None
+    dump_cache_file : str
         If present, will write out the cache to a binary file with this path with
         ``.sqlcache`` appended to the file name.
-    load_cache_file : str or None
+    load_cache_file : str
         If present, will first attempt to load and use a cache from a file with this
         path with ``.sqlcache`` appended to the file name.
     cache_file_primary : bool
@@ -149,8 +150,8 @@ def bayesnet(
         memcache_load = False
         memcache_save = False
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
-    cache_path = load_cache_file + ".sqcache" if load_cache_file else None
-    has_file_cache = os.path.exists(cache_path) if load_cache_file else False
+    cache_path = load_cache_file + ".sqcache" if load_cache_file != "" else ""
+    has_file_cache = os.path.exists(cache_path) if load_cache_file != "" else False
 
     if load_cache_file or dump_cache_file or cores > 1:
         encoder = msgspec.msgpack.Encoder()
@@ -296,7 +297,9 @@ def bayesnet(
     return events
 
 
-def update(prior, evidence, evidence_weight=1):
+def update(
+    prior: BaseDistribution, evidence: BaseDistribution, evidence_weight: float = 1
+) -> BaseDistribution:
     """
     Update a distribution.
 
@@ -354,7 +357,12 @@ def update(prior, evidence, evidence_weight=1):
         raise ValueError("type `{}` not supported.".format(prior.__class__.__name__))
 
 
-def average(prior, evidence, weights=[0.5, 0.5], relative_weights=None):
+def average(
+    prior: BaseDistribution,
+    evidence: BaseDistribution,
+    weights: List | np.ndarray | float | None = [0.5, 0.5],
+    relative_weights: List | np.ndarray | float | None = None,
+) -> MixtureDistribution:
     """
     Average two distributions.
 
@@ -374,14 +382,16 @@ def average(prior, evidence, weights=[0.5, 0.5], relative_weights=None):
 
     Returns
     -------
-    Distribution
+    MixtureDistribution
         A mixture distribution that accords weights to ``prior`` and ``evidence``.
 
     Examples
     --------
-    >> prior = sq.norm(1,5)
-    >> evidence = sq.norm(2,3)
+    >> prior = sq.norm(1, 5)
+    >> evidence = sq.norm(2, 3)
     >> bayes.average(prior, evidence)
     <Distribution> mixture
+    - 0.5 weight on <Distribution> norm(mean=3.0, sd=1.22)
+    - 0.5 weight on <Distribution> norm(mean=2.5, sd=0.3)
     """
     return mixture(dists=[prior, evidence], weights=weights, relative_weights=relative_weights)
