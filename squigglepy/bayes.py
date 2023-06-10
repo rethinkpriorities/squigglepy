@@ -64,19 +64,11 @@ def simple_bayes(likelihood_h: float, likelihood_not_h: float, prior: float) -> 
 
 # TODO: output type for bayesnet
 def bayesnet(
-<<<<<<< HEAD
     event_fn: Optional[Callable] = None,
     n: int = 1,
     find: Optional[Callable] = None,
     conditional_on: Optional[Callable] = None,
     reduce_fn: Optional[Callable] = None,
-=======
-    event_fn: Callable | None = None,
-    n: int = 1,
-    find: Callable | None = None,
-    conditional_on: Callable | None = None,
-    reduce_fn: Callable | None = None,
->>>>>>> 087260e (Started wip_types)
     raw: bool = False,
     memcache: bool = True,
     memcache_load: bool = True,
@@ -173,6 +165,7 @@ def bayesnet(
     cache_path = load_cache_file + ".sqcache" if load_cache_file != "" else ""
     has_file_cache = os.path.exists(cache_path) if load_cache_file != "" else False
 <<<<<<< HEAD
+<<<<<<< HEAD
     encoder = msgspec.msgpack.Encoder()
     decoder = msgspec.msgpack.Decoder()
 =======
@@ -181,6 +174,10 @@ def bayesnet(
         encoder = msgspec.msgpack.Encoder()
         decoder = msgspec.msgpack.Decoder()
 >>>>>>> 087260e (Started wip_types)
+=======
+    encoder = msgspec.msgpack.Encoder()
+    decoder = msgspec.msgpack.Decoder()
+>>>>>>> 10e4ded (fix type issues)
 
     if load_cache_file and not has_file_cache and verbose:
         print("Warning: cache file `{}.sqcache` not found.".format(load_cache_file))
@@ -201,6 +198,7 @@ def bayesnet(
             n_ = events.get("metadata")
             if n_ is not None:
                 n_ = n_.get("n")
+<<<<<<< HEAD
                 if n_ is None:
                     raise ValueError("events is malformed")
                 elif n_ < n:
@@ -208,6 +206,13 @@ def bayesnet(
                         ("insufficient samples - {} results cached but " + "requested {}").format(
                             events["metadata"]["n"], n
                         )
+=======
+                if events["metadata"]["n"] < n:
+                    raise ValueError(
+                        (
+                            "insufficient samples - {} results cached but " + "requested {}"
+                        ).format(events["metadata"]["n"], n)
+>>>>>>> 10e4ded (fix type issues)
                     )
             else:
                 raise ValueError("events is malformed")
@@ -295,6 +300,7 @@ def bayesnet(
         if verbose:
             print("...Cached!")
 
+    assert events is not None
     if conditional_on is not None:
         if verbose:
             print("Filtering conditional...")
@@ -371,8 +377,10 @@ def update(
     """
     if isinstance(prior, NormalDistribution) and isinstance(evidence, NormalDistribution):
         prior_mean = prior.mean
+        assert prior.sd is not None
         prior_var = prior.sd**2
         evidence_mean = evidence.mean
+        assert evidence.sd is not None
         evidence_var = evidence.sd**2
         return norm(
             mean=(
@@ -388,6 +396,10 @@ def update(
         prior_b = prior.b
         evidence_a = evidence.a
         evidence_b = evidence.b
+        assert prior_a is not None
+        assert evidence_a is not None
+        assert prior_b is not None
+        assert evidence_b is not None
         return beta(prior_a + evidence_a, prior_b + evidence_b)
     elif type(prior) != type(evidence):
         print(type(prior), type(evidence))
