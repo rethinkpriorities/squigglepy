@@ -64,11 +64,19 @@ def simple_bayes(likelihood_h: float, likelihood_not_h: float, prior: float) -> 
 
 # TODO: output type for bayesnet
 def bayesnet(
+<<<<<<< HEAD
     event_fn: Optional[Callable] = None,
     n: int = 1,
     find: Optional[Callable] = None,
     conditional_on: Optional[Callable] = None,
     reduce_fn: Optional[Callable] = None,
+=======
+    event_fn: Callable | None = None,
+    n: int = 1,
+    find: Callable | None = None,
+    conditional_on: Callable | None = None,
+    reduce_fn: Callable | None = None,
+>>>>>>> 087260e (Started wip_types)
     raw: bool = False,
     memcache: bool = True,
     memcache_load: bool = True,
@@ -164,8 +172,15 @@ def bayesnet(
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
     cache_path = load_cache_file + ".sqcache" if load_cache_file != "" else ""
     has_file_cache = os.path.exists(cache_path) if load_cache_file != "" else False
+<<<<<<< HEAD
     encoder = msgspec.msgpack.Encoder()
     decoder = msgspec.msgpack.Decoder()
+=======
+
+    if load_cache_file or dump_cache_file or cores > 1:
+        encoder = msgspec.msgpack.Encoder()
+        decoder = msgspec.msgpack.Decoder()
+>>>>>>> 087260e (Started wip_types)
 
     if load_cache_file and not has_file_cache and verbose:
         print("Warning: cache file `{}.sqcache` not found.".format(load_cache_file))
@@ -316,9 +331,13 @@ def bayesnet(
 
 
 def update(
+<<<<<<< HEAD
     prior: Union[NormalDistribution, BetaDistribution],
     evidence: Union[NormalDistribution, BetaDistribution],
     evidence_weight: float = 1,
+=======
+    prior: BaseDistribution, evidence: BaseDistribution, evidence_weight: float = 1
+>>>>>>> 087260e (Started wip_types)
 ) -> BaseDistribution:
     """
     Update a distribution.
@@ -380,8 +399,13 @@ def update(
 def average(
     prior: BaseDistribution,
     evidence: BaseDistribution,
+<<<<<<< HEAD
     weights: OptionalListOfFloats = [0.5, 0.5],
     relative_weights: OptionalListOfFloats = None,
+=======
+    weights: List | np.ndarray | float | None = [0.5, 0.5],
+    relative_weights: List | np.ndarray | float | None = None,
+>>>>>>> 087260e (Started wip_types)
 ) -> MixtureDistribution:
     """
     Average two distributions.
