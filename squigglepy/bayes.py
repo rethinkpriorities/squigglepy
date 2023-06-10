@@ -174,7 +174,9 @@ def bayesnet(
             n_ = events.get("metadata")
             if n_ is not None:
                 n_ = n_.get("n")
-                if events["metadata"]["n"] < n:
+                if n_ is None:
+                    raise ValueError("events is malformed")
+                elif n_ < n:
                     raise ValueError(
                         (
                             "insufficient samples - {} results cached but "
@@ -184,14 +186,15 @@ def bayesnet(
             else:
                 raise ValueError("events is malformed")
 
-            events = events.get("events", {})
+            events = events.get("events", [])
             if verbose:
                 print("...Loaded")
 
     elif verbose:
         print("Reloading cache...")
 
-    if events is None:
+    assert events is not None
+    if len(events) < 1:
         if event_fn is None:
             return None
 
@@ -266,7 +269,6 @@ def bayesnet(
         if verbose:
             print("...Cached!")
 
-    assert events is not None
     if conditional_on is not None:
         if verbose:
             print("Filtering conditional...")
