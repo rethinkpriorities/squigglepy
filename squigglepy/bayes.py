@@ -47,9 +47,7 @@ def simple_bayes(likelihood_h, likelihood_not_h, prior):
     >>> simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
     0.07763975155279504
     """
-    return (likelihood_h * prior) / (
-        likelihood_h * prior + likelihood_not_h * (1 - prior)
-    )
+    return (likelihood_h * prior) / (likelihood_h * prior + likelihood_not_h * (1 - prior))
 
 
 def bayesnet(
@@ -162,11 +160,7 @@ def bayesnet(
         print("Warning: cache file `{}.sqcache` not found.".format(load_cache_file))
 
     if not reload_cache:
-        if (
-            load_cache_file
-            and has_file_cache
-            and (not has_in_mem_cache or cache_file_primary)
-        ):
+        if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
             if verbose:
                 print("Loading from cache file (`{}`)...".format(cache_path))
             with open(cache_path, "rb") as f:
@@ -180,9 +174,9 @@ def bayesnet(
         if events:
             if events["metadata"]["n"] < n:
                 raise ValueError(
-                    (
-                        "insufficient samples - {} results cached but " + "requested {}"
-                    ).format(events["metadata"]["n"], n)
+                    ("insufficient samples - {} results cached but " + "requested {}").format(
+                        events["metadata"]["n"], n
+                    )
                 )
 
             events = events["events"]
@@ -216,9 +210,7 @@ def bayesnet(
                 def multicore_event_fn(core, total_cores=1, verbose=False):
                     r_ = range(cuts[core])
                     pbar = _init_tqdm(verbose=verbose, total=n)
-                    batch = [
-                        run_event_fn(pbar=pbar, total_cores=total_cores) for _ in r_
-                    ]
+                    batch = [run_event_fn(pbar=pbar, total_cores=total_cores) for _ in r_]
                     _flush_tqdm(pbar)
 
                     if verbose:
@@ -342,15 +334,11 @@ def update(prior, evidence, evidence_weight=1):
         evidence_var = evidence.sd**2
         return norm(
             mean=(
-                (
-                    evidence_var * prior_mean
-                    + evidence_weight * (prior_var * evidence_mean)
-                )
+                (evidence_var * prior_mean + evidence_weight * (prior_var * evidence_mean))
                 / (evidence_weight * prior_var + evidence_var)
             ),
             sd=math.sqrt(
-                (evidence_var * prior_var)
-                / (evidence_weight * prior_var + evidence_var)
+                (evidence_var * prior_var) / (evidence_weight * prior_var + evidence_var)
             ),
         )
     elif prior.type == "beta" and evidence.type == "beta":
@@ -395,6 +383,4 @@ def average(prior, evidence, weights=[0.5, 0.5], relative_weights=None):
     >> bayes.average(prior, evidence)
     <Distribution> mixture
     """
-    return mixture(
-        dists=[prior, evidence], weights=weights, relative_weights=relative_weights
-    )
+    return mixture(dists=[prior, evidence], weights=weights, relative_weights=relative_weights)

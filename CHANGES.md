@@ -1,5 +1,6 @@
 ## v0.27
 
+* This package now only supports Python 3.9 and higher.
 * Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
 * Using black now for formatting.
 * Switched from `flake8` to `ruff`.

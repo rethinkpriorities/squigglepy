@@ -245,9 +245,7 @@ def dist_fn(dist1, dist2=None, fn=None, name=None):
         def out_fn(d):
             out = d
             for f in fn:
-                out = ComplexDistribution(
-                    out, None, fn=f, fn_str=_get_fname(f, name), infix=False
-                )
+                out = ComplexDistribution(out, None, fn=f, fn_str=_get_fname(f, name), infix=False)
             return out
 
         return out_fn
@@ -268,9 +266,7 @@ def dist_fn(dist1, dist2=None, fn=None, name=None):
 
     out = dist1
     for f in fn:
-        out = ComplexDistribution(
-            out, dist2, fn=f, fn_str=_get_fname(f, name), infix=False
-        )
+        out = ComplexDistribution(out, dist2, fn=f, fn_str=_get_fname(f, name), infix=False)
 
     return out
 
@@ -643,9 +639,7 @@ def uniform(x, y):
 
 
 class NormalDistribution(OperableDistribution):
-    def __init__(
-        self, x=None, y=None, mean=None, sd=None, credibility=90, lclip=None, rclip=None
-    ):
+    def __init__(self, x=None, y=None, mean=None, sd=None, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -755,34 +749,21 @@ class LognormalDistribution(OperableDistribution):
         if self.x is not None and self.x <= 0:
             raise ValueError("lognormal distribution must have values > 0")
 
-        if (
-            (self.x is None or self.y is None)
-            and self.norm_sd is None
-            and self.lognorm_sd is None
-        ):
+        if (self.x is None or self.y is None) and self.norm_sd is None and self.lognorm_sd is None:
             raise ValueError(
-                (
-                    "must define only one of x/y, norm_mean/norm_sd, "
-                    "or lognorm_mean/lognorm_sd"
-                )
+                ("must define only one of x/y, norm_mean/norm_sd, " "or lognorm_mean/lognorm_sd")
             )
         elif (self.x is not None or self.y is not None) and (
             self.norm_sd is not None or self.lognorm_sd is not None
         ):
             raise ValueError(
-                (
-                    "must define only one of x/y, norm_mean/norm_sd, "
-                    "or lognorm_mean/lognorm_sd"
-                )
+                ("must define only one of x/y, norm_mean/norm_sd, " "or lognorm_mean/lognorm_sd")
             )
         elif (self.norm_sd is not None or self.norm_mean is not None) and (
             self.lognorm_sd is not None or self.lognorm_mean is not None
         ):
             raise ValueError(
-                (
-                    "must define only one of x/y, norm_mean/norm_sd, "
-                    "or lognorm_mean/lognorm_sd"
-                )
+                ("must define only one of x/y, norm_mean/norm_sd, " "or lognorm_mean/lognorm_sd")
             )
         elif self.norm_sd is not None and self.norm_mean is None:
             self.norm_mean = 0
@@ -798,24 +779,16 @@ class LognormalDistribution(OperableDistribution):
         if self.lognorm_sd is None:
             self.lognorm_mean = np.exp(self.norm_mean + self.norm_sd**2 / 2)
             self.lognorm_sd = (
-                (np.exp(self.norm_sd**2) - 1)
-                * np.exp(2 * self.norm_mean + self.norm_sd**2)
+                (np.exp(self.norm_sd**2) - 1) * np.exp(2 * self.norm_mean + self.norm_sd**2)
             ) ** 0.5
         elif self.norm_sd is None:
             self.norm_mean = np.log(
-                (
-                    self.lognorm_mean**2
-                    / np.sqrt(self.lognorm_sd**2 + self.lognorm_mean**2)
-                )
+                (self.lognorm_mean**2 / np.sqrt(self.lognorm_sd**2 + self.lognorm_mean**2))
             )
-            self.norm_sd = np.sqrt(
-                np.log(1 + self.lognorm_sd**2 / self.lognorm_mean**2)
-            )
+            self.norm_sd = np.sqrt(np.log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
 
     def __str__(self):
-        out = (
-            "<Distribution> {}(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
-        )
+        out = "<Distribution> {}(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
         out = out.format(
             self.type,
             round(self.lognorm_mean, 2),
@@ -1048,11 +1021,7 @@ def bernoulli(p):
 class DiscreteDistribution(OperableDistribution):
     def __init__(self, items):
         super().__init__()
-        if (
-            not isinstance(items, dict)
-            and not isinstance(items, list)
-            and not _is_numpy(items)
-        ):
+        if not isinstance(items, dict) and not isinstance(items, list) and not _is_numpy(items):
             raise ValueError("inputs to discrete must be a dict or list")
         self.items = list(items) if _is_numpy(items) else items
         self.type = "discrete"
@@ -1101,9 +1070,7 @@ class TDistribution(OperableDistribution):
         self.rclip = rclip
         self.type = "tdist"
 
-        if (self.x is None or self.y is None) and not (
-            self.x is None and self.y is None
-        ):
+        if (self.x is None or self.y is None) and not (self.x is None and self.y is None):
             raise ValueError("must define either both `x` and `y` or neither.")
         elif self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
@@ -1113,9 +1080,7 @@ class TDistribution(OperableDistribution):
 
     def __str__(self):
         if self.x is not None:
-            out = "<Distribution> {}(x={}, y={}, t={}".format(
-                self.type, self.x, self.y, self.t
-            )
+            out = "<Distribution> {}(x={}, y={}, t={}".format(self.type, self.x, self.y, self.t)
         else:
             out = "<Distribution> {}(t={}".format(self.type, self.t)
         if self.credibility != 90 and self.credibility is not None:
@@ -1165,9 +1130,7 @@ def tdist(x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
     >>> tdist()
     <Distribution> tdist(t=1)
     """
-    return TDistribution(
-        x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip
-    )
+    return TDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
 class LogTDistribution(OperableDistribution):
@@ -1182,9 +1145,7 @@ class LogTDistribution(OperableDistribution):
         self.rclip = rclip
         self.type = "log_tdist"
 
-        if (self.x is None or self.y is None) and not (
-            self.x is None and self.y is None
-        ):
+        if (self.x is None or self.y is None) and not (self.x is None and self.y is None):
             raise ValueError("must define either both `x` and `y` or neither.")
         elif self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
@@ -1194,9 +1155,7 @@ class LogTDistribution(OperableDistribution):
 
     def __str__(self):
         if self.x is not None:
-            out = "<Distribution> {}(x={}, y={}, t={}".format(
-                self.type, self.x, self.y, self.t
-            )
+            out = "<Distribution> {}(x={}, y={}, t={}".format(self.type, self.x, self.y, self.t)
         else:
             out = "<Distribution> {}(t={}".format(self.type, self.t)
         if self.credibility != 90 and self.credibility is not None:
@@ -1246,9 +1205,7 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
     >>> log_tdist()
     <Distribution> log_tdist(t=1)
     """
-    return LogTDistribution(
-        x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip
-    )
+    return LogTDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
 class TriangularDistribution(OperableDistribution):
@@ -1262,9 +1219,7 @@ class TriangularDistribution(OperableDistribution):
         self.type = "triangular"
 
     def __str__(self):
-        out = "<Distribution> {}({}, {}, {}".format(
-            self.type, self.left, self.mode, self.right
-        )
+        out = "<Distribution> {}({}, {}, {}".format(self.type, self.left, self.mode, self.right)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -1299,9 +1254,7 @@ def triangular(left, mode, right, lclip=None, rclip=None):
     >>> triangular(1, 2, 3)
     <Distribution> triangular(1, 2, 3)
     """
-    return TriangularDistribution(
-        left=left, mode=mode, right=right, lclip=lclip, rclip=rclip
-    )
+    return TriangularDistribution(left=left, mode=mode, right=right, lclip=lclip, rclip=rclip)
 
 
 class PoissonDistribution(OperableDistribution):
@@ -1433,9 +1386,7 @@ class GammaDistribution(OperableDistribution):
         self.type = "gamma"
 
     def __str__(self):
-        out = "<Distribution> {}(shape={}, scale={}".format(
-            self.type, self.shape, self.scale
-        )
+        out = "<Distribution> {}(shape={}, scale={}".format(self.type, self.shape, self.scale)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -1503,9 +1454,7 @@ def pareto(shape):
 
 
 class MixtureDistribution(OperableDistribution):
-    def __init__(
-        self, dists, weights=None, relative_weights=None, lclip=None, rclip=None
-    ):
+    def __init__(self, dists, weights=None, relative_weights=None, lclip=None, rclip=None):
         super().__init__()
         weights, dists = _process_weights_values(weights, relative_weights, dists)
         self.dists = dists

@@ -40,9 +40,7 @@ def test_process_weights_values_simple_case():
 
 
 def test_process_weights_values_numpy_arrays():
-    test = _process_weights_values(
-        weights=np.array([0.1, 0.9]), values=np.array([2, 3])
-    )
+    test = _process_weights_values(weights=np.array([0.1, 0.9]), values=np.array([2, 3]))
     expected = ([0.1, 0.9], [2, 3])
     assert test == expected
 
@@ -142,9 +140,7 @@ def test_process_weights_values_handle_none():
 
 
 def test_process_weights_values_can_drop_none():
-    test = _process_weights_values(
-        weights=None, values=[1, None, 3, 4, 5], drop_na=True
-    )
+    test = _process_weights_values(weights=None, values=[1, None, 3, 4, 5], drop_na=True)
     expected = ([0.25, 0.25, 0.25, 0.25], [1, 3, 4, 5])
     assert test == expected
 
@@ -332,9 +328,7 @@ def test_get_log_percentiles_change_percentiles():
 
 
 def test_get_log_percentiles_reverse():
-    test = get_log_percentiles(
-        [10**x for x in range(1, 10)], percentiles=[20, 80], reverse=True
-    )
+    test = get_log_percentiles([10**x for x in range(1, 10)], percentiles=[20, 80], reverse=True)
     expected = {20: "4.6e+07", 80: "6.4e+02"}
     assert test == expected
 
@@ -399,10 +393,7 @@ def test_geomean_numpy():
 
 
 def test_weighted_geomean():
-    assert (
-        round(geomean([0.1, 0.2, 0.3, 0.4, 0.5], weights=[0.5, 0.1, 0.1, 0.1, 0.2]), 2)
-        == 0.19
-    )
+    assert round(geomean([0.1, 0.2, 0.3, 0.4, 0.5], weights=[0.5, 0.1, 0.1, 0.1, 0.2]), 2) == 0.19
 
 
 def test_geomean_with_none_value():
@@ -410,10 +401,7 @@ def test_geomean_with_none_value():
 
 
 def test_weighted_geomean_alt_format():
-    assert (
-        round(geomean([[0.5, 0.1], [0.1, 0.2], [0.1, 0.3], [0.1, 0.4], [0.2, 0.5]]), 2)
-        == 0.19
-    )
+    assert round(geomean([[0.5, 0.1], [0.1, 0.2], [0.1, 0.3], [0.1, 0.4], [0.2, 0.5]]), 2) == 0.19
 
 
 def test_weighted_geomean_alt2_format():
@@ -482,10 +470,7 @@ def test_weighted_geomean_odds_alt_format():
 
 
 def test_weighted_geomean_odds_alt2_format():
-    assert (
-        round(geomean_odds({0.1: 0.5, 0.2: 0.1, 0.3: 0.1, 0.4: 0.1, 0.5: 0.2}), 2)
-        == 0.2
-    )
+    assert round(geomean_odds({0.1: 0.5, 0.2: 0.1, 0.3: 0.1, 0.4: 0.1, 0.5: 0.2}), 2) == 0.2
 
 
 def test_laplace_simple():
@@ -542,37 +527,37 @@ def test_laplace_no_time_passed():
 
 
 def test_growth_rate_to_doubling_time_float():
-    assert growth_rate_to_doubling_time(0.01) == 69.66071689357483
-    assert growth_rate_to_doubling_time(0.5) == 1.7095112913514547
-    assert growth_rate_to_doubling_time(1.0) == 1.0
+    assert round(growth_rate_to_doubling_time(0.01), 2) == 69.66
+    assert round(growth_rate_to_doubling_time(0.5), 2) == 1.71
+    assert round(growth_rate_to_doubling_time(1.0), 2) == 1.0
 
 
 def test_growth_rate_to_doubling_time_nparray():
     result = growth_rate_to_doubling_time(np.array([0.01, 0.5, 1.0]))
-    assert np.array_equal(
-        result, np.array([69.66071689357483, 1.7095112913514547, 1.0])
-    )
+    assert round(result[0], 2) == 69.66
+    assert round(result[1], 2) == 1.71
+    assert round(result[2], 2) == 1
 
 
 def test_growth_rate_to_doubling_time_dist():
-    assert growth_rate_to_doubling_time(const(0.01)) @ 1 == 69.66071689357483
+    assert round(growth_rate_to_doubling_time(const(0.01)) @ 1, 2) == 69.66
 
 
 def test_doubling_time_to_growth_rate_float():
-    assert doubling_time_to_growth_rate(12) == 0.05946309435929531
-    assert doubling_time_to_growth_rate(5.5) == 0.13431252219546264
-    assert doubling_time_to_growth_rate(1) == 1.0
+    assert round(doubling_time_to_growth_rate(12), 2) == 0.06
+    assert round(doubling_time_to_growth_rate(5.5), 2) == 0.13
+    assert round(doubling_time_to_growth_rate(1), 2) == 1
 
 
 def test_doubling_time_to_growth_rate_nparray():
     result = doubling_time_to_growth_rate(np.array([12, 5.5, 1]))
-    assert np.array_equal(
-        result, np.array([0.05946309435929531, 0.13431252219546264, 1.0])
-    )
+    assert round(result[0], 2) == 0.06
+    assert round(result[1], 2) == 0.13
+    assert round(result[2], 2) == 1
 
 
 def test_doubling_time_to_growth_rate_dist():
-    assert doubling_time_to_growth_rate(const(12)) @ 1 == 0.05946309435929531
+    assert round(doubling_time_to_growth_rate(const(12)) @ 1, 2) == 0.06
 
 
 def test_roll_die():

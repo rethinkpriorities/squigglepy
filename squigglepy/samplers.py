@@ -136,8 +136,7 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (high - mu) / normed_sigma
         return _simplify(
-            normal_sample(mu, sigma, samples)
-            / ((chi_square_sample(t, samples) / t) ** 0.5)
+            normal_sample(mu, sigma, samples) / ((chi_square_sample(t, samples) / t) ** 0.5)
         )
 
 
@@ -194,8 +193,7 @@ def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         sigma = (log_high - mu) / normed_sigma
         return _simplify(
             np.exp(
-                normal_sample(mu, sigma, samples)
-                / ((chi_square_sample(t, samples) / t) ** 0.5)
+                normal_sample(mu, sigma, samples) / ((chi_square_sample(t, samples) / t) ** 0.5)
             )
         )
 
@@ -469,9 +467,7 @@ def chi_square_sample(df, samples=1):
     return _simplify(_get_rng().chisquare(df, samples))
 
 
-def discrete_sample(
-    items, samples=1, verbose=False, _multicore_tqdm_n=1, _multicore_tqdm_cores=1
-):
+def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1, _multicore_tqdm_cores=1):
     """
     Sample a random value from a discrete distribution (aka categorical distribution).
 
@@ -539,17 +535,11 @@ def _mixture_sample_for_large_n(
     def _run_presample(dist, pbar):
         if is_dist(dist) and dist.type == "mixture":
             raise ValueError(
-                (
-                    "You cannot nest mixture distributions within "
-                    + "mixture distributions."
-                )
+                ("You cannot nest mixture distributions within " + "mixture distributions.")
             )
         elif is_dist(dist) and dist.type == "discrete":
             raise ValueError(
-                (
-                    "You cannot nest discrete distributions within "
-                    + "mixture distributions."
-                )
+                ("You cannot nest discrete distributions within " + "mixture distributions.")
             )
         _tick_tqdm(pbar)
         return _enlist(sample(dist, n=samples))
@@ -599,9 +589,7 @@ def _mixture_sample_for_small_n(
     pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
     out = _simplify(
         [
-            _run_mixture(
-                values=values, weights=weights, pbar=pbar, tick=_multicore_tqdm_cores
-            )
+            _run_mixture(values=values, weights=weights, pbar=pbar, tick=_multicore_tqdm_cores)
             for _ in range(samples)
         ]
     )
@@ -762,9 +750,7 @@ def sample(
         raise ValueError("n must be >= 1")
 
     if not is_sampleable(dist):
-        error = "input to sample is malformed - {} is not a sampleable type.".format(
-            type(dist)
-        )
+        error = "input to sample is malformed - {} is not a sampleable type.".format(type(dist))
         raise ValueError(error)
 
     if verbose is None:
@@ -781,11 +767,7 @@ def sample(
         print("Warning: cache file `{}.sqcache.npy` not found.".format(load_cache_file))
 
     if (load_cache_file or memcache) and not reload_cache:
-        if (
-            load_cache_file
-            and has_file_cache
-            and (not has_in_mem_cache or cache_file_primary)
-        ):
+        if load_cache_file and has_file_cache and (not has_in_mem_cache or cache_file_primary):
             if verbose:
                 print("Loading from cache file (`{}`)...".format(cache_path))
             with open(cache_path, "rb") as f:
@@ -836,9 +818,7 @@ def sample(
         pbar = _init_tqdm(verbose=verbose, total=cores)
         for core in range(cores):
             with open("test-core-{}.npy".format(core), "rb") as f:
-                samples = np.concatenate(
-                    (samples, np.load(f, allow_pickle=True)), axis=None
-                )
+                samples = np.concatenate((samples, np.load(f, allow_pickle=True)), axis=None)
             os.remove("test-core-{}.npy".format(core))
             _tick_tqdm(pbar, 1)
         _flush_tqdm(pbar)
@@ -876,10 +856,7 @@ def sample(
                 tqdm_samples = n if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
                 pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
                 out = np.array(
-                    [
-                        run_dist(dist=dist, pbar=pbar, tick=_multicore_tqdm_cores)
-                        for _ in range(n)
-                    ]
+                    [run_dist(dist=dist, pbar=pbar, tick=_multicore_tqdm_cores) for _ in range(n)]
                 )
                 _flush_tqdm(pbar)
             else:
@@ -892,12 +869,7 @@ def sample(
 
             pbar = _init_tqdm(verbose=verbose, total=len(out) * _multicore_tqdm_cores)
             samples = _simplify(
-                np.array(
-                    [
-                        run_dist(dist=o, pbar=pbar, tick=_multicore_tqdm_cores)
-                        for o in out
-                    ]
-                )
+                np.array([run_dist(dist=o, pbar=pbar, tick=_multicore_tqdm_cores) for o in out])
             )
             _flush_tqdm(pbar)
 
@@ -957,14 +929,10 @@ def sample(
             samples = triangular_sample(dist.left, dist.mode, dist.right, samples=n)
 
         elif dist.type == "tdist":
-            samples = t_sample(
-                dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n
-            )
+            samples = t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
 
         elif dist.type == "log_tdist":
-            samples = log_t_sample(
-                dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n
-            )
+            samples = log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
 
         elif dist.type == "mixture":
             samples = mixture_sample(
