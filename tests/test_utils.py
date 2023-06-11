@@ -568,7 +568,7 @@ def test_doubling_time_to_growth_rate_nparray():
     result = doubling_time_to_growth_rate(np.array([12, 5.5, 1]))
     assert np.array_equal(
         result, np.array([0.05946309435929531, 0.13431252219546264, 1.0])
-    )
+    ), result
 
 
 def test_doubling_time_to_growth_rate_dist():
