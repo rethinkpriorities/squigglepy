@@ -320,7 +320,6 @@ def update(
     prior: Union[NormalDistribution, BetaDistribution],
     evidence: Union[NormalDistribution, BetaDistribution],
     evidence_weight: float = 1,
-    prior: Union[NormalDistribution, BetaDistribution], evidence: Union[NormalDistribution, BetaDistribution], evidence_weight: float = 1
 ) -> BaseDistribution:
     """
     Update a distribution.
