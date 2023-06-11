@@ -190,10 +190,9 @@ def bayesnet(
                     raise ValueError("events is malformed")
                 elif n_ < n:
                     raise ValueError(
-                        (
-                            "insufficient samples - {} results cached but "
-                            + "requested {}"
-                        ).format(events["metadata"]["n"], n)
+                        ("insufficient samples - {} results cached but " + "requested {}").format(
+                            events["metadata"]["n"], n
+                        )
                     )
             else:
                 raise ValueError("events is malformed")
@@ -351,9 +350,7 @@ def update(
     >> bayes.update(prior, evidence)
     <Distribution> norm(mean=2.53, sd=0.29)
     """
-    if isinstance(prior, NormalDistribution) and isinstance(
-        evidence, NormalDistribution
-    ):
+    if isinstance(prior, NormalDistribution) and isinstance(evidence, NormalDistribution):
         prior_mean = prior.mean
         prior_var = prior.sd**2
         evidence_mean = evidence.mean

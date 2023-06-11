@@ -490,16 +490,9 @@ def get_log_percentiles(
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
-    percentiles = get_percentiles(
-        data, percentiles=percentiles, reverse=reverse, digits=digits
-    )
+    percentiles = get_percentiles(data, percentiles=percentiles, reverse=reverse, digits=digits)
     if display:
-        return dict(
-            [
-                (k, ("{:." + str(digits) + "e}").format(v))
-                for k, v in percentiles.items()
-            ]
-        )
+        return dict([(k, ("{:." + str(digits) + "e}").format(v)) for k, v in percentiles.items()])
     else:
         return dict([(k, _round(np.log10(v), digits)) for k, v in percentiles.items()])
 

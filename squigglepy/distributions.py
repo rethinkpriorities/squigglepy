@@ -680,9 +680,7 @@ class NormalDistribution(OperableDistribution):
         # x/y => mean/sd, mean/sd => x/y
         if mean is None and sd is None and x is not None and y is not None:
             if x > y:
-                raise ValueError(
-                    "`high value` (y) cannot be lower than `low value` (x)"
-                )
+                raise ValueError("`high value` (y) cannot be lower than `low value` (x)")
             self.x, self.y = x, y
             self.mean = (self.x + self.y) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
