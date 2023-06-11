@@ -338,12 +338,16 @@ def bayesnet(
 
 def update(
 <<<<<<< HEAD
+<<<<<<< HEAD
     prior: Union[NormalDistribution, BetaDistribution],
     evidence: Union[NormalDistribution, BetaDistribution],
     evidence_weight: float = 1,
 =======
     prior: BaseDistribution, evidence: BaseDistribution, evidence_weight: float = 1
 >>>>>>> 087260e (Started wip_types)
+=======
+    prior: Union[NormalDistribution, BetaDistribution], evidence: Union[NormalDistribution, BetaDistribution], evidence_weight: float = 1
+>>>>>>> 827297d (more fun with types)
 ) -> BaseDistribution:
     """
     Update a distribution.
@@ -377,10 +381,8 @@ def update(
     """
     if isinstance(prior, NormalDistribution) and isinstance(evidence, NormalDistribution):
         prior_mean = prior.mean
-        assert prior.sd is not None
         prior_var = prior.sd**2
         evidence_mean = evidence.mean
-        assert evidence.sd is not None
         evidence_var = evidence.sd**2
         return norm(
             mean=(
@@ -396,10 +398,6 @@ def update(
         prior_b = prior.b
         evidence_a = evidence.a
         evidence_b = evidence.b
-        assert prior_a is not None
-        assert evidence_a is not None
-        assert prior_b is not None
-        assert evidence_b is not None
         return beta(prior_a + evidence_a, prior_b + evidence_b)
     elif type(prior) != type(evidence):
         print(type(prior), type(evidence))
@@ -412,12 +410,17 @@ def average(
     prior: BaseDistribution,
     evidence: BaseDistribution,
 <<<<<<< HEAD
+<<<<<<< HEAD
     weights: OptionalListOfFloats = [0.5, 0.5],
     relative_weights: OptionalListOfFloats = None,
 =======
     weights: List | np.ndarray | float | None = [0.5, 0.5],
     relative_weights: List | np.ndarray | float | None = None,
 >>>>>>> 087260e (Started wip_types)
+=======
+    weights: Union[List, np.ndarray, float, None] = [0.5, 0.5],
+    relative_weights: Union[List, np.ndarray, float, None] = None,
+>>>>>>> 827297d (more fun with types)
 ) -> MixtureDistribution:
     """
     Average two distributions.
