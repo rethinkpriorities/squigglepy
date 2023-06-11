@@ -2,7 +2,7 @@ import operator
 import math
 import numpy as np
 from scipy import stats
-from types import Union, Optional
+from typing import Union, Optional
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round, _optional_import
 from .version import __version__
@@ -67,13 +67,10 @@ class BaseDistribution:
 
         from .samplers import sample
 
-<<<<<<< HEAD
         if plt is None:
             raise ModuleNotFoundError("You must install matplotlib for plotting.")
 
-=======
         samples = sample(self, num_samples)
->>>>>>> 1b5a7d3 (more fun with types)
         plt.hist(samples, bins=bins)
         plt.show()
 
@@ -658,6 +655,7 @@ class NormalDistribution(OperableDistribution):
     ):
         super().__init__()
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.x = x
         self.y = y
         self.credibility = credibility
@@ -690,8 +688,35 @@ class NormalDistribution(OperableDistribution):
         self.y = y: Number
         self.lclip = lclip: Optional[Number]
         self.rclip = rclip: Optional[Number]
+=======
+        self.credibility = credibility
+        self.lclip = lclip
+        self.rclip = rclip
+>>>>>>> f457d15 (fix normal distribution)
         self.type = "norm"
 
+        self.x: Number
+        self.y: Number
+        self.mean: Number
+        self.sd: Number
+
+        # Define the complementary set of parameters
+        # x/y => mean/sd, mean/sd => x/y
+        if mean is None and sd is None and x is not None and y is not None:
+            if x > y:
+                raise ValueError(
+                    "`high value` (y) cannot be lower than `low value` (x)"
+                )
+            self.x, self.y = x, y
+            self.mean = (self.x + self.y) / 2
+            cdf_value = 0.5 + 0.5 * (self.credibility / 100)
+            normed_sigma = stats.norm.ppf(cdf_value)
+            self.sd = (self.y - self.mean) / normed_sigma
+        elif sd is not None and x is None and y is None:
+            self.sd = sd
+            self.mean = 0 if mean is None else mean
+        else:
+            raise ValueError("you must define either x/y or mean/sd")
 
     def __str__(self):
         out = "<Distribution> norm(mean={}, sd={}".format(round(self.mean, 2), round(self.sd, 2))

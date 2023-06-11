@@ -9,7 +9,15 @@ import pathos.multiprocessing as mp
 from datetime import datetime
 from typing import Callable, Optional, Union, List
 
-from .distributions import BaseDistribution, NormalDistribution, MixtureDistribution, BetaDistribution, NormalDistribution, norm, beta, mixture
+from .distributions import (
+    BaseDistribution,
+    MixtureDistribution,
+    BetaDistribution,
+    NormalDistribution,
+    norm,
+    beta,
+    mixture,
+)
 from .utils import _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
@@ -305,7 +313,9 @@ def bayesnet(
 
 
 def update(
-    prior: Union[NormalDistribution, BetaDistribution], evidence: Union[NormalDistribution, BetaDistribution], evidence_weight: float = 1
+    prior: Union[NormalDistribution, BetaDistribution],
+    evidence: Union[NormalDistribution, BetaDistribution],
+    evidence_weight: float = 1,
 ) -> BaseDistribution:
     """
     Update a distribution.
@@ -337,7 +347,9 @@ def update(
     >> bayes.update(prior, evidence)
     <Distribution> norm(mean=2.53, sd=0.29)
     """
-    if isinstance(prior, NormalDistribution) and isinstance(evidence, NormalDistribution):
+    if isinstance(prior, NormalDistribution) and isinstance(
+        evidence, NormalDistribution
+    ):
         prior_mean = prior.mean
         prior_var = prior.sd**2
         evidence_mean = evidence.mean
