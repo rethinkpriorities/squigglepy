@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "squigglepy"
+version = "0.27-dev1"
+description = "Squiggle programming language for intuitive probabilistic estimation features in Python"
+authors = ["Peter Wildeford <peter@peterhurford.com>"]
+license = "MIT"
+readme = "README.md"
+include = ["CHANGES.md"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+repository = "https://github.com/rethinkpriorities/squigglepy"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+numpy = "^1.24.3"
+pandas = "^2.0.2"
+scipy = "^1.10.1"
+tqdm = "^4.65.0"
+matplotlib = "^3.7.1"
+pathos = "^0.3.0"
+msgspec = "^0.15.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.272"
+pytest = "^7.3.2"
+pytest-mock = "^3.10.0"
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 99
+
+[tool.black]
+line-length = 99
