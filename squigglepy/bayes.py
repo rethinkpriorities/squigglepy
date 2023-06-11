@@ -10,7 +10,6 @@ import pathos.multiprocessing as mp
 
 from datetime import datetime
 from typing import Callable, Optional, Union
-from numpy.typing import NDArray
 
 from .distributions import (
     BaseDistribution,

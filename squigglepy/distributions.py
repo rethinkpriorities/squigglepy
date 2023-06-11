@@ -2,7 +2,7 @@ import operator
 import math
 import numpy as np
 from scipy import stats
-from typing import Callable, Union, Optional
+from typing import Optional
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round, _optional_import
 from .version import __version__
