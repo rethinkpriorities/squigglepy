@@ -29,9 +29,7 @@ def _within(actual, expected, tolerance_ratio=None, abs_tolerance=None):
         return False
 
 
-def _mark_time(
-    start, expected_sec, label, tolerance_ratio=1.05, tolerance_ms_threshold=5
-):
+def _mark_time(start, expected_sec, label, tolerance_ratio=1.05, tolerance_ms_threshold=5):
     end = time.time()
     delta_sec = end - start
     use_delta = delta_sec
@@ -49,9 +47,7 @@ def _mark_time(
         )
     )
     if delta_label == "ms":
-        deviation = not _within(
-            use_delta, expected, tolerance_ratio, tolerance_ms_threshold
-        )
+        deviation = not _within(use_delta, expected, tolerance_ratio, tolerance_ms_threshold)
     else:
         deviation = not _within(use_delta, expected, tolerance_ratio)
     if deviation:
@@ -224,12 +220,8 @@ if __name__ == "__main__":
     pct_of_pop_w_pianos_ = sq.to(0.2, 1) * 0.01
     pianos_per_piano_tuner_ = sq.to(2 * K, 50 * K)
     piano_tuners_per_piano_ = 1 / pianos_per_piano_tuner_
-    total_tuners_in_2022 = (
-        pop_of_ny_2022 * pct_of_pop_w_pianos_ * piano_tuners_per_piano_
-    )
-    samples = (
-        total_tuners_in_2022 @ 1000
-    )  # Note: `@ 1000` is shorthand to get 1000 samples
+    total_tuners_in_2022 = pop_of_ny_2022 * pct_of_pop_w_pianos_ * piano_tuners_per_piano_
+    samples = total_tuners_in_2022 @ 1000  # Note: `@ 1000` is shorthand to get 1000 samples
     out = sq.get_percentiles(samples, digits=1)
     expected = {
         1: 0.3,
@@ -256,9 +248,7 @@ if __name__ == "__main__":
     print("Test 3 (PIANO TUNERS, TIME COMPONENT, LONG FORMAT)...")
     sq.set_seed(42)
     start2 = time.time()
-    out = sq.get_percentiles(
-        sq.sample(lambda: total_tuners_at_time(2030 - 2022), n=100), digits=1
-    )
+    out = sq.get_percentiles(sq.sample(lambda: total_tuners_at_time(2030 - 2022), n=100), digits=1)
     expected = {
         1: 0.7,
         5: 1.0,
@@ -331,14 +321,8 @@ if __name__ == "__main__":
     sq.sample(sq.discrete({0: 0.1, 1: 0.3, 2: 0.3, 3: 0.15, 4: 0.15}))
     sq.sample(sq.discrete([[0.1, 0], [0.3, 1], [0.3, 2], [0.15, 3], [0.15, 4]]))
     sq.sample(sq.discrete([0, 1, 2]))
-    sq.sample(
-        sq.mixture([sq.norm(1, 3), sq.norm(4, 10), sq.lognorm(1, 10)], [0.3, 0.3, 0.4])
-    )
-    sq.sample(
-        sq.mixture(
-            [[0.3, sq.norm(1, 3)], [0.3, sq.norm(4, 10)], [0.4, sq.lognorm(1, 10)]]
-        )
-    )
+    sq.sample(sq.mixture([sq.norm(1, 3), sq.norm(4, 10), sq.lognorm(1, 10)], [0.3, 0.3, 0.4]))
+    sq.sample(sq.mixture([[0.3, sq.norm(1, 3)], [0.3, sq.norm(4, 10)], [0.4, sq.lognorm(1, 10)]]))
     sq.sample(lambda: sq.sample(sq.norm(1, 3)) + sq.sample(sq.norm(4, 5)), n=100)
     sq.sample(lambda: sq.sample(sq.norm(1, 3)) - sq.sample(sq.norm(4, 5)), n=100)
     sq.sample(lambda: sq.sample(sq.norm(1, 3)) * sq.sample(sq.norm(4, 5)), n=100)
@@ -614,16 +598,8 @@ if __name__ == "__main__":
 
         pdb.set_trace()
     test_21_mark = _mark_time(start21, 3.6, "Test 21 complete")
-    print(
-        "1 core 10M RUNS expected {}sec".format(
-            round(test_20_mark["timing(sec)"] * 10, 1)
-        )
-    )
-    print(
-        "7 core 10M RUNS ideal {}sec".format(
-            round(test_20_mark["timing(sec)"] * 10 / 7, 1)
-        )
-    )
+    print("1 core 10M RUNS expected {}sec".format(round(test_20_mark["timing(sec)"] * 10, 1)))
+    print("7 core 10M RUNS ideal {}sec".format(round(test_20_mark["timing(sec)"] * 10 / 7, 1)))
     print("7 core 10M RUNS actual {}sec".format(round(test_21_mark["timing(sec)"], 1)))
 
     print("Test 22 (MAMMOGRAPHY BAYES MULTICORE)...")
@@ -645,45 +621,25 @@ if __name__ == "__main__":
 
         pdb.set_trace()
     test_22_mark = _mark_time(start22, 84.87, "Test 22 complete")
-    print(
-        "1 core 10M RUNS expected {}sec".format(
-            round(test_7_mark["timing(sec)"] * K, 1)
-        )
-    )
-    print(
-        "7 core 10M RUNS ideal {}sec".format(
-            round(test_7_mark["timing(sec)"] * K / 7, 1)
-        )
-    )
+    print("1 core 10M RUNS expected {}sec".format(round(test_7_mark["timing(sec)"] * K, 1)))
+    print("7 core 10M RUNS ideal {}sec".format(round(test_7_mark["timing(sec)"] * K / 7, 1)))
     print("7 core 10M RUNS actual {}sec".format(round(test_22_mark["timing(sec)"], 1)))
 
     print("Test 23 (DISCRETE COMPRESSION)...")
     start23 = time.time()
-    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (
-        10 * M
-    )
+    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10 * M)
     dist = sq.discrete(large_array)
     samps = sq.sample(dist, n=1 * M, verbose=True)
     test_23_mark = _mark_time(start23, 20.53, "Test 23 complete")
 
     print("Test 24 (DISCRETE COMPRESSION, MULTICORE)...")
     start24 = time.time()
-    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (
-        10 * M
-    )
+    large_array = sq.mixture([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3], [0.4, 0.4]]) @ (10 * M)
     dist = sq.discrete(large_array)
     samps = sq.sample(dist, n=10 * M, verbose=True)
     test_24_mark = _mark_time(start24, 31, "Test 22 complete")
-    print(
-        "1 core 10M RUNS expected {}sec".format(
-            round(test_23_mark["timing(sec)"] * 10, 1)
-        )
-    )
-    print(
-        "7 core 10M RUNS ideal {}sec".format(
-            round(test_23_mark["timing(sec)"] * 10 / 7, 1)
-        )
-    )
+    print("1 core 10M RUNS expected {}sec".format(round(test_23_mark["timing(sec)"] * 10, 1)))
+    print("7 core 10M RUNS ideal {}sec".format(round(test_23_mark["timing(sec)"] * 10 / 7, 1)))
     print("7 core 10M RUNS actual {}sec".format(round(test_24_mark["timing(sec)"], 1)))
 
     print("Test 25 (VERSION)...")

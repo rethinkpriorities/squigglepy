@@ -64,9 +64,7 @@ def test_bayesnet_conditional():
 
 
 def test_bayesnet_reduce_fn():
-    out = bayesnet(
-        lambda: {"a": 1, "b": 2}, find=lambda e: e["a"], reduce_fn=sum, n=100
-    )
+    out = bayesnet(lambda: {"a": 1, "b": 2}, find=lambda e: e["a"], reduce_fn=sum, n=100)
     assert out == 100
 
 
@@ -100,9 +98,7 @@ def test_bayesnet_cache():
 
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches4
-    assert (
-        _squigglepy_internal_bayesnet_caches.get(define_event)["metadata"]["n"] == 100
-    )
+    assert _squigglepy_internal_bayesnet_caches.get(define_event)["metadata"]["n"] == 100
 
 
 def test_bayesnet_cache_multiple():
@@ -133,12 +129,8 @@ def test_bayesnet_cache_multiple():
 
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 < n_caches4
-    assert (
-        _squigglepy_internal_bayesnet_caches.get(define_event)["metadata"]["n"] == 100
-    )
-    assert (
-        _squigglepy_internal_bayesnet_caches.get(define_event2)["metadata"]["n"] == 1000
-    )
+    assert _squigglepy_internal_bayesnet_caches.get(define_event)["metadata"]["n"] == 100
+    assert _squigglepy_internal_bayesnet_caches.get(define_event2)["metadata"]["n"] == 1000
 
     bayesnet(define_event2, find=lambda e: e["a"], n=100)
     from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
@@ -178,9 +170,7 @@ def test_bayesnet_reload_cache():
 
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches3 == n_caches4
-    assert (
-        _squigglepy_internal_bayesnet_caches.get(define_event)["metadata"]["n"] == 100
-    )
+    assert _squigglepy_internal_bayesnet_caches.get(define_event)["metadata"]["n"] == 100
 
 
 def test_bayesnet_dont_use_cache():

@@ -9,13 +9,9 @@ from collections import Counter
 from collections.abc import Iterable
 
 
-def _process_weights_values(
-    weights=None, relative_weights=None, values=None, drop_na=False
-):
+def _process_weights_values(weights=None, relative_weights=None, values=None, drop_na=False):
     if weights is not None and relative_weights is not None:
-        raise ValueError(
-            "can only pass either `weights` or `relative_weights`, not both."
-        )
+        raise ValueError("can only pass either `weights` or `relative_weights`, not both.")
     if values is None or _safe_len(values) == 0:
         raise ValueError("must pass `values`")
 
@@ -68,9 +64,7 @@ def _process_weights_values(
         if len(weights) == len(values) - 1 and sum_weights < 1:
             weights.append(1 - sum_weights)
         elif sum_weights <= 0.99 or sum_weights >= 1.01:
-            raise ValueError(
-                "weights don't sum to 1 -" + " they sum to {}".format(sum_weights)
-            )
+            raise ValueError("weights don't sum to 1 -" + " they sum to {}".format(sum_weights))
 
     if len(weights) != len(values):
         raise ValueError("weights and values not same length")
@@ -454,21 +448,14 @@ def get_log_percentiles(
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
-    percentiles = get_percentiles(
-        data, percentiles=percentiles, reverse=reverse, digits=digits
-    )
+    percentiles = get_percentiles(data, percentiles=percentiles, reverse=reverse, digits=digits)
     if isinstance(percentiles, dict):
         if display:
             return dict(
-                [
-                    (k, ("{:." + str(digits) + "e}").format(v))
-                    for k, v in percentiles.items()
-                ]
+                [(k, ("{:." + str(digits) + "e}").format(v)) for k, v in percentiles.items()]
             )
         else:
-            return dict(
-                [(k, _round(np.log10(v), digits)) for k, v in percentiles.items()]
-            )
+            return dict([(k, _round(np.log10(v), digits)) for k, v in percentiles.items()])
     else:
         if display:
             digit_str = "{:." + str(digits) + "e}"
@@ -535,9 +522,7 @@ def get_median_and_ci(data, credibility=90, digits=None):
     """
     ci_low = (100 - credibility) / 2
     ci_high = 100 - ci_low
-    percentiles = get_percentiles(
-        data, percentiles=[ci_low, 50, ci_high], digits=digits
-    )
+    percentiles = get_percentiles(data, percentiles=[ci_low, 50, ci_high], digits=digits)
     return {
         "median": percentiles[50],
         "ci_low": percentiles[ci_low],
@@ -711,22 +696,13 @@ def laplace(s, n=None, time_passed=None, time_remaining=None, time_fixed=False):
         return (s + 1) / (n + 2)
     elif time_passed is not None and time_remaining is not None and s == 0:
         return 1 - ((1 + time_remaining / time_passed) ** -1)
-    elif (
-        time_passed is not None
-        and time_remaining is not None
-        and s > 0
-        and not time_fixed
-    ):
+    elif time_passed is not None and time_remaining is not None and s > 0 and not time_fixed:
         return 1 - ((1 + time_remaining / time_passed) ** -s)
-    elif (
-        time_passed is not None and time_remaining is not None and s > 0 and time_fixed
-    ):
+    elif time_passed is not None and time_remaining is not None and s > 0 and time_fixed:
         return 1 - ((1 + time_remaining / time_passed) ** -(s + 1))
     elif time_passed is not None and time_remaining is None and s == 0:
         return 1 - ((1 + 1 / time_passed) ** -1)
-    elif (
-        time_passed is not None and time_remaining is None and s > 0 and not time_fixed
-    ):
+    elif time_passed is not None and time_remaining is None and s > 0 and not time_fixed:
         return 1 - ((1 + 1 / time_passed) ** -s)
     elif time_passed is not None and time_remaining is None and s > 0 and time_fixed:
         return 1 - ((1 + 1 / time_passed) ** -(s + 1))
@@ -877,9 +853,7 @@ def flip_coin(n=1):
     return flips[0] if len(flips) == 1 else flips
 
 
-def kelly(
-    my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0
-):
+def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0):
     """
     Calculate the Kelly criterion.
 
@@ -948,9 +922,7 @@ def kelly(
         expected_arr = None
     else:
         resolve_date = datetime.strptime(resolve_date, "%Y-%m-%d")
-        expected_arr = (
-            (expected_roi + 1) ** (365 / (resolve_date - datetime.now()).days)
-        ) - 1
+        expected_arr = ((expected_roi + 1) ** (365 / (resolve_date - datetime.now()).days)) - 1
     return {
         "my_price": round(my_price, 2),
         "market_price": round(market_price, 2),

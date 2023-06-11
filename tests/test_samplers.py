@@ -473,21 +473,15 @@ def test_sample_mixture_lclip():
 @patch.object(samplers, "normal_sample", Mock(return_value=1))
 @patch.object(samplers, "uniform_sample", Mock(return_value=0))
 def test_sample_mixture_lclip_multiple_values():
+    assert all(sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8]), n=3) == np.array([1, 1, 1]))
     assert all(
-        sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8]), n=3)
-        == np.array([1, 1, 1])
+        sample(mixture([norm(1, 2, lclip=3), norm(3, 4)], [0.2, 0.8])) == np.array([3, 3, 3])
     )
     assert all(
-        sample(mixture([norm(1, 2, lclip=3), norm(3, 4)], [0.2, 0.8]))
-        == np.array([3, 3, 3])
+        sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8], lclip=3)) == np.array([3, 3, 3])
     )
     assert all(
-        sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8], lclip=3))
-        == np.array([3, 3, 3])
-    )
-    assert all(
-        sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8]), lclip=3)
-        == np.array([3, 3, 3])
+        sample(mixture([norm(1, 2), norm(3, 4)], [0.2, 0.8]), lclip=3) == np.array([3, 3, 3])
     )
 
 
@@ -524,10 +518,7 @@ def test_sample_mixture_lclip_alt_format2():
 @patch.object(samplers, "normal_sample", Mock(return_value=1))
 @patch.object(samplers, "uniform_sample", Mock(return_value=0))
 def test_sample_mixture_lclip_alt_format2_multiple_values():
-    assert all(
-        mixture([[0.2, norm(1, 2, lclip=3)], [0.8, norm(3, 4)]]) @ 3
-        == np.array([3, 3, 3])
-    )
+    assert all(mixture([[0.2, norm(1, 2, lclip=3)], [0.8, norm(3, 4)]]) @ 3 == np.array([3, 3, 3]))
 
 
 @patch.object(samplers, "normal_sample", Mock(return_value=100))
@@ -1034,12 +1025,8 @@ def test_sample_cachefile_primary(cachefile):
     assert n_caches2 == n_caches + 1
     assert os.path.exists(cachefile + ".sqcache.npy")
 
-    o1 = sample(
-        norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=True
-    )
-    o2 = sample(
-        norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=False
-    )
+    o1 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=True)
+    o2 = sample(norm(10, 20), load_cache_file=cachefile, memcache=True, cache_file_primary=False)
     assert o1 == o2
 
 

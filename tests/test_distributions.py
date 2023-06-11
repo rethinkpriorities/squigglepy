@@ -235,9 +235,7 @@ def test_lognorm_with_lognormmean_lognormsd():
     assert lognorm(lognorm_mean=1, lognorm_sd=2).lclip is None
     assert lognorm(lognorm_mean=1, lognorm_sd=2).rclip is None
     assert str(lognorm(lognorm_mean=1, lognorm_sd=2)) == (
-        "<Distribution> lognorm(lognorm_mean"
-        "=1, lognorm_sd=2, norm_mean=-0.8, "
-        "norm_sd=1.27)"
+        "<Distribution> lognorm(lognorm_mean" "=1, lognorm_sd=2, norm_mean=-0.8, " "norm_sd=1.27)"
     )
 
 
@@ -1043,10 +1041,7 @@ def test_dist_fn_vectorize():
 def test_dist_fn2():
     obj = dist_fn(norm(0, 10), norm(1, 2), _mirror)
     assert obj.type == "complex"
-    assert (
-        str(obj)
-        == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
-    )
+    assert str(obj) == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
 
 
 def test_dist_fn_list():
@@ -1128,10 +1123,7 @@ def test_dist_fn_pipe():
 def test_dist_fn2_pipe():
     obj = norm(0, 10) >> dist_fn(norm(1, 2), _mirror)
     assert obj.type == "complex"
-    assert (
-        str(obj)
-        == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
-    )
+    assert str(obj) == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
 
 
 def test_dist_fn_vectorize_pipe():
