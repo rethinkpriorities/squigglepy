@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 import types
 from typing import Optional
@@ -7,7 +9,14 @@ from tqdm import tqdm
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
-from typing import List, Union
+from typing import Union
+from numpy.typing import NDArray
+
+
+Number = Union[int, float, np.floating, np.integer]
+OptionalListOfFloats = Union[
+    list[Union[Union[float, np.floating]]], NDArray[np.floating], float, None
+]
 
 import importlib
 import importlib.util
@@ -409,10 +418,10 @@ def one_in(p, digits=0, verbose=True):
 
 
 def get_percentiles(
-        data: Union[List, np.ndarray],
-        percentiles: List = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
-        reverse: bool = False,
-        digits: int = None,
+    data: Union[list[np.floating], NDArray[np.floating]],
+    percentiles: list[Number] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    reverse: bool = False,
+    digits: int = None,
 ) -> dict[str, float]:
     """
     Print the percentiles of the data.
@@ -447,12 +456,12 @@ def get_percentiles(
 
 
 def get_log_percentiles(
-    data,
-    percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
-    reverse=False,
-    display=True,
-    digits=1,
-):
+    data: Union[list[np.floating], NDArray[np.floating]],
+    percentiles: list[Number] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    reverse: bool = False,
+    display: bool = True,
+    digits: int = 1,
+) -> dict[str, float]:
     """
     Print the log (base 10) of the percentiles of the data.
 
@@ -481,20 +490,18 @@ def get_log_percentiles(
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
-    percentiles = get_percentiles(data, percentiles=percentiles, reverse=reverse, digits=digits)
-    if isinstance(percentiles, dict):
-        if display:
-            return dict(
-                [(k, ("{:." + str(digits) + "e}").format(v)) for k, v in percentiles.items()]
-            )
-        else:
-            return dict([(k, _round(np.log10(v), digits)) for k, v in percentiles.items()])
+    percentiles = get_percentiles(
+        data, percentiles=percentiles, reverse=reverse, digits=digits
+    )
+    if display:
+        return dict(
+            [
+                (k, ("{:." + str(digits) + "e}").format(v))
+                for k, v in percentiles.items()
+            ]
+        )
     else:
-        if display:
-            digit_str = "{:." + str(digits) + "e}"
-            digit_str.format(percentiles)
-        else:
-            return _round(np.log10(percentiles), digits)
+        return dict([(k, _round(np.log10(v), digits)) for k, v in percentiles.items()])
 
 
 def get_mean_and_ci(data, credibility=90, digits=None):

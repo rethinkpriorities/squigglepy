@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import time
 import math
@@ -7,7 +9,8 @@ import numpy as np
 import pathos.multiprocessing as mp
 
 from datetime import datetime
-from typing import Callable, Optional, Union, List
+from typing import Callable, Optional, Union
+from numpy.typing import NDArray
 
 from .distributions import (
     BaseDistribution,
@@ -18,7 +21,7 @@ from .distributions import (
     beta,
     mixture,
 )
-from .utils import _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
+from .utils import OptionalListOfFloats, _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
 _squigglepy_internal_bayesnet_caches = {}
@@ -59,6 +62,7 @@ def simple_bayes(likelihood_h: float, likelihood_not_h: float, prior: float) -> 
     return (likelihood_h * prior) / (likelihood_h * prior + likelihood_not_h * (1 - prior))
 
 
+# TODO: output type for bayesnet
 def bayesnet(
     event_fn: Optional[Callable] = None,
     n: int = 1,
@@ -379,8 +383,8 @@ def update(
 def average(
     prior: BaseDistribution,
     evidence: BaseDistribution,
-    weights: Union[List, np.ndarray, float, None] = [0.5, 0.5],
-    relative_weights: Union[List, np.ndarray, float, None] = None,
+    weights: OptionalListOfFloats = [0.5, 0.5],
+    relative_weights: OptionalListOfFloats = None,
 ) -> MixtureDistribution:
     """
     Average two distributions.

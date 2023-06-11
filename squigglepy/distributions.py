@@ -15,30 +15,8 @@ Number = Union[int, float, np.floating, np.integer]
 
 class BaseDistribution:
     def __init__(self):
-        self.x: Optional[Number] = None
-        self.y: Optional[Number] = None
-        self.n: Optional[Number] = None
-        self.p: Optional[Number] = None
-        self.t: Optional[Number] = None
-        self.a: Optional[Number] = None
-        self.b: Optional[Number] = None
-        self.shape: Optional[Number] = None
-        self.scale: Optional[Number] = None
-        self.credibility: Optional[Number] = None
-        self.mean: Optional[Number] = None
-        self.sd: Optional[Number] = None
-        self.left: Optional[Number] = None
-        self.mode: Optional[Number] = None
-        self.right: Optional[Number] = None
-        self.fn: Optional[Number] = None
-        self.fn_str: Optional[Number] = None
         self.lclip: Optional[Number] = None
         self.rclip: Optional[Number] = None
-        self.lam: Optional[Number] = None
-        self.df: Optional[Number] = None
-        self.items: Optional[Number] = None
-        self.dists: Optional[Number] = None
-        self.weights: Optional[Number] = None
         self.type = "base"
         self._version: str = __version__
 
@@ -713,6 +691,8 @@ class NormalDistribution(OperableDistribution):
         elif sd is not None and x is None and y is None:
             self.sd = sd
             self.mean = 0 if mean is None else mean
+            self.x = None
+            self.y = None
         else:
             raise ValueError("you must define either x/y or mean/sd")
 
@@ -993,7 +973,7 @@ def binomial(n, p):
 
 
 class BetaDistribution(OperableDistribution):
-    def __init__(self, a, b):
+    def __init__(self, a: Number, b: Number):
         super().__init__()
         self.a = a
         self.b = b
