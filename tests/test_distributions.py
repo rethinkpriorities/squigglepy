@@ -169,7 +169,9 @@ def test_norm_overdefinition_value_error():
 def test_norm_low_gt_high():
     with pytest.raises(ValueError) as execinfo:
         norm(10, 5)
-    assert "`high value` (y) cannot be lower than `low value` (x)" in str(execinfo.value)
+    assert "`high value` (y) cannot be lower than `low value` (x)" in str(
+        execinfo.value
+    )
 
 
 def test_norm_passes_lclip_rclip():

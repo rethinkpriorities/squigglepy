@@ -164,20 +164,8 @@ def bayesnet(
     has_in_mem_cache = event_fn in _squigglepy_internal_bayesnet_caches
     cache_path = load_cache_file + ".sqcache" if load_cache_file != "" else ""
     has_file_cache = os.path.exists(cache_path) if load_cache_file != "" else False
-<<<<<<< HEAD
-<<<<<<< HEAD
     encoder = msgspec.msgpack.Encoder()
     decoder = msgspec.msgpack.Decoder()
-=======
-
-    if load_cache_file or dump_cache_file or cores > 1:
-        encoder = msgspec.msgpack.Encoder()
-        decoder = msgspec.msgpack.Decoder()
->>>>>>> 087260e (Started wip_types)
-=======
-    encoder = msgspec.msgpack.Encoder()
-    decoder = msgspec.msgpack.Decoder()
->>>>>>> 10e4ded (fix type issues)
 
     if load_cache_file and not has_file_cache and verbose:
         print("Warning: cache file `{}.sqcache` not found.".format(load_cache_file))
@@ -198,7 +186,6 @@ def bayesnet(
             n_ = events.get("metadata")
             if n_ is not None:
                 n_ = n_.get("n")
-<<<<<<< HEAD
                 if n_ is None:
                     raise ValueError("events is malformed")
                 elif n_ < n:
@@ -206,13 +193,6 @@ def bayesnet(
                         ("insufficient samples - {} results cached but " + "requested {}").format(
                             events["metadata"]["n"], n
                         )
-=======
-                if events["metadata"]["n"] < n:
-                    raise ValueError(
-                        (
-                            "insufficient samples - {} results cached but " + "requested {}"
-                        ).format(events["metadata"]["n"], n)
->>>>>>> 10e4ded (fix type issues)
                     )
             else:
                 raise ValueError("events is malformed")
@@ -337,17 +317,10 @@ def bayesnet(
 
 
 def update(
-<<<<<<< HEAD
-<<<<<<< HEAD
     prior: Union[NormalDistribution, BetaDistribution],
     evidence: Union[NormalDistribution, BetaDistribution],
     evidence_weight: float = 1,
-=======
-    prior: BaseDistribution, evidence: BaseDistribution, evidence_weight: float = 1
->>>>>>> 087260e (Started wip_types)
-=======
     prior: Union[NormalDistribution, BetaDistribution], evidence: Union[NormalDistribution, BetaDistribution], evidence_weight: float = 1
->>>>>>> 827297d (more fun with types)
 ) -> BaseDistribution:
     """
     Update a distribution.
@@ -409,18 +382,8 @@ def update(
 def average(
     prior: BaseDistribution,
     evidence: BaseDistribution,
-<<<<<<< HEAD
-<<<<<<< HEAD
     weights: OptionalListOfFloats = [0.5, 0.5],
     relative_weights: OptionalListOfFloats = None,
-=======
-    weights: List | np.ndarray | float | None = [0.5, 0.5],
-    relative_weights: List | np.ndarray | float | None = None,
->>>>>>> 087260e (Started wip_types)
-=======
-    weights: Union[List, np.ndarray, float, None] = [0.5, 0.5],
-    relative_weights: Union[List, np.ndarray, float, None] = None,
->>>>>>> 827297d (more fun with types)
 ) -> MixtureDistribution:
     """
     Average two distributions.
