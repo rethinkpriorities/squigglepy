@@ -2,7 +2,7 @@ import operator
 import math
 import numpy as np
 from scipy import stats
-from typing import Union, Optional
+from typing import Callable, Union, Optional
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round, _optional_import
 from .version import __version__
@@ -15,31 +15,32 @@ Number = Union[int, float, np.floating, np.integer]
 
 class BaseDistribution:
     def __init__(self):
-        self.x = None
-        self.y = None
-        self.n = None
-        self.p = None
-        self.t = None
-        self.a = None
-        self.b = None
-        self.shape = None
-        self.scale = None
-        self.credibility = None
-        self.mean = None
-        self.sd = None
-        self.left = None
-        self.mode = None
-        self.right = None
-        self.fn = None
-        self.fn_str = None
-        self.lclip = None
-        self.rclip = None
-        self.lam = None
-        self.df = None
-        self.items = None
-        self.dists = None
-        self.weights = None
-        self._version = __version__
+        self.x: Optional[Number] = None
+        self.y: Optional[Number] = None
+        self.n: Optional[Number] = None
+        self.p: Optional[Number] = None
+        self.t: Optional[Number] = None
+        self.a: Optional[Number] = None
+        self.b: Optional[Number] = None
+        self.shape: Optional[Number] = None
+        self.scale: Optional[Number] = None
+        self.credibility: Optional[Number] = None
+        self.mean: Optional[Number] = None
+        self.sd: Optional[Number] = None
+        self.left: Optional[Number] = None
+        self.mode: Optional[Number] = None
+        self.right: Optional[Number] = None
+        self.fn: Optional[Number] = None
+        self.fn_str: Optional[Number] = None
+        self.lclip: Optional[Number] = None
+        self.rclip: Optional[Number] = None
+        self.lam: Optional[Number] = None
+        self.df: Optional[Number] = None
+        self.items: Optional[Number] = None
+        self.dists: Optional[Number] = None
+        self.weights: Optional[Number] = None
+        self.type = "base"
+        self._version: str = __version__
 
     def __str__(self):
         return "<Distribution> base"
@@ -47,7 +48,7 @@ class BaseDistribution:
     def __repr__(self):
         return str(self)
 
-    def plot(self, num_samples=None, bins=None):
+    def plot(self, num_samples: int = 1000, bins: int = 200) -> None:
         """
         Plot a histogram of the samples.
 
@@ -62,9 +63,6 @@ class BaseDistribution:
         --------
         >>> sq.norm(5, 10).plot()
         """
-        num_samples = 1000 if num_samples is None else num_samples
-        bins = 200 if bins is None else bins
-
         from .samplers import sample
 
         if plt is None:
@@ -84,7 +82,7 @@ class OperableDistribution(BaseDistribution):
 
         return sample(self)
 
-    def __matmul__(self, n):
+    def __matmul__(self, n: int) -> np.ndarray:
         try:
             n = int(n)
         except ValueError:
@@ -101,49 +99,49 @@ class OperableDistribution(BaseDistribution):
         else:
             raise ValueError
 
-    def __rmatmul__(self, n):
+    def __rmatmul__(self, n: int) -> np.ndarray:
         return self.__matmul__(n)
 
-    def __gt__(self, dist):
+    def __gt__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.gt, ">")
 
-    def __ge__(self, dist):
+    def __ge__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.ge, ">=")
 
-    def __lt__(self, dist):
+    def __lt__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.lt, "<")
 
-    def __le__(self, dist):
+    def __le__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.le, "<=")
 
-    def __eq__(self, dist):
+    def __eq__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.le, "==")
 
-    def __ne__(self, dist):
+    def __ne__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.le, "!=")
 
     def __neg__(self):
         return ComplexDistribution(self, None, operator.neg, "-")
 
-    def __add__(self, dist):
+    def __add__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.add, "+")
 
-    def __radd__(self, dist):
+    def __radd__(self, dist: BaseDistribution):
         return ComplexDistribution(dist, self, operator.add, "+")
 
-    def __sub__(self, dist):
+    def __sub__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.sub, "-")
 
-    def __rsub__(self, dist):
+    def __rsub__(self, dist: BaseDistribution):
         return ComplexDistribution(dist, self, operator.sub, "-")
 
-    def __mul__(self, dist):
+    def __mul__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.mul, "*")
 
-    def __rmul__(self, dist):
+    def __rmul__(self, dist: BaseDistribution):
         return ComplexDistribution(dist, self, operator.mul, "*")
 
-    def __truediv__(self, dist):
+    def __truediv__(self, dist: BaseDistribution):
         return ComplexDistribution(self, dist, operator.truediv, "/")
 
     def __rtruediv__(self, dist):

@@ -7,6 +7,7 @@ from tqdm import tqdm
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
+from typing import List, Union
 
 import importlib
 import importlib.util
@@ -408,11 +409,11 @@ def one_in(p, digits=0, verbose=True):
 
 
 def get_percentiles(
-    data,
-    percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
-    reverse=False,
-    digits=None,
-):
+        data: Union[List, np.ndarray],
+        percentiles: List = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+        reverse: bool = False,
+        digits: int = None,
+) -> dict[str, float]:
     """
     Print the percentiles of the data.
 
@@ -442,10 +443,7 @@ def get_percentiles(
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
     percentiles = np.percentile(data, percentiles)
     percentiles = [_round(p, digits) for p in percentiles]
-    if len(percentile_labels) == 1:
-        return percentiles[0]
-    else:
-        return dict(list(zip(percentile_labels, percentiles)))
+    return dict(list(zip(percentile_labels, percentiles)))
 
 
 def get_log_percentiles(
