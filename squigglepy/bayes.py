@@ -7,9 +7,9 @@ import numpy as np
 import pathos.multiprocessing as mp
 
 from datetime import datetime
-from typing import Callable, List
+from typing import Callable, Optional, Union, List
 
-from .distributions import BetaDistribution, NormalDistribution, MixtureDistribution, norm, beta, mixture
+from .distributions import BaseDistribution, NormalDistribution, MixtureDistribution, BetaDistribution, NormalDistribution, norm, beta, mixture
 from .utils import _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
@@ -52,11 +52,11 @@ def simple_bayes(likelihood_h: float, likelihood_not_h: float, prior: float) -> 
 
 
 def bayesnet(
-    event_fn: Callable | None = None,
+    event_fn: Optional[Callable] = None,
     n: int = 1,
-    find: Callable | None = None,
-    conditional_on: Callable | None = None,
-    reduce_fn: Callable | None = None,
+    find: Optional[Callable] = None,
+    conditional_on: Optional[Callable] = None,
+    reduce_fn: Optional[Callable] = None,
     raw: bool = False,
     memcache: bool = True,
     memcache_load: bool = True,
@@ -305,7 +305,7 @@ def bayesnet(
 
 
 def update(
-    prior: BaseDistribution, evidence: BaseDistribution, evidence_weight: float = 1
+    prior: Union[NormalDistribution, BetaDistribution], evidence: Union[NormalDistribution, BetaDistribution], evidence_weight: float = 1
 ) -> BaseDistribution:
     """
     Update a distribution.
@@ -339,10 +339,8 @@ def update(
     """
     if isinstance(prior, NormalDistribution) and isinstance(evidence, NormalDistribution):
         prior_mean = prior.mean
-        assert prior.sd is not None
         prior_var = prior.sd**2
         evidence_mean = evidence.mean
-        assert evidence.sd is not None
         evidence_var = evidence.sd**2
         return norm(
             mean=(
@@ -358,10 +356,6 @@ def update(
         prior_b = prior.b
         evidence_a = evidence.a
         evidence_b = evidence.b
-        assert prior_a is not None
-        assert evidence_a is not None
-        assert prior_b is not None
-        assert evidence_b is not None
         return beta(prior_a + evidence_a, prior_b + evidence_b)
     elif type(prior) != type(evidence):
         print(type(prior), type(evidence))
@@ -373,8 +367,8 @@ def update(
 def average(
     prior: BaseDistribution,
     evidence: BaseDistribution,
-    weights: List | np.ndarray | float | None = [0.5, 0.5],
-    relative_weights: List | np.ndarray | float | None = None,
+    weights: Union[List, np.ndarray, float, None] = [0.5, 0.5],
+    relative_weights: Union[List, np.ndarray, float, None] = None,
 ) -> MixtureDistribution:
     """
     Average two distributions.

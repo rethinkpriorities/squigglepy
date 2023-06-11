@@ -2,12 +2,15 @@ import operator
 import math
 import numpy as np
 from scipy import stats
+from types import Union, Optional
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round, _optional_import
 from .version import __version__
 
 # We only import matplotlib.pyplot if we need it
 plt = _optional_import("matplotlib.pyplot")
+
+Number = Union[int, float, np.floating, np.integer]
 
 
 class BaseDistribution:
@@ -62,11 +65,15 @@ class BaseDistribution:
         num_samples = 1000 if num_samples is None else num_samples
         bins = 200 if bins is None else bins
 
-        samples = self @ num_samples
+        from .samplers import sample
 
+<<<<<<< HEAD
         if plt is None:
             raise ModuleNotFoundError("You must install matplotlib for plotting.")
 
+=======
+        samples = sample(self, num_samples)
+>>>>>>> 1b5a7d3 (more fun with types)
         plt.hist(samples, bins=bins)
         plt.show()
 
@@ -639,8 +646,18 @@ def uniform(x, y):
 
 
 class NormalDistribution(OperableDistribution):
-    def __init__(self, x=None, y=None, mean=None, sd=None, credibility=90, lclip=None, rclip=None):
+    def __init__(
+            self,
+            x: Optional[Number] = None,
+            y: Optional[Number] = None
+            mean: Optional[Number] = None
+            sd: Optional[Number] = None,
+            credibility: Number = 90,
+            lclip: Optional[Number] = None,
+            rclip: Optional[Number] = None
+    ):
         super().__init__()
+<<<<<<< HEAD
         self.x = x
         self.y = y
         self.credibility = credibility
@@ -648,22 +665,33 @@ class NormalDistribution(OperableDistribution):
         self.sd = sd
         self.lclip = lclip
         self.rclip = rclip
+=======
+>>>>>>> 1b5a7d3 (more fun with types)
 
-        if self.x is not None and self.y is not None and self.x > self.y:
+        if x is not None and y is not None and x > y:
             raise ValueError("`high value` cannot be lower than `low value`")
 
-        if (self.x is None or self.y is None) and self.sd is None:
+        if (x is None or y is None) and sd is None:
             raise ValueError("must define either x/y or mean/sd")
-        elif (self.x is not None or self.y is not None) and self.sd is not None:
+        elif (x is not None or y is not None) and sd is not None:
             raise ValueError("must define either x/y or mean/sd -- cannot define both")
-        elif self.sd is not None and self.mean is None:
-            self.mean = 0
+        elif sd is not None and mean is None:
+            mean = 0
 
-        if self.mean is None and self.sd is None:
-            self.mean = (self.x + self.y) / 2
-            cdf_value = 0.5 + 0.5 * (self.credibility / 100)
+        if sd is None or mean is None:
+            mean = (x + y) / 2
+            cdf_value = 0.5 + 0.5 * (credibility / 100)
             normed_sigma = stats.norm.ppf(cdf_value)
-            self.sd = (self.y - self.mean) / normed_sigma
+            sd = (y - mean) / normed_sigma
+
+        self.mean = mean: Number
+        self.sd = sd: Number
+        self.x = x: Number
+        self.y = y: Number
+        self.lclip = lclip: Optional[Number]
+        self.rclip = rclip: Optional[Number]
+        self.type = "norm"
+
 
     def __str__(self):
         out = "<Distribution> norm(mean={}, sd={}".format(round(self.mean, 2), round(self.sd, 2))
