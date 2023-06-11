@@ -7,8 +7,8 @@ from squigglepy.version import __version__
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-if sys.version_info < (3, 7):
-    raise ValueError("Versions of Python before 3.7 are not supported")
+if sys.version_info < (3, 9):
+    raise ValueError("Versions of Python before 3.9 are not supported")
 
 setuptools.setup(
     name="squigglepy",
@@ -19,7 +19,7 @@ setuptools.setup(
         "Squiggle programming language for intuitive probabilistic"
         + " estimation features in Python"
     ),
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     install_requires=[
         "ruff",
         "msgspec",
