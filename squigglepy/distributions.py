@@ -620,14 +620,14 @@ def uniform(x, y):
 
 class NormalDistribution(OperableDistribution):
     def __init__(
-            self,
-            x: Optional[Number] = None,
-            y: Optional[Number] = None
-            mean: Optional[Number] = None
-            sd: Optional[Number] = None,
-            credibility: Number = 90,
-            lclip: Optional[Number] = None,
-            rclip: Optional[Number] = None
+        self,
+        x: Optional[Number] = None,
+        y: Optional[Number] = None,
+        mean: Optional[Number] = None,
+        sd: Optional[Number] = None,
+        credibility: Number = 90,
+        lclip: Optional[Number] = None,
+        rclip: Optional[Number] = None,
     ):
         super().__init__()
 <<<<<<< HEAD
