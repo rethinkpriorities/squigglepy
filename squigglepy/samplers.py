@@ -55,7 +55,7 @@ def normal_sample(mean, sd, samples=1):
     >>> normal_sample(0, 1)
     0.30471707975443135
     """
-    return _simplify(_get_rng().fill(n=samples, method='normal', var={'mean': mean, 'sd': sd}))
+    return _get_rng().fill(n=samples, method='normal', var={'loc': mean, 'scale': sd})
 
 
 def lognormal_sample(mean, sd, samples=1):
@@ -83,7 +83,7 @@ def lognormal_sample(mean, sd, samples=1):
     >>> lognormal_sample(0, 1)
     1.3562412406168636
     """
-    return _simplify(_get_rng().lognormal(mean, sd, samples))
+    return _get_rng().fill(n=samples, method='lognormal', var={'mean': mean, 'sigma': sd})
 
 
 def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
@@ -223,7 +223,7 @@ def binomial_sample(n, p, samples=1):
     >>> binomial_sample(10, 0.1)
     2
     """
-    return _simplify(_get_rng().binomial(n, p, samples))
+    return _get_rng().fill(n=samples, method='binomial', var={'n': n, 'p': p})
 
 
 def beta_sample(a, b, samples=1):
@@ -253,7 +253,7 @@ def beta_sample(a, b, samples=1):
     >>> beta_sample(1, 1)
     0.22145847498048798
     """
-    return _simplify(_get_rng().beta(a, b, samples))
+    return _get_rng().fill(n=samples, method='beta', var={'a': a, 'b': b})
 
 
 def bernoulli_sample(p, samples=1):
@@ -311,7 +311,7 @@ def triangular_sample(left, mode, right, samples=1):
     >>> triangular_sample(1, 2, 3)
     2.327625176788963
     """
-    return _simplify(_get_rng().triangular(left, mode, right, samples))
+    return _get_rng().fill(n=samples, method='triangular', var={'left': left, 'mode': mode, 'right': right})
 
 
 def poisson_sample(lam, samples=1):
@@ -336,7 +336,7 @@ def poisson_sample(lam, samples=1):
     >>> poisson_sample(10)
     13
     """
-    return _simplify(_get_rng().poisson(lam, samples))
+    return _get_rng().fill(n=samples, method='poisson', var={'lam': lam})
 
 
 def exponential_sample(scale, samples=1):
@@ -361,7 +361,7 @@ def exponential_sample(scale, samples=1):
     >>> exponential_sample(10)
     24.042086039659946
     """
-    return _simplify(_get_rng().exponential(scale, samples))
+    return _get_rng().fill(n=samples, method='exponential', var={'scale': scale})
 
 
 def gamma_sample(shape, scale, samples=1):
@@ -388,7 +388,7 @@ def gamma_sample(shape, scale, samples=1):
     >>> gamma_sample(10, 2)
     21.290716894247602
     """
-    return _simplify(_get_rng().gamma(shape, scale, samples))
+    return _get_rng().fill(n=samples, method='gamma', var={'shape': shape, 'scale': scale})
 
 
 def pareto_sample(shape, samples=1):
@@ -411,7 +411,7 @@ def pareto_sample(shape, samples=1):
     >>> pareto_sample(1)
     10.069666324736094
     """
-    return _simplify(_get_rng().pareto(shape, samples))
+    return _get_rng().fill(n=samples, method='pareto', var={'a': shape})
 
 
 def uniform_sample(low, high, samples=1):
@@ -439,7 +439,7 @@ def uniform_sample(low, high, samples=1):
     >>> uniform_sample(0, 1)
     0.7739560485559633
     """
-    return _simplify(_get_rng().uniform(low, high, samples))
+    return _get_rng().fill(n=samples, method='uniform', var={'low': low, 'high': high})
 
 
 def chi_square_sample(df, samples=1):
@@ -464,7 +464,7 @@ def chi_square_sample(df, samples=1):
     >>> chi_square_sample(2)
     4.808417207931989
     """
-    return _simplify(_get_rng().chisquare(df, samples))
+    return _get_rng().fill(n=samples, method='chisquare', var={'df': df})
 
 
 def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1, _multicore_tqdm_cores=1):

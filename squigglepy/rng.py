@@ -3,37 +3,51 @@ import multiprocessing
 import concurrent.futures
 import numpy as np
 
+from .utils import flatten
+
 
 class MultithreadedRNG:
-    def __init__(self, seed=None, threads=None):
-        if threads is None:
-            threads = multiprocessing.cpu_count()
-        self.threads = threads
-
-        seq = SeedSequence(seed)
-        self._random_generators = [default_rng(s) for s in seq.spawn(threads)]
-        self.executor = concurrent.futures.ThreadPoolExecutor(threads)
+    def __init__(self, seed=None, max_threads=None):
+        self.seed = seed
+        self.max_threads = max_threads
+        self.calls = 0
 
     def fill(self, n, method, var):
-        self.step = np.ceil(n / self.threads).astype(np.int_)
-
-        def _fill(random_state, var):
+        self.calls += 1
+        if n < 1000:
+            random_state = default_rng(self.seed + self.calls)
             fn = getattr(random_state, method)
-            var['size'] = self.n
+            var['size'] = n
             return fn(**var)
+        else:
+            threads = multiprocessing.cpu_count()
+            if self.max_threads is not None and threads > self.max_threads:
+                threads = self.max_threads
 
-        futures = {}
-        for i in range(self.threads):
-            args = (_fill,
-                    self._random_generators[i],
-                    self.step,
-                    var)
-            futures[self.executor.submit(*args)] = i
-        concurrent.futures.wait(futures)
-        return futures
+            seq = SeedSequence(self.seed + self.calls)
+            self._random_generators = [default_rng(s) for s in seq.spawn(threads)]
+            self.executor = concurrent.futures.ThreadPoolExecutor(threads)
 
-    def __del__(self):
-        self.executor.shutdown(False)
+            if n < threads:
+                threads = n
+
+            self.step = np.ceil(n / threads).astype(np.int_)
+
+            def _fill(random_state, step, var, i):
+                fn = getattr(random_state, method)
+                var['size'] = step
+                return (i, fn(**var))
+
+            futures = []
+            for i in range(threads):
+                args = (_fill,
+                        self._random_generators[i],
+                        self.step,
+                        var,
+                        i)
+                futures.append(self.executor.submit(*args))
+            out = [f.result() for f in concurrent.futures.as_completed(futures)]
+            return flatten([o[1] for o in sorted(out)])
 
 
 _squigglepy_internal_rng = MultithreadedRNG()

@@ -298,7 +298,7 @@ def event_occurs(p):
         p = sample(p)
     from .rng import _squigglepy_internal_rng
 
-    return _squigglepy_internal_rng.uniform(0, 1) < p
+    return _squigglepy_internal_rng.fill(n=1, method='uniform', var={'low': 0, 'high': 1}) < p
 
 
 def event_happens(p):
@@ -1159,3 +1159,7 @@ def extremize(p, e):
         return 1 - ((1 - p) ** e)
     else:
         return p**e
+
+
+def flatten(l):
+    return [item for sublist in l for item in sublist]
