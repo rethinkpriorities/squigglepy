@@ -1,14 +1,10 @@
 import time
 import numpy as np
-import squigglepy as sq
-
-from squigglepy.numbers import K, M
-from squigglepy import bayes
 
 from tqdm import tqdm
 
 
-RUNS = 10 * K
+RUNS = 10_000
 
 
 def _within(actual, expected, tolerance_ratio=None, abs_tolerance=None):
@@ -185,6 +181,14 @@ def model():
 
 
 if __name__ == "__main__":
+    print("Test 0 (LOAD SQ)")
+    start0 = time.time()
+    import squigglepy as sq
+    from squigglepy.numbers import K, M
+    from squigglepy import bayes
+    _mark_time(start0, 0.033, "Test 0 complete")
+
+
     print("Test 1 (PIANO TUNERS, NO TIME, LONG FORMAT)...")
     sq.set_seed(42)
     start1 = time.time()
@@ -646,5 +650,5 @@ if __name__ == "__main__":
     print("Squigglepy version is {}".format(sq.__version__))
 
     # END
-    _mark_time(start1, 150, "Integration tests complete")
+    _mark_time(start0, 150, "Integration tests complete")
     print("DONE! INTEGRATION TEST SUCCESS!")
