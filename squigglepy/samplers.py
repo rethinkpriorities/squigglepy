@@ -55,7 +55,7 @@ def normal_sample(mean, sd, samples=1):
     >>> normal_sample(0, 1)
     0.30471707975443135
     """
-    return _simplify(_get_rng().normal(mean, sd, samples))
+    return _simplify(_get_rng().fill(n=samples, method='normal', var={'mean': mean, 'sd': sd}))
 
 
 def lognormal_sample(mean, sd, samples=1):
