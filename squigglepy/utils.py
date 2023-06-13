@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-from scipy import stats
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
