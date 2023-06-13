@@ -186,8 +186,8 @@ if __name__ == "__main__":
     import squigglepy as sq
     from squigglepy.numbers import K, M
     from squigglepy import bayes
-    _mark_time(start0, 0.033, "Test 0 complete")
 
+    _mark_time(start0, 0.033, "Test 0 complete")
 
     print("Test 1 (PIANO TUNERS, NO TIME, LONG FORMAT)...")
     sq.set_seed(42)

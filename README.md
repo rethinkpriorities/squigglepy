@@ -1,12 +1,18 @@
-## Squigglepy: Implementation of Squiggle in Python
+# Squigglepy: Implementation of Squiggle in Python
 
 [Squiggle](https://www.squiggle-language.com/) is a "simple programming language for intuitive probabilistic estimation". It serves as its own standalone programming language with its own syntax, but it is implemented in JavaScript. I like the features of Squiggle and intend to use it frequently, but I also sometimes want to use similar functionalities in Python, especially alongside other Python statistical programming packages like Numpy, Pandas, and Matplotlib. The **squigglepy** package here implements many Squiggle-like functionalities in Python.
 
-
 ## Installation
 
-`pip3 install squigglepy`
+```shell
+pip install squigglepy
+```
 
+For plotting support, you can also use the `plots` extra:
+
+```shell
+pip install squigglepy[plots]
+```
 
 ## Usage
 
@@ -68,7 +74,6 @@ sq.get_percentiles(total_tuners_at_time(2030-2022) @ 1000)
 **WARNING:** Be careful about dividing by `K`, `M`, etc. `1/2*K` = 500 in Python. Use `1/(2*K)` instead to get the expected outcome.
 
 **WARNING:** Be careful about using `K` to get sample counts. Use `sq.norm(2, 3) @ (2*K)`... `sq.norm(2, 3) @ 2*K` will return only two samples, multiplied by 1000.
-
 
 ### Distributions
 
@@ -137,7 +142,6 @@ sq.mixture([[0.3, sq.norm(1,3)],
 sq.zero_inflated(0.6, sq.norm(1, 2))
 ```
 
-
 ### Additional Features
 
 ```Python
@@ -163,7 +167,6 @@ sq.norm(0, 3, lclip=0, rclip=5) # Sample norm with a 90% CI from 0-3, but anythi
 sq.norm(0, 3) >> sq.clip(0, 5)
 ```
 
-
 #### Example: Rolling a Die
 
 An example of how to use distributions to build tools:
@@ -179,7 +182,6 @@ roll_die(sides=6, n=10)
 ```
 
 This is already included standard in the utils of this package. Use `sq.roll_die`.
-
 
 ### Bayesian inference
 
@@ -264,7 +266,6 @@ print(sq.get_percentiles(average_samples))
 print('Average Mean: {} SD: {}'.format(np.mean(average_samples), np.std(average_samples)))
 ```
 
-
 #### Example: Alarm net
 
 This is the alarm network from [Bayesian Artificial Intelligence - Section 2.5.1](https://bayesian-intelligence.com/publications/bai/book/BAI_Chapter2.pdf):
@@ -284,7 +285,6 @@ This is the alarm network from [Bayesian Artificial Intelligence - Section 2.5.1
 > John will call you 90% of the time when the alarm goes off. But on 5% of the days, John will just call to say "hi".
 > Mary will call you 70% of the time when the alarm goes off. But on 1% of the days, Mary will just call to say "hi".
 
-
 ```Python
 import squigglepy as sq
 from squigglepy import bayes
@@ -302,7 +302,7 @@ def p_alarm_goes_off(burglary, earthquake):
 
 def p_john_calls(alarm_goes_off):
     return 0.9 if alarm_goes_off else 0.05
-    
+
 def p_mary_calls(alarm_goes_off):
     return 0.7 if alarm_goes_off else 0.01
 
@@ -338,7 +338,6 @@ bayes.bayesnet(define_event,
 
 Note that the amount of Bayesian analysis that squigglepy can do is pretty limited. For more complex bayesian analysis, consider [sorobn](https://github.com/MaxHalford/sorobn), [pomegranate](https://github.com/jmschrei/pomegranate), [bnlearn](https://github.com/erdogant/bnlearn), or [pyMC](https://github.com/pymc-devs/pymc).
 
-
 #### Example: A Demonstration of the Monty Hall Problem
 
 ```Python
@@ -351,13 +350,13 @@ def monte_hall(door_picked, switch=False):
     doors = ['A', 'B', 'C']
     car_is_behind_door = ~sq.discrete(doors)
     reveal_door = ~sq.discrete([d for d in doors if d != door_picked and d != car_is_behind_door])
-    
+
     if switch:
         old_door_picked = door_picked
         door_picked = [d for d in doors if d != old_door_picked and d != reveal_door][0]
-        
+
     won_car = (car_is_behind_door == door_picked)
-    return won_car 
+    return won_car
 
 
 def define_event():
@@ -385,7 +384,6 @@ print('Win {}% of the time when not switching'.format(int(r * 100)))
 # Win 34% of the time when not switching
 ```
 
-
 #### Example: More complex coin/dice interactions
 
 > Imagine that I flip a coin. If heads, I take a random die out of my blue bag. If tails, I take a random die out of my red bag.
@@ -411,16 +409,15 @@ bayes.bayesnet(define_event,
 # This run for me returned 0.12306 which is pretty close to the correct answer of 0.12292
 ```
 
-
 ### Kelly betting
 
 You can use probability generated, combine with a bankroll to determine bet sizing using [Kelly criterion](https://en.wikipedia.org/wiki/Kelly_criterion).
 
 For example, if you want to Kelly bet and you've...
 
-* determined that your price (your probability of the event in question happening / the market in question resolving in your favor) is $0.70 (70%)
-* see that the market is pricing at $0.65
-* you have a bankroll of $1000 that you are willing to bet
+- determined that your price (your probability of the event in question happening / the market in question resolving in your favor) is $0.70 (70%)
+- see that the market is pricing at $0.65
+- you have a bankroll of $1000 that you are willing to bet
 
 You should bet as follows:
 
@@ -439,13 +436,11 @@ kelly_data['expected_roi']  # What is the expected ROI of this bet?
 
 You can see more examples of squigglepy in action [here](https://github.com/peterhurford/public-botecs).
 
-
 ## Run tests
 
 Use `black .` for formatting.
 
 Run `ruff check . && pytest && pip3 install . && python3 tests/integration.py`
-
 
 ## Disclaimers
 
@@ -455,10 +450,8 @@ This package is also new and not yet in a stable production version, so you may 
 
 This package is available under an MIT License.
 
-
 ## Acknowledgements
 
-* Thanks to Ozzie Gooen and the Quantified Uncertainty Research Institute for creating and maintaining the original Squiggle language.
-* Thanks to Dawn Drescher for helping me implement math between distributions.
-* Thanks to Dawn Drescher for coming up with the idea to use `~` as a shorthand for `sample`, as well as helping me implement it.
-
+- Thanks to Ozzie Gooen and the Quantified Uncertainty Research Institute for creating and maintaining the original Squiggle language.
+- Thanks to Dawn Drescher for helping me implement math between distributions.
+- Thanks to Dawn Drescher for coming up with the idea to use `~` as a shorthand for `sample`, as well as helping me implement it.
