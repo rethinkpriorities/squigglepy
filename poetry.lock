@@ -78,7 +78,7 @@ files = [
 name = "contourpy"
 version = "1.0.7"
 description = "Python library for calculating contours of 2D quadrilateral grids"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "contourpy-1.0.7-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:95c3acddf921944f241b6773b767f1cbce71d03307270e2d769fd584d5d1092d"},
@@ -152,7 +152,7 @@ test-no-images = ["pytest"]
 name = "cycler"
 version = "0.11.0"
 description = "Composable style cycles"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
@@ -189,13 +189,45 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "fonttools"
-version = "4.39.4"
+version = "4.40.0"
 description = "Tools to manipulate font files"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "fonttools-4.39.4-py3-none-any.whl", hash = "sha256:106caf6167c4597556b31a8d9175a3fdc0356fdcd70ab19973c3b0d4c893c461"},
-    {file = "fonttools-4.39.4.zip", hash = "sha256:dba8d7cdb8e2bac1b3da28c5ed5960de09e59a2fe7e63bb73f5a59e57b0430d2"},
+    {file = "fonttools-4.40.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b802dcbf9bcff74672f292b2466f6589ab8736ce4dcf36f48eb994c2847c4b30"},
+    {file = "fonttools-4.40.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:7f6e3fa3da923063c286320e728ba2270e49c73386e3a711aa680f4b0747d692"},
+    {file = "fonttools-4.40.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5fdf60f8a5c6bcce7d024a33f7e4bc7921f5b74e8ea13bccd204f2c8b86f3470"},
+    {file = "fonttools-4.40.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:91784e21a1a085fac07c6a407564f4a77feb471b5954c9ee55a4f9165151f6c1"},
+    {file = "fonttools-4.40.0-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:05171f3c546f64d78569f10adc0de72561882352cac39ec7439af12304d8d8c0"},
+    {file = "fonttools-4.40.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:7449e5e306f3a930a8944c85d0cbc8429cba13503372a1a40f23124d6fb09b58"},
+    {file = "fonttools-4.40.0-cp310-cp310-win32.whl", hash = "sha256:bae8c13abbc2511e9a855d2142c0ab01178dd66b1a665798f357da0d06253e0d"},
+    {file = "fonttools-4.40.0-cp310-cp310-win_amd64.whl", hash = "sha256:425b74a608427499b0e45e433c34ddc350820b6f25b7c8761963a08145157a66"},
+    {file = "fonttools-4.40.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:00ab569b2a3e591e00425023ade87e8fef90380c1dde61be7691cb524ca5f743"},
+    {file = "fonttools-4.40.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:18ea64ac43e94c9e0c23d7a9475f1026be0e25b10dda8f236fc956188761df97"},
+    {file = "fonttools-4.40.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:022c4a16b412293e7f1ce21b8bab7a6f9d12c4ffdf171fdc67122baddb973069"},
+    {file = "fonttools-4.40.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:530c5d35109f3e0cea2535742d6a3bc99c0786cf0cbd7bb2dc9212387f0d908c"},
+    {file = "fonttools-4.40.0-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:5e00334c66f4e83535384cb5339526d01d02d77f142c23b2f97bd6a4f585497a"},
+    {file = "fonttools-4.40.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:eb52c10fda31159c22c7ed85074e05f8b97da8773ea461706c273e31bcbea836"},
+    {file = "fonttools-4.40.0-cp311-cp311-win32.whl", hash = "sha256:6a8d71b9a5c884c72741868e845c0e563c5d83dcaf10bb0ceeec3b4b2eb14c67"},
+    {file = "fonttools-4.40.0-cp311-cp311-win_amd64.whl", hash = "sha256:15abb3d055c1b2dff9ce376b6c3db10777cb74b37b52b78f61657634fd348a0d"},
+    {file = "fonttools-4.40.0-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:14037c31138fbd21847ad5e5441dfdde003e0a8f3feb5812a1a21fd1c255ffbd"},
+    {file = "fonttools-4.40.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:94c915f6716589f78bc00fbc14c5b8de65cfd11ee335d32504f1ef234524cb24"},
+    {file = "fonttools-4.40.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:37467cee0f32cada2ec08bc16c9c31f9b53ea54b2f5604bf25a1246b5f50593a"},
+    {file = "fonttools-4.40.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:56d4d85f5374b45b08d2f928517d1e313ea71b4847240398decd0ab3ebbca885"},
+    {file = "fonttools-4.40.0-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:8c4305b171b61040b1ee75d18f9baafe58bd3b798d1670078efe2c92436bfb63"},
+    {file = "fonttools-4.40.0-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:a954b90d1473c85a22ecf305761d9fd89da93bbd31dae86e7dea436ad2cb5dc9"},
+    {file = "fonttools-4.40.0-cp38-cp38-win32.whl", hash = "sha256:1bc4c5b147be8dbc5df9cc8ac5e93ee914ad030fe2a201cc8f02f499db71011d"},
+    {file = "fonttools-4.40.0-cp38-cp38-win_amd64.whl", hash = "sha256:8a917828dbfdb1cbe50cf40eeae6fbf9c41aef9e535649ed8f4982b2ef65c091"},
+    {file = "fonttools-4.40.0-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:882983279bf39afe4e945109772c2ffad2be2c90983d6559af8b75c19845a80a"},
+    {file = "fonttools-4.40.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:c55f1b4109dbc3aeb496677b3e636d55ef46dc078c2a5e3f3db4e90f1c6d2907"},
+    {file = "fonttools-4.40.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ec468c022d09f1817c691cf884feb1030ef6f1e93e3ea6831b0d8144c06480d1"},
+    {file = "fonttools-4.40.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6d5adf4ba114f028fc3f5317a221fd8b0f4ef7a2e5524a2b1e0fd891b093791a"},
+    {file = "fonttools-4.40.0-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:aa83b3f151bc63970f39b2b42a06097c5a22fd7ed9f7ba008e618de4503d3895"},
+    {file = "fonttools-4.40.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:97d95b8301b62bdece1af943b88bcb3680fd385f88346a4a899ee145913b414a"},
+    {file = "fonttools-4.40.0-cp39-cp39-win32.whl", hash = "sha256:1a003608400dd1cca3e089e8c94973c6b51a4fb1ef00ff6d7641617b9242e637"},
+    {file = "fonttools-4.40.0-cp39-cp39-win_amd64.whl", hash = "sha256:7961575221e3da0841c75da53833272c520000d76f7f71274dbf43370f8a1065"},
+    {file = "fonttools-4.40.0-py3-none-any.whl", hash = "sha256:200729d12461e2038700d31f0d49ad5a7b55855dec7525074979a06b46f88505"},
+    {file = "fonttools-4.40.0.tar.gz", hash = "sha256:337b6e83d7ee73c40ea62407f2ce03b07c3459e213b6f332b94a69923b9e1cb9"},
 ]
 
 [package.extras]
@@ -216,7 +248,7 @@ woff = ["brotli (>=1.0.1)", "brotlicffi (>=0.8.0)", "zopfli (>=0.1.4)"]
 name = "importlib-resources"
 version = "5.12.0"
 description = "Read resources from Python packages"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "importlib_resources-5.12.0-py3-none-any.whl", hash = "sha256:7b1deeebbf351c7578e09bf2f63fa2ce8b5ffec296e0d349139d43cca061a81a"},
@@ -245,7 +277,7 @@ files = [
 name = "kiwisolver"
 version = "1.4.4"
 description = "A fast implementation of the Cassowary constraint solver"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "kiwisolver-1.4.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2f5e60fabb7343a836360c4f0919b8cd0d6dbf08ad2ca6b9cf90bf0c76a3c4f6"},
@@ -322,7 +354,7 @@ files = [
 name = "matplotlib"
 version = "3.7.1"
 description = "Python plotting package"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "matplotlib-3.7.1-cp310-cp310-macosx_10_12_universal2.whl", hash = "sha256:95cbc13c1fc6844ab8812a525bbc237fa1470863ff3dace7352e910519e194b1"},
@@ -514,7 +546,7 @@ files = [
 name = "pandas"
 version = "2.0.2"
 description = "Powerful data structures for data analysis, time series, and statistics"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "pandas-2.0.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:9ebb9f1c22ddb828e7fd017ea265a59d80461d5a79154b49a4207bd17514d122"},
@@ -609,7 +641,7 @@ files = [
 name = "pillow"
 version = "9.5.0"
 description = "Python Imaging Library (Fork)"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "Pillow-9.5.0-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:ace6ca218308447b9077c14ea4ef381ba0b67ee78d64046b3f19cf4e1139ad16"},
@@ -743,7 +775,7 @@ dill = ["dill (>=0.3.6)"]
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
-optional = false
+optional = true
 python-versions = ">=3.6.8"
 files = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
@@ -796,7 +828,7 @@ dev = ["pre-commit", "pytest-asyncio", "tox"]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 files = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
@@ -810,7 +842,7 @@ six = ">=1.5"
 name = "pytz"
 version = "2023.3"
 description = "World timezone definitions, modern and historical"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "pytz-2023.3-py2.py3-none-any.whl", hash = "sha256:a151b3abb88eda1d4e34a9814df37de2a80e301e68ba0fd856fb9b46bfbbbffb"},
@@ -885,7 +917,7 @@ test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeo
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
@@ -938,7 +970,7 @@ files = [
 name = "tzdata"
 version = "2023.3"
 description = "Provider of IANA time zone data"
-optional = false
+optional = true
 python-versions = ">=2"
 files = [
     {file = "tzdata-2023.3-py2.py3-none-any.whl", hash = "sha256:7e65763eef3120314099b6939b5546db7adce1e7d6f2e179e3df563c70511eda"},
@@ -949,7 +981,7 @@ files = [
 name = "zipp"
 version = "3.15.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "zipp-3.15.0-py3-none-any.whl", hash = "sha256:48904fc76a60e542af151aded95726c1a5c34ed43ab4134b597665c86d7ad556"},
@@ -960,7 +992,12 @@ files = [
 docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
+[extras]
+all = []
+ecosystem = ["pandas"]
+plots = ["matplotlib"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "fa0d1c323642ec366697b25061f1d62acadf5788cb63d7e27b815057085a41e6"
+content-hash = "c08e85917917d22c840e121db13bdcdf32be455720eec35eee6299d378d645e0"

@@ -1,11 +1,13 @@
 import operator
 import math
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy import stats
 
-from .utils import _process_weights_values, _is_numpy, is_dist, _round
+from .utils import _process_weights_values, _is_numpy, is_dist, _round, _optional_import
 from .version import __version__
+
+# We only import matplotlib.pyplot if we need it
+plt = _optional_import("matplotlib.pyplot")
 
 
 class BaseDistribution:
@@ -62,6 +64,9 @@ class BaseDistribution:
         bins = 200 if bins is None else bins
 
         samples = self @ num_samples
+
+        if plt is None:
+            raise ModuleNotFoundError("You must install matplotlib for plotting.")
 
         plt.hist(samples, bins=bins)
         plt.show()

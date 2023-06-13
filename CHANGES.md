@@ -1,6 +1,8 @@
 ## v0.27
 
 * This package now only supports Python 3.9 and higher.
+* Package load time is now ~2x faster.
+* Pandas and matplotlib as removed as required dependencies, but their related features are lazily enabled when the modules are available. These packages are still available for install  as extras, installable with pip install squigglepy[plots] (for plotting-related functionality, matplotlib for now), pip install squigglepy[ecosystem] (for pandas, and in the future other related packages), or pip install squigglepy[all] (for all extras).
 * Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
 * Using black now for formatting.
 * Switched from `flake8` to `ruff`.
