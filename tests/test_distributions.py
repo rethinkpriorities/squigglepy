@@ -32,6 +32,24 @@ from ..squigglepy.distributions import (
     dist_exp,
     zero_inflated,
     inf0,
+    ComplexDistribution,
+    DiscreteDistribution,
+    ExponentialDistribution,
+    GammaDistribution,
+    LogTDistribution,
+    LognormalDistribution,
+    MixtureDistribution,
+    NormalDistribution,
+    PoissonDistribution,
+    TDistribution,
+    TriangularDistribution,
+    BernoulliDistribution,
+    BetaDistribution,
+    BinomialDistribution,
+    ChiSquareDistribution,
+    ConstantDistribution,
+    ParetoDistribution,
+    UniformDistribution,
 )
 from ..squigglepy.version import __version__
 
@@ -50,15 +68,15 @@ def _vectorized_mirror(x):
 
 
 def test_to_is_log_when_all_positive():
-    assert to(1, 2).type == "lognorm"
+    assert isinstance(to(1, 2), LognormalDistribution)
 
 
 def test_to_is_norm_when_not_all_positive():
-    assert to(-1, 2).type == "norm"
+    assert isinstance(to(-1, 2), NormalDistribution)
 
 
 def test_to_is_norm_when_zero():
-    assert to(0, 10).type == "norm"
+    assert isinstance(to(0, 10), NormalDistribution)
 
 
 def to_passes_lclip_rclip():
@@ -72,31 +90,31 @@ def to_passes_credibility():
 
 
 def test_const():
-    assert const(1).type == "const"
+    assert isinstance(const(1), ConstantDistribution)
     assert const(1).x == 1
     assert str(const(1)) == "<Distribution> const(1)"
 
 
 def test_const_wraps_float():
-    assert const(0.1).type == "const"
+    assert isinstance(const(0.1), ConstantDistribution)
     assert const(0.1).x == 0.1
     assert str(const(0.1)) == "<Distribution> const(0.1)"
 
 
 def test_const_wraps_str():
-    assert const("a").type == "const"
+    assert isinstance(const("a"), ConstantDistribution)
     assert const("a").x == "a"
     assert str(const("a")) == "<Distribution> const(a)"
 
 
 def test_const_wraps_list():
-    assert const([1, 2, 3]).type == "const"
+    assert isinstance(const([1, 2, 3]), ConstantDistribution)
     assert const([1, 2, 3]).x == [1, 2, 3]
     assert str(const([1, 2, 3])) == "<Distribution> const([1, 2, 3])"
 
 
 def test_norm():
-    assert norm(1, 2).type == "norm"
+    assert isinstance(norm(1, 2), NormalDistribution)
     assert norm(1, 2).x == 1
     assert norm(1, 2).y == 2
     assert norm(1, 2).mean == 1.5
@@ -112,7 +130,7 @@ def test_norm_has_version():
 
 
 def test_norm_with_mean_sd():
-    assert norm(mean=1, sd=2).type == "norm"
+    assert isinstance(norm(mean=1, sd=2), NormalDistribution)
     assert norm(mean=1, sd=2).x is None
     assert norm(mean=1, sd=2).y is None
     assert norm(mean=1, sd=2).mean == 1
@@ -123,7 +141,7 @@ def test_norm_with_mean_sd():
 
 
 def test_norm_with_just_sd_infers_zero_mean():
-    assert norm(sd=2).type == "norm"
+    assert isinstance(norm(sd=2), NormalDistribution)
     assert norm(sd=2).x is None
     assert norm(sd=2).y is None
     assert norm(sd=2).mean == 0
@@ -156,27 +174,27 @@ def test_norm_low_gt_high():
 
 def test_norm_passes_lclip_rclip():
     obj = norm(1, 2, lclip=1)
-    assert obj.type == "norm"
+    assert isinstance(obj, NormalDistribution)
     assert obj.lclip == 1
     assert obj.rclip is None
     assert str(obj) == "<Distribution> norm(mean=1.5, sd=0.3, lclip=1)"
     obj = norm(1, 2, rclip=1)
-    assert obj.type == "norm"
+    assert isinstance(obj, NormalDistribution)
     assert obj.lclip is None
     assert obj.rclip == 1
     assert str(obj) == "<Distribution> norm(mean=1.5, sd=0.3, rclip=1)"
     obj = norm(1, 2, lclip=0, rclip=3)
-    assert obj.type == "norm"
+    assert isinstance(obj, NormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     assert str(obj) == "<Distribution> norm(mean=1.5, sd=0.3, lclip=0, rclip=3)"
     obj = norm(mean=1, sd=2, lclip=0, rclip=3)
-    assert obj.type == "norm"
+    assert isinstance(obj, NormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     assert str(obj) == "<Distribution> norm(mean=1, sd=2, lclip=0, rclip=3)"
     obj = norm(sd=2, lclip=0, rclip=3)
-    assert obj.type == "norm"
+    assert isinstance(obj, NormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     assert str(obj) == "<Distribution> norm(mean=0, sd=2, lclip=0, rclip=3)"
@@ -184,12 +202,12 @@ def test_norm_passes_lclip_rclip():
 
 def test_norm_passes_credibility():
     obj = norm(1, 2, credibility=80)
-    assert obj.type == "norm"
+    assert isinstance(obj, NormalDistribution)
     assert obj.credibility == 80
 
 
 def test_lognorm():
-    assert lognorm(1, 2).type == "lognorm"
+    assert isinstance(lognorm(1, 2), LognormalDistribution)
     assert lognorm(1, 2).x == 1
     assert lognorm(1, 2).y == 2
     assert round(lognorm(1, 2).norm_mean, 2) == 0.35
@@ -206,7 +224,7 @@ def test_lognorm():
 
 
 def test_lognorm_with_normmean_normsd():
-    assert lognorm(norm_mean=1, norm_sd=2).type == "lognorm"
+    assert isinstance(lognorm(norm_mean=1, norm_sd=2), LognormalDistribution)
     assert lognorm(norm_mean=1, norm_sd=2).x is None
     assert lognorm(norm_mean=1, norm_sd=2).y is None
     assert lognorm(norm_mean=1, norm_sd=2).norm_mean == 1
@@ -224,7 +242,7 @@ def test_lognorm_with_normmean_normsd():
 
 
 def test_lognorm_with_lognormmean_lognormsd():
-    assert lognorm(lognorm_mean=1, lognorm_sd=2).type == "lognorm"
+    assert isinstance(lognorm(lognorm_mean=1, lognorm_sd=2), LognormalDistribution)
     assert lognorm(lognorm_mean=1, lognorm_sd=2).x is None
     assert lognorm(lognorm_mean=1, lognorm_sd=2).y is None
     assert round(lognorm(lognorm_mean=1, lognorm_sd=2).norm_mean, 2) == -0.8
@@ -240,7 +258,7 @@ def test_lognorm_with_lognormmean_lognormsd():
 
 
 def test_lognorm_with_just_normsd_infers_zero_norm_mean():
-    assert lognorm(norm_sd=2).type == "lognorm"
+    assert isinstance(lognorm(norm_sd=2), LognormalDistribution)
     assert lognorm(norm_sd=2).x is None
     assert lognorm(norm_sd=2).y is None
     assert lognorm(norm_sd=2).norm_mean == 0
@@ -253,7 +271,7 @@ def test_lognorm_with_just_normsd_infers_zero_norm_mean():
 
 
 def test_lognorm_with_just_lognormsd_infers_unit_lognorm_mean():
-    assert lognorm(lognorm_sd=2).type == "lognorm"
+    assert isinstance(lognorm(lognorm_sd=2), LognormalDistribution)
     assert lognorm(lognorm_sd=2).x is None
     assert lognorm(lognorm_sd=2).y is None
     assert round(lognorm(lognorm_sd=2).norm_mean, 2) == -0.8
@@ -310,7 +328,7 @@ def test_lognorm_must_be_gt_0():
 
 def test_lognorm_passes_lclip_rclip():
     obj = lognorm(1, 2, lclip=1)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.lclip == 1
     assert obj.rclip is None
     expected_str = (
@@ -319,7 +337,7 @@ def test_lognorm_passes_lclip_rclip():
     )
     assert str(obj) == expected_str
     obj = lognorm(1, 2, rclip=1)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.lclip is None
     assert obj.rclip == 1
     expected_str = (
@@ -328,7 +346,7 @@ def test_lognorm_passes_lclip_rclip():
     )
     assert str(obj) == expected_str
     obj = lognorm(1, 2, lclip=0, rclip=3)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     expected_str = (
@@ -337,7 +355,7 @@ def test_lognorm_passes_lclip_rclip():
     )
     assert str(obj) == expected_str
     obj = lognorm(norm_mean=1, norm_sd=2, lclip=0, rclip=3)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     expected_str = (
@@ -346,7 +364,7 @@ def test_lognorm_passes_lclip_rclip():
     )
     assert str(obj) == expected_str
     obj = lognorm(norm_sd=2, lclip=0, rclip=3)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     expected_str = (
@@ -355,7 +373,7 @@ def test_lognorm_passes_lclip_rclip():
     )
     assert str(obj) == expected_str
     obj = lognorm(lognorm_mean=1, lognorm_sd=2, lclip=0, rclip=3)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     expected_str = (
@@ -364,7 +382,7 @@ def test_lognorm_passes_lclip_rclip():
     )
     assert str(obj) == expected_str
     obj = lognorm(lognorm_sd=2, lclip=0, rclip=3)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
     assert str(obj) == expected_str
@@ -372,19 +390,19 @@ def test_lognorm_passes_lclip_rclip():
 
 def test_lognorm_passes_credibility():
     obj = lognorm(1, 2, credibility=80)
-    assert obj.type == "lognorm"
+    assert isinstance(obj, LognormalDistribution)
     assert obj.credibility == 80
 
 
 def test_uniform():
-    assert uniform(0, 1).type == "uniform"
+    assert isinstance(uniform(0, 1), UniformDistribution)
     assert uniform(0, 1).x == 0
     assert uniform(0, 1).y == 1
     assert str(uniform(0, 1)) == "<Distribution> uniform(0, 1)"
 
 
 def test_binomial():
-    assert binomial(10, 0.1).type == "binomial"
+    assert isinstance(binomial(10, 0.1), BinomialDistribution)
     assert binomial(10, 0.1).n == 10
     assert binomial(10, 0.1).p == 0.1
     assert str(binomial(10, 0.1)) == "<Distribution> binomial(n=10, p=0.1)"
@@ -400,20 +418,20 @@ def test_binomial_must_be_between_0_and_1():
 
 
 def test_beta():
-    assert beta(10, 1).type == "beta"
+    assert isinstance(beta(10, 1), BetaDistribution)
     assert beta(10, 1).a == 10
     assert beta(10, 1).b == 1
     assert str(beta(10, 1)) == "<Distribution> beta(a=10, b=1)"
 
 
 def test_bernoulli():
-    assert bernoulli(0.1).type == "bernoulli"
+    assert isinstance(bernoulli(0.1), BernoulliDistribution)
     assert bernoulli(0.1).p == 0.1
     assert str(bernoulli(0.1)) == "<Distribution> bernoulli(p=0.1)"
 
 
 def test_tdist():
-    assert tdist(1, 3, 5).type == "tdist"
+    assert isinstance(tdist(1, 3, 5), TDistribution)
     assert tdist(1, 3, 5).x == 1
     assert tdist(1, 3, 5).y == 3
     assert tdist(1, 3, 5).t == 5
@@ -424,7 +442,7 @@ def test_tdist():
 
 
 def test_pure_tdist():
-    assert tdist(t=5).type == "tdist"
+    assert isinstance(tdist(t=5), TDistribution)
     assert tdist(t=5).x is None
     assert tdist(t=5).y is None
     assert tdist(t=5).t == 5
@@ -435,7 +453,7 @@ def test_pure_tdist():
 
 
 def test_default_pure_tdist():
-    assert tdist().type == "tdist"
+    assert isinstance(tdist(), TDistribution)
     assert tdist().x is None
     assert tdist().y is None
     assert tdist().t == 20
@@ -447,19 +465,19 @@ def test_default_pure_tdist():
 
 def test_tdist_passes_lclip_rclip():
     obj = tdist(1, 3, t=5, lclip=3)
-    assert obj.type == "tdist"
+    assert isinstance(obj, TDistribution)
     assert obj.lclip == 3
     assert obj.rclip is None
     assert obj.credibility == 90
     assert str(obj) == "<Distribution> tdist(x=1, y=3, t=5, lclip=3)"
     obj = tdist(1, 3, t=5, rclip=3)
-    assert obj.type == "tdist"
+    assert isinstance(obj, TDistribution)
     assert obj.lclip is None
     assert obj.rclip == 3
     assert obj.credibility == 90
     assert str(obj) == "<Distribution> tdist(x=1, y=3, t=5, rclip=3)"
     obj = tdist(1, 3, t=5, lclip=3, rclip=5)
-    assert obj.type == "tdist"
+    assert isinstance(obj, TDistribution)
     assert obj.lclip == 3
     assert obj.rclip == 5
     assert obj.credibility == 90
@@ -468,13 +486,13 @@ def test_tdist_passes_lclip_rclip():
 
 def test_tdist_passes_credibility():
     obj = tdist(1, 3, t=5, credibility=80)
-    assert obj.type == "tdist"
+    assert isinstance(obj, TDistribution)
     assert obj.credibility == 80
     assert str(obj) == "<Distribution> tdist(x=1, y=3, t=5, credibility=80)"
 
 
 def test_log_tdist():
-    assert log_tdist(1, 3, 5).type == "log_tdist"
+    assert isinstance(log_tdist(1, 3, 5), LogTDistribution)
     assert log_tdist(1, 3, 5).x == 1
     assert log_tdist(1, 3, 5).y == 3
     assert log_tdist(1, 3, 5).t == 5
@@ -485,7 +503,7 @@ def test_log_tdist():
 
 
 def test_pure_log_tdist():
-    assert log_tdist(t=5).type == "log_tdist"
+    assert isinstance(log_tdist(t=5), LogTDistribution)
     assert log_tdist(t=5).x is None
     assert log_tdist(t=5).y is None
     assert log_tdist(t=5).t == 5
@@ -496,7 +514,7 @@ def test_pure_log_tdist():
 
 
 def test_default_pure_log_tdist():
-    assert log_tdist().type == "log_tdist"
+    assert isinstance(log_tdist(), LogTDistribution)
     assert log_tdist().x is None
     assert log_tdist().y is None
     assert log_tdist().t == 1
@@ -508,19 +526,19 @@ def test_default_pure_log_tdist():
 
 def test_log_tdist_passes_lclip_rclip():
     obj = log_tdist(1, 3, t=5, lclip=3)
-    assert obj.type == "log_tdist"
+    assert isinstance(obj, LogTDistribution)
     assert obj.lclip == 3
     assert obj.rclip is None
     assert obj.credibility == 90
     assert str(obj) == "<Distribution> log_tdist(x=1, y=3, t=5, lclip=3)"
     obj = log_tdist(1, 3, t=5, rclip=3)
-    assert obj.type == "log_tdist"
+    assert isinstance(obj, LogTDistribution)
     assert obj.lclip is None
     assert obj.rclip == 3
     assert obj.credibility == 90
     assert str(obj) == "<Distribution> log_tdist(x=1, y=3, t=5, rclip=3)"
     obj = log_tdist(1, 3, t=5, lclip=3, rclip=5)
-    assert obj.type == "log_tdist"
+    assert isinstance(obj, LogTDistribution)
     assert obj.lclip == 3
     assert obj.rclip == 5
     assert obj.credibility == 90
@@ -529,12 +547,12 @@ def test_log_tdist_passes_lclip_rclip():
 
 def test_log_tdist_passes_credibility():
     obj = log_tdist(1, 3, t=5, credibility=80)
-    assert obj.type == "log_tdist"
+    assert isinstance(obj, LogTDistribution)
     assert obj.credibility == 80
 
 
 def test_triangular():
-    assert triangular(1, 3, 5).type == "triangular"
+    assert isinstance(triangular(1, 3, 5), TriangularDistribution)
     assert triangular(1, 3, 5).left == 1
     assert triangular(1, 3, 5).mode == 3
     assert triangular(1, 3, 5).right == 5
@@ -545,85 +563,85 @@ def test_triangular():
 
 def test_triangular_lclip_rclip():
     obj = triangular(2, 4, 6, lclip=3)
-    assert obj.type == "triangular"
+    assert isinstance(obj, TriangularDistribution)
     assert obj.lclip == 3
     assert obj.rclip is None
     assert str(obj) == "<Distribution> triangular(2, 4, 6, lclip=3)"
     obj = triangular(2, 4, 6, rclip=3)
-    assert obj.type == "triangular"
+    assert isinstance(obj, TriangularDistribution)
     assert obj.lclip is None
     assert obj.rclip == 3
     assert str(obj) == "<Distribution> triangular(2, 4, 6, rclip=3)"
     obj = triangular(2, 4, 6, lclip=3, rclip=5)
-    assert obj.type == "triangular"
+    assert isinstance(obj, TriangularDistribution)
     assert obj.lclip == 3
     assert obj.rclip == 5
     assert str(obj) == "<Distribution> triangular(2, 4, 6, lclip=3, rclip=5)"
 
 
 def test_exponential():
-    assert exponential(10).type == "exponential"
+    assert isinstance(exponential(10), ExponentialDistribution)
     assert exponential(10).scale == 10
     assert str(exponential(10)) == "<Distribution> exponential(10)"
 
 
 def test_exponential_lclip_rclip():
     obj = exponential(10, lclip=10)
-    assert obj.type == "exponential"
+    assert isinstance(obj, ExponentialDistribution)
     assert obj.lclip == 10
     assert obj.rclip is None
     assert str(obj) == "<Distribution> exponential(10, lclip=10)"
     obj = exponential(10, rclip=10)
-    assert obj.type == "exponential"
+    assert isinstance(obj, ExponentialDistribution)
     assert obj.lclip is None
     assert obj.rclip == 10
     assert str(obj) == "<Distribution> exponential(10, rclip=10)"
     obj = exponential(10, lclip=10, rclip=15)
-    assert obj.type == "exponential"
+    assert isinstance(obj, ExponentialDistribution)
     assert obj.lclip == 10
     assert obj.rclip == 15
     assert str(obj) == "<Distribution> exponential(10, lclip=10, rclip=15)"
 
 
 def test_poisson():
-    assert poisson(10).type == "poisson"
+    assert isinstance(poisson(10), PoissonDistribution)
     assert poisson(10).lam == 10
     assert str(poisson(10)) == "<Distribution> poisson(10)"
 
 
 def test_poisson_lclip_rclip():
     obj = poisson(10, lclip=10)
-    assert obj.type == "poisson"
+    assert isinstance(obj, PoissonDistribution)
     assert obj.lclip == 10
     assert obj.rclip is None
     assert str(obj) == "<Distribution> poisson(10, lclip=10)"
     obj = poisson(10, rclip=10)
-    assert obj.type == "poisson"
+    assert isinstance(obj, PoissonDistribution)
     assert obj.lclip is None
     assert obj.rclip == 10
     assert str(obj) == "<Distribution> poisson(10, rclip=10)"
     obj = poisson(10, lclip=10, rclip=15)
-    assert obj.type == "poisson"
+    assert isinstance(obj, PoissonDistribution)
     assert obj.lclip == 10
     assert obj.rclip == 15
     assert str(obj) == "<Distribution> poisson(10, lclip=10, rclip=15)"
 
 
 def test_chisquare():
-    assert chisquare(10).type == "chisquare"
+    assert isinstance(chisquare(10), ChiSquareDistribution)
     assert chisquare(10).df == 10
     assert str(chisquare(10)) == "<Distribution> chisquare(10)"
 
 
 def test_gamma():
-    assert gamma(10, 2).type == "gamma"
+    assert isinstance(gamma(10, 2), GammaDistribution)
     assert gamma(10, 2).shape == 10
     assert gamma(10, 2).scale == 2
     assert str(gamma(10, 2)) == "<Distribution> gamma(shape=10, scale=2)"
 
 
 def test_gamma_default_scale():
-    assert gamma(10).type == "gamma"
+    assert isinstance(gamma(10), GammaDistribution)
     assert gamma(10).shape == 10
     assert gamma(10).scale == 1
     assert str(gamma(10)) == "<Distribution> gamma(shape=10, scale=1)"
@@ -631,47 +649,47 @@ def test_gamma_default_scale():
 
 def test_gamma_lclip_rclip():
     obj = gamma(10, 2, lclip=10)
-    assert obj.type == "gamma"
+    assert isinstance(obj, GammaDistribution)
     assert obj.lclip == 10
     assert obj.rclip is None
     assert str(obj) == "<Distribution> gamma(shape=10, scale=2, lclip=10)"
     obj = gamma(10, 2, rclip=10)
-    assert obj.type == "gamma"
+    assert isinstance(obj, GammaDistribution)
     assert obj.lclip is None
     assert obj.rclip == 10
     assert str(obj) == "<Distribution> gamma(shape=10, scale=2, rclip=10)"
     obj = gamma(10, 2, lclip=10, rclip=15)
-    assert obj.type == "gamma"
+    assert isinstance(obj, GammaDistribution)
     assert obj.lclip == 10
     assert obj.rclip == 15
     assert str(obj) == "<Distribution> gamma(shape=10, scale=2, lclip=10, rclip=15)"
 
 
 def test_pareto():
-    assert pareto(1).type == "pareto"
+    assert isinstance(pareto(1), ParetoDistribution)
     assert pareto(1).shape == 1
     assert pareto(10).shape == 10
 
 
 def test_discrete():
     obj = discrete({"a": 0.9, "b": 0.1})
-    assert obj.type == "discrete"
+    assert isinstance(obj, DiscreteDistribution)
     assert obj.items == {"a": 0.9, "b": 0.1}
     obj = discrete([0, 1])
-    assert obj.type == "discrete"
+    assert isinstance(obj, DiscreteDistribution)
     assert obj.items == [0, 1]
     assert str(obj) == "<Distribution> discrete([0, 1])"
 
 
 def test_discrete_list():
     obj = discrete([1, 2, 3])
-    assert obj.type == "discrete"
+    assert isinstance(obj, DiscreteDistribution)
     assert obj.items == [1, 2, 3]
 
 
 def test_discrete_works_on_numpy():
     obj = discrete(np.array([1, 2, 3]))
-    assert obj.type == "discrete"
+    assert isinstance(obj, DiscreteDistribution)
     assert obj.items == [1, 2, 3]
 
 
@@ -683,11 +701,11 @@ def test_discrete_raises_on_wrong_type():
 
 def test_mixture():
     obj = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6])
-    assert obj.type == "mixture"
-    assert obj.dists[0].type == "norm"
+    assert isinstance(obj, MixtureDistribution)
+    assert isinstance(obj.dists[0], NormalDistribution)
     assert obj.dists[0].x == 1
     assert obj.dists[0].y == 2
-    assert obj.dists[1].type == "norm"
+    assert isinstance(obj.dists[1], NormalDistribution)
     assert obj.dists[1].x == 3
     assert obj.dists[1].y == 4
     assert obj.weights == [0.4, 0.6]
@@ -698,44 +716,44 @@ def test_mixture():
 
 def test_mixture_different_distributions():
     obj = mixture([lognorm(1, 10), gamma(3)], [0.4, 0.6])
-    assert obj.type == "mixture"
-    assert obj.dists[0].type == "lognorm"
+    assert isinstance(obj, MixtureDistribution)
+    assert isinstance(obj.dists[0], LognormalDistribution)
     assert obj.dists[0].x == 1
     assert obj.dists[0].y == 10
-    assert obj.dists[1].type == "gamma"
+    assert isinstance(obj.dists[1], GammaDistribution)
     assert obj.dists[1].shape == 3
     assert obj.weights == [0.4, 0.6]
 
 
 def test_mixture_with_numbers():
     obj = mixture([10, gamma(3)], [0.4, 0.6])
-    assert obj.type == "mixture"
+    assert isinstance(obj, MixtureDistribution)
     assert obj.dists[0] == 10
-    assert obj.dists[1].type == "gamma"
+    assert isinstance(obj.dists[1], GammaDistribution)
     assert obj.dists[1].shape == 3
     assert obj.weights == [0.4, 0.6]
 
 
 def test_mixture_no_weights():
     obj = mixture([lognorm(1, 10), gamma(3)])
-    assert obj.type == "mixture"
+    assert isinstance(obj, MixtureDistribution)
     assert obj.weights == [0.5, 0.5]
 
 
 def test_mixture_lclip_rclip():
     obj = mixture([norm(1, 2), norm(3, 4)], [0.4, 0.6], lclip=1, rclip=4)
-    assert obj.type == "mixture"
+    assert isinstance(obj, MixtureDistribution)
     assert obj.lclip == 1
     assert obj.rclip == 4
 
 
 def test_mixture_different_format():
     obj = mixture([[0.4, norm(1, 2)], [0.6, norm(3, 4)]])
-    assert obj.type == "mixture"
-    assert obj.dists[0].type == "norm"
+    assert isinstance(obj, MixtureDistribution)
+    assert isinstance(obj.dists[0], NormalDistribution)
     assert obj.dists[0].x == 1
     assert obj.dists[0].y == 2
-    assert obj.dists[1].type == "norm"
+    assert isinstance(obj.dists[1], NormalDistribution)
     assert obj.dists[1].x == 3
     assert obj.dists[1].y == 4
     assert obj.weights == [0.4, 0.6]
@@ -743,11 +761,11 @@ def test_mixture_different_format():
 
 def test_mixture_can_be_discrete():
     obj = mixture({"a": 0.9, "b": 0.1})
-    assert obj.type == "mixture"
+    assert isinstance(obj, MixtureDistribution)
     assert obj.dists == ["a", "b"]
     assert obj.weights == [0.9, 0.1]
     obj = mixture([0, 1])
-    assert obj.type == "mixture"
+    assert isinstance(obj, MixtureDistribution)
     assert obj.dists == [0, 1]
     assert obj.weights == [0.5, 0.5]
     assert "<Distribution> mixture" in str(obj)
@@ -755,14 +773,14 @@ def test_mixture_can_be_discrete():
 
 def test_zero_inflated():
     obj = zero_inflated(0.6, norm(1, 2))
-    assert obj.type == "mixture"
+    assert isinstance(obj, MixtureDistribution)
     assert obj.dists == [0, norm(1, 2)]
     assert obj.weights == [0.6, 0.4]
 
 
 def test_inf0():
     obj = inf0(0.6, norm(1, 2))
-    assert obj.type == "mixture"
+    assert isinstance(obj, MixtureDistribution)
     assert obj.dists == [0, norm(1, 2)]
     assert obj.weights == [0.6, 0.4]
 
@@ -775,11 +793,11 @@ def test_zero_inflated_raises_error():
 
 def test_lt_distribution():
     obj = norm(0, 1) < norm(1, 2)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "<"
@@ -788,11 +806,11 @@ def test_lt_distribution():
 
 def test_lte_distribution():
     obj = norm(0, 1) <= norm(1, 2)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "<="
@@ -801,11 +819,11 @@ def test_lte_distribution():
 
 def test_gt_distribution():
     obj = norm(0, 1) > norm(1, 2)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == ">"
@@ -814,11 +832,11 @@ def test_gt_distribution():
 
 def test_gte_distribution():
     obj = norm(0, 1) >= norm(1, 2)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == ">="
@@ -827,11 +845,11 @@ def test_gte_distribution():
 
 def test_eq_distribution():
     obj = norm(0, 1) == norm(1, 2)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "=="
@@ -840,11 +858,11 @@ def test_eq_distribution():
 
 def test_ne_distribution():
     obj = norm(0, 1) != norm(1, 2)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "!="
@@ -853,8 +871,8 @@ def test_ne_distribution():
 
 def test_add_distribution():
     obj = norm(0, 1) + 12
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right == 12
@@ -864,9 +882,9 @@ def test_add_distribution():
 
 def test_radd_distribution():
     obj = 12 + norm(0, 1)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert obj.left == 12
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 0
     assert obj.right.y == 1
     assert obj.fn_str == "+"
@@ -875,8 +893,8 @@ def test_radd_distribution():
 
 def test_sub_distribution():
     obj = norm(0, 1) - 12
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right == 12
@@ -886,9 +904,9 @@ def test_sub_distribution():
 
 def test_rsub_distribution():
     obj = 12 - norm(0, 1)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert obj.left == 12
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 0
     assert obj.right.y == 1
     assert obj.fn_str == "-"
@@ -897,8 +915,8 @@ def test_rsub_distribution():
 
 def test_mul_distribution():
     obj = norm(0, 1) * 12
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right == 12
@@ -908,9 +926,9 @@ def test_mul_distribution():
 
 def test_rmul_distribution():
     obj = 12 * norm(0, 1)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert obj.left == 12
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 0
     assert obj.right.y == 1
     assert obj.fn_str == "*"
@@ -919,8 +937,8 @@ def test_rmul_distribution():
 
 def test_truediv_distribution():
     obj = norm(0, 1) / 12
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right == 12
@@ -930,9 +948,9 @@ def test_truediv_distribution():
 
 def test_rtruediv_distribution():
     obj = 12 / norm(0, 1)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert obj.left == 12
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 0
     assert obj.right.y == 1
     assert obj.fn_str == "/"
@@ -941,8 +959,8 @@ def test_rtruediv_distribution():
 
 def test_floordiv_distribution():
     obj = norm(0, 1) // 12
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right == 12
@@ -952,9 +970,9 @@ def test_floordiv_distribution():
 
 def test_rfloordiv_distribution():
     obj = 12 // norm(0, 1)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert obj.left == 12
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 0
     assert obj.right.y == 1
     assert obj.fn_str == "//"
@@ -963,8 +981,8 @@ def test_rfloordiv_distribution():
 
 def test_pow_distribution():
     obj = norm(0, 1) ** 2
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right == 2
@@ -974,9 +992,9 @@ def test_pow_distribution():
 
 def test_rpow_distribution():
     obj = 2 ** norm(0, 1)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert obj.left == 2
-    assert obj.right.type == "norm"
+    assert isinstance(obj.right, NormalDistribution)
     assert obj.right.x == 0
     assert obj.right.y == 1
     assert obj.fn_str == "**"
@@ -985,8 +1003,8 @@ def test_rpow_distribution():
 
 def test_log_distribution():
     obj = dist_log(norm(0, 1), 10)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right == 10
@@ -996,8 +1014,8 @@ def test_log_distribution():
 
 def test_exp_distribution():
     obj = dist_exp(norm(0, 1))
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.right is None
@@ -1007,8 +1025,8 @@ def test_exp_distribution():
 
 def test_negate_distribution():
     obj = -norm(0, 1)
-    assert obj.type == "complex"
-    assert obj.left.type == "norm"
+    assert isinstance(obj, ComplexDistribution)
+    assert isinstance(obj.left, NormalDistribution)
     assert obj.left.x == 0
     assert obj.left.y == 1
     assert obj.fn_str == "-"
@@ -1018,7 +1036,7 @@ def test_negate_distribution():
 
 def test_complex_math():
     obj = (2 ** norm(0, 1)) - (8 * 6) + 2 + (-lognorm(10, 100) / 11) + 8
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == (
         "<Distribution> 2 ** norm(mean=0.5, sd=0.3) - 48 + 2 +"
         " -lognorm(lognorm_mean=40.4, lognorm_sd=32.12, norm_mean=3.45, "
@@ -1028,31 +1046,31 @@ def test_complex_math():
 
 def test_dist_fn():
     obj = dist_fn(norm(0, 1), _mirror)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _mirror(norm(mean=0.5, sd=0.3))"
 
 
 def test_dist_fn_vectorize():
     obj = dist_fn(norm(0, 1), _vectorized_mirror)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))"
 
 
 def test_dist_fn2():
     obj = dist_fn(norm(0, 10), norm(1, 2), _mirror)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
 
 
 def test_dist_fn_list():
     obj = dist_fn(norm(0, 1), [_mirror, _mirror2])
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))"
 
 
 def test_max():
     obj = dist_max(norm(0, 1), lognorm(0.1, 1))
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == (
         "<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(lognorm_mean=0.4,"
         " lognorm_sd=0.32, norm_mean=-1.15, norm_sd=0.7))"
@@ -1061,7 +1079,7 @@ def test_max():
 
 def test_min():
     obj = dist_max(norm(0, 1), lognorm(0.1, 1))
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == (
         "<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(lognorm_mean=0.4, "
         "lognorm_sd=0.32, norm_mean=-1.15, norm_sd=0.7))"
@@ -1070,31 +1088,31 @@ def test_min():
 
 def test_round():
     obj = dist_round(norm(0, 1))
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 0)"
 
 
 def test_round_two_digits():
     obj = dist_round(norm(0, 1), digits=2)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 2)"
 
 
 def test_ceil():
     obj = dist_ceil(norm(0, 1))
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> ceil(norm(mean=0.5, sd=0.3))"
 
 
 def test_floor():
     obj = dist_floor(norm(0, 1))
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> floor(norm(mean=0.5, sd=0.3))"
 
 
 def test_lclip():
     obj = lclip(norm(0, 1), 0.5)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)"
     assert lclip(1, 0.5) == 1
     assert lclip(0.5, 1) == 1
@@ -1102,7 +1120,7 @@ def test_lclip():
 
 def test_rclip():
     obj = rclip(norm(0, 1), 0.5)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)"
     assert rclip(1, 0.5) == 0.5
     assert rclip(0.5, 1) == 0.5
@@ -1110,49 +1128,49 @@ def test_rclip():
 
 def test_clip():
     obj = clip(norm(0, 1), 0.5, 0.9)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)"
 
 
 def test_dist_fn_pipe():
     obj = norm(0, 1) >> dist_fn(_mirror)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _mirror(norm(mean=0.5, sd=0.3))"
 
 
 def test_dist_fn2_pipe():
     obj = norm(0, 10) >> dist_fn(norm(1, 2), _mirror)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
 
 
 def test_dist_fn_vectorize_pipe():
     obj = norm(0, 1) >> dist_fn(_vectorized_mirror)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))"
 
 
 def test_lclip_pipe():
     obj = norm(0, 1) >> lclip(2)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> lclip(norm(mean=0.5, sd=0.3), 2)"
     obj = norm(0, 1) >> lclip(0.5)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> lclip(norm(mean=0.5, sd=0.3), 0.5)"
 
 
 def test_rclip_pipe():
     obj = norm(0, 1) >> rclip(2)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> rclip(norm(mean=0.5, sd=0.3), 2)"
     obj = norm(0, 1) >> rclip(0.5)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> rclip(norm(mean=0.5, sd=0.3), 0.5)"
 
 
 def test_clip_pipe():
     obj = norm(0, 1) >> clip(0.5, 0.9)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)"
     assert clip(0.5, 0.7, 1) == 0.7
     assert clip(1.2, 0.7, 1) == 1
@@ -1160,7 +1178,7 @@ def test_clip_pipe():
 
 def test_max_pipe():
     obj = norm(0, 1) >> dist_max(lognorm(0.1, 1))
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == (
         "<Distribution> max(norm(mean=0.5, sd=0.3), lognorm(lognorm_mean=0.4,"
         " lognorm_sd=0.32, norm_mean=-1.15, norm_sd=0.7))"
@@ -1169,7 +1187,7 @@ def test_max_pipe():
 
 def test_min_pipe():
     obj = norm(0, 1) >> dist_min(lognorm(0.1, 1))
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == (
         "<Distribution> min(norm(mean=0.5, sd=0.3), "
         "lognorm(lognorm_mean=0.4, lognorm_sd=0.32, "
@@ -1179,32 +1197,32 @@ def test_min_pipe():
 
 def test_round_pipe():
     obj = norm(0, 1) >> dist_round
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 0)"
     obj = norm(0, 1) >> dist_round(2)
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 2)"
 
 
 def test_floor_pipe():
     obj = norm(0, 1) >> dist_floor
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> floor(norm(mean=0.5, sd=0.3))"
 
 
 def test_ceil_pipe():
     obj = norm(0, 1) >> dist_ceil
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> ceil(norm(mean=0.5, sd=0.3))"
 
 
 def test_two_pipes():
     obj = norm(0, 1) >> lclip(2) >> dist_round
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), 0)"
 
 
 def test_dist_fn_list_pipe():
     obj = norm(0, 1) >> dist_fn([_mirror, _mirror2])
-    assert obj.type == "complex"
+    assert isinstance(obj, ComplexDistribution)
     assert str(obj) == "<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))"
