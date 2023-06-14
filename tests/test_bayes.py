@@ -5,6 +5,7 @@ from ..squigglepy.bayes import simple_bayes, bayesnet, update, average
 from ..squigglepy.samplers import sample
 from ..squigglepy.distributions import discrete, norm, beta, gamma
 from ..squigglepy.rng import set_seed
+from ..squigglepy.distributions import BetaDistribution, MixtureDistribution, NormalDistribution
 
 
 def test_simple_bayes():
@@ -387,21 +388,21 @@ def test_bayesnet_multicore():
 
 def test_update_normal():
     out = update(norm(1, 10), norm(5, 15))
-    assert out.type == "norm"
+    assert isinstance(out, NormalDistribution)
     assert round(out.mean, 2) == 7.51
     assert round(out.sd, 2) == 2.03
 
 
 def test_update_normal_evidence_weight():
     out = update(norm(1, 10), norm(5, 15), evidence_weight=3)
-    assert out.type == "norm"
+    assert isinstance(out, NormalDistribution)
     assert round(out.mean, 2) == 8.69
     assert round(out.sd, 2) == 1.48
 
 
 def test_update_beta():
     out = update(beta(1, 1), beta(2, 2))
-    assert out.type == "beta"
+    assert isinstance(out, BetaDistribution)
     assert out.a == 3
     assert out.b == 3
 
@@ -409,7 +410,7 @@ def test_update_beta():
 def test_update_not_implemented():
     with pytest.raises(ValueError) as excinfo:
         update(gamma(1), gamma(2))
-    assert "type `gamma` not supported" in str(excinfo.value)
+    assert "not supported" in str(excinfo.value)
 
 
 def test_update_not_matching():
@@ -420,11 +421,11 @@ def test_update_not_matching():
 
 def test_average():
     out = average(norm(1, 2), norm(3, 4))
-    assert out.type == "mixture"
-    assert out.dists[0].type == "norm"
+    assert isinstance(out, MixtureDistribution)
+    assert isinstance(out.dists[0], NormalDistribution)
     assert out.dists[0].x == 1
     assert out.dists[0].y == 2
-    assert out.dists[1].type == "norm"
+    assert isinstance(out.dists[1], NormalDistribution)
     assert out.dists[1].x == 3
     assert out.dists[1].y == 4
     assert out.weights == [0.5, 0.5]

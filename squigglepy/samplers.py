@@ -20,6 +20,27 @@ from .utils import (
     _flush_tqdm,
 )
 
+from .distributions import (
+    BernoulliDistribution,
+    BetaDistribution,
+    BinomialDistribution,
+    ChiSquareDistribution,
+    ComplexDistribution,
+    ConstantDistribution,
+    DiscreteDistribution,
+    ExponentialDistribution,
+    GammaDistribution,
+    LogTDistribution,
+    LognormalDistribution,
+    MixtureDistribution,
+    NormalDistribution,
+    ParetoDistribution,
+    PoissonDistribution,
+    TDistribution,
+    TriangularDistribution,
+    UniformDistribution,
+    const,
+)
 
 _squigglepy_internal_sample_caches = {}
 
@@ -509,8 +530,6 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1, _multi
     """
     weights, values = _process_discrete_weights_values(items)
 
-    from .distributions import const
-
     values = [const(v) for v in values]
 
     return mixture_sample(
@@ -533,11 +552,11 @@ def _mixture_sample_for_large_n(
     _multicore_tqdm_cores=1,
 ):
     def _run_presample(dist, pbar):
-        if is_dist(dist) and dist.type == "mixture":
+        if is_dist(dist) and isinstance(dist, MixtureDistribution):
             raise ValueError(
                 ("You cannot nest mixture distributions within " + "mixture distributions.")
             )
-        elif is_dist(dist) and dist.type == "discrete":
+        elif is_dist(dist) and isinstance(dist, DiscreteDistribution):
             raise ValueError(
                 ("You cannot nest discrete distributions within " + "mixture distributions.")
             )
@@ -881,13 +900,13 @@ def sample(
         ):
             samples = _simplify(np.array([dist for _ in range(n)]))
 
-        elif dist.type == "const":
+        elif isinstance(dist, ConstantDistribution):
             samples = _simplify(np.array([dist.x for _ in range(n)]))
 
-        elif dist.type == "uniform":
+        elif isinstance(dist, UniformDistribution):
             samples = uniform_sample(dist.x, dist.y, samples=n)
 
-        elif dist.type == "discrete":
+        elif isinstance(dist, DiscreteDistribution):
             samples = discrete_sample(
                 dist.items,
                 samples=n,
@@ -895,46 +914,46 @@ def sample(
                 _multicore_tqdm_cores=_multicore_tqdm_cores,
             )
 
-        elif dist.type == "norm":
+        elif isinstance(dist, NormalDistribution):
             samples = normal_sample(mean=dist.mean, sd=dist.sd, samples=n)
 
-        elif dist.type == "lognorm":
+        elif isinstance(dist, LognormalDistribution):
             samples = lognormal_sample(mean=dist.norm_mean, sd=dist.norm_sd, samples=n)
 
-        elif dist.type == "binomial":
+        elif isinstance(dist, BinomialDistribution):
             samples = binomial_sample(n=dist.n, p=dist.p, samples=n)
 
-        elif dist.type == "beta":
+        elif isinstance(dist, BetaDistribution):
             samples = beta_sample(a=dist.a, b=dist.b, samples=n)
 
-        elif dist.type == "bernoulli":
+        elif isinstance(dist, BernoulliDistribution):
             samples = bernoulli_sample(p=dist.p, samples=n)
 
-        elif dist.type == "poisson":
+        elif isinstance(dist, PoissonDistribution):
             samples = poisson_sample(lam=dist.lam, samples=n)
 
-        elif dist.type == "chisquare":
+        elif isinstance(dist, ChiSquareDistribution):
             samples = chi_square_sample(df=dist.df, samples=n)
 
-        elif dist.type == "exponential":
+        elif isinstance(dist, ExponentialDistribution):
             samples = exponential_sample(scale=dist.scale, samples=n)
 
-        elif dist.type == "gamma":
+        elif isinstance(dist, GammaDistribution):
             samples = gamma_sample(shape=dist.shape, scale=dist.scale, samples=n)
 
-        elif dist.type == "pareto":
+        elif isinstance(dist, ParetoDistribution):
             samples = pareto_sample(shape=dist.shape, samples=n)
 
-        elif dist.type == "triangular":
+        elif isinstance(dist, TriangularDistribution):
             samples = triangular_sample(dist.left, dist.mode, dist.right, samples=n)
 
-        elif dist.type == "tdist":
+        elif isinstance(dist, TDistribution):
             samples = t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
 
-        elif dist.type == "log_tdist":
+        elif isinstance(dist, LogTDistribution):
             samples = log_t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)
 
-        elif dist.type == "mixture":
+        elif isinstance(dist, MixtureDistribution):
             samples = mixture_sample(
                 dist.dists,
                 dist.weights,
@@ -944,7 +963,7 @@ def sample(
                 _multicore_tqdm_cores=_multicore_tqdm_cores,
             )
 
-        elif dist.type == "complex":
+        elif isinstance(dist, ComplexDistribution):
             if dist.right is None:
                 samples = dist.fn(sample(dist.left, n=n, verbose=verbose))
             else:
@@ -957,7 +976,7 @@ def sample(
                 samples = sample(samples, n=n)
 
         else:
-            raise ValueError("{} sampler not found".format(dist.type))
+            raise ValueError("{} sampler not found".format(type(dist)))
 
     # Use lclip / rclip
     if _safe_len(samples) > 1:

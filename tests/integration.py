@@ -2,6 +2,7 @@ import time
 import numpy as np
 
 from tqdm import tqdm
+from squigglepy.distributions import LogTDistribution
 
 
 RUNS = 10_000
@@ -537,7 +538,7 @@ if __name__ == "__main__":
             for credibility in credibilities:
                 for dist in [sq.tdist, sq.log_tdist]:
                     dist = dist(val[0], val[1], t, credibility=credibility)
-                    if not (dist.type == "log_tdist" and val[0] < 1):
+                    if not (isinstance(dist, LogTDistribution) and val[0] < 1):
                         pctiles = sq.get_percentiles(
                             dist @ (20 * K),
                             percentiles=[
@@ -545,7 +546,7 @@ if __name__ == "__main__":
                                 100 - ((100 - credibility) / 2),
                             ],
                         )
-                        tol = 140 / t if dist.type == "log_tdist" else 1.35
+                        tol = 140 / t if isinstance(dist, LogTDistribution) else 1.35
                         if not _within(
                             pctiles[(100 - credibility) / 2], val[0], tol, tol
                         ) or not _within(

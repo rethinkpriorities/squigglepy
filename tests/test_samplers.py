@@ -44,6 +44,7 @@ from ..squigglepy.samplers import (
     t_sample,
     sample,
 )
+from ..squigglepy.distributions import NormalDistribution
 
 
 class FakeRNG:
@@ -320,7 +321,7 @@ def test_sample_const_shorthand():
 
 
 def test_nested_const_does_not_resolve():
-    assert (~const(norm(1, 2))).type == "norm"
+    assert isinstance((~const(norm(1, 2))), NormalDistribution)
     assert (~const(norm(1, 2))).x == 1
     assert (~const(norm(1, 2))).y == 2
 
@@ -400,7 +401,7 @@ def test_sample_discrete_shorthand():
 def test_sample_discrete_cannot_mixture():
     obj = ~discrete([norm(1, 2), norm(3, 4)])
     # Instead of sampling `norm(1, 2)`, discrete just returns it unsampled.
-    assert obj.type == "norm"
+    assert isinstance(obj, NormalDistribution)
     assert obj.x == 1
     assert obj.y == 2
 

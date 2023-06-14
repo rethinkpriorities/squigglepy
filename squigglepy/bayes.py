@@ -8,7 +8,7 @@ import pathos.multiprocessing as mp
 
 from datetime import datetime
 
-from .distributions import norm, beta, mixture
+from .distributions import BetaDistribution, NormalDistribution, norm, beta, mixture
 from .utils import _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
@@ -327,7 +327,7 @@ def update(prior, evidence, evidence_weight=1):
     >> bayes.update(prior, evidence)
     <Distribution> norm(mean=2.53, sd=0.29)
     """
-    if prior.type == "norm" and evidence.type == "norm":
+    if isinstance(prior, NormalDistribution) and isinstance(evidence, NormalDistribution):
         prior_mean = prior.mean
         prior_var = prior.sd**2
         evidence_mean = evidence.mean
@@ -341,16 +341,17 @@ def update(prior, evidence, evidence_weight=1):
                 (evidence_var * prior_var) / (evidence_weight * prior_var + evidence_var)
             ),
         )
-    elif prior.type == "beta" and evidence.type == "beta":
+    elif isinstance(prior, BetaDistribution) and isinstance(evidence, BetaDistribution):
         prior_a = prior.a
         prior_b = prior.b
         evidence_a = evidence.a
         evidence_b = evidence.b
         return beta(prior_a + evidence_a, prior_b + evidence_b)
-    elif prior.type != evidence.type:
+    elif type(prior) != type(evidence):
+        print(type(prior), type(evidence))
         raise ValueError("can only update distributions of the same type.")
     else:
-        raise ValueError("type `{}` not supported.".format(prior.type))
+        raise ValueError("type `{}` not supported.".format(prior.__class__.__name__))
 
 
 def average(prior, evidence, weights=[0.5, 0.5], relative_weights=None):
