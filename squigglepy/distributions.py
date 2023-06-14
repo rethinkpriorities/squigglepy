@@ -2,7 +2,7 @@ import operator
 import math
 import numpy as np
 from scipy import stats
-from typing import Optional
+from typing import Optional, Union
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round, _optional_import
 from .version import __version__
@@ -630,17 +630,6 @@ class NormalDistribution(OperableDistribution):
         rclip: Optional[Number] = None,
     ):
         super().__init__()
-<<<<<<< HEAD
-<<<<<<< HEAD
-        self.x = x
-        self.y = y
-        self.credibility = credibility
-        self.mean = mean
-        self.sd = sd
-        self.lclip = lclip
-        self.rclip = rclip
-=======
->>>>>>> 1b5a7d3 (more fun with types)
 
         if x is not None and y is not None and x > y:
             raise ValueError("`high value` cannot be lower than `low value`")
@@ -657,19 +646,6 @@ class NormalDistribution(OperableDistribution):
             cdf_value = 0.5 + 0.5 * (credibility / 100)
             normed_sigma = stats.norm.ppf(cdf_value)
             sd = (y - mean) / normed_sigma
-
-        self.mean = mean: Number
-        self.sd = sd: Number
-        self.x = x: Number
-        self.y = y: Number
-        self.lclip = lclip: Optional[Number]
-        self.rclip = rclip: Optional[Number]
-=======
-        self.credibility = credibility
-        self.lclip = lclip
-        self.rclip = rclip
->>>>>>> f457d15 (fix normal distribution)
-        self.type = "norm"
 
         self.x: Number
         self.y: Number

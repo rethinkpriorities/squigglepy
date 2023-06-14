@@ -12,15 +12,15 @@ from collections.abc import Iterable
 from typing import Union
 from numpy.typing import NDArray
 
+import importlib
+import importlib.util
+import sys
+
 
 Number = Union[int, float, np.floating, np.integer]
 OptionalListOfFloats = Union[
     list[Union[Union[float, np.floating]]], NDArray[np.floating], float, None
 ]
-
-import importlib
-import importlib.util
-import sys
 
 
 def _optional_import(name) -> Optional[types.ModuleType]:
