@@ -17,7 +17,6 @@ class BaseDistribution:
     def __init__(self):
         self.lclip: Optional[Number] = None
         self.rclip: Optional[Number] = None
-        self.type = "base"
         self._version: str = __version__
 
     def __str__(self):
