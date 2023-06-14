@@ -656,7 +656,6 @@ class NormalDistribution(OperableDistribution):
         else:
             raise ValueError("you must define either x/y or mean/sd")
 
-
     def __str__(self):
         out = "<Distribution> norm(mean={}, sd={}".format(round(self.mean, 2), round(self.sd, 2))
         if self.lclip is not None:
