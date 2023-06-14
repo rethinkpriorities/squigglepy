@@ -629,22 +629,9 @@ class NormalDistribution(OperableDistribution):
         rclip: Optional[Number] = None,
     ):
         super().__init__()
-
-        if x is not None and y is not None and x > y:
-            raise ValueError("`high value` cannot be lower than `low value`")
-
-        if (x is None or y is None) and sd is None:
-            raise ValueError("must define either x/y or mean/sd")
-        elif (x is not None or y is not None) and sd is not None:
-            raise ValueError("must define either x/y or mean/sd -- cannot define both")
-        elif sd is not None and mean is None:
-            mean = 0
-
-        if sd is None or mean is None:
-            mean = (x + y) / 2
-            cdf_value = 0.5 + 0.5 * (credibility / 100)
-            normed_sigma = stats.norm.ppf(cdf_value)
-            sd = (y - mean) / normed_sigma
+        self.credibility = credibility
+        self.lclip = lclip
+        self.rclip = rclip
 
         self.x: Number
         self.y: Number
@@ -668,6 +655,7 @@ class NormalDistribution(OperableDistribution):
             self.y = None
         else:
             raise ValueError("you must define either x/y or mean/sd")
+
 
     def __str__(self):
         out = "<Distribution> norm(mean={}, sd={}".format(round(self.mean, 2), round(self.sd, 2))
