@@ -123,7 +123,7 @@ def correlate(
     return variables
 
 
-@dataclass(slots=True)
+@dataclass
 class CorrelationGroup:
     """
     An object that holds metadata for a group of correlated distributions.
