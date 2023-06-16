@@ -1,10 +1,15 @@
 import operator
 import math
 import numpy as np
-from scipy import stats
+import scipy.stats
+
+from typing import Literal
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round
 from .version import __version__
+from .correlation import CorrelationGroup
+
+from collections.abc import Iterable
 
 
 class BaseDistribution:
@@ -35,6 +40,12 @@ class BaseDistribution:
         self.weights = None
         self.type = "base"
         self._version = __version__
+
+        # Correlation metadata
+        self.correlation_state: Literal["not_correlated", "to_correlate", "correlated"]
+        self.correlation_group: CorrelationGroup | None = None
+        # TODO: Make cleaner
+        self._correlated_samples: np.ndarray | None = None
 
     def __str__(self):
         return "<Distribution> {}".format(self.type)
@@ -156,7 +167,27 @@ class OperableDistribution(BaseDistribution):
         return ComplexDistribution(dist, self, operator.pow, "**")
 
 
-class ComplexDistribution(OperableDistribution):
+class CompositeDistribution(OperableDistribution):
+    def __init__(self):
+        super().__init__()
+        # Whether this distribution contains any correlated variables
+        self.contains_correlated: bool | None = None
+
+    def __post_init__(self):
+        assert self.contains_correlated is not None, "contains_correlated must be set"
+
+    def _check_correlated(self, dists: Iterable) -> None:
+        for dist in dists:
+            if isinstance(dist, BaseDistribution) and dist.correlation_group is not None:
+                self.contains_correlated = True
+                break
+            if isinstance(dist, CompositeDistribution):
+                if dist.contains_correlated:
+                    self.contains_correlated = True
+                    break
+
+
+class ComplexDistribution(CompositeDistribution):
     def __init__(self, left, right=None, fn=operator.add, fn_str="+", infix=True):
         super().__init__()
         self.left = left
@@ -165,6 +196,7 @@ class ComplexDistribution(OperableDistribution):
         self.fn_str = fn_str
         self.infix = infix
         self.type = "complex"
+        self._check_correlated((left, right))
 
     def __str__(self):
         if self.right is None and self.infix:
@@ -664,7 +696,7 @@ class NormalDistribution(OperableDistribution):
         if self.mean is None and self.sd is None:
             self.mean = (self.x + self.y) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
-            normed_sigma = stats.norm.ppf(cdf_value)
+            normed_sigma = scipy.stats.norm.ppf(cdf_value)
             self.sd = (self.y - self.mean) / normed_sigma
 
     def __str__(self):
@@ -774,7 +806,7 @@ class LognormalDistribution(OperableDistribution):
         if self.x is not None:
             self.norm_mean = (np.log(self.x) + np.log(self.y)) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
-            normed_sigma = stats.norm.ppf(cdf_value)
+            normed_sigma = scipy.stats.norm.ppf(cdf_value)
             self.norm_sd = (np.log(self.y) - self.norm_mean) / normed_sigma
 
         if self.lognorm_sd is None:
@@ -1454,7 +1486,7 @@ def pareto(shape):
     return ParetoDistribution(shape=shape)
 
 
-class MixtureDistribution(OperableDistribution):
+class MixtureDistribution(CompositeDistribution):
     def __init__(self, dists, weights=None, relative_weights=None, lclip=None, rclip=None):
         super().__init__()
         weights, dists = _process_weights_values(weights, relative_weights, dists)
@@ -1463,6 +1495,7 @@ class MixtureDistribution(OperableDistribution):
         self.lclip = lclip
         self.rclip = rclip
         self.type = "mixture"
+        self._check_correlated(dists)
 
     def __str__(self):
         out = "<Distribution> {}".format(self.type)
