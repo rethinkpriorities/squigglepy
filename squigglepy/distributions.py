@@ -1056,6 +1056,7 @@ class DiscreteDistribution(OperableDistribution):
         super().__init__()
         if not isinstance(items, dict) and not isinstance(items, list) and not _is_numpy(items):
             raise ValueError("inputs to discrete must be a dict or list")
+        assert len(items) > 0, "inputs to discrete must be non-empty"
         self.items = list(items) if _is_numpy(items) else items
         self.type = "discrete"
 
@@ -1391,7 +1392,7 @@ def exponential(scale, lclip=None, rclip=None):
     Parameters
     ----------
     scale : float
-        The scale value of the exponential distribution.
+        The scale value of the exponential distribution (> 0)
     lclip : float or None
         If not None, any value below ``lclip`` will be coerced to ``lclip``.
     rclip : float or None
