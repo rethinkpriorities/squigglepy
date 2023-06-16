@@ -228,12 +228,10 @@ class CorrelationGroup:
             data.shape == data_rank.shape == new_data_rank.shape
         ), "All input arrays must have the same shape"
         for i in range(data.shape[1]):
-            # Get the sorted indices of data_rank and new_data_rank
-            old_order = np.argsort(data_rank[:, i])
-            new_order = np.argsort(new_data_rank[:, i])
-
-            # Sort data according to old_order
-            sorted_data = data[old_order, i]
-
-            # Re-order the sorted data according to new_order
-            data[:, i] = sorted_data[new_order]
+            _, order = np.unique(
+                np.hstack((data_rank[:, i], new_data_rank[:, i])), return_inverse=True
+            )
+            old_order = order[: new_data_rank.shape[0]]
+            new_order = order[-new_data_rank.shape[0] :]
+            tmp = data[np.argsort(old_order), i][new_order]
+            data[:, i] = tmp[:]
