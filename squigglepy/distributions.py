@@ -642,6 +642,7 @@ class UniformDistribution(OperableDistribution):
         super().__init__()
         self.x = x
         self.y = y
+        assert x < y, "x must be less than y"
         self.type = "uniform"
 
     def __str__(self):
