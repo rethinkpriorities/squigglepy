@@ -68,8 +68,11 @@ def correlate(
 
     correlation : 2d-array or float
         An n-by-n array that defines the desired Spearman rank correlation coefficients.
-        This matrix must be symmetric and positive-definite; and must not be confused with
+        This matrix must be symmetric and positives emi-definite; and must not be confused with
         a covariance matrix.
+
+        Correlation parameters can only be between -1 and 1, exclusive
+        (including extremely close approximations).
 
         If a float is provided, all variables will be correlated with the same coefficient.
 
@@ -87,9 +90,10 @@ def correlate(
     >>> print(np.corrcoef(a_samples, b_samples).statistic)
         0.8923975890079759
     """
-    # Check that the variables are a tuple
     if not isinstance(variables, tuple):
-        raise TypeError("Variables must be provided as a tuple.")
+        variables = tuple(variables)
+
+    assert len(variables) >= 2, "Must provide at least two variables to correlate."
 
     # Convert a float to a correlation matrix
     if (
@@ -98,20 +102,23 @@ def correlate(
         or isinstance(correlation, int)
     ):
         correlation_parameter = np.float64(correlation)
-        
+
+        assert (
+            -1 < correlation_parameter < 1
+        ), "Correlation parameter must be between -1 and 1, exclusive."
         # Generate a correlation matrix with
         # pairwise correlations equal to the correlation parameter
-        correlation: NDArray[np.float64] = np.full(
+        correlation_matrix: NDArray[np.float64] = np.full(
             (len(variables), len(variables)), correlation_parameter
         )
         # Set the diagonal to 1
-        np.fill_diagonal(correlation, 1)
+        np.fill_diagonal(correlation_matrix, 1)
 
     # Coerce the correlation matrix into a numpy array
-    correlation = np.array(correlation, dtype=np.float64)
+    correlation_matrix: NDArray[np.float64] = np.array(correlation, dtype=np.float64)
 
     # Create the correlation group
-    CorrelationGroup(variables, correlation)
+    CorrelationGroup(variables, correlation_matrix)
 
     return variables
 
@@ -140,7 +147,7 @@ class CorrelationGroup:
 
         # Check that values are between -1 and 1
         assert (
-            np.max(self.correlation_matrix) <= 1 and np.min(self.correlation_matrix) >= -1
+            -1 <= np.min(self.correlation_matrix) and np.max(self.correlation_matrix) <= 1
         ), "Correlation matrix values must be between -1 and 1."
 
         # Check that the correlation matrix is positive semi-definite
