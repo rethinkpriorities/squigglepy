@@ -38,7 +38,6 @@ class BaseDistribution:
         self.items = None
         self.dists = None
         self.weights = None
-        self.type = "base"
         self._version = __version__
 
         # Correlation metadata
@@ -48,7 +47,7 @@ class BaseDistribution:
         self._correlated_samples: np.ndarray | None = None
 
     def __str__(self):
-        return "<Distribution> {}".format(self.type)
+        return "<Distribution> base"
 
     def __repr__(self):
         return str(self)
@@ -82,7 +81,6 @@ class BaseDistribution:
 class OperableDistribution(BaseDistribution):
     def __init__(self):
         super().__init__()
-        self.type = "base"
 
     def __invert__(self):
         from .samplers import sample
@@ -195,7 +193,6 @@ class ComplexDistribution(CompositeDistribution):
         self.fn = fn
         self.fn_str = fn_str
         self.infix = infix
-        self.type = "complex"
         self._check_correlated((left, right))
 
     def __str__(self):
@@ -608,10 +605,9 @@ class ConstantDistribution(OperableDistribution):
     def __init__(self, x):
         super().__init__()
         self.x = x
-        self.type = "const"
 
     def __str__(self):
-        return "<Distribution> {}({})".format(self.type, self.x)
+        return "<Distribution> const({})".format(self.x)
 
 
 def const(x):
@@ -643,10 +639,9 @@ class UniformDistribution(OperableDistribution):
         self.x = x
         self.y = y
         assert x < y, "x must be less than y"
-        self.type = "uniform"
 
     def __str__(self):
-        return "<Distribution> {}({}, {})".format(self.type, self.x, self.y)
+        return "<Distribution> uniform({}, {})".format(self.x, self.y)
 
 
 def uniform(x, y):
@@ -682,7 +677,6 @@ class NormalDistribution(OperableDistribution):
         self.sd = sd
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "norm"
 
         if self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
@@ -701,9 +695,7 @@ class NormalDistribution(OperableDistribution):
             self.sd = (self.y - self.mean) / normed_sigma
 
     def __str__(self):
-        out = "<Distribution> {}(mean={}, sd={}".format(
-            self.type, round(self.mean, 2), round(self.sd, 2)
-        )
+        out = "<Distribution> norm(mean={}, sd={}".format(round(self.mean, 2), round(self.sd, 2))
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -776,7 +768,6 @@ class LognormalDistribution(OperableDistribution):
         self.lognorm_sd = lognorm_sd
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "lognorm"
 
         if self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
@@ -822,9 +813,8 @@ class LognormalDistribution(OperableDistribution):
             self.norm_sd = np.sqrt(np.log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
 
     def __str__(self):
-        out = "<Distribution> {}(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
+        out = "<Distribution> lognorm(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
         out = out.format(
-            self.type,
             round(self.lognorm_mean, 2),
             round(self.lognorm_sd, 2),
             round(self.norm_mean, 2),
@@ -950,12 +940,11 @@ class BinomialDistribution(OperableDistribution):
         super().__init__()
         self.n = n
         self.p = p
-        self.type = "binomial"
         if self.p <= 0 or self.p >= 1:
             raise ValueError("p must be between 0 and 1 (exclusive)")
 
     def __str__(self):
-        return "<Distribution> {}(n={}, p={})".format(self.type, self.n, self.p)
+        return "<Distribution> binomial(n={}, p={})".format(self.n, self.p)
 
 
 def binomial(n, p):
@@ -986,10 +975,9 @@ class BetaDistribution(OperableDistribution):
         super().__init__()
         self.a = a
         self.b = b
-        self.type = "beta"
 
     def __str__(self):
-        return "<Distribution> {}(a={}, b={})".format(self.type, self.a, self.b)
+        return "<Distribution> beta(a={}, b={})".format(self.a, self.b)
 
 
 def beta(a, b):
@@ -1025,10 +1013,9 @@ class BernoulliDistribution(OperableDistribution):
         if p <= 0 or p >= 1:
             raise ValueError("bernoulli p must be 0-1 (exclusive)")
         self.p = p
-        self.type = "bernoulli"
 
     def __str__(self):
-        return "<Distribution> {}(p={})".format(self.type, self.p)
+        return "<Distribution> bernoulli(p={})".format(self.p)
 
 
 def bernoulli(p):
@@ -1059,10 +1046,9 @@ class DiscreteDistribution(OperableDistribution):
             raise ValueError("inputs to discrete must be a dict or list")
         assert len(items) > 0, "inputs to discrete must be non-empty"
         self.items = list(items) if _is_numpy(items) else items
-        self.type = "discrete"
 
     def __str__(self):
-        return "<Distribution> {}({})".format(self.type, self.items)
+        return "<Distribution> discrete({})".format(self.items)
 
 
 def discrete(items):
@@ -1103,7 +1089,6 @@ class TDistribution(OperableDistribution):
         self.credibility = credibility
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "tdist"
 
         if (self.x is None or self.y is None) and not (self.x is None and self.y is None):
             raise ValueError("must define either both `x` and `y` or neither.")
@@ -1115,9 +1100,9 @@ class TDistribution(OperableDistribution):
 
     def __str__(self):
         if self.x is not None:
-            out = "<Distribution> {}(x={}, y={}, t={}".format(self.type, self.x, self.y, self.t)
+            out = "<Distribution> tdist(x={}, y={}, t={}".format(self.x, self.y, self.t)
         else:
-            out = "<Distribution> {}(t={}".format(self.type, self.t)
+            out = "<Distribution> tdist(t={}".format(self.t)
         if self.credibility != 90 and self.credibility is not None:
             out += ", credibility={}".format(self.credibility)
         if self.lclip is not None:
@@ -1178,7 +1163,6 @@ class LogTDistribution(OperableDistribution):
         self.credibility = credibility
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "log_tdist"
 
         if (self.x is None or self.y is None) and not (self.x is None and self.y is None):
             raise ValueError("must define either both `x` and `y` or neither.")
@@ -1190,9 +1174,9 @@ class LogTDistribution(OperableDistribution):
 
     def __str__(self):
         if self.x is not None:
-            out = "<Distribution> {}(x={}, y={}, t={}".format(self.type, self.x, self.y, self.t)
+            out = "<Distribution> log_tdist(x={}, y={}, t={}".format(self.x, self.y, self.t)
         else:
-            out = "<Distribution> {}(t={}".format(self.type, self.t)
+            out = "<Distribution> log_tdist(t={}".format(self.t)
         if self.credibility != 90 and self.credibility is not None:
             out += ", credibility={}".format(self.credibility)
         if self.lclip is not None:
@@ -1251,10 +1235,9 @@ class TriangularDistribution(OperableDistribution):
         self.right = right
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "triangular"
 
     def __str__(self):
-        out = "<Distribution> {}({}, {}, {}".format(self.type, self.left, self.mode, self.right)
+        out = "<Distribution> triangular({}, {}, {}".format(self.left, self.mode, self.right)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -1298,10 +1281,9 @@ class PoissonDistribution(OperableDistribution):
         self.lam = lam
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "poisson"
 
     def __str__(self):
-        out = "<Distribution> {}({}".format(self.type, self.lam)
+        out = "<Distribution> poisson({}".format(self.lam)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -1339,12 +1321,11 @@ class ChiSquareDistribution(OperableDistribution):
     def __init__(self, df):
         super().__init__()
         self.df = df
-        self.type = "chisquare"
         if self.df <= 0:
             raise ValueError("df must be positive")
 
     def __str__(self):
-        return "<Distribution> {}({})".format(self.type, self.df)
+        return "<Distribution> chisquare({})".format(self.df)
 
 
 def chisquare(df):
@@ -1377,10 +1358,9 @@ class ExponentialDistribution(OperableDistribution):
         self.scale = scale
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "exponential"
 
     def __str__(self):
-        out = "<Distribution> {}({}".format(self.type, self.scale)
+        out = "<Distribution> exponential({}".format(self.scale)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -1421,10 +1401,9 @@ class GammaDistribution(OperableDistribution):
         self.scale = scale
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "gamma"
 
     def __str__(self):
-        out = "<Distribution> {}(shape={}, scale={}".format(self.type, self.shape, self.scale)
+        out = "<Distribution> gamma(shape={}, scale={}".format(self.shape, self.scale)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -1464,10 +1443,9 @@ class ParetoDistribution(OperableDistribution):
     def __init__(self, shape):
         super().__init__()
         self.shape = shape
-        self.type = "pareto"
 
     def __str__(self):
-        return "<Distribution> {}({})".format(self.type, self.shape)
+        return "<Distribution> pareto({})".format(self.shape)
 
 
 def pareto(shape):
@@ -1499,11 +1477,10 @@ class MixtureDistribution(CompositeDistribution):
         self.weights = weights
         self.lclip = lclip
         self.rclip = rclip
-        self.type = "mixture"
         self._check_correlated(dists)
 
     def __str__(self):
-        out = "<Distribution> {}".format(self.type)
+        out = "<Distribution> mixture"
         for i in range(len(self.dists)):
             out += "\n - {} weight on {}".format(self.weights[i], self.dists[i])
         return out

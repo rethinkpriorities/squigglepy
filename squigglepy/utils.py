@@ -2,7 +2,6 @@ import math
 import numpy as np
 
 from tqdm import tqdm
-from scipy import stats
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
@@ -568,7 +567,8 @@ def geomean(a, weights=None, relative_weights=None, drop_na=True):
     3.1072325059538595
     """
     weights, a = _process_weights_values(weights, relative_weights, a, drop_na=drop_na)
-    return stats.mstats.gmean(a, weights=weights)
+    log_a = np.log(a)
+    return np.exp(np.average(log_a, weights=weights))
 
 
 def p_to_odds(p):

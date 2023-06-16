@@ -3,4 +3,4 @@ dist/*
 *.egg-info
 __pycache__
 .ruff_cache
-.hypothesis
+.pytest-runtimes
