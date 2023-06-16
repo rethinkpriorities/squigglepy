@@ -56,22 +56,36 @@ def random_distributions(draw):
     elif i == 3:
         # Binomial
         n = draw(st.integers(1, 500))
-        p = draw(st.floats(0, 1))
+        p = draw(st.floats(0, 1, exclude_min=True, exclude_max=True))
         return sq.binomial(n, p)
     elif i == 4:
         # Bernoulli
-        p = draw(st.floats(0, 1))
+        p = draw(st.floats(0, 1, exclude_min=True, exclude_max=True))
         return sq.bernoulli(p)
     elif i == 5:
         # Discrete
         items = draw(
-            st.dictionaries(st.floats(0, 1), st.floats(allow_infinity=False, allow_nan=False), min_size=1)
+            st.dictionaries(
+                st.floats(0, 1), st.floats(allow_infinity=False, allow_nan=False), min_size=1
+            )
         )
         return sq.discrete(items)
     else:
         # Exponential
-        a = draw(st.floats(min_value=0, exclude_min=True, allow_infinity=False, allow_nan=False))
+        # This distribution is VERY finicky
+        a = draw(
+            st.floats(
+                min_value=0,
+                max_value=1e20, # Prevents overflow
+                exclude_min=True,
+                exclude_max=True,
+                allow_infinity=False,
+                allow_nan=False,
+                allow_subnormal=False, # Prevents overflow (again)
+            )
+        )
         return sq.exponential(a)
+
 
 @st.composite
 def distributions_with_correlation(draw, min_size=2, max_size=20):
@@ -80,6 +94,7 @@ def distributions_with_correlation(draw, min_size=2, max_size=20):
     note(f"Distributions: {dist}")
     note(f"Correlation matrix: {corr}")
     return dist, corr
+
 
 @given(st.floats(-0.999, 0.999))
 def test_basic_correlate(corr):

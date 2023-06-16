@@ -950,8 +950,8 @@ class BinomialDistribution(OperableDistribution):
         self.n = n
         self.p = p
         self.type = "binomial"
-        if self.p < 0 or self.p > 1:
-            raise ValueError("p must be between 0 and 1")
+        if self.p <= 0 or self.p >= 1:
+            raise ValueError("p must be between 0 and 1 (exclusive)")
 
     def __str__(self):
         return "<Distribution> {}(n={}, p={})".format(self.type, self.n, self.p)
@@ -1021,8 +1021,8 @@ class BernoulliDistribution(OperableDistribution):
         super().__init__()
         if not isinstance(p, float) or isinstance(p, int):
             raise ValueError("bernoulli p must be a float or int")
-        if p < 0 or p > 1:
-            raise ValueError("bernoulli p must be 0-1")
+        if p <= 0 or p >= 1:
+            raise ValueError("bernoulli p must be 0-1 (exclusive)")
         self.p = p
         self.type = "bernoulli"
 
@@ -1370,6 +1370,9 @@ def chisquare(df):
 class ExponentialDistribution(OperableDistribution):
     def __init__(self, scale, lclip=None, rclip=None):
         super().__init__()
+        assert scale > 0, "scale must be positive"
+        # Prevent numeric overflows
+        assert scale < 1e20, "scale must be less than 1e20"
         self.scale = scale
         self.lclip = lclip
         self.rclip = rclip
