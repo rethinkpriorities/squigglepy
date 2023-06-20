@@ -228,6 +228,11 @@ def bayesnet(
                     if verbose:
                         print(".", end="", flush=True)
                     time.sleep(1)
+                for c in range(cores):
+                    while not os.path.exists("test-core-{}.sqcache".format(c)):
+                        if verbose:
+                            print("...Waiting for other cores (just a little bit longer)")
+                        time.sleep(1)
 
         if cores > 1:
             if verbose:

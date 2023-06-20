@@ -1,16 +1,18 @@
 ## v0.27
 
-* This package now only supports Python 3.9 and higher.
+* **[Breaking change]** This package now only supports Python 3.9 and higher.
+* **[Breaking change]** `get_percentiles` and `get_log_percentiles` now always return a dictionary, even if there's only one element.
+* **[Breaking change]** `.type` is now removed from distribution objects.
 * Package load time is now ~2x faster.
 * Pandas and matplotlib as removed as required dependencies, but their related features are lazily enabled when the modules are available. These packages are still available for install  as extras, installable with pip install squigglepy[plots] (for plotting-related functionality, matplotlib for now), pip install squigglepy[ecosystem] (for pandas, and in the future other related packages), or pip install squigglepy[all] (for all extras).
+* Multicore distribution now does extra checks to avoid crashing from race conditions.
 * Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
-* `.type` is now removed from distribution objects.
 * Using black now for formatting.
 * Switched from `flake8` to `ruff`.
 
 ## v0.26
 
-* `lognorm` can now be defined either referencing the mean and sd of the underlying normal distribution via `norm_mean` / `norm_sd` or via the mean and sd of the lognormal distribution itself via `lognorm_mean` / `lognorm_sd`. To further disambiguate, `mean` and `sd` are no longer variables that can be passed to `lognorm`.
+* **[Breaking change]** `lognorm` can now be defined either referencing the mean and sd of the underlying normal distribution via `norm_mean` / `norm_sd` or via the mean and sd of the lognormal distribution itself via `lognorm_mean` / `lognorm_sd`. To further disambiguate, `mean` and `sd` are no longer variables that can be passed to `lognorm`.
 
 
 ## v0.25
@@ -282,4 +284,3 @@
 ## v0.1
 
 * Initial library
-
