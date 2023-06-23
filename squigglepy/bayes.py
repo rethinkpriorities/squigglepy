@@ -221,7 +221,7 @@ def bayesnet(
                             encoder = msgspec.msgpack.Encoder()
                             outfile.write(encoder.encode(batch))
                         if verbose:
-                            print('Writing data...')
+                            print("Writing data...")
                             time.sleep(1)
 
                 pool_results = pool.amap(multicore_event_fn, list(range(cores - 1)))
