@@ -24,7 +24,7 @@ df = pd.DataFrame(
     }
 )
 
-print(f"Forced correlation: {df.corr(method='spearman')}")
+print(f"Forced correlation: {df.corr(method='spearman', numeric_only=True)}")
 # Append the uncorrelated samples to the dataframe, using correlated as a categorical variable
 df2 = pd.DataFrame(
     {
@@ -33,7 +33,7 @@ df2 = pd.DataFrame(
         "correlated": [False for _ in range(10_000)],
     }
 )
-print(f"Uncorrelated: {df2.corr(method='spearman')}")
+print(f"Uncorrelated: {df2.corr(method='spearman', numeric_only=True)}")
 
 # Concatenate the two dataframes
 df = pd.concat([df, df2])

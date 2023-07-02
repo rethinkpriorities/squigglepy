@@ -48,6 +48,7 @@ def distributions_with_correlation(draw, min_size=2, max_size=20, continuous_onl
     note(f"Correlation matrix: {corr}")
     return dists, corr
 
+
 @st.composite
 def correlation_matrices(draw, min_size=2, max_size=20):
     # Generate a random list of correlations
@@ -68,7 +69,7 @@ def correlation_matrices(draw, min_size=2, max_size=20):
 
 @st.composite
 def random_distributions(
-    draw, continuous_only: bool=False, discrete_only: bool= False
+    draw, continuous_only: bool = False, discrete_only: bool = False
 ) -> sq.OperableDistribution:
     assert not (continuous_only and discrete_only), "Cannot be both continuous and discrete"
 

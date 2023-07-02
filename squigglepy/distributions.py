@@ -51,7 +51,7 @@ class BaseDistribution(ABC):
     @abstractmethod
     def __str__(self):
         ...
-        
+
     def __repr__(self):
         return str(self)
 
@@ -59,8 +59,7 @@ class BaseDistribution(ABC):
 class OperableDistribution(BaseDistribution):
     def __init__(self):
         super().__init__()
-        
-    
+
     def plot(self, num_samples=None, bins=None):
         """
         Plot a histogram of the samples.
@@ -171,9 +170,11 @@ class OperableDistribution(BaseDistribution):
 
 # Distribution are either discrete, continuous, or composite
 
+
 class DiscreteDistribution(OperableDistribution, ABC):
     ...
-    
+
+
 class ContinuousDistribution(OperableDistribution, ABC):
     ...
 
@@ -719,7 +720,7 @@ class NormalDistribution(ContinuousDistribution):
 
 def norm(
     x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=None
-    ) -> NormalDistribution:
+) -> NormalDistribution:
     """
     Initialize a normal distribution.
 
@@ -1185,7 +1186,7 @@ class LogTDistribution(ContinuousDistribution):
             raise ValueError("`high value` cannot be lower than `low value`")
         if self.x is not None and self.x <= 0:
             raise ValueError("`low value` must be greater than 0.")
-        
+
         if self.x is None:
             self.credibility = None
 
@@ -1218,7 +1219,7 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
     Parameters
     ----------
     x : float or None
-        The low value of a credible interval defined by ``credibility``. Must be greater than 0. 
+        The low value of a credible interval defined by ``credibility``. Must be greater than 0.
         Defaults to a 90% CI.
     y : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
@@ -1603,4 +1604,3 @@ def inf0(p_zero, dist):
      - <Distribution> norm(mean=1.5, sd=0.3)
     """
     return zero_inflated(p_zero=p_zero, dist=dist)
-
