@@ -29,7 +29,7 @@ from .distributions import (
     ChiSquareDistribution,
     ComplexDistribution,
     ConstantDistribution,
-    DiscreteDistribution,
+    CategoricalDistribution,
     ExponentialDistribution,
     GammaDistribution,
     LogTDistribution,
@@ -177,7 +177,7 @@ def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     Parameters
     ----------
     low : float or None
-        The low value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
+        The low value of a credible interval defined by ``credibility``. Must be greater than 0. Defaults to a 90% CI.
     high : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
@@ -558,7 +558,7 @@ def _mixture_sample_for_large_n(
             raise ValueError(
                 ("You cannot nest mixture distributions within " + "mixture distributions.")
             )
-        elif is_dist(dist) and isinstance(dist, DiscreteDistribution):
+        elif is_dist(dist) and isinstance(dist, CategoricalDistribution):
             raise ValueError(
                 ("You cannot nest discrete distributions within " + "mixture distributions.")
             )
@@ -955,7 +955,7 @@ def sample(
         elif isinstance(dist, UniformDistribution):
             samples = uniform_sample(dist.x, dist.y, samples=n)
 
-        elif isinstance(dist, DiscreteDistribution):
+        elif isinstance(dist, CategoricalDistribution):
             samples = discrete_sample(
                 dist.items,
                 samples=n,

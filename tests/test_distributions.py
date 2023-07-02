@@ -33,7 +33,7 @@ from ..squigglepy.distributions import (
     zero_inflated,
     inf0,
     ComplexDistribution,
-    DiscreteDistribution,
+    CategoricalDistribution,
     ExponentialDistribution,
     GammaDistribution,
     LogTDistribution,
@@ -673,30 +673,30 @@ def test_pareto():
 
 def test_discrete():
     obj = discrete({"a": 0.9, "b": 0.1})
-    assert isinstance(obj, DiscreteDistribution)
+    assert isinstance(obj, CategoricalDistribution)
     assert obj.items == {"a": 0.9, "b": 0.1}
     obj = discrete([0, 1])
-    assert isinstance(obj, DiscreteDistribution)
+    assert isinstance(obj, CategoricalDistribution)
     assert obj.items == [0, 1]
-    assert str(obj) == "<Distribution> discrete([0, 1])"
+    assert str(obj) == "<Distribution> categorical([0, 1])"
 
 
 def test_discrete_list():
     obj = discrete([1, 2, 3])
-    assert isinstance(obj, DiscreteDistribution)
+    assert isinstance(obj, CategoricalDistribution)
     assert obj.items == [1, 2, 3]
 
 
 def test_discrete_works_on_numpy():
     obj = discrete(np.array([1, 2, 3]))
-    assert isinstance(obj, DiscreteDistribution)
+    assert isinstance(obj, CategoricalDistribution)
     assert obj.items == [1, 2, 3]
 
 
 def test_discrete_raises_on_wrong_type():
     with pytest.raises(ValueError) as excinfo:
         discrete(2)
-    assert "inputs to discrete must be a dict or list" in str(excinfo.value)
+    assert "must be a dict or list" in str(excinfo.value)
 
 
 def test_mixture():

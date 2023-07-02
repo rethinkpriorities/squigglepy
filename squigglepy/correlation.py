@@ -42,10 +42,12 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.linalg import cholesky
 from scipy.stats import rankdata
-from scipy.stats.distributions import norm
+from scipy.stats.distributions import norm as _scipy_norm
 from numpy.typing import NDArray
 
 from typing import TYPE_CHECKING
+
+from .utils import is_continuous_dist
 
 if TYPE_CHECKING:
     from .distributions import OperableDistribution
@@ -93,7 +95,10 @@ def correlate(
     if not isinstance(variables, tuple):
         variables = tuple(variables)
 
-    assert len(variables) >= 2, "Must provide at least two variables to correlate."
+    if len(variables) < 2:
+        raise ValueError("You must provide at least two variables to correlate.")
+    if not all(is_continuous_dist(variable) for variable in variables):
+        raise TypeError("Discrete distributions aren't supported yet.")
 
     # Convert a float to a correlation matrix
     if (
@@ -185,12 +190,24 @@ class CorrelationGroup:
             An m-by-n array that has the desired correlations.
 
         """
+        # Check that each column doesn't have too little unique values
+        for column in data.T:
+            if not has_sufficient_sample_diversity(column):
+                raise ValueError(
+                    "The data has too many repeated values to induce a correlation. "
+                    "This might be because of too few samples, or too many repeated samples."
+                )
+
+        # If the correlation matrix is the identity matrix, just return the data
+        if np.all(self.correlation_matrix == np.eye(self.correlation_matrix.shape[0])):
+            return data
+
         # Create a rank-matrix
-        data_rank = np.vstack([rankdata(datai) for datai in data.T]).T
+        data_rank = np.vstack([rankdata(datai, method="min") for datai in data.T]).T
 
         # Generate van der Waerden scores
         data_rank_score = data_rank / (data_rank.shape[0] + 1.0)
-        data_rank_score = norm(0, 1).ppf(data_rank_score)
+        data_rank_score = _scipy_norm(0, 1).ppf(data_rank_score)
 
         # Calculate the lower triangular matrix of the Cholesky decomposition
         # of the desired correlation matrix
@@ -210,7 +227,7 @@ class CorrelationGroup:
         new_data = np.dot(data_rank_score, s.T)
 
         # Create the new rank matrix
-        new_data_rank = np.vstack([rankdata(datai) for datai in new_data.T]).T
+        new_data_rank = np.vstack([rankdata(datai, method="min") for datai in new_data.T]).T
 
         # Sort the original data according to the new rank matrix
         self._sort_data_according_to_rank(data, data_rank, new_data_rank)
@@ -235,3 +252,18 @@ class CorrelationGroup:
             new_order = order[-new_data_rank.shape[0] :]
             tmp = data[np.argsort(old_order), i][new_order]
             data[:, i] = tmp[:]
+
+
+def has_sufficient_sample_diversity(
+    samples: NDArray[np.float64], relative_threshold: float = 0.5, absolute_threshold=1_000
+) -> bool:
+    """
+    Check if there is there are sufficient unique samples to work with in the data.
+    """
+
+    unique_samples = len(np.unique(samples, axis=0))
+    n_samples = len(samples)
+
+    diversity = unique_samples / n_samples
+
+    return (diversity >= relative_threshold) and (unique_samples >= absolute_threshold)

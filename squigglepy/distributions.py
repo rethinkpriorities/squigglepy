@@ -11,8 +11,10 @@ from .correlation import CorrelationGroup
 
 from collections.abc import Iterable
 
+from abc import ABC, abstractmethod
 
-class BaseDistribution:
+
+class BaseDistribution(ABC):
     def __init__(self):
         self.x = None
         self.y = None
@@ -46,12 +48,19 @@ class BaseDistribution:
         # TODO: Make cleaner
         self._correlated_samples: np.ndarray | None = None
 
+    @abstractmethod
     def __str__(self):
-        return "<Distribution> base"
-
+        ...
+        
     def __repr__(self):
         return str(self)
 
+
+class OperableDistribution(BaseDistribution):
+    def __init__(self):
+        super().__init__()
+        
+    
     def plot(self, num_samples=None, bins=None):
         """
         Plot a histogram of the samples.
@@ -76,11 +85,6 @@ class BaseDistribution:
 
         plt.hist(samples, bins=bins)
         plt.show()
-
-
-class OperableDistribution(BaseDistribution):
-    def __init__(self):
-        super().__init__()
 
     def __invert__(self):
         from .samplers import sample
@@ -163,6 +167,15 @@ class OperableDistribution(BaseDistribution):
 
     def __rpow__(self, dist):
         return ComplexDistribution(dist, self, operator.pow, "**")
+
+
+# Distribution are either discrete, continuous, or composite
+
+class DiscreteDistribution(OperableDistribution, ABC):
+    ...
+    
+class ContinuousDistribution(OperableDistribution, ABC):
+    ...
 
 
 class CompositeDistribution(OperableDistribution):
@@ -601,7 +614,7 @@ def clip(dist1, left, right=None):
         return rclip(lclip(dist1, left), right)
 
 
-class ConstantDistribution(OperableDistribution):
+class ConstantDistribution(DiscreteDistribution):
     def __init__(self, x):
         super().__init__()
         self.x = x
@@ -633,7 +646,7 @@ def const(x):
     return ConstantDistribution(x)
 
 
-class UniformDistribution(OperableDistribution):
+class UniformDistribution(ContinuousDistribution):
     def __init__(self, x, y):
         super().__init__()
         self.x = x
@@ -667,7 +680,7 @@ def uniform(x, y):
     return UniformDistribution(x=x, y=y)
 
 
-class NormalDistribution(OperableDistribution):
+class NormalDistribution(ContinuousDistribution):
     def __init__(self, x=None, y=None, mean=None, sd=None, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
@@ -704,7 +717,9 @@ class NormalDistribution(OperableDistribution):
         return out
 
 
-def norm(x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=None):
+def norm(
+    x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=None
+    ) -> NormalDistribution:
     """
     Initialize a normal distribution.
 
@@ -745,7 +760,7 @@ def norm(x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=N
     )
 
 
-class LognormalDistribution(OperableDistribution):
+class LognormalDistribution(ContinuousDistribution):
     def __init__(
         self,
         x=None,
@@ -895,7 +910,7 @@ def lognorm(
     )
 
 
-def to(x, y, credibility=90, lclip=None, rclip=None):
+def to(x, y, credibility=90, lclip=None, rclip=None) -> LognormalDistribution | NormalDistribution:
     """
     Initialize a distribution from ``x`` to ``y``.
 
@@ -935,7 +950,7 @@ def to(x, y, credibility=90, lclip=None, rclip=None):
         return norm(x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
-class BinomialDistribution(OperableDistribution):
+class BinomialDistribution(DiscreteDistribution):
     def __init__(self, n, p):
         super().__init__()
         self.n = n
@@ -970,7 +985,7 @@ def binomial(n, p):
     return BinomialDistribution(n=n, p=p)
 
 
-class BetaDistribution(OperableDistribution):
+class BetaDistribution(ContinuousDistribution):
     def __init__(self, a, b):
         super().__init__()
         self.a = a
@@ -1005,7 +1020,7 @@ def beta(a, b):
     return BetaDistribution(a, b)
 
 
-class BernoulliDistribution(OperableDistribution):
+class BernoulliDistribution(DiscreteDistribution):
     def __init__(self, p):
         super().__init__()
         if not isinstance(p, float) or isinstance(p, int):
@@ -1039,16 +1054,16 @@ def bernoulli(p):
     return BernoulliDistribution(p)
 
 
-class DiscreteDistribution(OperableDistribution):
+class CategoricalDistribution(DiscreteDistribution):
     def __init__(self, items):
         super().__init__()
         if not isinstance(items, dict) and not isinstance(items, list) and not _is_numpy(items):
-            raise ValueError("inputs to discrete must be a dict or list")
-        assert len(items) > 0, "inputs to discrete must be non-empty"
+            raise ValueError("inputs to categorical must be a dict or list")
+        assert len(items) > 0, "inputs to categorical must be non-empty"
         self.items = list(items) if _is_numpy(items) else items
 
     def __str__(self):
-        return "<Distribution> discrete({})".format(self.items)
+        return "<Distribution> categorical({})".format(self.items)
 
 
 def discrete(items):
@@ -1063,23 +1078,23 @@ def discrete(items):
 
     Returns
     -------
-    DiscreteDistribution
+    CategoricalDistribution
 
     Examples
     --------
     >>> discrete({0: 0.1, 1: 0.9})  # 10% chance of returning 0, 90% chance of returning 1
-    <Distribution> discrete({0: 0.1, 1: 0.9})
+    <Distribution> categorical({0: 0.1, 1: 0.9})
     >>> discrete([[0.1, 0], [0.9, 1]])  # Different notation for the same thing.
-    <Distribution> discrete([[0.1, 0], [0.9, 1]])
+    <Distribution> categorical([[0.1, 0], [0.9, 1]])
     >>> discrete([0, 1, 2])  # When no weights are given, all have equal chance of happening.
-    <Distribution> discrete([0, 1, 2])
+    <Distribution> categorical([0, 1, 2])
     >>> discrete({'a': 0.1, 'b': 0.9})  # Values do not have to be numbers.
-    <Distribution> discrete({'a': 0.1, 'b': 0.9})
+    <Distribution> categorical({'a': 0.1, 'b': 0.9})
     """
-    return DiscreteDistribution(items)
+    return CategoricalDistribution(items)
 
 
-class TDistribution(OperableDistribution):
+class TDistribution(ContinuousDistribution):
     def __init__(self, x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
@@ -1153,7 +1168,7 @@ def tdist(x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
     return TDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
-class LogTDistribution(OperableDistribution):
+class LogTDistribution(ContinuousDistribution):
     def __init__(self, x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
@@ -1166,9 +1181,11 @@ class LogTDistribution(OperableDistribution):
 
         if (self.x is None or self.y is None) and not (self.x is None and self.y is None):
             raise ValueError("must define either both `x` and `y` or neither.")
-        elif self.x is not None and self.y is not None and self.x > self.y:
+        if self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
-
+        if self.x is not None and self.x <= 0:
+            raise ValueError("`low value` must be greater than 0.")
+        
         if self.x is None:
             self.credibility = None
 
@@ -1201,7 +1218,8 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
     Parameters
     ----------
     x : float or None
-        The low value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
+        The low value of a credible interval defined by ``credibility``. Must be greater than 0. 
+        Defaults to a 90% CI.
     y : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
@@ -1227,7 +1245,7 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
     return LogTDistribution(x=x, y=y, t=t, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
-class TriangularDistribution(OperableDistribution):
+class TriangularDistribution(ContinuousDistribution):
     def __init__(self, left, mode, right, lclip=None, rclip=None):
         super().__init__()
         self.left = left
@@ -1275,7 +1293,7 @@ def triangular(left, mode, right, lclip=None, rclip=None):
     return TriangularDistribution(left=left, mode=mode, right=right, lclip=lclip, rclip=rclip)
 
 
-class PoissonDistribution(OperableDistribution):
+class PoissonDistribution(DiscreteDistribution):
     def __init__(self, lam, lclip=None, rclip=None):
         super().__init__()
         self.lam = lam
@@ -1317,7 +1335,7 @@ def poisson(lam, lclip=None, rclip=None):
     return PoissonDistribution(lam=lam, lclip=lclip, rclip=rclip)
 
 
-class ChiSquareDistribution(OperableDistribution):
+class ChiSquareDistribution(ContinuousDistribution):
     def __init__(self, df):
         super().__init__()
         self.df = df
@@ -1349,7 +1367,7 @@ def chisquare(df):
     return ChiSquareDistribution(df=df)
 
 
-class ExponentialDistribution(OperableDistribution):
+class ExponentialDistribution(ContinuousDistribution):
     def __init__(self, scale, lclip=None, rclip=None):
         super().__init__()
         assert scale > 0, "scale must be positive"
@@ -1394,7 +1412,7 @@ def exponential(scale, lclip=None, rclip=None):
     return ExponentialDistribution(scale=scale, lclip=lclip, rclip=rclip)
 
 
-class GammaDistribution(OperableDistribution):
+class GammaDistribution(ContinuousDistribution):
     def __init__(self, shape, scale=1, lclip=None, rclip=None):
         super().__init__()
         self.shape = shape
@@ -1439,7 +1457,7 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
     return GammaDistribution(shape=shape, scale=scale, lclip=lclip, rclip=rclip)
 
 
-class ParetoDistribution(OperableDistribution):
+class ParetoDistribution(ContinuousDistribution):
     def __init__(self, shape):
         super().__init__()
         self.shape = shape
@@ -1585,3 +1603,4 @@ def inf0(p_zero, dist):
      - <Distribution> norm(mean=1.5, sd=0.3)
     """
     return zero_inflated(p_zero=p_zero, dist=dist)
+
