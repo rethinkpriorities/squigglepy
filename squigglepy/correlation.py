@@ -45,7 +45,7 @@ from scipy.stats import rankdata
 from scipy.stats.distributions import norm as _scipy_norm
 from numpy.typing import NDArray
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from .utils import is_continuous_dist
 
@@ -55,7 +55,7 @@ if TYPE_CHECKING:
 
 def correlate(
     variables: tuple[OperableDistribution, ...],
-    correlation: NDArray[np.float64] | list[list[float]] | np.float64 | float,
+    correlation: Union[NDArray[np.float64], list[list[float]], np.float64, float],
 ):
     """
     Correlate a set of variables according to a rank correlation matrix.

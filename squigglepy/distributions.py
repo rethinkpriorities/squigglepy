@@ -3,7 +3,7 @@ import math
 import numpy as np
 import scipy.stats
 
-from typing import Literal
+from typing import Literal, Optional, Union
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round
 from .version import __version__
@@ -44,9 +44,9 @@ class BaseDistribution(ABC):
 
         # Correlation metadata
         self.correlation_state: Literal["not_correlated", "to_correlate", "correlated"]
-        self.correlation_group: CorrelationGroup | None = None
+        self.correlation_group: Optional[CorrelationGroup] = None
         # TODO: Make cleaner
-        self._correlated_samples: np.ndarray | None = None
+        self._correlated_samples: Union[np.ndarray] = None
 
     @abstractmethod
     def __str__(self):
@@ -183,7 +183,7 @@ class CompositeDistribution(OperableDistribution):
     def __init__(self):
         super().__init__()
         # Whether this distribution contains any correlated variables
-        self.contains_correlated: bool | None = None
+        self.contains_correlated: Optional[bool] = None
 
     def __post_init__(self):
         assert self.contains_correlated is not None, "contains_correlated must be set"
@@ -911,7 +911,7 @@ def lognorm(
     )
 
 
-def to(x, y, credibility=90, lclip=None, rclip=None) -> LognormalDistribution | NormalDistribution:
+def to(x, y, credibility=90, lclip=None, rclip=None) -> Union[LognormalDistribution, NormalDistribution]:
     """
     Initialize a distribution from ``x`` to ``y``.
 
