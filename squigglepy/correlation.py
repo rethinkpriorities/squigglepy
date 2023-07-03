@@ -57,6 +57,7 @@ def correlate(
     variables: tuple[OperableDistribution, ...],
     correlation: Union[NDArray[np.float64], list[list[float]], np.float64, float],
     tolerance: Union[float, np.float64, None] = 0.05,
+    _min_unique_samples: int = 100,
 ):
     """
     Correlate a set of variables according to a rank correlation matrix.
@@ -79,13 +80,13 @@ def correlate(
         (including extremely close approximations).
 
         If a float is provided, all variables will be correlated with the same coefficient.
-        
+
     tolerance : float, optional
         If provided, overrides the absolute tolerance used to check if the resulting
         correlation matrix matches the desired correlation matrix. Defaults to 0.05.
-        
+
         Checking can also be disabled by passing None.
-    
+
     Returns
     -------
     correlated_variables : tuple of distributions
@@ -99,13 +100,13 @@ def correlate(
     >>> solar_radiation, temperature = sq.correlate((solar_radiation, temperature), 0.7)
     >>> print(np.corrcoef(solar_radiation @ 1000, temperature @ 1000)[0, 1])
         0.6989658852109647
-        
+
     Or you could pass a correlation matrix:
     >>> funding_gap, cost_per_delivery, effect_size = (
             sq.lognorm(2, 0.5), sq.gamma(200, 50), sq.uniform(0.1, 0.6)
         )
     >>> funding_gap, cost_per_delivery, effect_size = sq.correlate(
-            (funding_gap, cost_per_delivery, effect_size), 
+            (funding_gap, cost_per_delivery, effect_size),
             [[1, 0.3, -0.5], [0.3, 1, -0.2], [-0.5, -0.2, 1]]
         )
     >>> print(np.corrcoef(funding_gap @ 1000, cost_per_delivery @ 1000, effect_size @ 1000))
@@ -147,7 +148,7 @@ def correlate(
     tolerance = float(tolerance) if tolerance is not None else None
 
     # Create the correlation group
-    CorrelationGroup(variables, correlation_matrix, tolerance)
+    CorrelationGroup(variables, correlation_matrix, tolerance, _min_unique_samples)
 
     return variables
 
@@ -162,7 +163,8 @@ class CorrelationGroup:
 
     correlated_dists: tuple[OperableDistribution]
     correlation_matrix: NDArray[np.float64]
-    correlation_tolerance: Union[float, None]
+    correlation_tolerance: Union[float, None] = 0.05
+    min_unique_samples: int = 100
 
     def __post_init__(self):
         # Check that the correlation matrix is square of the expected size
@@ -256,7 +258,7 @@ class CorrelationGroup:
 
         # Sort the original data according to the new rank matrix
         self._sort_data_according_to_rank(data, data_rank, new_data_rank)
-        
+
         # Check correlation
         if self.correlation_tolerance:
             self._check_empirical_correlation(data)
@@ -281,15 +283,14 @@ class CorrelationGroup:
             new_order = order[-new_data_rank.shape[0] :]
             tmp = data[np.argsort(old_order), i][new_order]
             data[:, i] = tmp[:]
-    
-    
+
     def _check_empirical_correlation(self, samples: NDArray[np.float64]):
         """
         Ensures that the empirical correlation matrix is
         the same as the desired correlation matrix.
         """
         assert self.correlation_tolerance is not None
-        
+
         # Compute the empirical correlation matrix
         empirical_correlation_matrix = spearmanr(samples).statistic
         if not np.allclose(
@@ -301,13 +302,18 @@ class CorrelationGroup:
                 "You can relax the tolerance by passing `tolerance` to correlate()."
             )
 
-    @staticmethod
     def has_sufficient_sample_diversity(
-        samples: NDArray[np.float64], relative_threshold: float = 0.5, absolute_threshold=100
+        self,
+        samples: NDArray[np.float64],
+        relative_threshold: float = 0.5,
+        absolute_threshold=None
     ) -> bool:
         """
         Check if there is there are sufficient unique samples to work with in the data.
         """
+        
+        if absolute_threshold is None:
+            absolute_threshold = self.min_unique_samples
 
         unique_samples = len(np.unique(samples, axis=0))
         n_samples = len(samples)

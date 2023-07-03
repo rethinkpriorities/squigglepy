@@ -79,7 +79,9 @@ def test_arbitrary_correlates(dist_corrs):
     """
 
     uncorrelated_dists, corrs = dist_corrs
-    correlated_dists = sq.correlate(uncorrelated_dists, corrs, tolerance=None)
+    correlated_dists = sq.correlate(
+        uncorrelated_dists, corrs, tolerance=None, _min_unique_samples=1_000
+    )
     try:
         check_correlation_from_matrix(correlated_dists, corrs)
     except ValueError as e:
