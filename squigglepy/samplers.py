@@ -177,7 +177,7 @@ def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     Parameters
     ----------
     low : float or None
-        The low value of a credible interval defined by ``credibility``. 
+        The low value of a credible interval defined by ``credibility``.
         Must be greater than 0. Defaults to a 90% CI.
     high : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.

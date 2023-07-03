@@ -911,7 +911,9 @@ def lognorm(
     )
 
 
-def to(x, y, credibility=90, lclip=None, rclip=None) -> Union[LognormalDistribution, NormalDistribution]:
+def to(
+    x, y, credibility=90, lclip=None, rclip=None
+) -> Union[LognormalDistribution, NormalDistribution]:
     """
     Initialize a distribution from ``x`` to ``y``.
 

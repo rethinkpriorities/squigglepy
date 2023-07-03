@@ -122,7 +122,6 @@ def correlate(
         raise ValueError("You must provide at least two variables to correlate.")
     if not all(is_continuous_dist(variable) for variable in variables):
         raise TypeError("Discrete distributions aren't supported yet.")
-    
 
     # Convert a float to a correlation matrix
     if (
