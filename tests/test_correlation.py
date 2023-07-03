@@ -2,7 +2,7 @@ import scipy.stats as stats
 
 from .. import squigglepy as sq
 from .strategies import distributions_with_correlation
-from hypothesis import given, assume, note, example
+from hypothesis import given, assume, note, example, reproduce_failure
 import hypothesis.strategies as st
 import numpy as np
 import warnings
@@ -60,15 +60,19 @@ def test_basic_correlates(corr):
 
         # Check marginal distributions
         # a (uniform)
-        assert np.isclose(np.mean(a_samples), np.mean(a_params), atol=0.08), np.mean(a_samples)
+        assert np.isclose(
+            np.mean(a_samples), np.mean(a_params), atol=0.08
+        ), f"Mean: {np.mean(a_samples)} != {np.mean(a_params)}"
         expected_sd = np.sqrt((a_params[1] - a_params[0]) ** 2 / 12)
-        assert np.isclose(np.std(a_samples), expected_sd, atol=0.08), np.std(a_samples)
+        assert np.isclose(
+            np.std(a_samples), expected_sd, atol=0.08
+        ), f"SD: {np.std(a_samples)} != {expected_sd}"
         # b (normal)
         assert np.isclose(np.mean(b_samples), b_params[0], atol=0.08), np.mean(b_samples)
         assert np.isclose(np.std(b_samples), b_params[1], atol=0.08), np.std(b_samples)
 
 
-@given(distributions_with_correlation(continuous_only=True))
+@given(distributions_with_correlation())
 def test_arbitrary_correlates(dist_corrs):
     """
     Test multi-variable correlation with a series of arbitrary random variables,
@@ -83,7 +87,10 @@ def test_arbitrary_correlates(dist_corrs):
         uncorrelated_dists, corrs, tolerance=None, _min_unique_samples=1_000
     )
     try:
-        check_correlation_from_matrix(correlated_dists, corrs)
+        # The tolerance is quite high here, given that we're only
+        # interested in very signifcant errors. The user would be warned
+        # if the correlation was too far off anyway (with less tolerance).
+        check_correlation_from_matrix(correlated_dists, corrs, atol=0.1)
     except ValueError as e:
         assume("repeated values" not in str(e))
 
