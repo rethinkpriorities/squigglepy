@@ -62,7 +62,7 @@ def correlate(
 
     This employs the Iman-Conover method to induce the correlation while
     preserving the original marginal distributions.
-    
+
     This method works on a best-effort basis, and may fail to induce the desired
     correlation depending on the distributions provided. An exception will be raised
     if that's the case.
@@ -71,13 +71,13 @@ def correlate(
     ----------
     variables : tuple of distributions
         The variables to correlate as a tuple of distributions.
-        
+
         The distributions must be able to produce enough unique samples for the method
         to be able to induce the desired correlation by shuffling the samples.
-        
+
         Discrete distributions are notably hard to correlate this way,
         as it's common for them to result in very few unique samples.
-        
+
     correlation : 2d-array or float
         An n-by-n array that defines the desired Spearman rank correlation coefficients.
         This matrix must be symmetric and positives emi-definite; and must not be confused with
@@ -127,7 +127,7 @@ def correlate(
 
     if len(variables) < 2:
         raise ValueError("You must provide at least two variables to correlate.")
-    
+
     # Convert a float to a correlation matrix
     if (
         isinstance(correlation, float)

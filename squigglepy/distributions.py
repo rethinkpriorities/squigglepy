@@ -3,7 +3,7 @@ import math
 import numpy as np
 import scipy.stats
 
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
 from .utils import _process_weights_values, _is_numpy, is_dist, _round
 from .version import __version__
@@ -43,10 +43,9 @@ class BaseDistribution(ABC):
         self._version = __version__
 
         # Correlation metadata
-        self.correlation_state: Literal["not_correlated", "to_correlate", "correlated"]
         self.correlation_group: Optional[CorrelationGroup] = None
         # TODO: Make cleaner
-        self._correlated_samples: Union[np.ndarray] = None
+        self._correlated_samples: Optional[np.ndarray] = None
 
     @abstractmethod
     def __str__(self):

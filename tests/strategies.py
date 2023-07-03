@@ -150,7 +150,9 @@ def instantiate_with_parameters(draw, dist_fn: Callable) -> sq.OperableDistribut
     elif dist_fn == sq.discrete:
         items = draw(
             st.dictionaries(
-                st.floats(allow_infinity=False, allow_nan=False), st.floats(0, 1, exclude_min=True), min_size=1
+                st.floats(allow_infinity=False, allow_nan=False),
+                st.floats(0, 1, exclude_min=True),
+                min_size=1,
             )
         )
         # Normalize the probabilities
@@ -158,7 +160,7 @@ def instantiate_with_parameters(draw, dist_fn: Callable) -> sq.OperableDistribut
         value_sum = sum(items.values())
         for k, v in items.items():
             normalized_items[k] = v / value_sum
-            
+
         return dist_fn(normalized_items)
     elif dist_fn == sq.exponential:
         a = draw(
