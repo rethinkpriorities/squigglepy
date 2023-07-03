@@ -44,15 +44,18 @@ class BaseDistribution(ABC):
 
         # Correlation metadata
         self.correlation_group: Optional[CorrelationGroup] = None
-        # TODO: Make cleaner
         self._correlated_samples: Optional[np.ndarray] = None
 
     @abstractmethod
-    def __str__(self):
+    def __str__(self) -> str:
         ...
 
     def __repr__(self):
-        return str(self)
+        if self.correlation_group:
+            return (
+                self.__str__() + f" (version {self._version}, corr_group {self.correlation_group})"
+            )
+        return self.__str__() + f" (version {self._version})"
 
 
 class OperableDistribution(BaseDistribution):

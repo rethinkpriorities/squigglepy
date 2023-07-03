@@ -44,6 +44,7 @@ from scipy.linalg import cholesky
 from scipy.stats import rankdata, spearmanr
 from scipy.stats.distributions import norm as _scipy_norm
 from numpy.typing import NDArray
+from copy import deepcopy
 
 from typing import TYPE_CHECKING, Union
 
@@ -128,6 +129,8 @@ def correlate(
     if len(variables) < 2:
         raise ValueError("You must provide at least two variables to correlate.")
 
+    assert all(v.correlation_group is None for v in variables)
+
     # Convert a float to a correlation matrix
     if (
         isinstance(correlation, float)
@@ -151,6 +154,9 @@ def correlate(
         correlation_matrix: NDArray[np.float64] = np.array(correlation, dtype=np.float64)
 
     tolerance = float(tolerance) if tolerance is not None else None
+    
+    # Deepcopy the variables to avoid modifying the originals
+    variables = deepcopy(variables)
 
     # Create the correlation group
     CorrelationGroup(variables, correlation_matrix, tolerance, _min_unique_samples)
