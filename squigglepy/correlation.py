@@ -217,7 +217,7 @@ class CorrelationGroup:
         """
         # Check that each column doesn't have too little unique values
         for column in data.T:
-            if not has_sufficient_sample_diversity(column):
+            if not self.has_sufficient_sample_diversity(column):
                 raise ValueError(
                     "The data has too many repeated values to induce a correlation. "
                     "This might be because of too few samples, or too many repeated samples."
@@ -301,17 +301,17 @@ class CorrelationGroup:
                 "You can relax the tolerance by passing `tolerance` to correlate()."
             )
 
+    @staticmethod
+    def has_sufficient_sample_diversity(
+        samples: NDArray[np.float64], relative_threshold: float = 0.5, absolute_threshold=100
+    ) -> bool:
+        """
+        Check if there is there are sufficient unique samples to work with in the data.
+        """
 
-def has_sufficient_sample_diversity(
-    samples: NDArray[np.float64], relative_threshold: float = 0.5, absolute_threshold=100
-) -> bool:
-    """
-    Check if there is there are sufficient unique samples to work with in the data.
-    """
+        unique_samples = len(np.unique(samples, axis=0))
+        n_samples = len(samples)
 
-    unique_samples = len(np.unique(samples, axis=0))
-    n_samples = len(samples)
+        diversity = unique_samples / n_samples
 
-    diversity = unique_samples / n_samples
-
-    return (diversity >= relative_threshold) and (unique_samples >= absolute_threshold)
+        return (diversity >= relative_threshold) and (unique_samples >= absolute_threshold)
