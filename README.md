@@ -166,9 +166,11 @@ sq.norm(0, 3, lclip=0, rclip=5) # Sample norm with a 90% CI from 0-3, but anythi
 # You can also clip with a function, and use pipes
 sq.norm(0, 3) >> sq.clip(0, 5)
 
-# You can correlate distributions
+# You can correlate continuous distributions
 a, b = sq.uniform(-1, 1), sq.to(0, 3)
-a, b = sq.correlate((a, b), []
+a, b = sq.correlate((a, b), 0.5)  # Correlate a and b with a correlation of 0.5
+# You can even pass your own correlation matrix!
+a, b = sq.correlate((a, b), [[1, 0.5], [0.5, 1]])
 ```
 
 #### Example: Rolling a Die

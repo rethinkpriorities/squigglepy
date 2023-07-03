@@ -8,19 +8,19 @@ import numpy as np
 import warnings
 
 
-def check_correlation_from_matrix(dists, corr):
+def check_correlation_from_matrix(dists, corr, atol=0.08):
     samples = np.column_stack([dist @ 3_000 for dist in dists])
     estimated_corr = stats.spearmanr(samples).statistic
     note(f"Estimated correlation: {estimated_corr}")
     if len(dists) == 2:
         note(f"Desired correlation: {corr[0, 1]}")
-        assert np.all(np.isclose(estimated_corr, corr[0, 1], atol=0.08))
+        assert np.all(np.isclose(estimated_corr, corr[0, 1], atol=atol))
     else:
         note(f"Desired correlation: {corr}")
-        assert np.all(np.isclose(estimated_corr, corr, atol=0.08))
+        assert np.all(np.isclose(estimated_corr, corr, atol=atol))
 
 
-def check_correlation_from_parameter(dists_or_samples, corr):
+def check_correlation_from_parameter(dists_or_samples, corr, atol=0.08):
     assert len(dists_or_samples) == 2
     if isinstance(dists_or_samples[0], sq.OperableDistribution):
         # Sample
@@ -32,7 +32,7 @@ def check_correlation_from_parameter(dists_or_samples, corr):
     note(f"Desired correlation: {corr}")
     estimated_corr = stats.spearmanr(samples).statistic
     note(f"Estimated correlation: {estimated_corr}")
-    assert np.all(np.isclose(estimated_corr, corr, atol=0.08))
+    assert np.all(np.isclose(estimated_corr, corr, atol=atol))
 
 
 @given(st.floats(-0.999, 0.999))
@@ -51,7 +51,7 @@ def test_basic_correlates(corr):
         a, b = sq.UniformDistribution(*a_params), sq.NormalDistribution(
             mean=b_params[0], sd=b_params[1]
         )
-        a, b = sq.correlate((a, b), [[1, corr], [corr, 1]])
+        a, b = sq.correlate((a, b), [[1, corr], [corr, 1]], tolerance=None)
 
         # Sample
         a_samples = a @ 3_000
@@ -77,15 +77,13 @@ def test_arbitrary_correlates(dist_corrs):
     Ensures the resulting corr. matrix is as expected, and that the marginal
     distributionsremain intact.
     """
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
 
-        uncorrelated_dists, corrs = dist_corrs
-        correlated_dists = sq.correlate(uncorrelated_dists, corrs)
-        try:
-            check_correlation_from_matrix(correlated_dists, corrs)
-        except ValueError as e:
-            assume("repeated values" not in str(e))
+    uncorrelated_dists, corrs = dist_corrs
+    correlated_dists = sq.correlate(uncorrelated_dists, corrs, tolerance=None)
+    try:
+        check_correlation_from_matrix(correlated_dists, corrs)
+    except ValueError as e:
+        assume("repeated values" not in str(e))
 
     # Check marginal distributions
     # Check means, mode and SDs

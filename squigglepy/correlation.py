@@ -41,7 +41,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 from scipy.linalg import cholesky
-from scipy.stats import rankdata
+from scipy.stats import rankdata, spearmanr
 from scipy.stats.distributions import norm as _scipy_norm
 from numpy.typing import NDArray
 
@@ -56,6 +56,7 @@ if TYPE_CHECKING:
 def correlate(
     variables: tuple[OperableDistribution, ...],
     correlation: Union[NDArray[np.float64], list[list[float]], np.float64, float],
+    tolerance: Union[float, np.float64, None] = 0.05,
 ):
     """
     Correlate a set of variables according to a rank correlation matrix.
@@ -67,6 +68,7 @@ def correlate(
     ----------
     variables : tuple of distributions
         The variables to correlate as a tuple of distributions.
+        The distributions must be continuous.
 
     correlation : 2d-array or float
         An n-by-n array that defines the desired Spearman rank correlation coefficients.
@@ -77,7 +79,13 @@ def correlate(
         (including extremely close approximations).
 
         If a float is provided, all variables will be correlated with the same coefficient.
-
+        
+    tolerance : float, optional
+        If provided, overrides the absolute tolerance used to check if the resulting
+        correlation matrix matches the desired correlation matrix. Defaults to 0.05.
+        
+        Checking can also be disabled by passing None.
+    
     Returns
     -------
     correlated_variables : tuple of distributions
@@ -86,11 +94,25 @@ def correlate(
 
     Examples
     --------
-    >>> a, b = sq.uniform(-1, 1), sq.to(0, 3)
-    >>> a, b = sq.correlate((a, b), [[1, 0.9], [0.9, 1]])
-    >>> a_samples, b_samples = a @ 1000, b @ 1000
-    >>> print(np.corrcoef(a_samples, b_samples).statistic)
-        0.8923975890079759
+    Suppose we want to correlate two variables with a correlation coefficient of 0.65:
+    >>> solar_radiation, temperature = sq.gamma(300, 100), sq.norm(25, 5)
+    >>> solar_radiation, temperature = sq.correlate((solar_radiation, temperature), 0.7)
+    >>> print(np.corrcoef(solar_radiation @ 1000, temperature @ 1000)[0, 1])
+        0.6989658852109647
+        
+    Or you could pass a correlation matrix:
+    >>> funding_gap, cost_per_delivery, effect_size = (
+            sq.lognorm(2, 0.5), sq.gamma(200, 50), sq.uniform(0.1, 0.6)
+        )
+    >>> funding_gap, cost_per_delivery, effect_size = sq.correlate(
+            (funding_gap, cost_per_delivery, effect_size), 
+            [[1, 0.3, -0.5], [0.3, 1, -0.2], [-0.5, -0.2, 1]]
+        )
+    >>> print(np.corrcoef(funding_gap @ 1000, cost_per_delivery @ 1000, effect_size @ 1000))
+        array([[ 1.        ,  0.29716686, -0.50545024],
+               [ 0.29716686,  1.        , -0.19812394],
+               [-0.50545024, -0.19812394,  1.        ]])
+
     """
     if not isinstance(variables, tuple):
         variables = tuple(variables)
@@ -122,8 +144,10 @@ def correlate(
     # Coerce the correlation matrix into a numpy array
     correlation_matrix: NDArray[np.float64] = np.array(correlation, dtype=np.float64)
 
+    tolerance = float(tolerance) if tolerance is not None else None
+
     # Create the correlation group
-    CorrelationGroup(variables, correlation_matrix)
+    CorrelationGroup(variables, correlation_matrix, tolerance)
 
     return variables
 
@@ -138,6 +162,7 @@ class CorrelationGroup:
 
     correlated_dists: tuple[OperableDistribution]
     correlation_matrix: NDArray[np.float64]
+    correlation_tolerance: Union[float, None]
 
     def __post_init__(self):
         # Check that the correlation matrix is square of the expected size
@@ -231,6 +256,10 @@ class CorrelationGroup:
 
         # Sort the original data according to the new rank matrix
         self._sort_data_according_to_rank(data, data_rank, new_data_rank)
+        
+        # Check correlation
+        if self.correlation_tolerance:
+            self._check_empirical_correlation(data)
 
         return data
 
@@ -252,10 +281,29 @@ class CorrelationGroup:
             new_order = order[-new_data_rank.shape[0] :]
             tmp = data[np.argsort(old_order), i][new_order]
             data[:, i] = tmp[:]
+    
+    
+    def _check_empirical_correlation(self, samples: NDArray[np.float64]):
+        """
+        Ensures that the empirical correlation matrix is
+        the same as the desired correlation matrix.
+        """
+        assert self.correlation_tolerance is not None
+        
+        # Compute the empirical correlation matrix
+        empirical_correlation_matrix = spearmanr(samples).statistic
+        if not np.allclose(
+            empirical_correlation_matrix, self.correlation_matrix, atol=self.correlation_tolerance
+        ):
+            raise RuntimeError(
+                "Failed to induce the desired correlation between samples. "
+                "This might be because of too little diversity in the samples. "
+                "You can relax the tolerance by passing `tolerance` to correlate()."
+            )
 
 
 def has_sufficient_sample_diversity(
-    samples: NDArray[np.float64], relative_threshold: float = 0.5, absolute_threshold=1_000
+    samples: NDArray[np.float64], relative_threshold: float = 0.5, absolute_threshold=100
 ) -> bool:
     """
     Check if there is there are sufficient unique samples to work with in the data.
