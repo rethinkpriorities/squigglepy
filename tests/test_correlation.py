@@ -2,7 +2,7 @@ import scipy.stats as stats
 
 from .. import squigglepy as sq
 from .strategies import distributions_with_correlation
-from hypothesis import given, assume, note, example, reproduce_failure
+from hypothesis import given, assume, note, example
 import hypothesis.strategies as st
 import numpy as np
 import warnings
@@ -96,7 +96,7 @@ def test_arbitrary_correlates(dist_corrs):
 
     # Check marginal distributions
     # Check means, mode and SDs
-    for uncorr, corr in zip(uncorrelated_dists, correlated_dists, strict=True):
+    for uncorr, corr in zip(uncorrelated_dists, correlated_dists):
         uncorr_samples = uncorr @ 3_000
         corr_samples = corr @ 3_000
         assert np.isclose(
