@@ -96,23 +96,23 @@ def correlate(
     Examples
     --------
     Suppose we want to correlate two variables with a correlation coefficient of 0.65:
-    >>> solar_radiation, temperature = sq.gamma(300, 100), sq.norm(25, 5)
+    >>> solar_radiation, temperature = sq.gamma(300, 100), sq.to(22, 28)
     >>> solar_radiation, temperature = sq.correlate((solar_radiation, temperature), 0.7)
     >>> print(np.corrcoef(solar_radiation @ 1000, temperature @ 1000)[0, 1])
-        0.6989658852109647
+        0.6975960649767123
 
     Or you could pass a correlation matrix:
     >>> funding_gap, cost_per_delivery, effect_size = (
-            sq.lognorm(2, 0.5), sq.gamma(200, 50), sq.uniform(0.1, 0.6)
+            sq.to(20_000, 80_000), sq.to(30, 80), sq.beta(2, 5)
         )
     >>> funding_gap, cost_per_delivery, effect_size = sq.correlate(
             (funding_gap, cost_per_delivery, effect_size),
-            [[1, 0.3, -0.5], [0.3, 1, -0.2], [-0.5, -0.2, 1]]
+            [[1, 0.6, -0.5], [0.6, 1, -0.2], [-0.5, -0.2, 1]]
         )
     >>> print(np.corrcoef(funding_gap @ 1000, cost_per_delivery @ 1000, effect_size @ 1000))
-        array([[ 1.        ,  0.29716686, -0.50545024],
-               [ 0.29716686,  1.        , -0.19812394],
-               [-0.50545024, -0.19812394,  1.        ]])
+        array([[ 1.      ,  0.580520  , -0.480149],
+               [ 0.580962,  1.        , -0.187831],
+               [-0.480149, -0.187831  ,  1.        ]])
 
     """
     if not isinstance(variables, tuple):
@@ -122,6 +122,7 @@ def correlate(
         raise ValueError("You must provide at least two variables to correlate.")
     if not all(is_continuous_dist(variable) for variable in variables):
         raise TypeError("Discrete distributions aren't supported yet.")
+    
 
     # Convert a float to a correlation matrix
     if (
@@ -141,9 +142,9 @@ def correlate(
         )
         # Set the diagonal to 1
         np.fill_diagonal(correlation_matrix, 1)
-
-    # Coerce the correlation matrix into a numpy array
-    correlation_matrix: NDArray[np.float64] = np.array(correlation, dtype=np.float64)
+    else:
+        # Coerce the correlation matrix into a numpy array
+        correlation_matrix: NDArray[np.float64] = np.array(correlation, dtype=np.float64)
 
     tolerance = float(tolerance) if tolerance is not None else None
 
@@ -259,7 +260,7 @@ class CorrelationGroup:
         # Sort the original data according to the new rank matrix
         self._sort_data_according_to_rank(data, data_rank, new_data_rank)
 
-        # Check correlation
+        # # Check correlation
         if self.correlation_tolerance:
             self._check_empirical_correlation(data)
 
@@ -292,10 +293,24 @@ class CorrelationGroup:
         assert self.correlation_tolerance is not None
 
         # Compute the empirical correlation matrix
-        empirical_correlation_matrix = spearmanr(samples).statistic
-        if not np.allclose(
-            empirical_correlation_matrix, self.correlation_matrix, atol=self.correlation_tolerance
-        ):
+        empirical_correlation = spearmanr(samples).statistic
+        if len(self.correlated_dists) == 2:
+            # empirical_correlation is a scalar
+            properly_correlated = np.isclose(
+                empirical_correlation,
+                self.correlation_matrix[0, 1],
+                atol=self.correlation_tolerance,
+                rtol=0,
+            )
+        else:
+            # empirical_correlation is a matrix
+            properly_correlated = np.allclose(
+                empirical_correlation,
+                self.correlation_matrix,
+                atol=self.correlation_tolerance,
+                rtol=0,
+            )
+        if not properly_correlated:
             raise RuntimeError(
                 "Failed to induce the desired correlation between samples. "
                 "This might be because of too little diversity in the samples. "
@@ -306,12 +321,12 @@ class CorrelationGroup:
         self,
         samples: NDArray[np.float64],
         relative_threshold: float = 0.5,
-        absolute_threshold=None
+        absolute_threshold=None,
     ) -> bool:
         """
         Check if there is there are sufficient unique samples to work with in the data.
         """
-        
+
         if absolute_threshold is None:
             absolute_threshold = self.min_unique_samples
 

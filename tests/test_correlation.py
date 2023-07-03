@@ -51,7 +51,7 @@ def test_basic_correlates(corr):
         a, b = sq.UniformDistribution(*a_params), sq.NormalDistribution(
             mean=b_params[0], sd=b_params[1]
         )
-        a, b = sq.correlate((a, b), [[1, corr], [corr, 1]], tolerance=None)
+        a, b = sq.correlate((a, b), corr, tolerance=None)
 
         # Sample
         a_samples = a @ 3_000
