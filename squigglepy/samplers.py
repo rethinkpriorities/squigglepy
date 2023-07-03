@@ -695,7 +695,9 @@ def mixture_sample(
         )
 
 
-def sample_correlated_group(requested_dist: BaseDistribution, n: int, verbose=False) -> NDArray[np.float64]:
+def sample_correlated_group(
+    requested_dist: BaseDistribution, n: int, verbose=False
+) -> NDArray[np.float64]:
     """
     Samples a correlated distribution, alongside
     all other correlated distributions in the same group.
@@ -732,9 +734,9 @@ def sample_correlated_group(requested_dist: BaseDistribution, n: int, verbose=Fa
         else:
             # Store the samples we requested
             requested_samples = samples[:, i]
-            
+
     assert requested_samples is not None
-            
+
     return requested_samples
 
 

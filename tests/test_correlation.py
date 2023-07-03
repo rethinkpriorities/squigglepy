@@ -6,7 +6,6 @@ from hypothesis import given, assume, note, example
 import hypothesis.strategies as st
 import numpy as np
 import warnings
-from copy import deepcopy
 
 
 def check_correlation_from_matrix(dists, corr, atol=0.08):
@@ -101,10 +100,7 @@ def test_arbitrary_correlates(dist_corrs):
     group = correlated_dists[0].correlation_group
     assert group is not None
     uncorr_samples = np.column_stack(
-        [
-            sq.sample(dist, 3_000, _correlate_if_needed=False)
-            for dist in group.correlated_dists
-        ]
+        [sq.sample(dist, 3_000, _correlate_if_needed=False) for dist in group.correlated_dists]
     )
     corr_samples = group.induce_correlation(uncorr_samples)
 
@@ -114,9 +110,7 @@ def test_arbitrary_correlates(dist_corrs):
     assert np.isclose(
         np.std(uncorr_samples), np.std(corr_samples), rtol=0.01
     ), "SDs are not equal, violating integrity of marginal distributions"
-    assert np.isclose(
-        np.median(uncorr_samples), np.median(corr_samples), rtol=0.01
-    )
+    assert np.isclose(np.median(uncorr_samples), np.median(corr_samples), rtol=0.01)
     assert np.isclose(np.max(uncorr_samples), np.max(corr_samples), rtol=0.01)
     assert np.isclose(np.min(uncorr_samples), np.min(corr_samples), rtol=0.01)
 
@@ -127,13 +121,11 @@ def test_correlated_resampling():
     without stale samples being used (self._correlated_samples)
     """
     uncorrelated_dists = sq.to(2, 30), sq.uniform(-3, 6), sq.beta(50, 100)
-    correlated_dists = sq.correlate(
-        uncorrelated_dists, 0.8, tolerance=None
-    )
+    correlated_dists = sq.correlate(uncorrelated_dists, 0.8, tolerance=None)
 
     first_samples = np.column_stack([d @ 1_000 for d in correlated_dists])
     second_samples = np.column_stack([d @ 1_000 for d in correlated_dists])
-    
+
     assert not np.allclose(
         first_samples, second_samples
     ), "Resampling correlated distributions produces the same samples"

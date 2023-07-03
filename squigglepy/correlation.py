@@ -154,7 +154,7 @@ def correlate(
         correlation_matrix: NDArray[np.float64] = np.array(correlation, dtype=np.float64)
 
     tolerance = float(tolerance) if tolerance is not None else None
-    
+
     # Deepcopy the variables to avoid modifying the originals
     variables = deepcopy(variables)
 
