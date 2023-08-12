@@ -932,8 +932,8 @@ def sample(
                     n_explosions = sum([s in dist.explode_on for s in explosion_samples])
                     if n_explosions > 0:
                         explosion_samples = discrete_sample(
-                            list(range(1, dist.sides + 1)),
-                            samples=n_explosions)
+                            list(range(1, dist.sides + 1)), samples=n_explosions
+                        )
                         samples.append(explosion_samples)
 
         elif isinstance(dist, Coin):
