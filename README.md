@@ -181,8 +181,6 @@ roll_die(sides=6, n=10)
 # [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
 ```
 
-This is already included standard in the utils of this package. Use `sq.roll_die`.
-
 ### Bayesian inference
 
 1% of women at age forty who participate in routine screening have breast cancer.
