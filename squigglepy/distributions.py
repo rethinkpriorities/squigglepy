@@ -4,7 +4,7 @@ import functools
 
 import math
 import operator
-from typing import Any, Callable, Optional, Self, TypeVar, Union
+from typing import Any, Callable, Optional, TypeVar, Union
 
 import numpy as np
 from scipy import stats
@@ -58,7 +58,7 @@ class OperableDistribution(BaseDistribution):
         return sample(self, n=n)
 
     def __rshift__(
-        self, fn: Union[Callable[[Self], ComplexDistribution], ComplexDistribution]
+        self, fn: Union[Callable[[OperableDistribution], ComplexDistribution], ComplexDistribution]
     ) -> Union[ComplexDistribution, int]:
         if callable(fn):
             return fn(self)
