@@ -1,18 +1,33 @@
+from __future__ import annotations
+from functools import partial
+import functools
+
 import math
 import operator
-from typing import Optional, Union
+from typing import Any, Callable, Optional, Self, TypeVar, Union
 
 import numpy as np
 from scipy import stats
 
-from .utils import _is_numpy, _process_weights_values, _round, is_dist
+from .utils import (
+    Integer,
+    Weights,
+    _is_numpy,
+    _process_weights_values,
+    _round,
+    is_dist,
+    Number,
+    Float,
+)
 from .version import __version__
 
-Number = Union[int, float, np.floating, np.integer]
+from typing import overload
+
+from numpy import ufunc, vectorize
 
 
 class BaseDistribution:
-    def __init__(self):
+    def __init__(self) -> None:
         self.lclip: Optional[Number] = None
         self.rclip: Optional[Number] = None
         self._version: str = __version__
@@ -20,12 +35,12 @@ class BaseDistribution:
     def __str__(self):
         return "<Distribution> base"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
 
 class OperableDistribution(BaseDistribution):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def __invert__(self):
@@ -33,7 +48,7 @@ class OperableDistribution(BaseDistribution):
 
         return sample(self)
 
-    def __matmul__(self, n: int) -> np.ndarray:
+    def __matmul__(self, n: int):
         try:
             n = int(n)
         except ValueError:
@@ -42,7 +57,9 @@ class OperableDistribution(BaseDistribution):
 
         return sample(self, n=n)
 
-    def __rshift__(self, fn):
+    def __rshift__(
+        self, fn: Union[Callable[[Self], ComplexDistribution], ComplexDistribution]
+    ) -> Union[ComplexDistribution, int]:
         if callable(fn):
             return fn(self)
         elif isinstance(fn, ComplexDistribution):
@@ -50,66 +67,66 @@ class OperableDistribution(BaseDistribution):
         else:
             raise ValueError
 
-    def __rmatmul__(self, n: int) -> np.ndarray:
+    def __rmatmul__(self, n: int):
         return self.__matmul__(n)
 
-    def __gt__(self, dist: BaseDistribution):
+    def __gt__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.gt, ">")
 
-    def __ge__(self, dist: BaseDistribution):
+    def __ge__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.ge, ">=")
 
-    def __lt__(self, dist: BaseDistribution):
+    def __lt__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.lt, "<")
 
-    def __le__(self, dist: BaseDistribution):
+    def __le__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.le, "<=")
 
-    def __eq__(self, dist: BaseDistribution):
+    def __eq__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.le, "==")
 
-    def __ne__(self, dist: BaseDistribution):
+    def __ne__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.le, "!=")
 
-    def __neg__(self):
+    def __neg__(self) -> "ComplexDistribution":
         return ComplexDistribution(self, None, operator.neg, "-")
 
-    def __add__(self, dist: BaseDistribution):
+    def __add__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.add, "+")
 
-    def __radd__(self, dist: BaseDistribution):
+    def __radd__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.add, "+")
 
-    def __sub__(self, dist: BaseDistribution):
+    def __sub__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.sub, "-")
 
-    def __rsub__(self, dist: BaseDistribution):
+    def __rsub__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.sub, "-")
 
-    def __mul__(self, dist: BaseDistribution):
+    def __mul__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.mul, "*")
 
-    def __rmul__(self, dist: BaseDistribution):
+    def __rmul__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.mul, "*")
 
-    def __truediv__(self, dist: BaseDistribution):
+    def __truediv__(self, dist: BaseDistribution) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.truediv, "/")
 
-    def __rtruediv__(self, dist):
+    def __rtruediv__(self, dist: Number) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.truediv, "/")
 
-    def __floordiv__(self, dist):
+    def __floordiv__(self, dist: int) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.floordiv, "//")
 
-    def __rfloordiv__(self, dist):
+    def __rfloordiv__(self, dist: int) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.floordiv, "//")
 
-    def __pow__(self, dist):
+    def __pow__(self, dist: int) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.pow, "**")
 
-    def __rpow__(self, dist):
+    def __rpow__(self, dist: int) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.pow, "**")
-    
+
     def plot(self, num_samples: int = 1000, bins: int = 200) -> None:
         """
         Plot a histogram of the samples.
@@ -137,7 +154,14 @@ class OperableDistribution(BaseDistribution):
 
 
 class ComplexDistribution(OperableDistribution):
-    def __init__(self, left, right=None, fn=operator.add, fn_str="+", infix=True):
+    def __init__(
+        self,
+        left: Any,
+        right: Optional[Any] = None,
+        fn: UFunction = operator.add,
+        fn_str: str = "+",
+        infix: bool = True,
+    ) -> None:
         super().__init__()
         self.left = left
         self.right = right
@@ -145,36 +169,46 @@ class ComplexDistribution(OperableDistribution):
         self.fn_str = fn_str
         self.infix = infix
 
-    def __str__(self):
-        if self.right is None and self.infix:
+    def __str__(self) -> str:
+        left, right, infix = self.left, self.right, self.infix
+        if isinstance(self.fn, functools.partial) and right is None and not infix:
+            # This prints the arguments when a partial function is being used
+            # this is useful for things like round, lclip, rclip, etc.
+            right = "".join(str(arg) for arg in self.fn.args)
+            for i, (k, v) in enumerate(self.fn.keywords.items()):
+                if i == 0 and right:
+                    right += ", "
+                right += "{}={}".format(k, v)
+
+        if right is None and infix:
             if self.fn_str == "-":
                 out = "<Distribution> {}{}"
             else:
                 out = "<Distribution> {} {}"
-            out = out.format(self.fn_str, str(self.left).replace("<Distribution> ", ""))
-        elif self.right is None and not self.infix:
+            out = out.format(self.fn_str, str(left).replace("<Distribution> ", ""))
+        elif right is None and not infix:
             out = "<Distribution> {}({})".format(
-                self.fn_str, str(self.left).replace("<Distribution> ", "")
+                self.fn_str, str(left).replace("<Distribution> ", "")
             )
-        elif self.right is not None and self.infix:
+        elif right is not None and infix:
             out = "<Distribution> {} {} {}".format(
-                str(self.left).replace("<Distribution> ", ""),
+                str(left).replace("<Distribution> ", ""),
                 self.fn_str,
-                str(self.right).replace("<Distribution> ", ""),
+                str(right).replace("<Distribution> ", ""),
             )
-        elif self.right is not None and not self.infix:
+        elif right is not None and not infix:
             out = "<Distribution> {}({}, {})"
             out = out.format(
                 self.fn_str,
-                str(self.left).replace("<Distribution> ", ""),
-                str(self.right).replace("<Distribution> ", ""),
+                str(left).replace("<Distribution> ", ""),
+                str(right).replace("<Distribution> ", ""),
             )
         else:
-            raise ValueError
+            raise ValueError("The complex distribution is not properly defined")
         return out
 
 
-def _get_fname(f, name):
+def _get_fname(f: UFunction, name: Optional[str]) -> str:
     if name is None:
         if isinstance(f, np.vectorize):
             name = f.pyfunc.__name__
@@ -183,7 +217,21 @@ def _get_fname(f, name):
     return name
 
 
-def dist_fn(dist1, dist2=None, fn=None, name=None):
+# These are the types of functions that can be used in the dist_fn function
+# We allow booleans for the case of the comparison operators
+UScalar = TypeVar("UScalar", bound=Union[Number, bool])
+UFunction = Union[
+    Callable[[UScalar], UScalar],
+    Callable[[UScalar, UScalar], UScalar],
+    ufunc,
+    vectorize,
+]
+
+
+@overload
+def dist_fn(
+    dist: OperableDistribution, fn: Union[UFunction, list[UFunction]], name: Optional[str] = None
+) -> ComplexDistribution:
     """
     Initialize a distribution that has a custom function applied to the result.
 
@@ -191,24 +239,19 @@ def dist_fn(dist1, dist2=None, fn=None, name=None):
 
     Parameters
     ----------
-    dist1 : Distribution or function or list
-        Typically, the distribution to apply the function to. Could also be a function
-        or list of functions if ``dist_fn`` is being used in a pipe.
-    dist2 : Distribution or function or list or None
-        Typically, the second distribution to apply the function to if the function takes
-        two arguments. Could also be a function or list of functions if ``dist_fn`` is
-        being used in a pipe.
-    fn : function or None
-        The function to apply to the distribution(s).
+    dist : Distribution or function or list
+        The distribution to apply the function to.
+    fn : function or list of functions
+        The function(s) to apply to the distribution.
     name : str or None
         By default, ``fn.__name__`` will be used to name the function. But you can pass
         a custom name.
 
     Returns
     -------
-    ComplexDistribution or function
-        This will be a lazy evaluation of the desired function that will then be calculated
-        when it is sampled.
+    ComplexDistribution
+        This distribution performs a lazy evaluation of the desired function that
+        will be calculated when it is sampled.
 
     Examples
     --------
@@ -216,42 +259,309 @@ def dist_fn(dist1, dist2=None, fn=None, name=None):
     >>>     return x * 2
     >>> dist_fn(norm(0, 1), double)
     <Distribution> double(norm(mean=0.5, sd=0.3))
+    """
+    # A unary function (or functions) was passed in
+    # The function is applied to each sample
+    ...
+
+
+@overload
+def dist_fn(
+    dist1: OperableDistribution,
+    dist2: OperableDistribution,
+    fn: Union[UFunction, list[UFunction]],
+    name: Optional[str] = None,
+) -> ComplexDistribution:
+    """
+    Apply a binary function to a pair of distributions.
+
+    The function won't be applied until the returned distribution is sampled.
+
+    Parameters
+    ----------
+    dist1 : Distribution
+        The first distribution to apply the function to.
+    dist2 : Distribution
+        The second distribution to apply the function to.
+    fn : function or list of functions
+        The function(s) to apply to the distributions. Must take two arguments and
+        return a single value.
+    name : str or None
+        By default, ``fn.__name__`` will be used to name the function. But you can pass
+        a custom name.
+
+    Returns
+    -------
+    ComplexDistribution
+        This distribution performs a lazy evaluation of the desired function that
+        will be calculated when it is sampled.
+
+    Examples
+    --------
+    >>> def add(x, y):
+    >>>     return x + y
+    >>> dist_fn(norm(0, 1), norm(1, 2), add)
+    <Distribution> add(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
+    """
+    # A binary function (or function) passed was passed in
+    # The function is applied to pairs of samples, and returns the combined sample
+    ...
+
+
+@overload
+def dist_fn(
+    fn: Union[UFunction, list[UFunction]],
+    name: Optional[str] = None,
+) -> Callable[[OperableDistribution], ComplexDistribution]:
+    """
+    Lazily applies the given function to the previous distribution in a pipe. (Or, equivalently,
+    produces a partial of the function with the previous distribution as the first argument.)
+
+    Parameters
+    ----------
+    fn : function or list of functions
+        The function(s) to apply to the distributions. Each must take one argument and
+        return a single value.
+    name : str or None
+        By default, ``fn.__name__`` will be used to name the function. But you can pass
+        a custom name.
+
+    Returns
+    -------
+    function
+        A function that takes a distribution and returns a distribution. The returned distribution
+        performs a lazy evaluation of the desired function whenever it is sampled.
+
+    Examples
+    --------
+    >>> def double(x):
+    >>>     return x * 2
     >>> norm(0, 1) >> dist_fn(double)
     <Distribution> double(norm(mean=0.5, sd=0.3))
     """
-    if isinstance(dist1, list) and callable(dist1[0]) and dist2 is None and fn is None:
-        fn = dist1
-
-        def out_fn(d):
-            out = d
-            for f in fn:
-                out = ComplexDistribution(out, None, fn=f, fn_str=_get_fname(f, name), infix=False)
-            return out
-
-        return out_fn
-
-    if callable(dist1) and dist2 is None and fn is None:
-        return lambda d: dist_fn(d, fn=dist1)
-
-    if isinstance(dist2, list) and callable(dist2[0]) and fn is None:
-        fn = dist2
-        dist2 = None
-
-    if callable(dist2) and fn is None:
-        fn = dist2
-        dist2 = None
-
-    if not isinstance(fn, list):
-        fn = [fn]
-
-    out = dist1
-    for f in fn:
-        out = ComplexDistribution(out, dist2, fn=f, fn_str=_get_fname(f, name), infix=False)
-
-    return out
+    # Unary case of the pipe version
+    ...
 
 
-def dist_max(dist1, dist2=None):
+@overload
+def dist_fn(
+    dist: OperableDistribution,
+    fn: Union[UFunction, list[UFunction]],
+    name: Optional[str] = None,
+) -> Callable[[OperableDistribution], ComplexDistribution]:
+    """
+    Lazily applies the given binary function to the previous distribution in a pipe, with the given
+    distribution as the second argument. (Or, equivalently, produces a partial of the function with
+    the previous distribution passed as the second argument.)
+
+    Parameters
+    ----------
+    dist : Distribution
+        The distribution to apply the function to.
+    fn : function or list of functions
+        The function(s) to apply to the distributions. Each must take two arguments and
+        return a single value.
+    name : str or None
+        By default, ``fn.__name__`` will be used to name the function. But you can pass
+        a custom name.
+
+    Returns
+    -------
+    function
+        A function that takes a distribution and returns a distribution. The returned distribution
+        performs a lazy evaluation of the desired function whenever it is sampled.
+
+    Examples
+    --------
+    >>> def add(x, y):
+    >>>     return x + y
+    >>> norm(0, 1) >> dist_fn(norm(1, 2), add)
+    <Distribution> add(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))
+    """
+    # Binary case of the pipe version
+    ...
+
+
+def dist_fn(
+    *args,
+    **kwargs,
+) -> Union[ComplexDistribution, Callable[[OperableDistribution], ComplexDistribution]]:
+    """
+    This is the dispatcher for the `dist_fn` function. It handles the different cases
+    of the function, which are then passed to the `_dist_fn` function to actually
+    create the respective distribution or partial function.
+
+    This handles both unary and binary functions, as well as the pipe versions of each.
+    The pipe version simply creates a partial of the inner `_dist_fn` function, and returns
+    that partial.
+    """
+    # Get the arguments
+    p1: Union[OperableDistribution, Union[UFunction, list[UFunction]]] = (
+        args[0] if len(args) > 0 else kwargs.get("dist1", None)
+    )
+    p2: Optional[Union[OperableDistribution, Union[UFunction, list[UFunction]]]] = (
+        args[1] if len(args) > 1 else kwargs.get("dist2", None)
+    )
+    p3: Union[UFunction, list[UFunction]] = args[2] if len(args) > 2 else kwargs.get("fn", None)
+    name: str = kwargs.get("name", None)
+
+    # Dispatch to the proper form of the function
+    if (
+        (isinstance(p1, OperableDistribution))
+        and (not isinstance(p2, OperableDistribution) and p2 is not None)
+        and (p3 is None)
+    ):
+        # Simple case, unary function
+        p2 = p2 if isinstance(p2, list) else [p2]
+        return _dist_fn(dist1=p1, fn_list=p2, name=name)
+    elif (
+        isinstance(p1, OperableDistribution)
+        and isinstance(p2, OperableDistribution)
+        and (p3 is not None)
+    ):
+        # Simple case, binary function
+        p3 = p3 if isinstance(p3, list) else [p3]
+        return _dist_fn(dist1=p1, dist2=p2, fn_list=p3, name=name)
+    elif p1 is not None and not isinstance(p1, OperableDistribution) and p2 is None and p3 is None:
+        # Pipe case, unary function
+        p1 = p1 if isinstance(p1, list) else [p1]
+        return lambda d: _dist_fn(dist1=d, fn_list=p1, name=name)
+    elif (
+        p1 is not None
+        and not isinstance(p1, OperableDistribution)
+        and isinstance(p2, OperableDistribution)
+        and p3 is None
+    ):
+        p1 = p1 if isinstance(p1, list) else [p1]
+        # Pipe case, binary function
+        return lambda d: _dist_fn(dist1=d, dist2=p2, fn_list=p1, name=name)
+    else:
+        raise ValueError("Invalid arguments to dist_fn")
+
+
+def _dist_fn(
+    dist1: Optional[OperableDistribution] = None,
+    dist2: Optional[OperableDistribution] = None,
+    fn_list: Optional[list[UFunction]] = None,
+    name: Optional[str] = None,
+) -> ComplexDistribution:
+    """
+    This is the actual function that creates the complex distribution
+    whenever `dist_fn` is used. It handles the simple one function case,
+    as well as the case where multiple functions are being composed together.
+    """
+    assert dist1 is not None and fn_list is not None
+    assert all(callable(f) for f in fn_list), "All functions provided must be callable"
+    assert len(fn_list) > 0, "Must provide at least one function to compose"
+
+    if len(fn_list) == 1:
+        return ComplexDistribution(
+            dist1, dist2, fn=fn_list[0], fn_str=_get_fname(fn_list[0], name), infix=False
+        )
+    else:
+        assert (
+            dist2 is None
+        ), "Cannot provide a second distribution when composing multiple functions"
+
+        out = ComplexDistribution(
+            dist1, None, fn=fn_list[0], fn_str=_get_fname(fn_list[0], name), infix=False
+        )
+        for f in fn_list[1:]:
+            out = ComplexDistribution(out, None, fn=f, fn_str=_get_fname(f, name), infix=False)
+
+        return out
+
+
+# def _dist_fn(
+#     dist1: Union[OperableDistribution, Callable, list[Callable]],
+#     dist2: Optional[Union[OperableDistribution, Callable, list[Callable]]] = None,
+#     fn: Optional[UFunction] = None,
+#     name: Optional[str] = None,
+# ) -> Union[ComplexDistribution, Callable]:
+#     """
+#     Initialize a distribution that has a custom function applied to the result.
+
+#     The function won't be applied until the distribution is sampled.
+
+#     Parameters
+#     ----------
+#     dist1 : Distribution or function or list
+#         Typically, the distribution to apply the function to. Could also be a function
+#         or list of functions if ``dist_fn`` is being used in a pipe.
+#     dist2 : Distribution or function or list or None
+#         Typically, the second distribution to apply the function to if the function takes
+#         two arguments. Could also be a function or list of functions if ``dist_fn`` is
+#         being used in a pipe.
+#     fn : function or None
+#         The function to apply to the distribution(s).
+#     name : str or None
+#         By default, ``fn.__name__`` will be used to name the function. But you can pass
+#         a custom name.
+
+#     Returns
+#     -------
+#     ComplexDistribution or function
+#         This will be a lazy evaluation of the desired function that will then be calculated
+#         when it is sampled.
+
+#     Examples
+#     --------
+#     >>> def double(x):
+#     >>>     return x * 2
+#     >>> dist_fn(norm(0, 1), double)
+#     <Distribution> double(norm(mean=0.5, sd=0.3))
+#     >>> norm(0, 1) >> dist_fn(double)
+#     <Distribution> double(norm(mean=0.5, sd=0.3))
+#     """
+
+#     p1 = dist1 if isinstance(dist1, list) else [dist1]
+#     assert (p1 is None) or all(callable(f) for f in p1)
+#     p2 = dist2 if isinstance(dist2, list) else [dist2]
+#     assert (p2 is None) or all(callable(f) for f in p2)
+#     p3 = fn if isinstance(fn, list) else [fn]
+#     assert (p3 is None) or all(callable(f) for f in p3)
+
+
+#     if (p1 is not None and p2 is None and p3 is None) and (not ):
+#         # This is a simple pipe,
+#         # we compose the functions and return a partial of the composition
+
+#         def out_fn(d):
+#             out = d
+#             for fn in p1:
+#                 out = ComplexDistribution(
+#                     out, None, fn=fn, fn_str=_get_fname(fn, name), infix=False
+#                 )
+#             return out
+
+#         return out_fn
+
+
+#     if callable(dist1) and dist2 is None and fn is None:
+#         return lambda d: dist_fn(d, fn=dist1)
+
+#     # These are cases where we're just applying function(s) to a distribution
+#     if isinstance(dist2, list) and callable(dist2[0]) and fn is None:
+#         # The user provided the functions through dist2
+#         assert all(callable(f) for f in dist2)
+#         fn_list = dist2
+
+#     if callable(dist2) and fn is None:
+#         fn_list = [dist2]
+
+#     if fn is not None and callable(fn):
+#         fn_list = [fn]
+
+#     out = dist1
+#     for f in fn_list:
+#         out = ComplexDistribution(out, dist2, fn=f, fn_str=_get_fname(f, name), infix=False)
+
+#     return out
+
+
+def dist_max(
+    dist1: OperableDistribution, dist2: Optional[OperableDistribution] = None
+) -> Union[Callable, ComplexDistribution]:
     """
     Initialize the calculation of the maximum value of two distributions.
 
@@ -277,11 +587,16 @@ def dist_max(dist1, dist2=None):
     """
     if is_dist(dist1) and dist2 is None:
         return lambda d: dist_fn(d, dist1, np.maximum, name="max")
-    else:
+    elif dist2 is not None:
         return dist_fn(dist1, dist2, np.maximum, name="max")
+    else:
+        raise ValueError("Invalid arguments to dist_max")
 
 
-def dist_min(dist1, dist2=None):
+def dist_min(
+    dist1: OperableDistribution,
+    dist2: Optional[OperableDistribution] = None,
+) -> Union[Callable, ComplexDistribution]:
     """
     Initialize the calculation of the minimum value of two distributions.
 
@@ -306,11 +621,15 @@ def dist_min(dist1, dist2=None):
     """
     if is_dist(dist1) and dist2 is None:
         return lambda d: dist_fn(d, dist1, np.minimum, name="min")
-    else:
+    elif dist2 is not None:
         return dist_fn(dist1, dist2, np.minimum, name="min")
+    else:
+        raise ValueError("Invalid arguments to dist_min")
 
 
-def dist_round(dist1, digits=0):
+def dist_round(
+    dist: OperableDistribution, digits: int = 0
+) -> Union[Callable, ComplexDistribution]:
     """
     Initialize the rounding of the output of the distribution.
 
@@ -333,13 +652,15 @@ def dist_round(dist1, digits=0):
     >>> dist_round(norm(0, 1))
     <Distribution> round(norm(mean=0.5, sd=0.3), 0)
     """
-    if isinstance(dist1, int) and digits == 0:
-        return lambda d: dist_round(d, digits=dist1)
+    if isinstance(dist, int) and digits == 0:
+        return lambda d: dist_round(d, digits=dist)
     else:
-        return dist_fn(dist1, digits, _round, name="round")
+        return dist_fn(dist, partial(_round, digits=digits), name="round")
 
 
-def dist_ceil(dist1):
+def dist_ceil(
+    dist1: OperableDistribution,
+) -> Union[ComplexDistribution, Callable]:
     """
     Initialize the ceiling rounding of the output of the distribution.
 
@@ -352,7 +673,7 @@ def dist_ceil(dist1):
 
     Returns
     -------
-    ComplexDistribution or function
+    ComplexDistribution
         This will be a lazy evaluation of the desired function that will then be calculated
 
     Examples
@@ -360,10 +681,10 @@ def dist_ceil(dist1):
     >>> dist_ceil(norm(0, 1))
     <Distribution> ceil(norm(mean=0.5, sd=0.3))
     """
-    return dist_fn(dist1, None, np.ceil)
+    return dist_fn(dist1, np.ceil)
 
 
-def dist_floor(dist1):
+def dist_floor(dist1: OperableDistribution):
     """
     Initialize the floor rounding of the output of the distribution.
 
@@ -376,7 +697,7 @@ def dist_floor(dist1):
 
     Returns
     -------
-    ComplexDistribution or function
+    ComplexDistribution
         This will be a lazy evaluation of the desired function that will then be calculated
 
     Examples
@@ -384,10 +705,12 @@ def dist_floor(dist1):
     >>> dist_floor(norm(0, 1))
     <Distribution> floor(norm(mean=0.5, sd=0.3))
     """
-    return dist_fn(dist1, None, np.floor)
+    return dist_fn(dist1, np.floor)
 
 
-def dist_log(dist1, base=math.e):
+def dist_log(
+    dist1: OperableDistribution, base: Number = math.e
+) -> Union[ComplexDistribution, Callable]:
     """
     Initialize the log of the output of the distribution.
 
@@ -411,7 +734,7 @@ def dist_log(dist1, base=math.e):
     return dist_fn(dist1, const(base), math.log)
 
 
-def dist_exp(dist1):
+def dist_exp(dist1: OperableDistribution):
     """
     Initialize the exp of the output of the distribution.
 
@@ -424,7 +747,7 @@ def dist_exp(dist1):
 
     Returns
     -------
-    ComplexDistribution or function
+    ComplexDistribution
         This will be a lazy evaluation of the desired function that will then be calculated
 
     Examples
@@ -432,18 +755,21 @@ def dist_exp(dist1):
     >>> dist_exp(norm(0, 1))
     <Distribution> exp(norm(mean=0.5, sd=0.3))
     """
-    return dist_fn(dist1, None, math.exp)
+    return dist_fn(dist1, math.exp)
 
 
 @np.vectorize
-def _lclip(n, val=None):
+def _lclip(n: Number, val: Number) -> Number:
     if val is None:
         return n
     else:
         return val if n < val else n
 
 
-def lclip(dist1, val=None):
+def lclip(
+    dist1: Union[OperableDistribution, Callable],
+    val: Optional[Number] = None,
+) -> Union[ComplexDistribution, Callable]:
     """
     Initialize the clipping/bounding of the output of the distribution by the lower value.
 
@@ -469,21 +795,24 @@ def lclip(dist1, val=None):
     """
     if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
         return lambda d: lclip(d, dist1)
-    elif is_dist(dist1):
-        return dist_fn(dist1, val, _lclip, name="lclip")
+    elif isinstance(dist1, OperableDistribution):
+        return dist_fn(dist1, partial(_lclip, val), name="lclip")
     else:
         return _lclip(dist1, val)
 
 
 @np.vectorize
-def _rclip(n, val=None):
+def _rclip(n: Number, val: Number) -> Number:
     if val is None:
         return n
     else:
         return val if n > val else n
 
 
-def rclip(dist1, val=None):
+def rclip(
+    dist1: Union[OperableDistribution, Callable],
+    val: Optional[Number] = None,
+) -> Union[ComplexDistribution, Callable]:
     """
     Initialize the clipping/bounding of the output of the distribution by the upper value.
 
@@ -509,13 +838,17 @@ def rclip(dist1, val=None):
     """
     if (isinstance(dist1, int) or isinstance(dist1, float)) and val is None:
         return lambda d: rclip(d, dist1)
-    elif is_dist(dist1):
-        return dist_fn(dist1, val, _rclip, name="rclip")
+    elif isinstance(dist1, OperableDistribution):
+        return dist_fn(dist1, partial(_rclip, val), name="rclip")
     else:
         return _rclip(dist1, val)
 
 
-def clip(dist1, left, right=None):
+def clip(
+    dist1: Union[OperableDistribution, Callable],
+    left: Optional[Number],
+    right: Optional[Number] = None,
+) -> Union[ComplexDistribution, Callable]:
     """
     Initialize the clipping/bounding of the output of the distribution.
 
@@ -552,15 +885,15 @@ def clip(dist1, left, right=None):
 
 
 class ConstantDistribution(OperableDistribution):
-    def __init__(self, x):
+    def __init__(self, x: Any) -> None:
         super().__init__()
         self.x = x
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> const({})".format(self.x)
 
 
-def const(x):
+def const(x: Any) -> ConstantDistribution:
     """
     Initialize a constant distribution.
 
@@ -584,16 +917,16 @@ def const(x):
 
 
 class UniformDistribution(OperableDistribution):
-    def __init__(self, x, y):
+    def __init__(self, x: Number, y: Number) -> None:
         super().__init__()
         self.x = x
         self.y = y
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> uniform({}, {})".format(self.x, self.y)
 
 
-def uniform(x, y):
+def uniform(x: Number, y: Number) -> UniformDistribution:
     """
     Initialize a uniform random distribution.
 
@@ -616,7 +949,6 @@ def uniform(x, y):
     return UniformDistribution(x=x, y=y)
 
 
-
 class NormalDistribution(OperableDistribution):
     def __init__(
         self,
@@ -627,7 +959,7 @@ class NormalDistribution(OperableDistribution):
         credibility: Number = 90,
         lclip: Optional[Number] = None,
         rclip: Optional[Number] = None,
-    ):
+    ) -> None:
         super().__init__()
         self.credibility = credibility
         self.lclip = lclip
@@ -645,8 +977,8 @@ class NormalDistribution(OperableDistribution):
                 raise ValueError("`high value` (y) cannot be lower than `low value` (x)")
             self.x, self.y = x, y
             self.mean = (self.x + self.y) / 2
-            cdf_value: float | np.float64 = 0.5 + 0.5 * (self.credibility / 100)
-            normed_sigma: np.float64 = stats.norm.ppf(cdf_value) # type: ignore
+            cdf_value: Float = 0.5 + 0.5 * (self.credibility / 100)
+            normed_sigma: np.float64 = stats.norm.ppf(cdf_value)  # type: ignore
             assert self.mean is not None
             self.sd = (self.y - self.mean) / normed_sigma
         elif sd is not None and x is None and y is None:
@@ -657,7 +989,7 @@ class NormalDistribution(OperableDistribution):
         else:
             raise ValueError("you must define either x/y or mean/sd")
 
-    def __str__(self):
+    def __str__(self) -> str:
         assert self.mean is not None and self.sd is not None
         out = "<Distribution> norm(mean={}, sd={}".format(round(self.mean, 2), round(self.sd, 2))
         if self.lclip is not None:
@@ -668,7 +1000,15 @@ class NormalDistribution(OperableDistribution):
         return out
 
 
-def norm(x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=None):
+def norm(
+    x: Optional[Number] = None,
+    y: Optional[Number] = None,
+    credibility: Integer = 90,
+    mean: Optional[Number] = None,
+    sd: Optional[Number] = None,
+    lclip: Optional[Number] = None,
+    rclip: Optional[Number] = None,
+) -> NormalDistribution:
     """
     Initialize a normal distribution.
 
@@ -712,20 +1052,20 @@ def norm(x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=N
 class LognormalDistribution(OperableDistribution):
     def __init__(
         self,
-        x: Optional[Number]=None,
-        y: Optional[Number]=None,
-        norm_mean: Optional[Number]=None,
-        norm_sd: Optional[Number]=None,
-        lognorm_mean: Optional[Number]=None,
-        lognorm_sd: Optional[Number]=None,
-        credibility: int=90,
-        lclip: Optional[Number]=None,
-        rclip: Optional[Number]=None,
-    ):
+        x: Optional[Number] = None,
+        y: Optional[Number] = None,
+        norm_mean: Optional[Number] = None,
+        norm_sd: Optional[Number] = None,
+        lognorm_mean: Optional[Number] = None,
+        lognorm_sd: Optional[Number] = None,
+        credibility: Integer = 90,
+        lclip: Optional[Number] = None,
+        rclip: Optional[Number] = None,
+    ) -> None:
         super().__init__()
         self.x: Optional[Number] = x
         self.y: Optional[Number] = y
-        self.credibility: int = credibility
+        self.credibility: Integer = credibility
         self.norm_mean: Optional[Number] = norm_mean
         self.norm_sd: Optional[Number] = norm_sd
         self.lognorm_mean: Optional[Number] = lognorm_mean
@@ -778,7 +1118,7 @@ class LognormalDistribution(OperableDistribution):
             )
             self.norm_sd = np.sqrt(np.log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
 
-    def __str__(self):
+    def __str__(self) -> str:
         assert self.lognorm_mean is not None and self.lognorm_sd is not None
         assert self.norm_mean is not None and self.norm_sd is not None
         out = "<Distribution> lognorm(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
@@ -797,16 +1137,16 @@ class LognormalDistribution(OperableDistribution):
 
 
 def lognorm(
-    x=None,
-    y=None,
-    credibility=90,
-    norm_mean=None,
-    norm_sd=None,
-    lognorm_mean=None,
-    lognorm_sd=None,
-    lclip=None,
-    rclip=None,
-):
+    x: Optional[Number] = None,
+    y: Optional[Number] = None,
+    credibility: Integer = 90,
+    norm_mean: Optional[Number] = None,
+    norm_sd: Optional[Number] = None,
+    lognorm_mean: Optional[Number] = None,
+    lognorm_sd: Optional[Number] = None,
+    lclip: Optional[Number] = None,
+    rclip: Optional[Number] = None,
+) -> LognormalDistribution:
     """
     Initialize a lognormal distribution.
 
@@ -863,7 +1203,13 @@ def lognorm(
     )
 
 
-def to(x, y, credibility=90, lclip=None, rclip=None):
+def to(
+    x: Number,
+    y: Number,
+    credibility: Integer = 90,
+    lclip: Optional[Number] = None,
+    rclip: Optional[Number] = None,
+) -> Union[LognormalDistribution, NormalDistribution]:
     """
     Initialize a distribution from ``x`` to ``y``.
 
@@ -904,18 +1250,18 @@ def to(x, y, credibility=90, lclip=None, rclip=None):
 
 
 class BinomialDistribution(OperableDistribution):
-    def __init__(self, n, p):
+    def __init__(self, n: int, p: Number) -> None:
         super().__init__()
         self.n = n
         self.p = p
         if self.p < 0 or self.p > 1:
             raise ValueError("p must be between 0 and 1")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> binomial(n={}, p={})".format(self.n, self.p)
 
 
-def binomial(n, p):
+def binomial(n: int, p: Number) -> BinomialDistribution:
     """
     Initialize a binomial distribution.
 
@@ -939,16 +1285,16 @@ def binomial(n, p):
 
 
 class BetaDistribution(OperableDistribution):
-    def __init__(self, a: Number, b: Number):
+    def __init__(self, a: Number, b: Number) -> None:
         super().__init__()
         self.a = a
         self.b = b
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> beta(a={}, b={})".format(self.a, self.b)
 
 
-def beta(a, b):
+def beta(a: Number, b: Number) -> BetaDistribution:
     """
     Initialize a beta distribution.
 
@@ -974,7 +1320,7 @@ def beta(a, b):
 
 
 class BernoulliDistribution(OperableDistribution):
-    def __init__(self, p):
+    def __init__(self, p: Number) -> None:
         super().__init__()
         if not isinstance(p, float) or isinstance(p, int):
             raise ValueError("bernoulli p must be a float or int")
@@ -982,11 +1328,11 @@ class BernoulliDistribution(OperableDistribution):
             raise ValueError("bernoulli p must be 0-1")
         self.p = p
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> bernoulli(p={})".format(self.p)
 
 
-def bernoulli(p):
+def bernoulli(p: Number) -> BernoulliDistribution:
     """
     Initialize a Bernoulli distribution.
 
@@ -1008,17 +1354,17 @@ def bernoulli(p):
 
 
 class DiscreteDistribution(OperableDistribution):
-    def __init__(self, items):
+    def __init__(self, items: Any) -> None:
         super().__init__()
         if not isinstance(items, dict) and not isinstance(items, list) and not _is_numpy(items):
             raise ValueError("inputs to discrete must be a dict or list")
         self.items = list(items) if _is_numpy(items) else items
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> discrete({})".format(self.items)
 
 
-def discrete(items):
+def discrete(items: Union[dict[Any, Number], list[list[Number]]]) -> DiscreteDistribution:
     """
     Initialize a discrete distribution (aka categorical distribution).
 
@@ -1047,7 +1393,15 @@ def discrete(items):
 
 
 class TDistribution(OperableDistribution):
-    def __init__(self, x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
+    def __init__(
+        self,
+        x: Optional[Number] = None,
+        y: Optional[Number] = None,
+        t: Integer = 20,
+        credibility: Integer = 90,
+        lclip: Optional[Number] = None,
+        rclip: Optional[Number] = None,
+    ) -> None:
         super().__init__()
         self.x = x
         self.y = y
@@ -1065,7 +1419,7 @@ class TDistribution(OperableDistribution):
         if self.x is None:
             self.credibility = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.x is not None:
             out = "<Distribution> tdist(x={}, y={}, t={}".format(self.x, self.y, self.t)
         else:
@@ -1080,7 +1434,14 @@ class TDistribution(OperableDistribution):
         return out
 
 
-def tdist(x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
+def tdist(
+    x: Optional[Number] = None,
+    y: Optional[Number] = None,
+    t: Integer = 20,
+    credibility: Integer = 90,
+    lclip: Optional[Number] = None,
+    rclip: Optional[Number] = None,
+) -> TDistribution:
     """
     Initialize a t-distribution.
 
@@ -1097,7 +1458,7 @@ def tdist(x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
         The low value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     y : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
-    t : float
+    t : integer
         The number of degrees of freedom of the t-distribution. Defaults to 20.
     credibility : float
         The range of the credibility interval. Defaults to 90.
@@ -1121,7 +1482,15 @@ def tdist(x=None, y=None, t=20, credibility=90, lclip=None, rclip=None):
 
 
 class LogTDistribution(OperableDistribution):
-    def __init__(self, x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
+    def __init__(
+        self,
+        x: Optional[Integer] = None,
+        y: Optional[Integer] = None,
+        t: int = 1,
+        credibility: int = 90,
+        lclip: Optional[Integer] = None,
+        rclip: Optional[Integer] = None,
+    ) -> None:
         super().__init__()
         self.x = x
         self.y = y
@@ -1139,7 +1508,7 @@ class LogTDistribution(OperableDistribution):
         if self.x is None:
             self.credibility = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.x is not None:
             out = "<Distribution> log_tdist(x={}, y={}, t={}".format(self.x, self.y, self.t)
         else:
@@ -1154,7 +1523,14 @@ class LogTDistribution(OperableDistribution):
         return out
 
 
-def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
+def log_tdist(
+    x: Optional[Integer] = None,
+    y: Optional[Integer] = None,
+    t: int = 1,
+    credibility: int = 90,
+    lclip: Optional[Integer] = None,
+    rclip: Optional[Integer] = None,
+) -> LogTDistribution:
     """
     Initialize a log t-distribution, which is a t-distribution in log-space.
 
@@ -1195,7 +1571,14 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
 
 
 class TriangularDistribution(OperableDistribution):
-    def __init__(self, left, mode, right, lclip=None, rclip=None):
+    def __init__(
+        self,
+        left: int,
+        mode: int,
+        right: int,
+        lclip: Optional[Integer] = None,
+        rclip: Optional[Integer] = None,
+    ) -> None:
         super().__init__()
         self.left = left
         self.mode = mode
@@ -1203,7 +1586,7 @@ class TriangularDistribution(OperableDistribution):
         self.lclip = lclip
         self.rclip = rclip
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = "<Distribution> triangular({}, {}, {}".format(self.left, self.mode, self.right)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
@@ -1213,7 +1596,13 @@ class TriangularDistribution(OperableDistribution):
         return out
 
 
-def triangular(left, mode, right, lclip=None, rclip=None):
+def triangular(
+    left: int,
+    mode: int,
+    right: int,
+    lclip: Optional[Integer] = None,
+    rclip: Optional[Integer] = None,
+) -> TriangularDistribution:
     """
     Initialize a triangular distribution.
 
@@ -1243,13 +1632,15 @@ def triangular(left, mode, right, lclip=None, rclip=None):
 
 
 class PoissonDistribution(OperableDistribution):
-    def __init__(self, lam, lclip=None, rclip=None):
+    def __init__(
+        self, lam: Number, lclip: Optional[Integer] = None, rclip: Optional[Integer] = None
+    ) -> None:
         super().__init__()
         self.lam = lam
         self.lclip = lclip
         self.rclip = rclip
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = "<Distribution> poisson({}".format(self.lam)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
@@ -1259,7 +1650,9 @@ class PoissonDistribution(OperableDistribution):
         return out
 
 
-def poisson(lam, lclip=None, rclip=None):
+def poisson(
+    lam: Number, lclip: Optional[Integer] = None, rclip: Optional[Integer] = None
+) -> PoissonDistribution:
     """
     Initialize a poisson distribution.
 
@@ -1285,17 +1678,17 @@ def poisson(lam, lclip=None, rclip=None):
 
 
 class ChiSquareDistribution(OperableDistribution):
-    def __init__(self, df):
+    def __init__(self, df: int) -> None:
         super().__init__()
         self.df = df
         if self.df <= 0:
             raise ValueError("df must be positive")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> chisquare({})".format(self.df)
 
 
-def chisquare(df):
+def chisquare(df: int) -> ChiSquareDistribution:
     """
     Initialize a chi-square distribution.
 
@@ -1317,13 +1710,15 @@ def chisquare(df):
 
 
 class ExponentialDistribution(OperableDistribution):
-    def __init__(self, scale, lclip=None, rclip=None):
+    def __init__(
+        self, scale: int, lclip: Optional[Integer] = None, rclip: Optional[Integer] = None
+    ) -> None:
         super().__init__()
         self.scale = scale
         self.lclip = lclip
         self.rclip = rclip
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = "<Distribution> exponential({}".format(self.scale)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
@@ -1333,7 +1728,9 @@ class ExponentialDistribution(OperableDistribution):
         return out
 
 
-def exponential(scale, lclip=None, rclip=None):
+def exponential(
+    scale: int, lclip: Optional[Integer] = None, rclip: Optional[Integer] = None
+) -> ExponentialDistribution:
     """
     Initialize an exponential distribution.
 
@@ -1359,14 +1756,20 @@ def exponential(scale, lclip=None, rclip=None):
 
 
 class GammaDistribution(OperableDistribution):
-    def __init__(self, shape, scale=1, lclip=None, rclip=None):
+    def __init__(
+        self,
+        shape: int,
+        scale: int = 1,
+        lclip: Optional[Integer] = None,
+        rclip: Optional[Integer] = None,
+    ) -> None:
         super().__init__()
         self.shape = shape
         self.scale = scale
         self.lclip = lclip
         self.rclip = rclip
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = "<Distribution> gamma(shape={}, scale={}".format(self.shape, self.scale)
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
@@ -1376,7 +1779,9 @@ class GammaDistribution(OperableDistribution):
         return out
 
 
-def gamma(shape, scale=1, lclip=None, rclip=None):
+def gamma(
+    shape: int, scale: int = 1, lclip: Optional[Integer] = None, rclip: Optional[Integer] = None
+) -> GammaDistribution:
     """
     Initialize a gamma distribution.
 
@@ -1404,15 +1809,15 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
 
 
 class ParetoDistribution(OperableDistribution):
-    def __init__(self, shape):
+    def __init__(self, shape: int) -> None:
         super().__init__()
         self.shape = shape
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<Distribution> pareto({})".format(self.shape)
 
 
-def pareto(shape):
+def pareto(shape: int) -> ParetoDistribution:
     """
     Initialize a pareto distribution.
 
@@ -1434,7 +1839,14 @@ def pareto(shape):
 
 
 class MixtureDistribution(OperableDistribution):
-    def __init__(self, dists, weights=None, relative_weights=None, lclip=None, rclip=None):
+    def __init__(
+        self,
+        dists: Any,
+        weights: Optional[Weights] = None,
+        relative_weights: Optional[Weights] = None,
+        lclip: Optional[Number] = None,
+        rclip: Optional[Number] = None,
+    ) -> None:
         super().__init__()
         weights, dists = _process_weights_values(weights, relative_weights, dists)
         self.dists = dists
@@ -1442,14 +1854,21 @@ class MixtureDistribution(OperableDistribution):
         self.lclip = lclip
         self.rclip = rclip
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = "<Distribution> mixture"
+        assert self.weights is not None
         for i in range(len(self.dists)):
             out += "\n - {} weight on {}".format(self.weights[i], self.dists[i])
         return out
 
 
-def mixture(dists, weights=None, relative_weights=None, lclip=None, rclip=None):
+def mixture(
+    dists: Any,
+    weights: Optional[Weights] = None,
+    relative_weights: Optional[Weights] = None,
+    lclip: Optional[Integer] = None,
+    rclip: Optional[Integer] = None,
+) -> MixtureDistribution:
     """
     Initialize a mixture distribution, which is a combination of different distributions.
 
@@ -1496,7 +1915,7 @@ def mixture(dists, weights=None, relative_weights=None, lclip=None, rclip=None):
     )
 
 
-def zero_inflated(p_zero, dist):
+def zero_inflated(p_zero: float, dist: NormalDistribution) -> MixtureDistribution:
     """
     Initialize an arbitrary zero-inflated distribution.
 
@@ -1520,10 +1939,10 @@ def zero_inflated(p_zero, dist):
     """
     if p_zero > 1 or p_zero < 0 or not isinstance(p_zero, float):
         raise ValueError("`p_zero` must be between 0 and 1")
-    return MixtureDistribution(dists=[0, dist], weights=p_zero)
+    return MixtureDistribution(dists=[0, dist], weights=[p_zero])
 
 
-def inf0(p_zero, dist):
+def inf0(p_zero: float, dist: NormalDistribution) -> MixtureDistribution:
     """
     Initialize an arbitrary zero-inflated distribution.
 

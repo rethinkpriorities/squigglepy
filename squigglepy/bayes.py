@@ -20,7 +20,7 @@ from .distributions import (
     beta,
     mixture,
 )
-from .utils import OptionalListOfFloats, _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
+from .utils import Weights, _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
 _squigglepy_internal_bayesnet_caches = {}
@@ -384,8 +384,8 @@ def update(
 def average(
     prior: BaseDistribution,
     evidence: BaseDistribution,
-    weights: OptionalListOfFloats = [0.5, 0.5],
-    relative_weights: OptionalListOfFloats = None,
+    weights: Optional[Weights] = [0.5, 0.5],
+    relative_weights: Optional[Weights] = None,
 ) -> MixtureDistribution:
     """
     Average two distributions.

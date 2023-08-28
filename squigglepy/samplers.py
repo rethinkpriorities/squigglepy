@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Optional
 
 import numpy as np
 import pathos.multiprocessing as mp
@@ -7,6 +8,8 @@ import pathos.multiprocessing as mp
 from scipy import stats
 
 from .utils import (
+    Integer,
+    Number,
     _process_weights_values,
     _process_discrete_weights_values,
     is_dist,
@@ -21,6 +24,7 @@ from .utils import (
 )
 
 from .distributions import (
+    BaseDistribution,
     BernoulliDistribution,
     BetaDistribution,
     BinomialDistribution,
@@ -107,7 +111,7 @@ def lognormal_sample(mean, sd, samples=1):
     return _simplify(_get_rng().lognormal(mean, sd, samples))
 
 
-def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
+def t_sample(low=None, high=None, t: Integer = 20, samples=1, credibility=90):
     """
     Sample a random number according to a t-distribution.
 
@@ -124,7 +128,7 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         The low value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     high : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
-    t : float
+    t : integer
         The number of degrees of freedom of the t-distribution. Defaults to 20.
     samples : int
         The number of samples to return.
@@ -692,7 +696,7 @@ def mixture_sample(
 
 
 def sample(
-    dist=None,
+    dist: Optional[BaseDistribution | Number | str | bool] = None,
     n=1,
     lclip=None,
     rclip=None,

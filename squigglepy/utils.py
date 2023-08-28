@@ -7,18 +7,18 @@ from tqdm import tqdm
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
-from typing import Union
+from typing import Optional, Union, overload
 from numpy.typing import NDArray
 
 import importlib
 import importlib.util
 import sys
 
-
-Number = Union[int, float, np.floating, np.integer]
-OptionalListOfFloats = Union[
-    list[Union[Union[float, np.floating]]], NDArray[np.floating], float, None
-]
+Float = Union[float, np.floating]
+Integer = Union[int, np.integer]
+Number = Union[Float, Integer]
+FloatArray = Union[list[Float], NDArray[np.floating]]
+Weights = Union[list[Float], NDArray[np.floating], np.floating, float]
 
 
 def _check_pandas_series(values):
@@ -30,7 +30,12 @@ def _check_pandas_series(values):
     return isinstance(values, pd.core.series.Series)
 
 
-def _process_weights_values(weights=None, relative_weights=None, values=None, drop_na=False):
+def _process_weights_values(
+    weights: Optional[Weights] = None,
+    relative_weights: Optional[Weights] = None,
+    values=None,
+    drop_na: bool = False,
+) -> tuple[list[Float], list[list]]:
     if weights is not None and relative_weights is not None:
         raise ValueError("can only pass either `weights` or `relative_weights`, not both.")
     if values is None or _safe_len(values) == 0:
@@ -41,7 +46,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
         weights = relative_weights
         relative = True
 
-    if isinstance(weights, float):
+    if isinstance(weights, float) or isinstance(weights, np.floating):
         weights = [weights]
     elif isinstance(weights, np.ndarray):
         weights = list(weights)
@@ -77,7 +82,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
 
     if any([_is_na_like(w) for w in weights]):
         raise ValueError("cannot handle NA-like values in weights")
-    sum_weights = sum(weights)
+    sum_weights = sum(weights)  # type: ignore
 
     if relative:
         weights = normalize(weights)
@@ -129,7 +134,22 @@ def _is_na_like(a):
     return a is None or np.isnan(a)
 
 
-def _round(x, digits=0):
+@overload
+def _round(x: NDArray[np.floating], digits: Optional[int] = 0) -> NDArray[np.floating]:
+    ...
+
+
+@overload
+def _round(x: NDArray[np.integer], digits: Optional[int] = 0) -> NDArray[np.integer]:
+    ...
+
+
+@overload
+def _round(x: Number, digits: Optional[int] = 0) -> Number:
+    ...
+
+
+def _round(x: Union[Number, np.ndarray], digits: Optional[int] = 0) -> Union[Number, np.ndarray]:
     if digits is None:
         return x
 
@@ -395,9 +415,9 @@ def one_in(p, digits=0, verbose=True):
 
 def get_percentiles(
     data: Union[list[np.floating], NDArray[np.floating]],
-    percentiles: list[Number] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    percentiles: list[Integer] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
     reverse: bool = False,
-    digits: int = None,
+    digits: Optional[int] = None,
 ) -> dict[str, float]:
     """
     Print the percentiles of the data.
@@ -863,7 +883,14 @@ def flip_coin(n=1):
     return flips[0] if len(flips) == 1 else flips
 
 
-def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0):
+def kelly(
+    my_price: Number,
+    market_price: Number,
+    deference: Number = 0,
+    bankroll: Number = 1,
+    resolve_date: Optional[str] = None,
+    current: Number = 0,
+):
     """
     Calculate the Kelly criterion.
 
