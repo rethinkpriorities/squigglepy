@@ -616,6 +616,7 @@ def uniform(x, y):
     return UniformDistribution(x=x, y=y)
 
 
+
 class NormalDistribution(OperableDistribution):
     def __init__(
         self,
@@ -632,10 +633,10 @@ class NormalDistribution(OperableDistribution):
         self.lclip = lclip
         self.rclip = rclip
 
-        self.x: Number
-        self.y: Number
-        self.mean: Number
-        self.sd: Number
+        self.x: Optional[Number]
+        self.y: Optional[Number]
+        self.mean: Optional[Number]
+        self.sd: Optional[Number]
 
         # Define the complementary set of parameters
         # x/y => mean/sd, mean/sd => x/y
@@ -644,8 +645,9 @@ class NormalDistribution(OperableDistribution):
                 raise ValueError("`high value` (y) cannot be lower than `low value` (x)")
             self.x, self.y = x, y
             self.mean = (self.x + self.y) / 2
-            cdf_value = 0.5 + 0.5 * (self.credibility / 100)
-            normed_sigma = stats.norm.ppf(cdf_value)
+            cdf_value: float | np.float64 = 0.5 + 0.5 * (self.credibility / 100)
+            normed_sigma: np.float64 = stats.norm.ppf(cdf_value) # type: ignore
+            assert self.mean is not None
             self.sd = (self.y - self.mean) / normed_sigma
         elif sd is not None and x is None and y is None:
             self.sd = sd
@@ -656,6 +658,7 @@ class NormalDistribution(OperableDistribution):
             raise ValueError("you must define either x/y or mean/sd")
 
     def __str__(self):
+        assert self.mean is not None and self.sd is not None
         out = "<Distribution> norm(mean={}, sd={}".format(round(self.mean, 2), round(self.sd, 2))
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
@@ -709,26 +712,26 @@ def norm(x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=N
 class LognormalDistribution(OperableDistribution):
     def __init__(
         self,
-        x=None,
-        y=None,
-        norm_mean=None,
-        norm_sd=None,
-        lognorm_mean=None,
-        lognorm_sd=None,
-        credibility=90,
-        lclip=None,
-        rclip=None,
+        x: Optional[Number]=None,
+        y: Optional[Number]=None,
+        norm_mean: Optional[Number]=None,
+        norm_sd: Optional[Number]=None,
+        lognorm_mean: Optional[Number]=None,
+        lognorm_sd: Optional[Number]=None,
+        credibility: int=90,
+        lclip: Optional[Number]=None,
+        rclip: Optional[Number]=None,
     ):
         super().__init__()
-        self.x = x
-        self.y = y
-        self.credibility = credibility
-        self.norm_mean = norm_mean
-        self.norm_sd = norm_sd
-        self.lognorm_mean = lognorm_mean
-        self.lognorm_sd = lognorm_sd
-        self.lclip = lclip
-        self.rclip = rclip
+        self.x: Optional[Number] = x
+        self.y: Optional[Number] = y
+        self.credibility: int = credibility
+        self.norm_mean: Optional[Number] = norm_mean
+        self.norm_sd: Optional[Number] = norm_sd
+        self.lognorm_mean: Optional[Number] = lognorm_mean
+        self.lognorm_sd: Optional[Number] = lognorm_sd
+        self.lclip: Optional[Number] = lclip
+        self.rclip: Optional[Number] = rclip
 
         if self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
@@ -756,24 +759,28 @@ class LognormalDistribution(OperableDistribution):
         elif self.lognorm_sd is not None and self.lognorm_mean is None:
             self.lognorm_mean = 1
 
-        if self.x is not None:
+        if self.x is not None and self.y is not None:
             self.norm_mean = (np.log(self.x) + np.log(self.y)) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = stats.norm.ppf(cdf_value)
             self.norm_sd = (np.log(self.y) - self.norm_mean) / normed_sigma
 
         if self.lognorm_sd is None:
+            assert self.norm_sd is not None and self.norm_mean is not None
             self.lognorm_mean = np.exp(self.norm_mean + self.norm_sd**2 / 2)
             self.lognorm_sd = (
                 (np.exp(self.norm_sd**2) - 1) * np.exp(2 * self.norm_mean + self.norm_sd**2)
             ) ** 0.5
         elif self.norm_sd is None:
+            assert self.lognorm_sd is not None and self.lognorm_mean is not None
             self.norm_mean = np.log(
                 (self.lognorm_mean**2 / np.sqrt(self.lognorm_sd**2 + self.lognorm_mean**2))
             )
             self.norm_sd = np.sqrt(np.log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
 
     def __str__(self):
+        assert self.lognorm_mean is not None and self.lognorm_sd is not None
+        assert self.norm_mean is not None and self.norm_sd is not None
         out = "<Distribution> lognorm(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
         out = out.format(
             round(self.lognorm_mean, 2),
