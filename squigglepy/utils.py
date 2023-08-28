@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import math
-import types
-from typing import Optional
 import numpy as np
 
 from tqdm import tqdm
@@ -21,28 +19,6 @@ Number = Union[int, float, np.floating, np.integer]
 OptionalListOfFloats = Union[
     list[Union[Union[float, np.floating]]], NDArray[np.floating], float, None
 ]
-
-
-def _optional_import(name) -> Optional[types.ModuleType]:
-    """
-    Imports a module lazily, notifying the user if they need to install the module.
-    This is useful for speeding up the import of a module that is not always used.
-    """
-    try:
-        spec = importlib.util.find_spec(name)
-    except ImportError:
-        return None
-
-    if spec is None:
-        return None
-
-    loader = importlib.util.LazyLoader(spec.loader)
-    spec.loader = loader
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    loader.exec_module(module)
-
-    return module
 
 
 def _check_pandas_series(values):

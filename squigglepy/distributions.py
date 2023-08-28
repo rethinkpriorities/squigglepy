@@ -4,11 +4,9 @@ import numpy as np
 from scipy import stats
 from typing import Optional, Union
 
-from .utils import _process_weights_values, _is_numpy, is_dist, _round, _optional_import
+from .utils import _process_weights_values, _is_numpy, is_dist, _round
 from .version import __version__
 
-# We only import matplotlib.pyplot if we need it
-plt = _optional_import("matplotlib.pyplot")
 
 Number = Union[int, float, np.floating, np.integer]
 
@@ -40,12 +38,13 @@ class BaseDistribution:
         --------
         >>> sq.norm(5, 10).plot()
         """
-        from .samplers import sample
+        from matplotlib import pyplot as plt
 
-        if plt is None:
-            raise ModuleNotFoundError("You must install matplotlib for plotting.")
+        num_samples = 1000 if num_samples is None else num_samples
+        bins = 200 if bins is None else bins
 
-        samples = sample(self, num_samples)
+        samples = self @ num_samples
+
         plt.hist(samples, bins=bins)
         plt.show()
 
