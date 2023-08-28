@@ -1,12 +1,12 @@
-import operator
 import math
-import numpy as np
-from scipy import stats
+import operator
 from typing import Optional, Union
 
-from .utils import _process_weights_values, _is_numpy, is_dist, _round
-from .version import __version__
+import numpy as np
+from scipy import stats
 
+from .utils import _is_numpy, _process_weights_values, _round, is_dist
+from .version import __version__
 
 Number = Union[int, float, np.floating, np.integer]
 
@@ -22,31 +22,6 @@ class BaseDistribution:
 
     def __repr__(self):
         return str(self)
-
-    def plot(self, num_samples: int = 1000, bins: int = 200) -> None:
-        """
-        Plot a histogram of the samples.
-
-        Parameters
-        ----------
-        num_samples : int
-            The number of samples to draw for plotting. Defaults to 1000 if not set.
-        bins : int
-            The number of bins to plot. Defaults to 200 if not set.
-
-        Examples
-        --------
-        >>> sq.norm(5, 10).plot()
-        """
-        from matplotlib import pyplot as plt
-
-        num_samples = 1000 if num_samples is None else num_samples
-        bins = 200 if bins is None else bins
-
-        samples = self @ num_samples
-
-        plt.hist(samples, bins=bins)
-        plt.show()
 
 
 class OperableDistribution(BaseDistribution):
@@ -134,6 +109,31 @@ class OperableDistribution(BaseDistribution):
 
     def __rpow__(self, dist):
         return ComplexDistribution(dist, self, operator.pow, "**")
+    
+    def plot(self, num_samples: int = 1000, bins: int = 200) -> None:
+        """
+        Plot a histogram of the samples.
+
+        Parameters
+        ----------
+        num_samples : int
+            The number of samples to draw for plotting. Defaults to 1000 if not set.
+        bins : int
+            The number of bins to plot. Defaults to 200 if not set.
+
+        Examples
+        --------
+        >>> sq.norm(5, 10).plot()
+        """
+        from matplotlib import pyplot as plt
+
+        num_samples = 1000 if num_samples is None else num_samples
+        bins = 200 if bins is None else bins
+
+        samples = self @ num_samples
+
+        plt.hist(samples, bins=bins)
+        plt.show()
 
 
 class ComplexDistribution(OperableDistribution):
