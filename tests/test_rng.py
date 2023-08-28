@@ -1,6 +1,6 @@
-from ..squigglepy.rng import set_seed
-from ..squigglepy.samplers import sample
-from ..squigglepy.distributions import norm
+from squigglepy.rng import set_seed
+from squigglepy.samplers import sample
+from squigglepy.distributions import norm
 
 
 def test_seed():

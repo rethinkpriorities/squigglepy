@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from ..squigglepy.distributions import (
+from squigglepy.distributions import (
     to,
     const,
     uniform,
@@ -51,7 +51,7 @@ from ..squigglepy.distributions import (
     ParetoDistribution,
     UniformDistribution,
 )
-from ..squigglepy.version import __version__
+from squigglepy.version import __version__
 
 
 def _mirror(x):

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from datetime import datetime, timedelta
-from ..squigglepy.utils import (
+from squigglepy.utils import (
     _process_weights_values,
     _process_discrete_weights_values,
     event_occurs,
@@ -29,8 +29,8 @@ from ..squigglepy.utils import (
     extremize,
     normalize,
 )
-from ..squigglepy.rng import set_seed
-from ..squigglepy.distributions import bernoulli, beta, norm, dist_round, const
+from squigglepy.rng import set_seed
+from squigglepy.distributions import bernoulli, beta, norm, dist_round, const
 
 
 def test_process_weights_values_simple_case():
