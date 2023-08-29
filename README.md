@@ -438,9 +438,7 @@ You can see more examples of squigglepy in action [here](https://github.com/pete
 
 ## Run tests
 
-Use `black .` for formatting.
-
-Run `ruff check . && pytest && pip3 install . && python3 tests/integration.py`
+Run `black . && pyright . && ruff check . && pytest && pip3 install . && python3 tests/integration.py`
 
 ## Disclaimers
 

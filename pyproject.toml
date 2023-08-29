@@ -30,6 +30,7 @@ ruff = "^0.0.272"
 pytest = "^7.3.2"
 pytest-mock = "^3.10.0"
 black = "^23.3.0"
+pyright = "^1.1.324"
 
 [tool.poetry.extras]
 plots = ["matplotlib"]

@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from ..squigglepy.distributions import (
+from squigglepy.distributions import (
     to,
     const,
     uniform,
@@ -51,7 +51,7 @@ from ..squigglepy.distributions import (
     ParetoDistribution,
     UniformDistribution,
 )
-from ..squigglepy.version import __version__
+from squigglepy.version import __version__
 
 
 def _mirror(x):
@@ -118,7 +118,7 @@ def test_norm():
     assert norm(1, 2).x == 1
     assert norm(1, 2).y == 2
     assert norm(1, 2).mean == 1.5
-    assert round(norm(1, 2).sd, 2) == 0.3
+    assert round(norm(1, 2).sd, 2) == 0.3  # type: ignore
     assert norm(1, 2).credibility == 90
     assert norm(1, 2).lclip is None
     assert norm(1, 2).rclip is None
@@ -169,7 +169,7 @@ def test_norm_overdefinition_value_error():
 def test_norm_low_gt_high():
     with pytest.raises(ValueError) as execinfo:
         norm(10, 5)
-    assert "`high value` cannot be lower than `low value`" in str(execinfo.value)
+    assert "`high value` (y) cannot be lower than `low value` (x)" in str(execinfo.value)
 
 
 def test_norm_passes_lclip_rclip():
@@ -210,10 +210,10 @@ def test_lognorm():
     assert isinstance(lognorm(1, 2), LognormalDistribution)
     assert lognorm(1, 2).x == 1
     assert lognorm(1, 2).y == 2
-    assert round(lognorm(1, 2).norm_mean, 2) == 0.35
-    assert round(lognorm(1, 2).norm_sd, 2) == 0.21
-    assert round(lognorm(1, 2).lognorm_mean, 2) == 1.45
-    assert round(lognorm(1, 2).lognorm_sd, 2) == 0.31
+    assert round(lognorm(1, 2).norm_mean, 2) == 0.35  # type: ignore
+    assert round(lognorm(1, 2).norm_sd, 2) == 0.21  # type: ignore
+    assert round(lognorm(1, 2).lognorm_mean, 2) == 1.45  # type: ignore
+    assert round(lognorm(1, 2).lognorm_sd, 2) == 0.31  # type: ignore
     assert lognorm(1, 2).credibility == 90
     assert lognorm(1, 2).lclip is None
     assert lognorm(1, 2).rclip is None
@@ -1089,13 +1089,13 @@ def test_min():
 def test_round():
     obj = dist_round(norm(0, 1))
     assert isinstance(obj, ComplexDistribution)
-    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 0)"
+    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), digits=0)"
 
 
 def test_round_two_digits():
     obj = dist_round(norm(0, 1), digits=2)
     assert isinstance(obj, ComplexDistribution)
-    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 2)"
+    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), digits=2)"
 
 
 def test_ceil():
@@ -1198,10 +1198,10 @@ def test_min_pipe():
 def test_round_pipe():
     obj = norm(0, 1) >> dist_round
     assert isinstance(obj, ComplexDistribution)
-    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 0)"
+    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), digits=0)"
     obj = norm(0, 1) >> dist_round(2)
     assert isinstance(obj, ComplexDistribution)
-    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), 2)"
+    assert str(obj) == "<Distribution> round(norm(mean=0.5, sd=0.3), digits=2)"
 
 
 def test_floor_pipe():
@@ -1219,7 +1219,7 @@ def test_ceil_pipe():
 def test_two_pipes():
     obj = norm(0, 1) >> lclip(2) >> dist_round
     assert isinstance(obj, ComplexDistribution)
-    assert str(obj) == "<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), 0)"
+    assert str(obj) == "<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), digits=0)"
 
 
 def test_dist_fn_list_pipe():

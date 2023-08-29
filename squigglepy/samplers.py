@@ -1,26 +1,16 @@
 import os
 import time
+from typing import Any, List, Optional, Tuple, TypeAlias, Union
 
 import numpy as np
 import pathos.multiprocessing as mp
-
+from numpy import float64
+from numpy.typing import NDArray
+from numpy.random import Generator
 from scipy import stats
 
-from .utils import (
-    _process_weights_values,
-    _process_discrete_weights_values,
-    is_dist,
-    is_sampleable,
-    _simplify,
-    _enlist,
-    _safe_len,
-    _core_cuts,
-    _init_tqdm,
-    _tick_tqdm,
-    _flush_tqdm,
-)
-
 from .distributions import (
+    BaseDistribution,
     BernoulliDistribution,
     BetaDistribution,
     BinomialDistribution,
@@ -30,8 +20,8 @@ from .distributions import (
     DiscreteDistribution,
     ExponentialDistribution,
     GammaDistribution,
-    LogTDistribution,
     LognormalDistribution,
+    LogTDistribution,
     MixtureDistribution,
     NormalDistribution,
     ParetoDistribution,
@@ -41,17 +31,40 @@ from .distributions import (
     UniformDistribution,
     const,
 )
+from .utils import (
+    Float,
+    Integer,
+    Number,
+    Weights,
+    _core_cuts,
+    _enlist,
+    _flush_tqdm,
+    _init_tqdm,
+    _process_discrete_weights_values,
+    _process_weights_values,
+    _safe_len,
+    _simplify_numpy,
+    _simplify_list,
+    _tick_tqdm,
+    is_dist,
+    is_sampleable,
+)
 
 _squigglepy_internal_sample_caches = {}
 
 
-def _get_rng():
+def _get_rng() -> Generator:
     from .rng import _squigglepy_internal_rng
 
     return _squigglepy_internal_rng
 
 
-def normal_sample(mean, sd, samples=1):
+SampleFloatOutput: TypeAlias = NDArray[np.float64] | List[np.float64] | np.float64
+SampleIntOutput: TypeAlias = NDArray[np.integer] | List[np.integer] | np.integer
+SampleNumberOutput: TypeAlias = SampleFloatOutput | SampleIntOutput
+
+
+def normal_sample(mean: Number, sd: Number, samples: int = 1) -> SampleFloatOutput:
     """
     Sample a random number according to a normal distribution.
 
@@ -76,10 +89,10 @@ def normal_sample(mean, sd, samples=1):
     >>> normal_sample(0, 1)
     0.30471707975443135
     """
-    return _simplify(_get_rng().normal(mean, sd, samples))
+    return _simplify_numpy(_get_rng().normal(mean, sd, samples))
 
 
-def lognormal_sample(mean, sd, samples=1):
+def lognormal_sample(mean: Number, sd: Number, samples: int = 1) -> SampleFloatOutput:
     """
     Sample a random number according to a lognormal distribution.
 
@@ -104,10 +117,16 @@ def lognormal_sample(mean, sd, samples=1):
     >>> lognormal_sample(0, 1)
     1.3562412406168636
     """
-    return _simplify(_get_rng().lognormal(mean, sd, samples))
+    return _simplify_numpy(_get_rng().lognormal(mean, sd, samples))
 
 
-def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
+def t_sample(
+    low: Optional[Number] = None,
+    high: Optional[Number] = None,
+    t: Integer = 20,
+    samples: int = 1,
+    credibility: int = 90,
+) -> SampleFloatOutput:
     """
     Sample a random number according to a t-distribution.
 
@@ -124,7 +143,7 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         The low value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     high : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
-    t : float
+    t : integer
         The number of degrees of freedom of the t-distribution. Defaults to 20.
     samples : int
         The number of samples to return.
@@ -156,12 +175,18 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         cdf_value = 0.5 + 0.5 * (credibility / 100)
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (high - mu) / normed_sigma
-        return _simplify(
+        return _simplify_numpy(
             normal_sample(mu, sigma, samples) / ((chi_square_sample(t, samples) / t) ** 0.5)
         )
 
 
-def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
+def log_t_sample(
+    low: Optional[int] = None,
+    high: Optional[int] = None,
+    t: int = 20,
+    samples: int = 1,
+    credibility: int = 90,
+) -> SampleFloatOutput:
     """
     Sample a random number according to a log-t-distribution.
 
@@ -212,14 +237,14 @@ def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
         cdf_value = 0.5 + 0.5 * (credibility / 100)
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (log_high - mu) / normed_sigma
-        return _simplify(
+        return _simplify_numpy(
             np.exp(
                 normal_sample(mu, sigma, samples) / ((chi_square_sample(t, samples) / t) ** 0.5)
             )
         )
 
 
-def binomial_sample(n, p, samples=1):
+def binomial_sample(n: int, p: float, samples: int = 1) -> SampleIntOutput:
     """
     Sample a random number according to a binomial distribution.
 
@@ -244,10 +269,10 @@ def binomial_sample(n, p, samples=1):
     >>> binomial_sample(10, 0.1)
     2
     """
-    return _simplify(_get_rng().binomial(n, p, samples))
+    return _simplify_numpy(_get_rng().binomial(n, p, samples))
 
 
-def beta_sample(a, b, samples=1):
+def beta_sample(a: int, b: int, samples: int = 1) -> SampleFloatOutput:
     """
     Sample a random number according to a beta distribution.
 
@@ -274,10 +299,10 @@ def beta_sample(a, b, samples=1):
     >>> beta_sample(1, 1)
     0.22145847498048798
     """
-    return _simplify(_get_rng().beta(a, b, samples))
+    return _simplify_numpy(_get_rng().beta(a, b, samples))
 
 
-def bernoulli_sample(p, samples=1):
+def bernoulli_sample(p: Float, samples: int = 1) -> SampleIntOutput:
     """
     Sample 1 with probability ``p`` and 0 otherwise.
 
@@ -300,13 +325,13 @@ def bernoulli_sample(p, samples=1):
     0
     """
     a = uniform_sample(0, 1, samples)
-    if _safe_len(a) == 1:
-        return int(a < p)
+    if isinstance(a, Number):
+        return np.int64(a < p)
     else:
-        return (a < p).astype(int)
+        return (a < p).astype(np.int64)
 
 
-def triangular_sample(left, mode, right, samples=1):
+def triangular_sample(left: int, mode: int, right: int, samples: int = 1) -> SampleFloatOutput:
     """
     Sample a random number according to a triangular distribution.
 
@@ -332,10 +357,10 @@ def triangular_sample(left, mode, right, samples=1):
     >>> triangular_sample(1, 2, 3)
     2.327625176788963
     """
-    return _simplify(_get_rng().triangular(left, mode, right, samples))
+    return _simplify_numpy(_get_rng().triangular(left, mode, right, samples))
 
 
-def poisson_sample(lam, samples=1):
+def poisson_sample(lam: Union[int, float], samples: int = 1) -> SampleIntOutput:
     """
     Sample a random number according to a poisson distribution.
 
@@ -357,10 +382,10 @@ def poisson_sample(lam, samples=1):
     >>> poisson_sample(10)
     13
     """
-    return _simplify(_get_rng().poisson(lam, samples))
+    return _simplify_numpy(_get_rng().poisson(lam, samples))
 
 
-def exponential_sample(scale, samples=1):
+def exponential_sample(scale: int, samples: int = 1) -> SampleFloatOutput:
     """
     Sample a random number according to an exponential distribution.
 
@@ -382,10 +407,10 @@ def exponential_sample(scale, samples=1):
     >>> exponential_sample(10)
     24.042086039659946
     """
-    return _simplify(_get_rng().exponential(scale, samples))
+    return _simplify_numpy(_get_rng().exponential(scale, samples))
 
 
-def gamma_sample(shape, scale, samples=1):
+def gamma_sample(shape: int, scale: int, samples: int = 1) -> SampleNumberOutput:
     """
     Sample a random number according to a gamma distribution.
 
@@ -409,10 +434,10 @@ def gamma_sample(shape, scale, samples=1):
     >>> gamma_sample(10, 2)
     21.290716894247602
     """
-    return _simplify(_get_rng().gamma(shape, scale, samples))
+    return _simplify_numpy(_get_rng().gamma(shape, scale, samples))
 
 
-def pareto_sample(shape, samples=1):
+def pareto_sample(shape: int, samples: int = 1) -> SampleNumberOutput:
     """
     Sample a random number according to a pareto distribution.
 
@@ -432,10 +457,10 @@ def pareto_sample(shape, samples=1):
     >>> pareto_sample(1)
     10.069666324736094
     """
-    return _simplify(_get_rng().pareto(shape, samples))
+    return _simplify_numpy(_get_rng().pareto(shape, samples))
 
 
-def uniform_sample(low, high, samples=1):
+def uniform_sample(low: int, high: int, samples: int = 1) -> SampleFloatOutput:
     """
     Sample a random number according to a uniform distribution.
 
@@ -460,10 +485,10 @@ def uniform_sample(low, high, samples=1):
     >>> uniform_sample(0, 1)
     0.7739560485559633
     """
-    return _simplify(_get_rng().uniform(low, high, samples))
+    return _simplify_numpy(_get_rng().uniform(low, high, samples))
 
 
-def chi_square_sample(df, samples=1):
+def chi_square_sample(df: int, samples: int = 1) -> SampleFloatOutput:
     """
     Sample a random number according to a chi-square distribution.
 
@@ -485,10 +510,16 @@ def chi_square_sample(df, samples=1):
     >>> chi_square_sample(2)
     4.808417207931989
     """
-    return _simplify(_get_rng().chisquare(df, samples))
+    return _simplify_numpy(_get_rng().chisquare(df, samples))
 
 
-def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1, _multicore_tqdm_cores=1):
+def discrete_sample(
+    items: Any,
+    samples: int = 1,
+    verbose: bool = False,
+    _multicore_tqdm_n: int = 1,
+    _multicore_tqdm_cores: int = 1,
+) -> Union[List[float], str, List[int], NormalDistribution, int]:
     """
     Sample a random value from a discrete distribution (aka categorical distribution).
 
@@ -543,14 +574,14 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1, _multi
 
 
 def _mixture_sample_for_large_n(
-    values,
-    weights=None,
-    relative_weights=None,
-    samples=1,
-    verbose=False,
-    _multicore_tqdm_n=1,
-    _multicore_tqdm_cores=1,
-):
+    values: List[Union[NormalDistribution, ConstantDistribution, float]],
+    weights: Optional[List[float]] = None,
+    relative_weights: None = None,
+    samples: int = 1,
+    verbose: bool = False,
+    _multicore_tqdm_n: int = 1,
+    _multicore_tqdm_cores: int = 1,
+) -> Number | List[Number]:
     def _run_presample(dist, pbar):
         if is_dist(dist) and isinstance(dist, MixtureDistribution):
             raise ValueError(
@@ -578,22 +609,22 @@ def _mixture_sample_for_large_n(
     picker = uniform_sample(0, 1, samples=samples)
 
     tqdm_samples = samples if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
-    pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
-    out = _simplify([_run_mixture(p, i, pbar) for i, p in enumerate(_enlist(picker))])
+    pbar: tqdm[NoReturn] | None = _init_tqdm(verbose=verbose, total=tqdm_samples)
+    out = _simplify_list([_run_mixture(p, i, pbar) for i, p in enumerate(_enlist(picker))])
     _flush_tqdm(pbar)
 
     return out
 
 
 def _mixture_sample_for_small_n(
-    values,
-    weights=None,
-    relative_weights=None,
-    samples=1,
-    verbose=False,
-    _multicore_tqdm_n=1,
-    _multicore_tqdm_cores=1,
-):
+    values: List[Any],
+    weights: Optional[List[float]] = None,
+    relative_weights: None = None,
+    samples: int = 1,
+    verbose: bool = False,
+    _multicore_tqdm_n: int = 1,
+    _multicore_tqdm_cores: int = 1,
+) -> Number | List[Number]:
     def _run_mixture(values, weights, pbar=None, tick=1):
         r_ = uniform_sample(0, 1)
         _tick_tqdm(pbar, tick)
@@ -606,7 +637,7 @@ def _mixture_sample_for_small_n(
     weights = np.cumsum(weights)
     tqdm_samples = samples if _multicore_tqdm_cores == 1 else _multicore_tqdm_n
     pbar = _init_tqdm(verbose=verbose, total=tqdm_samples)
-    out = _simplify(
+    out = _simplify_list(
         [
             _run_mixture(values=values, weights=weights, pbar=pbar, tick=_multicore_tqdm_cores)
             for _ in range(samples)
@@ -617,14 +648,14 @@ def _mixture_sample_for_small_n(
 
 
 def mixture_sample(
-    values,
-    weights=None,
-    relative_weights=None,
-    samples=1,
-    verbose=False,
-    _multicore_tqdm_n=1,
-    _multicore_tqdm_cores=1,
-):
+    values: Union[dict, list],
+    weights: Optional[Weights] = None,
+    relative_weights: Optional[Weights] = None,
+    samples: int = 1,
+    verbose: bool = False,
+    _multicore_tqdm_n: int = 1,
+    _multicore_tqdm_cores: int = 1,
+) -> Any:
     """
     Sample a ranom number from a mixture distribution.
 
@@ -692,20 +723,20 @@ def mixture_sample(
 
 
 def sample(
-    dist=None,
-    n=1,
-    lclip=None,
-    rclip=None,
-    memcache=False,
-    reload_cache=False,
-    dump_cache_file=None,
-    load_cache_file=None,
-    cache_file_primary=False,
-    verbose=None,
-    cores=1,
-    _multicore_tqdm_n=1,
-    _multicore_tqdm_cores=1,
-):
+    dist: Optional[BaseDistribution | Number | str | bool] = None,
+    n: int = 1,
+    lclip: Optional[int] = None,
+    rclip: Optional[int] = None,
+    memcache: bool = False,
+    reload_cache: bool = False,
+    dump_cache_file: Optional[str] = None,
+    load_cache_file: Optional[str] = None,
+    cache_file_primary: bool = False,
+    verbose: Optional[bool] = None,
+    cores: int = 1,
+    _multicore_tqdm_n: int = 1,
+    _multicore_tqdm_cores: int = 1,
+) -> Any:
     """
     Sample random numbers from a given distribution.
 
@@ -887,7 +918,7 @@ def sample(
                 return samp
 
             pbar = _init_tqdm(verbose=verbose, total=len(out) * _multicore_tqdm_cores)
-            samples = _simplify(
+            samples = _simplify_numpy(
                 np.array([run_dist(dist=o, pbar=pbar, tick=_multicore_tqdm_cores) for o in out])
             )
             _flush_tqdm(pbar)
@@ -898,10 +929,10 @@ def sample(
             or isinstance(dist, str)
             or dist is None
         ):
-            samples = _simplify(np.array([dist for _ in range(n)]))
+            samples = _simplify_numpy(np.array([dist for _ in range(n)]))
 
         elif isinstance(dist, ConstantDistribution):
-            samples = _simplify(np.array([dist.x for _ in range(n)]))
+            samples = _simplify_numpy(np.array([dist.x for _ in range(n)]))
 
         elif isinstance(dist, UniformDistribution):
             samples = uniform_sample(dist.x, dist.y, samples=n)

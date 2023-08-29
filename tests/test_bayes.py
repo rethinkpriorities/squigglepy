@@ -1,11 +1,11 @@
 import os
 import pytest
 
-from ..squigglepy.bayes import simple_bayes, bayesnet, update, average
-from ..squigglepy.samplers import sample
-from ..squigglepy.distributions import discrete, norm, beta, gamma
-from ..squigglepy.rng import set_seed
-from ..squigglepy.distributions import BetaDistribution, MixtureDistribution, NormalDistribution
+from squigglepy.bayes import simple_bayes, bayesnet, update, average
+from squigglepy.samplers import sample
+from squigglepy.distributions import discrete, norm, beta, gamma
+from squigglepy.rng import set_seed
+from squigglepy.distributions import BetaDistribution, MixtureDistribution, NormalDistribution
 
 
 def test_simple_bayes():
@@ -75,7 +75,7 @@ def test_bayesnet_raw():
 
 
 def test_bayesnet_cache():
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches = len(_squigglepy_internal_bayesnet_caches)
 
@@ -83,19 +83,19 @@ def test_bayesnet_cache():
         return {"a": 1, "b": 2}
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches < n_caches2
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches3 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches3
 
     bayesnet(define_event, find=lambda e: e["b"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches4
@@ -103,7 +103,7 @@ def test_bayesnet_cache():
 
 
 def test_bayesnet_cache_multiple():
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches = len(_squigglepy_internal_bayesnet_caches)
 
@@ -111,13 +111,13 @@ def test_bayesnet_cache_multiple():
         return {"a": 1, "b": 2}
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches < n_caches2
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches3 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches3
@@ -126,7 +126,7 @@ def test_bayesnet_cache_multiple():
         return {"a": 4, "b": 6}
 
     bayesnet(define_event2, find=lambda e: e["b"], n=1000)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 < n_caches4
@@ -134,20 +134,20 @@ def test_bayesnet_cache_multiple():
     assert _squigglepy_internal_bayesnet_caches.get(define_event2)["metadata"]["n"] == 1000
 
     bayesnet(define_event2, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches5 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches4 == n_caches5
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches6 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches4 == n_caches6
 
 
 def test_bayesnet_reload_cache():
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches = len(_squigglepy_internal_bayesnet_caches)
 
@@ -155,19 +155,19 @@ def test_bayesnet_reload_cache():
         return {"a": 1, "b": 2}
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches < n_caches2
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches3 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches3
 
     bayesnet(define_event, find=lambda e: e["b"], n=100, reload_cache=True)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches3 == n_caches4
@@ -175,7 +175,7 @@ def test_bayesnet_reload_cache():
 
 
 def test_bayesnet_dont_use_cache():
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches = len(_squigglepy_internal_bayesnet_caches)
 
@@ -183,7 +183,7 @@ def test_bayesnet_dont_use_cache():
         return {"a": 1, "b": 2}
 
     bayesnet(define_event, find=lambda e: e["a"], memcache=False, n=100)
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches == n_caches2
@@ -259,7 +259,7 @@ def test_bayesnet_cachefile(cachefile):
 def test_bayesnet_cachefile_primary(cachefile):
     assert not os.path.exists(cachefile + ".sqcache")
 
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches = len(_squigglepy_internal_bayesnet_caches)
 
@@ -268,7 +268,7 @@ def test_bayesnet_cachefile_primary(cachefile):
 
     bayesnet(define_event, find=lambda e: e["a"], n=100)
 
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches + 1
@@ -285,7 +285,7 @@ def test_bayesnet_cachefile_primary(cachefile):
         n=100,
     )
 
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches3 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches3 == n_caches2
@@ -314,7 +314,7 @@ def test_bayesnet_cachefile_primary(cachefile):
     )
     assert set(out) == set([2])
 
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches4 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches4 == n_caches2
@@ -323,7 +323,7 @@ def test_bayesnet_cachefile_primary(cachefile):
 
 def test_bayesnet_cachefile_will_also_memcache(cachefile):
     assert not os.path.exists(cachefile + ".sqcache")
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches = len(_squigglepy_internal_bayesnet_caches)
 
@@ -341,7 +341,7 @@ def test_bayesnet_cachefile_will_also_memcache(cachefile):
 
     assert os.path.exists(cachefile + ".sqcache")
     assert set(out) == set([1])
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches2 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches2 == n_caches
@@ -357,7 +357,7 @@ def test_bayesnet_cachefile_will_also_memcache(cachefile):
 
     assert os.path.exists(cachefile + ".sqcache")
     assert set(out) == set([1])
-    from ..squigglepy.bayes import _squigglepy_internal_bayesnet_caches
+    from squigglepy.bayes import _squigglepy_internal_bayesnet_caches
 
     n_caches3 = len(_squigglepy_internal_bayesnet_caches)
     assert n_caches3 == n_caches + 1

@@ -1,4 +1,4 @@
-from ..squigglepy.numbers import K, M, B, T
+from squigglepy.numbers import K, M, B, T
 
 
 def test_thousand():

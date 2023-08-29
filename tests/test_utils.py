@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from datetime import datetime, timedelta
-from ..squigglepy.utils import (
+from squigglepy.utils import (
     _process_weights_values,
     _process_discrete_weights_values,
     event_occurs,
@@ -29,8 +29,8 @@ from ..squigglepy.utils import (
     extremize,
     normalize,
 )
-from ..squigglepy.rng import set_seed
-from ..squigglepy.distributions import bernoulli, beta, norm, dist_round, const
+from squigglepy.rng import set_seed
+from squigglepy.distributions import bernoulli, beta, norm, dist_round, const
 
 
 def test_process_weights_values_simple_case():
@@ -280,9 +280,9 @@ def test_get_percentiles_digits():
 
 def test_get_percentiles_length_one():
     test = get_percentiles(range(1, 901), percentiles=[25], digits=1)
-    assert test == 225.8
+    assert test == {25: 225.8}
     test = get_percentiles(range(1, 901), percentiles=25, digits=1)
-    assert test == 225.8
+    assert test == {25: 225.8}
 
 
 def test_get_percentiles_zero_digits():
@@ -353,11 +353,11 @@ def test_get_log_percentiles_length_one():
     test = get_log_percentiles(
         [10**x for x in range(1, 10)], percentiles=[20], display=False, digits=0
     )
-    assert test == 3
+    assert test == {20: 3}
     test = get_log_percentiles(
         [10**x for x in range(1, 10)], percentiles=20, display=False, digits=0
     )
-    assert test == 3
+    assert test == {20: 3}
 
 
 def test_get_mean_and_ci():

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 import numpy as np
 
@@ -5,10 +7,19 @@ from tqdm import tqdm
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
+from typing import Any, Optional, Union, overload
+from numpy.typing import NDArray
+from typing import TypeVar, List
 
 import importlib
 import importlib.util
 import sys
+
+Float = Union[float, np.floating]
+Integer = Union[int, np.integer]
+Number = Union[Float, Integer]
+FloatArray = Union[list[Float], NDArray[np.floating]]
+Weights = Union[list[Float], NDArray[np.floating], np.floating, float]
 
 
 def _check_pandas_series(values):
@@ -20,7 +31,12 @@ def _check_pandas_series(values):
     return isinstance(values, pd.core.series.Series)
 
 
-def _process_weights_values(weights=None, relative_weights=None, values=None, drop_na=False):
+def _process_weights_values(
+    weights: Optional[Weights] = None,
+    relative_weights: Optional[Weights] = None,
+    values=None,
+    drop_na: bool = False,
+) -> tuple[list[Float], list[list]]:
     if weights is not None and relative_weights is not None:
         raise ValueError("can only pass either `weights` or `relative_weights`, not both.")
     if values is None or _safe_len(values) == 0:
@@ -31,7 +47,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
         weights = relative_weights
         relative = True
 
-    if isinstance(weights, float):
+    if isinstance(weights, float) or isinstance(weights, np.floating):
         weights = [weights]
     elif isinstance(weights, np.ndarray):
         weights = list(weights)
@@ -67,7 +83,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
 
     if any([_is_na_like(w) for w in weights]):
         raise ValueError("cannot handle NA-like values in weights")
-    sum_weights = sum(weights)
+    sum_weights = sum(weights)  # type: ignore
 
     if relative:
         weights = normalize(weights)
@@ -119,7 +135,22 @@ def _is_na_like(a):
     return a is None or np.isnan(a)
 
 
-def _round(x, digits=0):
+@overload
+def _round(x: NDArray[np.floating], digits: Optional[int] = 0) -> NDArray[np.floating]:
+    ...
+
+
+@overload
+def _round(x: NDArray[np.integer], digits: Optional[int] = 0) -> NDArray[np.integer]:
+    ...
+
+
+@overload
+def _round(x: Number, digits: Optional[int] = 0) -> Number:
+    ...
+
+
+def _round(x: Union[Number, np.ndarray], digits: Optional[int] = 0) -> Union[Number, np.ndarray]:
     if digits is None:
         return x
 
@@ -131,13 +162,22 @@ def _round(x, digits=0):
         return int(x) if digits <= 0 else x
 
 
-def _simplify(a):
-    if _is_numpy(a):
-        a = a.tolist() if a.size == 1 else a
-    if isinstance(a, list):
-        a = a[0] if len(a) == 1 else a
+NumpyNumberVar = TypeVar("NumpyNumberVar", np.floating, np.integer)
+
+def _simplify_numpy(
+    a: Union[NumpyNumberVar, NDArray[NumpyNumberVar]]
+) -> Union[NumpyNumberVar, NDArray[NumpyNumberVar]]:
+    if isinstance(a, np.ndarray):
+        a = a[0] if a.size == 1 and a.ndim == 1 else a
+        return a
     return a
 
+NumberVar = TypeVar("NumberVar", bound=Number)
+
+def _simplify_list(a: list[NumberVar]) -> Union[NumberVar, list[NumberVar]]:
+    if len(a) == 1:
+        return a[0]
+    return a
 
 def _enlist(a):
     if _is_numpy(a) and isinstance(a, np.ndarray):
@@ -384,11 +424,11 @@ def one_in(p, digits=0, verbose=True):
 
 
 def get_percentiles(
-    data,
-    percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
-    reverse=False,
-    digits=None,
-):
+    data: Union[list[np.floating], NDArray[np.floating]],
+    percentiles: list[Number] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    reverse: bool = False,
+    digits: Optional[int] = None,
+) -> dict[Number, Number]:
     """
     Print the percentiles of the data.
 
@@ -416,20 +456,17 @@ def get_percentiles(
     """
     percentiles = percentiles if isinstance(percentiles, list) else [percentiles]
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
-    percentiles = np.percentile(data, percentiles)
-    percentiles = [_round(p, digits) for p in percentiles]
-    if len(percentile_labels) == 1:
-        return percentiles[0]
-    else:
-        return dict(list(zip(percentile_labels, percentiles)))
+    computed_percentiles: NDArray[np.float64] = np.percentile(data, percentiles)  # type: ignore
+    rounded_percentiles: list[Number] = [_round(p, digits) for p in computed_percentiles]
+    return dict(list(zip(percentile_labels, rounded_percentiles, strict=True)))
 
 
 def get_log_percentiles(
-    data,
-    percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
-    reverse=False,
-    display=True,
-    digits=1,
+    data: Union[list[np.floating], NDArray[np.floating]],
+    percentiles: list[Number] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    reverse: bool = False,
+    display: bool = True,
+    digits: int = 1,
 ):
     """
     Print the log (base 10) of the percentiles of the data.
@@ -459,20 +496,15 @@ def get_log_percentiles(
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
-    percentiles = get_percentiles(data, percentiles=percentiles, reverse=reverse, digits=digits)
-    if isinstance(percentiles, dict):
-        if display:
-            return dict(
-                [(k, ("{:." + str(digits) + "e}").format(v)) for k, v in percentiles.items()]
-            )
-        else:
-            return dict([(k, _round(np.log10(v), digits)) for k, v in percentiles.items()])
+    computed_percentiles = get_percentiles(
+        data, percentiles=percentiles, reverse=reverse, digits=digits
+    )
+    if display:
+        return dict(
+            [(k, ("{:." + str(digits) + "e}").format(v)) for k, v in computed_percentiles.items()]
+        )
     else:
-        if display:
-            digit_str = "{:." + str(digits) + "e}"
-            digit_str.format(percentiles)
-        else:
-            return _round(np.log10(percentiles), digits)
+        return dict([(k, _round(np.log10(v), digits)) for k, v in computed_percentiles.items()])
 
 
 def get_mean_and_ci(data, credibility=90, digits=None):
@@ -598,7 +630,7 @@ def p_to_odds(p):
             raise ValueError("p must be between 0 and 1")
         return p / (1 - p)
 
-    return _simplify(np.array([_convert(p) for p in _enlist(p)]))
+    return _simplify_numpy(np.array([_convert(p) for p in _enlist(p)]))
 
 
 def odds_to_p(odds):
@@ -628,7 +660,7 @@ def odds_to_p(odds):
             raise ValueError("odds must be greater than 0")
         return o / (1 + o)
 
-    return _simplify(np.array([_convert(o) for o in _enlist(odds)]))
+    return _simplify_numpy(np.array([_convert(o) for o in _enlist(odds)]))
 
 
 def geomean_odds(a, weights=None, relative_weights=None, drop_na=True):
@@ -799,7 +831,7 @@ def doubling_time_to_growth_rate(doubling_time):
         return math.exp(math.log(2) / doubling_time) - 1
 
 
-def roll_die(sides, n=1):
+def roll_die(sides: int, n: int=1) -> Union[int, list[int], None]:
     """
     Roll a die.
 
@@ -831,6 +863,8 @@ def roll_die(sides, n=1):
         raise ValueError("cannot roll less than a 2-sided die.")
     elif not isinstance(sides, int):
         raise ValueError("can only roll an integer number of sides")
+    elif n <= 0:
+        raise ValueError("cannot roll less than once")
     else:
         from .samplers import sample
         from .distributions import discrete
@@ -859,13 +893,20 @@ def flip_coin(n=1):
     'heads'
     """
     rolls = roll_die(2, n=n)
-    if isinstance(rolls, int):
-        rolls = [rolls]
+    if isinstance(rolls, np.integer):
+        rolls: list[np.integer] = [rolls]
     flips = ["heads" if d == 2 else "tails" for d in rolls]
     return flips[0] if len(flips) == 1 else flips
 
 
-def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0):
+def kelly(
+    my_price: Number,
+    market_price: Number,
+    deference: Number = 0,
+    bankroll: Number = 1,
+    resolve_date: Optional[str] = None,
+    current: Number = 0,
+):
     """
     Calculate the Kelly criterion.
 
