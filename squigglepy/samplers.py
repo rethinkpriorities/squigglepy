@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pathos.multiprocessing as mp
@@ -10,6 +10,7 @@ from scipy import stats
 from .utils import (
     Integer,
     Number,
+    Weights,
     _process_weights_values,
     _process_discrete_weights_values,
     is_dist,
@@ -621,13 +622,13 @@ def _mixture_sample_for_small_n(
 
 
 def mixture_sample(
-    values,
-    weights=None,
-    relative_weights=None,
-    samples=1,
-    verbose=False,
-    _multicore_tqdm_n=1,
-    _multicore_tqdm_cores=1,
+    values: Union[dict, list],
+    weights: Optional[Weights] = None,
+    relative_weights: Optional[Weights] = None,
+    samples: int = 1,
+    verbose: bool = False,
+    _multicore_tqdm_n: int = 1,
+    _multicore_tqdm_cores: int = 1,
 ):
     """
     Sample a ranom number from a mixture distribution.

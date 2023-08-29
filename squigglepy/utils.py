@@ -415,10 +415,10 @@ def one_in(p, digits=0, verbose=True):
 
 def get_percentiles(
     data: Union[list[np.floating], NDArray[np.floating]],
-    percentiles: list[Integer] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    percentiles: list[Number] = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
     reverse: bool = False,
     digits: Optional[int] = None,
-) -> dict[str, float]:
+) -> dict[Number, Number]:
     """
     Print the percentiles of the data.
 
@@ -446,9 +446,9 @@ def get_percentiles(
     """
     percentiles = percentiles if isinstance(percentiles, list) else [percentiles]
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
-    percentiles = np.percentile(data, percentiles)
-    percentiles = [_round(p, digits) for p in percentiles]
-    return dict(list(zip(percentile_labels, percentiles)))
+    computed_percentiles: NDArray[np.float64] = np.percentile(data, percentiles)  # type: ignore
+    rounded_percentiles: list[Number] = [_round(p, digits) for p in computed_percentiles]
+    return dict(list(zip(percentile_labels, rounded_percentiles, strict=True)))
 
 
 def get_log_percentiles(
@@ -457,7 +457,7 @@ def get_log_percentiles(
     reverse: bool = False,
     display: bool = True,
     digits: int = 1,
-) -> dict[str, float]:
+):
     """
     Print the log (base 10) of the percentiles of the data.
 
@@ -486,11 +486,15 @@ def get_log_percentiles(
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
-    percentiles = get_percentiles(data, percentiles=percentiles, reverse=reverse, digits=digits)
+    computed_percentiles = get_percentiles(
+        data, percentiles=percentiles, reverse=reverse, digits=digits
+    )
     if display:
-        return dict([(k, ("{:." + str(digits) + "e}").format(v)) for k, v in percentiles.items()])
+        return dict(
+            [(k, ("{:." + str(digits) + "e}").format(v)) for k, v in computed_percentiles.items()]
+        )
     else:
-        return dict([(k, _round(np.log10(v), digits)) for k, v in percentiles.items()])
+        return dict([(k, _round(np.log10(v), digits)) for k, v in computed_percentiles.items()])
 
 
 def get_mean_and_ci(data, credibility=90, digits=None):

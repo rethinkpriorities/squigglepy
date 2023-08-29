@@ -4,12 +4,14 @@ import functools
 
 import math
 import operator
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, Callable, Optional, TypeAlias, TypeVar, Union
 
 import numpy as np
 from scipy import stats
+from numpy.typing import NDArray
 
 from .utils import (
+    FloatArray,
     Integer,
     Weights,
     _is_numpy,
@@ -37,6 +39,9 @@ class BaseDistribution:
 
     def __repr__(self) -> str:
         return str(self)
+
+
+OperationTarget: TypeAlias = Union[BaseDistribution, Number]
 
 
 class OperableDistribution(BaseDistribution):
@@ -70,61 +75,61 @@ class OperableDistribution(BaseDistribution):
     def __rmatmul__(self, n: int):
         return self.__matmul__(n)
 
-    def __gt__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __gt__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.gt, ">")
 
-    def __ge__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __ge__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.ge, ">=")
 
-    def __lt__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __lt__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.lt, "<")
 
-    def __le__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __le__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.le, "<=")
 
-    def __eq__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __eq__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.le, "==")
 
-    def __ne__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __ne__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.le, "!=")
 
     def __neg__(self) -> "ComplexDistribution":
         return ComplexDistribution(self, None, operator.neg, "-")
 
-    def __add__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __add__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.add, "+")
 
-    def __radd__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __radd__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.add, "+")
 
-    def __sub__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __sub__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.sub, "-")
 
-    def __rsub__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __rsub__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.sub, "-")
 
-    def __mul__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __mul__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.mul, "*")
 
-    def __rmul__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __rmul__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.mul, "*")
 
-    def __truediv__(self, dist: BaseDistribution) -> "ComplexDistribution":
+    def __truediv__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.truediv, "/")
 
-    def __rtruediv__(self, dist: Number) -> "ComplexDistribution":
+    def __rtruediv__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.truediv, "/")
 
-    def __floordiv__(self, dist: int) -> "ComplexDistribution":
+    def __floordiv__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.floordiv, "//")
 
-    def __rfloordiv__(self, dist: int) -> "ComplexDistribution":
+    def __rfloordiv__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.floordiv, "//")
 
-    def __pow__(self, dist: int) -> "ComplexDistribution":
+    def __pow__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(self, dist, operator.pow, "**")
 
-    def __rpow__(self, dist: int) -> "ComplexDistribution":
+    def __rpow__(self, dist: OperationTarget) -> "ComplexDistribution":
         return ComplexDistribution(dist, self, operator.pow, "**")
 
     def plot(self, num_samples: int = 1000, bins: int = 200) -> None:
@@ -1364,7 +1369,9 @@ class DiscreteDistribution(OperableDistribution):
         return "<Distribution> discrete({})".format(self.items)
 
 
-def discrete(items: Union[dict[Any, Number], list[list[Number]]]) -> DiscreteDistribution:
+def discrete(
+    items: Union[dict[Any, Number], list[list[Number]], FloatArray]
+) -> DiscreteDistribution:
     """
     Initialize a discrete distribution (aka categorical distribution).
 
