@@ -7,8 +7,9 @@ from tqdm import tqdm
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
-from typing import Optional, Union, overload
+from typing import Any, Optional, Union, overload
 from numpy.typing import NDArray
+from typing import TypeVar, List
 
 import importlib
 import importlib.util
@@ -161,13 +162,22 @@ def _round(x: Union[Number, np.ndarray], digits: Optional[int] = 0) -> Union[Num
         return int(x) if digits <= 0 else x
 
 
-def _simplify(a):
-    if _is_numpy(a):
-        a = a.tolist() if a.size == 1 else a
-    if isinstance(a, list):
-        a = a[0] if len(a) == 1 else a
+NumpyNumberVar = TypeVar("NumpyNumberVar", np.floating, np.integer)
+
+def _simplify_numpy(
+    a: Union[NumpyNumberVar, NDArray[NumpyNumberVar]]
+) -> Union[NumpyNumberVar, NDArray[NumpyNumberVar]]:
+    if isinstance(a, np.ndarray):
+        a = a[0] if a.size == 1 and a.ndim == 1 else a
+        return a
     return a
 
+NumberVar = TypeVar("NumberVar", bound=Number)
+
+def _simplify_list(a: list[NumberVar]) -> Union[NumberVar, list[NumberVar]]:
+    if len(a) == 1:
+        return a[0]
+    return a
 
 def _enlist(a):
     if _is_numpy(a) and isinstance(a, np.ndarray):
@@ -620,7 +630,7 @@ def p_to_odds(p):
             raise ValueError("p must be between 0 and 1")
         return p / (1 - p)
 
-    return _simplify(np.array([_convert(p) for p in _enlist(p)]))
+    return _simplify_numpy(np.array([_convert(p) for p in _enlist(p)]))
 
 
 def odds_to_p(odds):
@@ -650,7 +660,7 @@ def odds_to_p(odds):
             raise ValueError("odds must be greater than 0")
         return o / (1 + o)
 
-    return _simplify(np.array([_convert(o) for o in _enlist(odds)]))
+    return _simplify_numpy(np.array([_convert(o) for o in _enlist(odds)]))
 
 
 def geomean_odds(a, weights=None, relative_weights=None, drop_na=True):
@@ -821,7 +831,7 @@ def doubling_time_to_growth_rate(doubling_time):
         return math.exp(math.log(2) / doubling_time) - 1
 
 
-def roll_die(sides, n=1):
+def roll_die(sides: int, n: int=1) -> Union[int, list[int], None]:
     """
     Roll a die.
 
@@ -853,6 +863,8 @@ def roll_die(sides, n=1):
         raise ValueError("cannot roll less than a 2-sided die.")
     elif not isinstance(sides, int):
         raise ValueError("can only roll an integer number of sides")
+    elif n <= 0:
+        raise ValueError("cannot roll less than once")
     else:
         from .samplers import sample
         from .distributions import discrete
@@ -881,8 +893,8 @@ def flip_coin(n=1):
     'heads'
     """
     rolls = roll_die(2, n=n)
-    if isinstance(rolls, int):
-        rolls = [rolls]
+    if isinstance(rolls, np.integer):
+        rolls: list[np.integer] = [rolls]
     flips = ["heads" if d == 2 else "tails" for d in rolls]
     return flips[0] if len(flips) == 1 else flips
 

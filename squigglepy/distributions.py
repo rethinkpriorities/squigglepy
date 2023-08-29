@@ -8,7 +8,6 @@ from typing import Any, Callable, Optional, TypeAlias, TypeVar, Union
 
 import numpy as np
 from scipy import stats
-from numpy.typing import NDArray
 
 from .utils import (
     FloatArray,

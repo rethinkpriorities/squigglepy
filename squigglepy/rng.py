@@ -1,9 +1,10 @@
 import numpy as np
+from numpy.random import Generator
 
 _squigglepy_internal_rng = np.random.default_rng()
 
 
-def set_seed(seed):
+def set_seed(seed: int) -> Generator:
     """
     Set the seed of the random number generator used by Squigglepy.
 
