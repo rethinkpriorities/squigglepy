@@ -32,6 +32,7 @@ from ..squigglepy.distributions import (
     dist_exp,
     zero_inflated,
     inf0,
+    geometric,
     ComplexDistribution,
     DiscreteDistribution,
     ExponentialDistribution,
@@ -50,6 +51,7 @@ from ..squigglepy.distributions import (
     ConstantDistribution,
     ParetoDistribution,
     UniformDistribution,
+    GeometricDistribution
 )
 from ..squigglepy.version import __version__
 
@@ -783,6 +785,21 @@ def test_inf0():
     assert isinstance(obj, MixtureDistribution)
     assert obj.dists == [0, norm(1, 2)]
     assert obj.weights == [0.6, 0.4]
+
+
+def test_geometric():
+    assert isinstance(geometric(0.1), GeometricDistribution)
+    assert geometric(0.1).p == 0.1
+    assert str(geometric(0.1)) == "<Distribution> geometric(p=0.1)"
+
+
+def test_geometric_must_be_between_0_and_1():
+    with pytest.raises(ValueError) as execinfo:
+        geometric(-1)
+    assert "must be between 0 and 1" in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        geometric(1.1)
+    assert "must be between 0 and 1" in str(execinfo.value)
 
 
 def test_zero_inflated_raises_error():
