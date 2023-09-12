@@ -23,6 +23,7 @@ from ..squigglepy.distributions import (
     mixture,
     zero_inflated,
     inf0,
+    geometric,
     dist_min,
     dist_max,
     dist_round,
@@ -86,6 +87,9 @@ class FakeRNG:
 
     def chisquare(self, df, n):
         return df
+
+    def geometric(self, p):
+        return p
 
 
 def test_noop():
@@ -593,6 +597,11 @@ def test_sample_inf0():
     assert ~inf0(0.6, norm(1, 2)) == 0
 
 
+@patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
+def test_sample_geometric():
+    assert sample(geometric(0.1)) == 0.1
+
+
 def test_sample_n_gt_1_norm():
     out = sample(norm(1, 2), n=5)
     assert _is_numpy(out)
@@ -681,6 +690,12 @@ def test_sample_n_gt_1_mixture():
     out = sample(mixture([norm(1, 2), norm(3, 4)]), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
+
+
+def test_sample_n_gt_1_geometric():
+    out = sample(geometric(0.1), n=5)
+    assert _is_numpy(out)
+    assert len(out) == 0.1
 
 
 def test_sample_n_gt_1_raw_float():

@@ -30,6 +30,7 @@ from .distributions import (
     DiscreteDistribution,
     ExponentialDistribution,
     GammaDistribution,
+    GeometricDistribution,
     LogTDistribution,
     LognormalDistribution,
     MixtureDistribution,
@@ -542,6 +543,31 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1, _multi
     )
 
 
+def geometric_sample(p, samples=1):
+    """
+    Sample a random number according to a geometric distribution.
+
+    Parameters
+    ----------
+    p : float
+        The probability of success of an individual trial. Must be between 0 and 1.
+    samples : int
+        The number of samples to return.
+
+    Returns
+    -------
+    int
+        A random number sampled from a geometric distribution.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> geometric_sample(0.1)
+    2
+    """
+    return _simplify(_get_rng().geometric(p, samples))
+
+
 def _mixture_sample_for_large_n(
     values,
     weights=None,
@@ -962,6 +988,9 @@ def sample(
                 _multicore_tqdm_n=_multicore_tqdm_n,
                 _multicore_tqdm_cores=_multicore_tqdm_cores,
             )
+
+        elif isinstance(dist, GeometricDistribution):
+            samples = geometric_sample(p=dist.p, samples=n)
 
         elif isinstance(dist, ComplexDistribution):
             if dist.right is None:
