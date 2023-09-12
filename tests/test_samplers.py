@@ -88,7 +88,7 @@ class FakeRNG:
     def chisquare(self, df, n):
         return df
 
-    def geometric(self, p):
+    def geometric(self, p, n):
         return p
 
 
@@ -695,7 +695,7 @@ def test_sample_n_gt_1_mixture():
 def test_sample_n_gt_1_geometric():
     out = sample(geometric(0.1), n=5)
     assert _is_numpy(out)
-    assert len(out) == 0.1
+    assert len(out) == 5
 
 
 def test_sample_n_gt_1_raw_float():

@@ -110,6 +110,7 @@ sq.chisquare(2)
 sq.gamma(3, 2)
 sq.pareto(1)
 sq.exponential(scale=1)
+sq.geometric(p=0.5)
 
 # Discrete sampling
 sq.discrete({'A': 0.1, 'B': 0.9})
