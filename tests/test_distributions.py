@@ -51,7 +51,7 @@ from ..squigglepy.distributions import (
     ConstantDistribution,
     ParetoDistribution,
     UniformDistribution,
-    GeometricDistribution
+    GeometricDistribution,
 )
 from ..squigglepy.version import __version__
 
