@@ -153,7 +153,7 @@ class OperableDistribution(BaseDistribution):
     def __rpow__(self, dist):
         return ComplexDistribution(dist, self, operator.pow, "**")
 
-    def __hash__(self, dist):
+    def __hash__(self):
         return hash(repr(self))
 
 
