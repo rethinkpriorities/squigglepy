@@ -131,6 +131,10 @@ def test_norm_has_version():
     assert norm(1, 2)._version == __version__
 
 
+def test_norm_has_hash():
+    assert hash(norm(1, 2)) == 6871018895621648205
+
+
 def test_norm_with_mean_sd():
     assert isinstance(norm(mean=1, sd=2), NormalDistribution)
     assert norm(mean=1, sd=2).x is None

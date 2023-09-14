@@ -8,6 +8,7 @@
 * Pandas and matplotlib as removed as required dependencies, but their related features are lazily enabled when the modules are available. These packages are still available for install  as extras, installable with `pip install squigglepy[plots]` (for plotting-related functionality, matplotlib for now), `pip install squigglepy[ecosystem]` (for pandas, and in the future other related packages), or `pip install squigglepy[all]` (for all extras).
 * Multicore distribution now does extra checks to avoid crashing from race conditions.
 * Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
+* Distributions can now be hashed with `hash`.
 * Using black now for formatting.
 * Switched from `flake8` to `ruff`.
 
