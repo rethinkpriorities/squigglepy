@@ -578,14 +578,6 @@ def _mixture_sample_for_large_n(
     _multicore_tqdm_cores=1,
 ):
     def _run_presample(dist, pbar):
-        if is_dist(dist) and isinstance(dist, MixtureDistribution):
-            raise ValueError(
-                ("You cannot nest mixture distributions within " + "mixture distributions.")
-            )
-        elif is_dist(dist) and isinstance(dist, DiscreteDistribution):
-            raise ValueError(
-                ("You cannot nest discrete distributions within " + "mixture distributions.")
-            )
         _tick_tqdm(pbar)
         return _enlist(sample(dist, n=samples))
 
