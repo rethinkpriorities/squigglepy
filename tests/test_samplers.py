@@ -82,7 +82,7 @@ class FakeRNG:
     def triangular(self, left, mode, right, n):
         return left, mode, right
 
-    def standard_t(self, t):
+    def standard_t(self, t, n):
         return t
 
     def chisquare(self, df, n):
@@ -222,6 +222,12 @@ def test_sample_bernoulli():
 @patch.object(samplers, "normal_sample", Mock(return_value=1))
 def test_tdist():
     assert round(t_sample(1, 2, 3), 2) == 1
+
+
+@patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
+@patch.object(samplers, "normal_sample", Mock(return_value=1))
+def test_tdist_t():
+    assert round(t_sample(), 2) == 20
 
 
 @patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
@@ -658,6 +664,12 @@ def test_sample_n_gt_1_triangular():
 
 def test_sample_n_gt_1_tdist():
     out = sample(tdist(1, 2, 3), n=5)
+    assert _is_numpy(out)
+    assert len(out) == 5
+
+
+def test_sample_n_gt_1_tdist_t():
+    out = sample(tdist(), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 

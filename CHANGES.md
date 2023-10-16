@@ -12,6 +12,7 @@
 * Distributions can now be hashed with `hash`.
 * Using black now for formatting.
 * Switched from `flake8` to `ruff`.
+* Fixed a bug where `tdist` would not return multiple samples if defined with `t` alone.
 
 ## v0.26
 

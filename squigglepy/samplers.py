@@ -145,7 +145,7 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     2.7887113716855985
     """
     if low is None and high is None:
-        return _get_rng().standard_t(t)
+        return _get_rng().standard_t(t, samples)
     elif low is None or high is None:
         raise ValueError("must define either both `x` and `y` or neither.")
     elif low > high:
