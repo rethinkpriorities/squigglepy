@@ -1,3 +1,4 @@
+import bisect
 import os
 import time
 
@@ -587,10 +588,8 @@ def _mixture_sample_for_large_n(
 
     def _run_mixture(picker, i, pbar):
         _tick_tqdm(pbar, _multicore_tqdm_cores)
-        for j, w in enumerate(weights):
-            if picker < w:
-                return values[j][i]
-        return values[-1][i]
+        index = bisect.bisect_left(weights, picker)
+        return values[index][i]
 
     weights = np.cumsum(weights)
     picker = uniform_sample(0, 1, samples=samples)
