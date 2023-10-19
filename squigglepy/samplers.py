@@ -1001,9 +1001,9 @@ def sample(
     # Use lclip / rclip
     if _safe_len(samples) > 1:
         if lclip is not None:
-            samples = np.array([lclip if s < lclip else s for s in samples])
+            samples = np.maximum(samples, lclip)
         if rclip is not None:
-            samples = np.array([rclip if s > rclip else s for s in samples])
+            samples = np.minimum(samples, rclip)
     else:
         if lclip is not None:
             samples = lclip if samples < lclip else samples
