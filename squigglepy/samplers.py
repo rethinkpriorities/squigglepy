@@ -588,7 +588,7 @@ def _mixture_sample_for_large_n(
 
     def _run_mixture(picker, i, pbar):
         _tick_tqdm(pbar, _multicore_tqdm_cores)
-        index = bisect.bisect_left(weights, picker)
+        index = np.searchsorted(weights, picker, side='left')
         return values[index][i]
 
     weights = np.cumsum(weights)
