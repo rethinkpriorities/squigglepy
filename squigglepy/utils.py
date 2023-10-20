@@ -229,6 +229,26 @@ def is_dist(obj):
     return isinstance(obj, BaseDistribution)
 
 
+def is_continuous_dist(obj):
+    from .distributions import (
+        ContinuousDistribution,
+        CompositeDistribution,
+        ComplexDistribution,
+        MixtureDistribution,
+    )
+
+    if isinstance(obj, ContinuousDistribution):
+        return True
+    elif isinstance(obj, CompositeDistribution):
+        if isinstance(obj, ComplexDistribution):
+            return is_continuous_dist(obj.left) and is_continuous_dist(obj.right)
+        elif isinstance(obj, MixtureDistribution):
+            return all([is_continuous_dist(d) for d in obj.dists])
+        else:
+            raise ValueError("Unknown composite distribution")
+    return False
+
+
 def is_sampleable(obj):
     """
     Test if a given object can be sampled from.

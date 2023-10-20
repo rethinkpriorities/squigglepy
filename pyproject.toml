@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "squigglepy"
-version = "0.27-dev5"
+version = "0.27-dev6"
 description = "Squiggle programming language for intuitive probabilistic estimation features in Python"
 authors = ["Peter Wildeford <peter@rethinkpriorities.org>"]
 license = "MIT"
@@ -30,6 +30,9 @@ ruff = "^0.0.272"
 pytest = "^7.3.2"
 pytest-mock = "^3.10.0"
 black = "^23.3.0"
+seaborn = "^0.12.2"
+hypothesis = "^6.78.3"
+hypofuzz = "^23.6.1"
 
 [tool.poetry.extras]
 plots = ["matplotlib"]

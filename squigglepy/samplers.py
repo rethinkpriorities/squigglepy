@@ -4,6 +4,8 @@ import time
 import numpy as np
 import pathos.multiprocessing as mp
 
+from numpy.typing import NDArray
+
 from scipy import stats
 
 from .utils import (
@@ -21,13 +23,14 @@ from .utils import (
 )
 
 from .distributions import (
+    BaseDistribution,
     BernoulliDistribution,
     BetaDistribution,
     BinomialDistribution,
     ChiSquareDistribution,
     ComplexDistribution,
     ConstantDistribution,
-    DiscreteDistribution,
+    CategoricalDistribution,
     ExponentialDistribution,
     GammaDistribution,
     GeometricDistribution,
@@ -176,7 +179,8 @@ def log_t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     Parameters
     ----------
     low : float or None
-        The low value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
+        The low value of a credible interval defined by ``credibility``.
+        Must be greater than 0. Defaults to a 90% CI.
     high : float or None
         The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
     t : float
@@ -578,6 +582,14 @@ def _mixture_sample_for_large_n(
     _multicore_tqdm_cores=1,
 ):
     def _run_presample(dist, pbar):
+        if is_dist(dist) and isinstance(dist, MixtureDistribution):
+            raise ValueError(
+                ("You cannot nest mixture distributions within " + "mixture distributions.")
+            )
+        elif is_dist(dist) and isinstance(dist, CategoricalDistribution):
+            raise ValueError(
+                ("You cannot nest discrete distributions within " + "mixture distributions.")
+            )
         _tick_tqdm(pbar)
         return _enlist(sample(dist, n=samples))
 
@@ -709,6 +721,51 @@ def mixture_sample(
         )
 
 
+def sample_correlated_group(
+    requested_dist: BaseDistribution, n: int, verbose=False
+) -> NDArray[np.float64]:
+    """
+    Samples a correlated distribution, alongside
+    all other correlated distributions in the same group.
+
+    The samples for other variables are stored in the distributions themselves
+    (in `_correlated_samples`).
+
+    This is necessary, because the sampling needs to happen all at once, regardless
+    of where the distributions are used in the binary tree of operations.
+    """
+    group = requested_dist.correlation_group
+    assert group is not None
+
+    samples = np.column_stack(
+        [
+            # Skip correlation to prevent infinite recursion
+            # TODO: Check that this does not interfere
+            # with other correlated distributions downstream
+            sample(dist, n, verbose=verbose, _correlate_if_needed=False)
+            for dist in group.correlated_dists
+        ]
+    )
+    # Induce correlation
+    samples = group.induce_correlation(samples)
+
+    # Store the samples in each distribution
+    # except the one we are sampling from
+    # so it requires resampling next time
+    requested_samples = None
+    for i, target_distribution in enumerate(group.correlated_dists):
+        if requested_dist is not target_distribution:
+            # Store the samples in the distribution
+            target_distribution._correlated_samples = samples[:, i]
+        else:
+            # Store the samples we requested
+            requested_samples = samples[:, i]
+
+    assert requested_samples is not None
+
+    return requested_samples
+
+
 def sample(
     dist=None,
     n=1,
@@ -723,6 +780,7 @@ def sample(
     cores=1,
     _multicore_tqdm_n=1,
     _multicore_tqdm_cores=1,
+    _correlate_if_needed=True,
 ):
     """
     Sample random numbers from a given distribution.
@@ -918,13 +976,37 @@ def sample(
         ):
             samples = _simplify(np.array([dist for _ in range(n)]))
 
+        # Distribution is part of a correlation group
+        # and has not been sampled yet
+        elif (
+            isinstance(dist, BaseDistribution)
+            and _correlate_if_needed
+            and dist.correlation_group is not None
+            and dist._correlated_samples is None
+        ):
+            # Samples the entire correlated group at once
+            samples = sample_correlated_group(dist, n=n, verbose=verbose)
+
+        # Distribution has already been sampled
+        # as part of a correlation group
+        elif (
+            isinstance(dist, BaseDistribution)
+            and _correlate_if_needed
+            and dist.correlation_group is not None
+            and dist._correlated_samples is not None
+        ):
+            samples = dist._correlated_samples
+            # This forces the distribution to be resampled
+            # if the user attempts to sample from it again
+            dist._correlated_samples = None
+
         elif isinstance(dist, ConstantDistribution):
             samples = _simplify(np.array([dist.x for _ in range(n)]))
 
         elif isinstance(dist, UniformDistribution):
             samples = uniform_sample(dist.x, dist.y, samples=n)
 
-        elif isinstance(dist, DiscreteDistribution):
+        elif isinstance(dist, CategoricalDistribution):
             samples = discrete_sample(
                 dist.items,
                 samples=n,
