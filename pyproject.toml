@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "squigglepy"
-version = "0.27-dev3"
+version = "0.27-dev6"
 description = "Squiggle programming language for intuitive probabilistic estimation features in Python"
-authors = ["Peter Wildeford <peter@peterhurford.com>"]
+authors = ["Peter Wildeford <peter@rethinkpriorities.org>"]
 license = "MIT"
 readme = "README.md"
 include = ["CHANGES.md"]

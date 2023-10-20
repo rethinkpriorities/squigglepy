@@ -23,6 +23,7 @@ from ..squigglepy.distributions import (
     mixture,
     zero_inflated,
     inf0,
+    geometric,
     dist_min,
     dist_max,
     dist_round,
@@ -81,11 +82,14 @@ class FakeRNG:
     def triangular(self, left, mode, right, n):
         return left, mode, right
 
-    def standard_t(self, t):
+    def standard_t(self, t, n):
         return t
 
     def chisquare(self, df, n):
         return df
+
+    def geometric(self, p, n):
+        return p
 
 
 def test_noop():
@@ -218,6 +222,12 @@ def test_sample_bernoulli():
 @patch.object(samplers, "normal_sample", Mock(return_value=1))
 def test_tdist():
     assert round(t_sample(1, 2, 3), 2) == 1
+
+
+@patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
+@patch.object(samplers, "normal_sample", Mock(return_value=1))
+def test_tdist_t():
+    assert round(t_sample(), 2) == 20
 
 
 @patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
@@ -593,6 +603,11 @@ def test_sample_inf0():
     assert ~inf0(0.6, norm(1, 2)) == 0
 
 
+@patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
+def test_sample_geometric():
+    assert sample(geometric(0.1)) == 0.1
+
+
 def test_sample_n_gt_1_norm():
     out = sample(norm(1, 2), n=5)
     assert _is_numpy(out)
@@ -653,6 +668,12 @@ def test_sample_n_gt_1_tdist():
     assert len(out) == 5
 
 
+def test_sample_n_gt_1_tdist_t():
+    out = sample(tdist(), n=5)
+    assert _is_numpy(out)
+    assert len(out) == 5
+
+
 def test_sample_n_gt_1_log_tdist():
     out = sample(log_tdist(1, 2, 3), n=5)
     assert _is_numpy(out)
@@ -679,6 +700,12 @@ def test_sample_n_gt_1_discrete():
 
 def test_sample_n_gt_1_mixture():
     out = sample(mixture([norm(1, 2), norm(3, 4)]), n=5)
+    assert _is_numpy(out)
+    assert len(out) == 5
+
+
+def test_sample_n_gt_1_geometric():
+    out = sample(geometric(0.1), n=5)
     assert _is_numpy(out)
     assert len(out) == 5
 

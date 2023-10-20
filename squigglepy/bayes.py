@@ -216,9 +216,13 @@ def bayesnet(
                     if verbose:
                         print("Shuffling data...")
 
-                    with open("test-core-{}.sqcache".format(core), "wb") as outfile:
-                        encoder = msgspec.msgpack.Encoder()
-                        outfile.write(encoder.encode(batch))
+                    while not os.path.exists("test-core-{}.sqcache".format(core)):
+                        with open("test-core-{}.sqcache".format(core), "wb") as outfile:
+                            encoder = msgspec.msgpack.Encoder()
+                            outfile.write(encoder.encode(batch))
+                        if verbose:
+                            print("Writing data...")
+                            time.sleep(1)
 
                 pool_results = pool.amap(multicore_event_fn, list(range(cores - 1)))
                 multicore_event_fn(cores - 1, total_cores=cores, verbose=verbose)

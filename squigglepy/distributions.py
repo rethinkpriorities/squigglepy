@@ -169,6 +169,9 @@ class OperableDistribution(BaseDistribution):
     def __rpow__(self, dist):
         return ComplexDistribution(dist, self, operator.pow, "**")
 
+    def __hash__(self):
+        return hash(repr(self))
+
 
 # Distribution are either discrete, continuous, or composite
 
@@ -1608,3 +1611,35 @@ def inf0(p_zero, dist):
      - <Distribution> norm(mean=1.5, sd=0.3)
     """
     return zero_inflated(p_zero=p_zero, dist=dist)
+
+
+class GeometricDistribution(OperableDistribution):
+    def __init__(self, p):
+        super().__init__()
+        self.p = p
+        if self.p < 0 or self.p > 1:
+            raise ValueError("p must be between 0 and 1")
+
+    def __str__(self):
+        return "<Distribution> geometric(p={})".format(self.p)
+
+
+def geometric(p):
+    """
+    Initialize a geometric distribution.
+
+    Parameters
+    ----------
+    p : float
+        The probability of success of an individual trial. Must be between 0 and 1.
+
+    Returns
+    -------
+    GeometricDistribution
+
+    Examples
+    --------
+    >>> geometric(0.1)
+    <Distribution> geometric(0.1)
+    """
+    return GeometricDistribution(p=p)

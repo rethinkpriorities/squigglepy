@@ -33,6 +33,7 @@ from .distributions import (
     CategoricalDistribution,
     ExponentialDistribution,
     GammaDistribution,
+    GeometricDistribution,
     LogTDistribution,
     LognormalDistribution,
     MixtureDistribution,
@@ -147,7 +148,7 @@ def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
     2.7887113716855985
     """
     if low is None and high is None:
-        return _get_rng().standard_t(t)
+        return _get_rng().standard_t(t, samples)
     elif low is None or high is None:
         raise ValueError("must define either both `x` and `y` or neither.")
     elif low > high:
@@ -544,6 +545,31 @@ def discrete_sample(items, samples=1, verbose=False, _multicore_tqdm_n=1, _multi
         _multicore_tqdm_n=_multicore_tqdm_n,
         _multicore_tqdm_cores=_multicore_tqdm_cores,
     )
+
+
+def geometric_sample(p, samples=1):
+    """
+    Sample a random number according to a geometric distribution.
+
+    Parameters
+    ----------
+    p : float
+        The probability of success of an individual trial. Must be between 0 and 1.
+    samples : int
+        The number of samples to return.
+
+    Returns
+    -------
+    int
+        A random number sampled from a geometric distribution.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> geometric_sample(0.1)
+    2
+    """
+    return _simplify(_get_rng().geometric(p, samples))
 
 
 def _mixture_sample_for_large_n(
@@ -1036,6 +1062,9 @@ def sample(
                 _multicore_tqdm_n=_multicore_tqdm_n,
                 _multicore_tqdm_cores=_multicore_tqdm_cores,
             )
+
+        elif isinstance(dist, GeometricDistribution):
+            samples = geometric_sample(p=dist.p, samples=n)
 
         elif isinstance(dist, ComplexDistribution):
             if dist.right is None:
