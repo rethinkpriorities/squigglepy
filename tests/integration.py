@@ -539,8 +539,8 @@ if __name__ == "__main__":
         for val in vals:
             for credibility in credibilities:
                 for dist in [sq.tdist, sq.log_tdist]:
-                    dist = dist(val[0], val[1], t, credibility=credibility)
-                    if not (isinstance(dist, LogTDistribution) and val[0] < 1):
+                    if not dist == sq.log_tdist and val[0] < 1:
+                        dist = dist(val[0], val[1], t, credibility=credibility)
                         pctiles = sq.get_percentiles(
                             dist @ (20 * K),
                             percentiles=[
