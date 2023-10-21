@@ -4,15 +4,17 @@
 * **[Breaking change]** `get_percentiles` and `get_log_percentiles` now always return a dictionary, even if there's only one element.
 * **[Breaking change]** `.type` is now removed from distribution objects.
 * **[Breaking change]** You now can nest mixture distributions within mixture distributoins.
-* Added `geometric` distrubtion.
-* Package load time is now ~2x faster.
-* Pandas and matplotlib as removed as required dependencies, but their related features are lazily enabled when the modules are available. These packages are still available for install  as extras, installable with `pip install squigglepy[plots]` (for plotting-related functionality, matplotlib for now), `pip install squigglepy[ecosystem]` (for pandas, and in the future other related packages), or `pip install squigglepy[all]` (for all extras).
-* Multicore distribution now does extra checks to avoid crashing from race conditions.
+* You can now create correlated variables using `sq.correlate`.
+* Added `geometric` distribution.
 * Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
 * Distributions can now be hashed with `hash`.
+* Fixed a bug where `tdist` would not return multiple samples if defined with `t` alone.
+* Package load time is now ~2x faster.
+* Mixture sampling is now ~20% faster.
+* Pandas and matplotlib as removed as required dependencies, but their related features are lazily enabled when the modules are available. These packages are still available for install  as extras, installable with `pip install squigglepy[plots]` (for plotting-related functionality, matplotlib for now), `pip install squigglepy[ecosystem]` (for pandas, and in the future other related packages), or `pip install squigglepy[all]` (for all extras).
+* Multicore distribution now does extra checks to avoid crashing from race conditions.
 * Using black now for formatting.
 * Switched from `flake8` to `ruff`.
-* Fixed a bug where `tdist` would not return multiple samples if defined with `t` alone.
 
 ## v0.26
 
