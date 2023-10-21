@@ -10,7 +10,7 @@
 * Distributions can now be hashed with `hash`.
 * Fixed a bug where `tdist` would not return multiple samples if defined with `t` alone.
 * Package load time is now ~2x faster.
-* Mixture sampling is now ~20% faster.
+* Mixture sampling is now ~2x faster.
 * Pandas and matplotlib as removed as required dependencies, but their related features are lazily enabled when the modules are available. These packages are still available for install  as extras, installable with `pip install squigglepy[plots]` (for plotting-related functionality, matplotlib for now), `pip install squigglepy[ecosystem]` (for pandas, and in the future other related packages), or `pip install squigglepy[all]` (for all extras).
 * Multicore distribution now does extra checks to avoid crashing from race conditions.
 * Using black now for formatting.
