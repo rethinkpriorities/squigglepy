@@ -459,6 +459,7 @@ This package is available under an MIT License.
 
 ## Acknowledgements
 
+- The primary author of this package is Peter Wildeford. Augustin Covarrubias and Bernardo Baron contributed several key features and development.
 - Thanks to Ozzie Gooen and the Quantified Uncertainty Research Institute for creating and maintaining the original Squiggle language.
 - Thanks to Dawn Drescher for helping me implement math between distributions.
 - Thanks to Dawn Drescher for coming up with the idea to use `~` as a shorthand for `sample`, as well as helping me implement it.
