@@ -3,6 +3,7 @@ import numpy as np
 
 from datetime import datetime, timedelta
 from ..squigglepy.utils import (
+    _core_cuts,
     _process_weights_values,
     _process_discrete_weights_values,
     event_occurs,
@@ -835,3 +836,8 @@ def test_extremize_out_of_bounds():
         with pytest.raises(ValueError) as execinfo:
             extremize(p=p, e=1.73)
         assert "must be greater than 0 and less than 1" in str(execinfo.value)
+
+
+def test_core_cuts():
+    assert _core_cuts(10, 2) == [5, 5]
+    assert _core_cuts(10, 3) == [3, 3, 4]
