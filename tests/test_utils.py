@@ -92,6 +92,12 @@ def test_process_weights_values_weight_inference_no_weights():
     assert test == expected
 
 
+def test_process_weights_values_weight_inference_relative_weights():
+    test = _process_weights_values(values=[2, 3], relative_weights=[1, 3])
+    expected = ([0.25, 0.75], [2, 3])
+    assert test == expected
+
+
 def test_process_weights_values_weight_inference_no_weights_len4():
     test = _process_weights_values(values=[2, 3, 4, 5])
     expected = ([0.25, 0.25, 0.25, 0.25], [2, 3, 4, 5])
@@ -395,6 +401,10 @@ def test_geomean_numpy():
 
 def test_weighted_geomean():
     assert round(geomean([0.1, 0.2, 0.3, 0.4, 0.5], weights=[0.5, 0.1, 0.1, 0.1, 0.2]), 2) == 0.19
+
+def test_relative_weighted_geomean():
+    assert round(geomean([0.1, 0.2, 0.3, 0.4, 0.5],
+                         relative_weights=[5, 1, 1, 1, 2]), 2) == 0.19
 
 
 def test_geomean_with_none_value():

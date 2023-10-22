@@ -740,6 +740,15 @@ def test_mixture_with_numbers():
     assert obj.weights == [0.4, 0.6]
 
 
+def test_mixture_with_relative_weights():
+    obj = mixture([10, gamma(3)], relative_weights=[4, 6])
+    assert isinstance(obj, MixtureDistribution)
+    assert obj.dists[0] == 10
+    assert isinstance(obj.dists[1], GammaDistribution)
+    assert obj.dists[1].shape == 3
+    assert obj.weights == [0.4, 0.6]
+
+
 def test_mixture_no_weights():
     obj = mixture([lognorm(1, 10), gamma(3)])
     assert isinstance(obj, MixtureDistribution)
