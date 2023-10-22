@@ -432,8 +432,7 @@ def test_mixture_sample():
 @patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
 @patch.object(samplers, "uniform_sample", Mock(return_value=0))
 def test_mixture_sample_relative_weights():
-    assert mixture_sample([norm(1, 2), norm(3, 4)],
-                          relative_weights=[1, 1]) == (1.5, 0.3)
+    assert mixture_sample([norm(1, 2), norm(3, 4)], relative_weights=[1, 1]) == (1.5, 0.3)
 
 
 @patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))

@@ -402,9 +402,9 @@ def test_geomean_numpy():
 def test_weighted_geomean():
     assert round(geomean([0.1, 0.2, 0.3, 0.4, 0.5], weights=[0.5, 0.1, 0.1, 0.1, 0.2]), 2) == 0.19
 
+
 def test_relative_weighted_geomean():
-    assert round(geomean([0.1, 0.2, 0.3, 0.4, 0.5],
-                         relative_weights=[5, 1, 1, 1, 2]), 2) == 0.19
+    assert round(geomean([0.1, 0.2, 0.3, 0.4, 0.5], relative_weights=[5, 1, 1, 1, 2]), 2) == 0.19
 
 
 def test_geomean_with_none_value():
