@@ -1290,7 +1290,7 @@ def triangular(left, mode, right, lclip=None, rclip=None):
 
 
 class PERTDistribution(ContinuousDistribution):
-    def __init__(self, left, mode, right, lam, lclip=None, rclip=None):
+    def __init__(self, left, mode, right, lam=4, lclip=None, rclip=None):
         super().__init__()
         self.left = left
         self.mode = mode
@@ -1311,7 +1311,7 @@ class PERTDistribution(ContinuousDistribution):
         return out
 
 
-def pert(left, mode, right, lam, lclip=None, rclip=None):
+def pert(left, mode, right, lam=4, lclip=None, rclip=None):
     """
     Initialize a PERT distribution.
 
@@ -1324,7 +1324,7 @@ def pert(left, mode, right, lam, lclip=None, rclip=None):
     right : float
         The largest value of the PERT distribution.
     lam : float
-        The lambda value of the PERT distribution.
+        The lambda value of the PERT distribution. Defaults to 4.
     lclip : float or None
         If not None, any value below ``lclip`` will be coerced to ``lclip``.
     rclip : float or None
