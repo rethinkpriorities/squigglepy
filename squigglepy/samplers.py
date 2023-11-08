@@ -362,7 +362,7 @@ def pert_sample(left, mode, right, lam, samples=1):
     Returns
     -------
     float
-        A random number sampled from a triangular distribution.
+        A random number sampled from a PERT distribution.
 
     Examples
     --------
