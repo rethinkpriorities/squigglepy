@@ -43,6 +43,7 @@ from .distributions import (
     PoissonDistribution,
     TDistribution,
     TriangularDistribution,
+    PERTDistribution,
     UniformDistribution,
     const,
 )
@@ -339,6 +340,40 @@ def triangular_sample(left, mode, right, samples=1):
     2.327625176788963
     """
     return _simplify(_get_rng().triangular(left, mode, right, samples))
+
+
+def pert_sample(left, mode, right, lam, samples=1):
+    """
+    Sample a random number according to a PERT distribution.
+
+    Parameters
+    ----------
+    left : float
+        The smallest value of the PERT distribution.
+    mode : float
+        The most common value of the PERT distribution.
+    right : float
+        The largest value of the PERT distribution.
+    lam : float
+        The lambda of the PERT distribution.
+    samples : int
+        The number of samples to return.
+
+    Returns
+    -------
+    float
+        A random number sampled from a PERT distribution.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> pert_sample(1, 2, 3, 4)
+    2.327625176788963
+    """
+    r = right - left
+    alpha = 1 + lam * (mode - left) / r
+    beta = 1 + lam * (right - mode) / r
+    return left + beta_sample(a=alpha, b=beta, samples=samples) * r
 
 
 def poisson_sample(lam, samples=1):
@@ -1045,6 +1080,9 @@ def sample(
 
         elif isinstance(dist, TriangularDistribution):
             samples = triangular_sample(dist.left, dist.mode, dist.right, samples=n)
+
+        elif isinstance(dist, PERTDistribution):
+            samples = pert_sample(dist.left, dist.mode, dist.right, dist.lam, samples=n)
 
         elif isinstance(dist, TDistribution):
             samples = t_sample(dist.x, dist.y, dist.t, credibility=dist.credibility, samples=n)

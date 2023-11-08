@@ -81,7 +81,7 @@ def correlate(
 
     correlation : 2d-array or float
         An n-by-n array that defines the desired Spearman rank correlation coefficients.
-        This matrix must be symmetric and positives emi-definite; and must not be confused with
+        This matrix must be symmetric and positive semi-definite; and must not be confused with
         a covariance matrix.
 
         Correlation parameters can only be between -1 and 1, exclusive

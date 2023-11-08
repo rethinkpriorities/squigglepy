@@ -15,6 +15,7 @@ from ..squigglepy.distributions import (
     tdist,
     log_tdist,
     triangular,
+    pert,
     chisquare,
     poisson,
     exponential,
@@ -289,10 +290,15 @@ def test_sample_triangular():
     assert sample(triangular(10, 20, 30)) == (10, 20, 30)
 
 
-@patch.object(samplers, "triangular_sample", Mock(return_value=100))
-def test_sample_triangular_passes_lclip_rclip():
-    assert sample(triangular(1, 2, 3)) == 100
-    assert sample(triangular(1, 2, 3, lclip=1, rclip=3)) == 3
+@patch.object(samplers, "pert_sample", Mock(return_value=100))
+def test_sample_pert():
+    assert sample(pert(10, 20, 30, 40)) == 100
+
+
+@patch.object(samplers, "pert_sample", Mock(return_value=100))
+def test_sample_pert_passes_lclip_rclip():
+    assert sample(pert(1, 2, 3, 4)) == 100
+    assert sample(pert(1, 2, 3, 4, lclip=1, rclip=3)) == 3
 
 
 @patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
