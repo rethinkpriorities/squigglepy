@@ -1292,6 +1292,13 @@ def triangular(left, mode, right, lclip=None, rclip=None):
 class PERTDistribution(ContinuousDistribution):
     def __init__(self, left, mode, right, lam=4, lclip=None, rclip=None):
         super().__init__()
+        if left > mode:
+            raise ValueError("left must be less than or equal to mode")
+        if right < mode:
+            raise ValueError("right must be greater than or equal to mode")
+        if lam < 0:
+            raise ValueError("the shape parameter must be positive")
+        
         self.left = left
         self.mode = mode
         self.right = right
