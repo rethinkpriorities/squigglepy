@@ -20,7 +20,7 @@ CONTINUOUS_DISTRIBUTIONS = [
     sq.exponential,
     sq.gamma,
     sq.pareto,
-    sq.pert
+    sq.pert,
 ]
 
 DISCRETE_DISTRIBUTIONS = [
@@ -223,7 +223,7 @@ def instantiate_with_parameters(draw, dist_fn: Callable) -> sq.OperableDistribut
             )
         )
         return dist_fn(a, c, b)
-    
+
     elif dist_fn == sq.pert:
         low = draw(
             st.floats(-1e30, 1e30, allow_infinity=False, allow_nan=False, allow_subnormal=False)
@@ -253,7 +253,6 @@ def instantiate_with_parameters(draw, dist_fn: Callable) -> sq.OperableDistribut
             )
         )
         return dist_fn(low, low + mode_offset, low + mode_offset + high_offset, shape)
-        
 
     elif dist_fn == sq.poisson:
         lambda_ = draw(st.integers(1, 1000))

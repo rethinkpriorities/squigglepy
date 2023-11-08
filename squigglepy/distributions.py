@@ -1298,7 +1298,7 @@ class PERTDistribution(ContinuousDistribution):
             raise ValueError("right must be greater than or equal to mode")
         if lam < 0:
             raise ValueError("the shape parameter must be positive")
-        
+
         self.left = left
         self.mode = mode
         self.right = right

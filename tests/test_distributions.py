@@ -582,6 +582,7 @@ def test_pert():
     assert pert(1, 3, 5, 2).rclip is None
     assert str(pert(1, 3, 5, 2)) == "<Distribution> PERT(1, 3, 5, lam=2)"
 
+
 @given(
     left=st.floats(min_value=0, max_value=100),
     mode_offset=st.floats(min_value=0.1, max_value=100_000),
@@ -593,10 +594,10 @@ def test_pert_sampling(left, mode_offset, right_offset, lam):
     assert isinstance(dist, PERTDistribution)
     samples = dist @ 10
     for sample in samples:
-        assert left <= sample <= left + mode_offset + right_offset, (
-            "Sampled value is outside of the PERT range"
-        )
-        
+        assert (
+            left <= sample <= left + mode_offset + right_offset
+        ), "Sampled value is outside of the PERT range"
+
 
 def test_pert_distribution_invalid_parameters():
     with pytest.raises(ValueError):
@@ -607,7 +608,7 @@ def test_pert_distribution_invalid_parameters():
         pert(1, 0, 3)  # mode < left
     with pytest.raises(ValueError):
         pert(1, 2, 3, -1)  # Negative lambda
-        
+
 
 def test_pert_lclip_rclip():
     obj = pert(2, 4, 6, 10, lclip=3)
