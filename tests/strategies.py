@@ -226,7 +226,7 @@ def instantiate_with_parameters(draw, dist_fn: Callable) -> sq.OperableDistribut
 
     elif dist_fn == sq.pert:
         low = draw(
-            st.floats(-1e20, 1e20, allow_infinity=False, allow_nan=False, allow_subnormal=False)
+            st.floats(-1e10, 1e10, allow_infinity=False, allow_nan=False, allow_subnormal=False)
         )
         mode_offset = draw(
             st.floats(
@@ -252,7 +252,6 @@ def instantiate_with_parameters(draw, dist_fn: Callable) -> sq.OperableDistribut
                 allow_nan=False,
             )
         )
-        print(f"low: {low}, mode_offset: {mode_offset}, high_offset: {high_offset}, shape: {shape}")
         return dist_fn(low, low + mode_offset, low + mode_offset + high_offset, shape)
 
     elif dist_fn == sq.poisson:

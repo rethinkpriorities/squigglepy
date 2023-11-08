@@ -296,7 +296,7 @@ def test_sample_pert():
 
 
 @patch.object(samplers, "pert_sample", Mock(return_value=100))
-def test_sample_triangular_passes_lclip_rclip():
+def test_sample_pert_passes_lclip_rclip():
     assert sample(pert(1, 2, 3, 4)) == 100
     assert sample(pert(1, 2, 3, 4, lclip=1, rclip=3)) == 3
 
