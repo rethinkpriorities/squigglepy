@@ -2,7 +2,7 @@ import scipy.stats as stats
 
 from .. import squigglepy as sq
 from .strategies import distributions_with_correlation
-from hypothesis import given, assume, note, example, reproduce_failure
+from hypothesis import given, assume, note, example
 import hypothesis.strategies as st
 import numpy as np
 import warnings
