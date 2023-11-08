@@ -20,6 +20,7 @@ CONTINUOUS_DISTRIBUTIONS = [
     sq.exponential,
     sq.gamma,
     sq.pareto,
+    sq.pert
 ]
 
 DISCRETE_DISTRIBUTIONS = [
