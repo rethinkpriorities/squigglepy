@@ -1300,10 +1300,9 @@ class PERTDistribution(ContinuousDistribution):
         self.rclip = rclip
 
     def __str__(self):
-        out = "<Distribution> PERT({}, {}, {}, lam={}".format(self.left,
-                                                              self.mode,
-                                                              self.right,
-                                                              self.lam)
+        out = "<Distribution> PERT({}, {}, {}, lam={}".format(
+            self.left, self.mode, self.right, self.lam
+        )
         if self.lclip is not None:
             out += ", lclip={}".format(self.lclip)
         if self.rclip is not None:
@@ -1340,12 +1339,7 @@ def pert(left, mode, right, lam, lclip=None, rclip=None):
     >>> pert(1, 2, 3)
     <Distribution> PERT(1, 2, 3)
     """
-    return PERTDistribution(left=left,
-                            mode=mode,
-                            right=right,
-                            lam=lam,
-                            lclip=lclip,
-                            rclip=rclip)
+    return PERTDistribution(left=left, mode=mode, right=right, lam=lam, lclip=lclip, rclip=rclip)
 
 
 class PoissonDistribution(DiscreteDistribution):
