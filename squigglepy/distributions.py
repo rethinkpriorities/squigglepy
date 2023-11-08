@@ -1256,6 +1256,12 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
 class TriangularDistribution(ContinuousDistribution):
     def __init__(self, left, mode, right):
         super().__init__()
+        if left > mode:
+            raise ValueError("left must be less than or equal to mode")
+        if right < mode:
+            raise ValueError("right must be greater than or equal to mode")
+        if left == right:
+            raise ValueError("left and right must be different")
         self.left = left
         self.mode = mode
         self.right = right
@@ -1298,6 +1304,8 @@ class PERTDistribution(ContinuousDistribution):
             raise ValueError("right must be greater than or equal to mode")
         if lam < 0:
             raise ValueError("the shape parameter must be positive")
+        if left == right:
+            raise ValueError("left and right must be different")
 
         self.left = left
         self.mode = mode
