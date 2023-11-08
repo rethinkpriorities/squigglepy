@@ -1254,22 +1254,14 @@ def log_tdist(x=None, y=None, t=1, credibility=90, lclip=None, rclip=None):
 
 
 class TriangularDistribution(ContinuousDistribution):
-    def __init__(self, left, mode, right, lclip=None, rclip=None):
+    def __init__(self, left, mode, right):
         super().__init__()
         self.left = left
         self.mode = mode
         self.right = right
-        self.lclip = lclip
-        self.rclip = rclip
 
     def __str__(self):
-        out = "<Distribution> triangular({}, {}, {}".format(self.left, self.mode, self.right)
-        if self.lclip is not None:
-            out += ", lclip={}".format(self.lclip)
-        if self.rclip is not None:
-            out += ", rclip={}".format(self.rclip)
-        out += ")"
-        return out
+        return "<Distribution> triangular({}, {}, {})".format(self.left, self.mode, self.right)
 
 
 def triangular(left, mode, right, lclip=None, rclip=None):
@@ -1284,10 +1276,6 @@ def triangular(left, mode, right, lclip=None, rclip=None):
         The most common value of the triangular distribution.
     right : float
         The largest value of the triangular distribution.
-    lclip : float or None
-        If not None, any value below ``lclip`` will be coerced to ``lclip``.
-    rclip : float or None
-        If not None, any value below ``rclip`` will be coerced to ``rclip``.
 
     Returns
     -------
@@ -1298,7 +1286,66 @@ def triangular(left, mode, right, lclip=None, rclip=None):
     >>> triangular(1, 2, 3)
     <Distribution> triangular(1, 2, 3)
     """
-    return TriangularDistribution(left=left, mode=mode, right=right, lclip=lclip, rclip=rclip)
+    return TriangularDistribution(left=left, mode=mode, right=right)
+
+
+class PERTDistribution(ContinuousDistribution):
+    def __init__(self, left, mode, right, lam, lclip=None, rclip=None):
+        super().__init__()
+        self.left = left
+        self.mode = mode
+        self.right = right
+        self.lam = lam
+        self.lclip = lclip
+        self.rclip = rclip
+
+    def __str__(self):
+        out = "<Distribution> PERT({}, {}, {}, lam={}".format(self.left,
+                                                              self.mode,
+                                                              self.right,
+                                                              self.lam)
+        if self.lclip is not None:
+            out += ", lclip={}".format(self.lclip)
+        if self.rclip is not None:
+            out += ", rclip={}".format(self.rclip)
+        out += ")"
+        return out
+
+
+def pert(left, mode, right, lam, lclip=None, rclip=None):
+    """
+    Initialize a PERT distribution.
+
+    Parameters
+    ----------
+    left : float
+        The smallest value of the PERT distribution.
+    mode : float
+        The most common value of the PERT distribution.
+    right : float
+        The largest value of the PERT distribution.
+    lam : float
+        The lambda value of the PERT distribution.
+    lclip : float or None
+        If not None, any value below ``lclip`` will be coerced to ``lclip``.
+    rclip : float or None
+        If not None, any value below ``rclip`` will be coerced to ``rclip``.
+
+    Returns
+    -------
+    PERTDistribution
+
+    Examples
+    --------
+    >>> pert(1, 2, 3)
+    <Distribution> PERT(1, 2, 3)
+    """
+    return PERTDistribution(left=left,
+                            mode=mode,
+                            right=right,
+                            lam=lam,
+                            lclip=lclip,
+                            rclip=rclip)
 
 
 class PoissonDistribution(DiscreteDistribution):

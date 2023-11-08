@@ -13,6 +13,7 @@ from ..squigglepy.distributions import (
     tdist,
     log_tdist,
     triangular,
+    pert,
     chisquare,
     poisson,
     exponential,
@@ -44,6 +45,7 @@ from ..squigglepy.distributions import (
     PoissonDistribution,
     TDistribution,
     TriangularDistribution,
+    PERTDistribution,
     BernoulliDistribution,
     BetaDistribution,
     BinomialDistribution,
@@ -567,22 +569,33 @@ def test_triangular():
     assert str(triangular(1, 3, 5)) == "<Distribution> triangular(1, 3, 5)"
 
 
-def test_triangular_lclip_rclip():
-    obj = triangular(2, 4, 6, lclip=3)
-    assert isinstance(obj, TriangularDistribution)
+def test_pert():
+    assert isinstance(pert(1, 3, 5, 2), PERTDistribution)
+    assert pert(1, 3, 5, 2).left == 1
+    assert pert(1, 3, 5, 2).mode == 3
+    assert pert(1, 3, 5, 2).right == 5
+    assert pert(1, 3, 5, 2).lam == 2
+    assert pert(1, 3, 5, 2).lclip is None
+    assert pert(1, 3, 5, 2).rclip is None
+    assert str(pert(1, 3, 5, 2)) == "<Distribution> PERT(1, 3, 5, lam=2)"
+
+
+def test_pert_lclip_rclip():
+    obj = pert(2, 4, 6, 10, lclip=3)
+    assert isinstance(obj, PERTDistribution)
     assert obj.lclip == 3
     assert obj.rclip is None
-    assert str(obj) == "<Distribution> triangular(2, 4, 6, lclip=3)"
-    obj = triangular(2, 4, 6, rclip=3)
-    assert isinstance(obj, TriangularDistribution)
+    assert str(obj) == "<Distribution> PERT(2, 4, 6, lam=10, lclip=3)"
+    obj = pert(2, 4, 6, 10, rclip=3)
+    assert isinstance(obj, PERTDistribution)
     assert obj.lclip is None
     assert obj.rclip == 3
-    assert str(obj) == "<Distribution> triangular(2, 4, 6, rclip=3)"
-    obj = triangular(2, 4, 6, lclip=3, rclip=5)
-    assert isinstance(obj, TriangularDistribution)
+    assert str(obj) == "<Distribution> PERT(2, 4, 6, lam=10, rclip=3)"
+    obj = pert(2, 4, 6, 10, lclip=3, rclip=5)
+    assert isinstance(obj, PERTDistribution)
     assert obj.lclip == 3
     assert obj.rclip == 5
-    assert str(obj) == "<Distribution> triangular(2, 4, 6, lclip=3, rclip=5)"
+    assert str(obj) == "<Distribution> PERT(2, 4, 6, lam=10, lclip=3, rclip=5)"
 
 
 def test_exponential():

@@ -1,3 +1,9 @@
+## v0.28
+
+* **[Breaking change]** lclip / rclip have been removed from triangular distribution because that doesn't make sense.
+* Added `pert` distribution.
+
+
 ## v0.27
 
 * **[Breaking change]** This package now only supports Python 3.9 and higher.
