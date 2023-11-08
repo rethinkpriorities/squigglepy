@@ -41,7 +41,6 @@ from ..squigglepy.samplers import (
     normal_sample,
     lognormal_sample,
     mixture_sample,
-    pert_sample,
     discrete_sample,
     log_t_sample,
     t_sample,
