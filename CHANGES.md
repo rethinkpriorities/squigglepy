@@ -1,6 +1,7 @@
 ## v0.28
 
 * **[Breaking change]** lclip / rclip have been removed from triangular distribution because that doesn't make sense.
+* **[Breaking change]** You now can nest mixture and discrete distributions within mixture distributions.
 * Added `pert` distribution.
 
 
@@ -9,7 +10,6 @@
 * **[Breaking change]** This package now only supports Python 3.9 and higher.
 * **[Breaking change]** `get_percentiles` and `get_log_percentiles` now always return a dictionary, even if there's only one element.
 * **[Breaking change]** `.type` is now removed from distribution objects.
-* **[Breaking change]** You now can nest mixture distributions within mixture distributoins.
 * You can now create correlated variables using `sq.correlate`.
 * Added `geometric` distribution.
 * Distribution objects now have the version of squigglepy they were created with, which can be accessed via `obj._version`. This should be helpful for debugging and noticing stale objects, especially when squigglepy distributions are stored in caches.
