@@ -140,6 +140,7 @@ class ProbabilityMassHistogram:
         assert len(values) == len(masses)
         self.values = values
         self.masses = masses
+        self.num_bins = len(values)
         self.exact_mean = exact_mean
 
     def __len__(self):
@@ -224,10 +225,7 @@ class ProbabilityMassHistogram:
             )
 
             # How much each bin contributes to total EV.
-            contribution_to_ev = (
-                stats.lognorm.mean(dist.norm_sd, scale=np.exp(dist.norm_mean))
-                / num_bins
-            )
+            contribution_to_ev = dist.lognorm_mean / num_bins
 
             # We can compute the exact mass of each bin as the difference in
             # CDF between the left and right edges.
@@ -244,7 +242,34 @@ class ProbabilityMassHistogram:
             # (modulo floating point rounding).
             values = contribution_to_ev / masses
 
+            # For sufficiently large values, CDF rounds to 1 which makes the
+            # mass 0. In that case, ignore the value.
+            values = np.where(masses == 0, 0, values)
+
             return cls(np.array(values), np.array(masses))
 
     def mean(self):
         return np.sum(self.values * self.masses)
+
+    def fraction_of_ev(self, x: np.ndarray | float):
+        """Return the approximate fraction of expected value that is less than
+        the given value.
+        """
+        if isinstance(x, np.ndarray):
+            return np.array([self.fraction_of_ev(xi) for xi in x])
+        return (
+            np.sum(self.masses * self.values * (self.values <= x))
+            / self.mean()
+        )
+
+    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
+        """Return the value such that `fraction` of the contribution to
+        expected value lies to the left of that value.
+        """
+        if isinstance(fraction, np.ndarray):
+            return np.array([self.inv_fraction_of_ev(xi) for xi in fraction])
+        if fraction <= 0:
+            raise ValueError("fraction must be greater than 0")
+        epsilon = 1e-6  # to avoid floating point rounding issues
+        index = np.searchsorted(self.fraction_of_ev(self.values), fraction - epsilon)
+        return self.values[index]
