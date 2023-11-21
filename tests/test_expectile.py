@@ -85,8 +85,18 @@ def test_expectile_specific_values():
     assert dist.expectile(0.9, max_iter=1000) == pytest.approx(8.094002)
     assert dist.expectile(0.999, max_iter=1000) == pytest.approx(9.473339)
 
-def test_contribution_to_ev():
-    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    print(dist.contribution_to_ev(0.5))
-    print(dist.contribution_to_ev(0.001))
-    print(dist.contribution_to_ev(0.999))
+@given(
+    norm_mean=st.floats(min_value=np.log(0.01), max_value=np.log(1e6)),
+    norm_sd=st.floats(min_value=0.1, max_value=2.5),
+    ev_quantile=st.floats(min_value=0.01, max_value=0.99),
+)
+@settings(max_examples=1000)
+def test_inv_fraction_of_ev_inverts_fraction_of_ev(norm_mean, norm_sd, ev_quantile):
+    dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
+    assert dist.fraction_of_ev(dist.inv_fraction_of_ev(ev_quantile)) == pytest.approx(ev_quantile, 2e-5 / ev_quantile)
+
+
+def test_basic():
+    dist = LognormalDistribution(lognorm_mean=2, lognorm_sd=1.0)
+    ev_quantile = 0.25
+    assert dist.fraction_of_ev(dist.inv_fraction_of_ev(ev_quantile)) == pytest.approx(ev_quantile)

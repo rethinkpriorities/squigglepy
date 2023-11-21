@@ -3,7 +3,7 @@ import operator
 import warnings
 import numpy as np
 import scipy.stats
-from scipy.special import erf
+from scipy.special import erf, erfinv
 
 from typing import Optional, Union
 
@@ -942,9 +942,9 @@ class LognormalDistribution(ContinuousDistribution):
     def expectile(
         self, alphas: np.ndarray | float, precision=1e-10, max_iter=1000
     ):
-        # translated from R package "expectreg" function `elnorm`
-        # This function uses root finding to find the expectile such that inv_expectile(expectile) equals alphas.
-        # TODO: try rewriting using scipy root finder, see if it's faster
+        # translated from R package "expectreg" function `elnorm` This function
+        # uses root finding to find the expectile such that
+        # inv_expectile(expectile) equals alphas.
         if isinstance(alphas, float):
             return self.expectile(
                 np.array([alphas]), precision=precision, max_iter=max_iter
@@ -985,12 +985,18 @@ class LognormalDistribution(ContinuousDistribution):
 
         return zz
 
-    def contribution_to_ev(self, x: np.ndarray | float):
+    def fraction_of_ev(self, x: np.ndarray | float):
         """Find the proportion of expected value given by the portion of the
         distribution that lies to the left of x.
+
+        `fraction_of_ev(x)` is equivalent to
+
+        .. math::
+          \\int_0^x t f(t) dt
+        where `f(t)` is the PDF of the lognormal distribution.
         """
         if isinstance(x, float):
-            return self.contribution_to_ev(np.array([x]))[0]
+            return self.fraction_of_ev(np.array([x]))[0]
 
         mu = self.norm_mean
         sigma = self.norm_sd
@@ -1000,42 +1006,24 @@ class LognormalDistribution(ContinuousDistribution):
 
         return (right_bound - left_bound) / self.lognorm_mean
 
-    def _derivative_contribution_to_ev(self, x: np.ndarray):
-        """The derivative of `inv_contribution_to_ev` with respect to x."""
-        # Computed using Wolfram Alpha and verified correctness by confirming
-        # that contribution_to_ev with a binary search implementation gives the
-        # same result as with Newton's method using this function.
-        mu = self.norm_mean
-        sigma = self.norm_sd
-        return np.exp(mu + sigma**2/2 - (mu + sigma**2 - np.log(x))**2/(2 * sigma**2))/(np.sqrt(2 * np.pi) * x * sigma)
+    def inv_fraction_of_ev(self, alphas: np.ndarray | float):
+        """For a given fraction of expected value, find the number such that
+        that fraction lies to the left of that number. The inverse of
+        `fraction_of_ev`.
 
-
-    def inv_contribution_to_ev(self, alphas: np.ndarray | float, precision=1e-10, max_iter=100, upper_bound=1e12):
-        # solve for t: (integral from 0 to t of 1/(sigma*sqrt(2*pi)) * exp(-((log(t) - mu)^2 / (2*sigma^2))) dt) = a * m
+        This function is analogous to `lognorm.ppf` except that
+        the integrand is `x * f(x) dx` instead of `f(x) dx`.
+        """
         if isinstance(alphas, float) or isinstance(alphas, int):
-            return self.inv_contribution_to_ev(np.array([alphas]))[0]
+            return self.inv_fraction_of_ev(np.array([alphas]))[0]
 
         if any(alphas <= 0) or any(alphas >= 1):
             raise ValueError("alphas must be between 0 and 1")
 
-        guess = np.repeat(self.lognorm_mean, len(alphas))
-        diff = 1
-        iter_count = 0
-        while diff > precision and iter_count < max_iter:
-            root = self.contribution_to_ev(guess) - alphas
-
-            guess = guess - root / self._derivative_contribution_to_ev(guess)
-            diff = np.max(np.abs(root))
-            iter_count += 1
-
-        if iter_count == max_iter:
-            warnings.warn(
-                f"contribution_to_ev({alphas}, {self.norm_mean}, {self.norm_sd}) failed to converge in {max_iter} iterations; last iterations differed by {diff}",
-                ConvergenceWarning,
-            )
-
-        return guess
-
+        mu = self.norm_mean
+        sigma = self.norm_sd
+        y = alphas * self.lognorm_mean
+        return np.exp(mu + sigma**2 - np.sqrt(2) * sigma * erfinv(1 - 2 * np.exp(-mu - sigma**2/2) * y))
 
 
 def lognorm(

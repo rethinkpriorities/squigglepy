@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from scipy import stats
+from typing import Optional
 
 from .distributions import LognormalDistribution, lognorm
 from .samplers import sample
@@ -84,8 +85,8 @@ class PHDArbitraryBins(PDHBase):
         value."""
         masses = bin_data[:, 0] * bin_data[:, 1]
         # formula for expected value is density * bin width * bin center
-        contribution_to_ev = TODO
-        ev = sum(contribution_to_ev)
+        fraction_of_ev = TODO
+        ev = sum(fraction_of_ev)
         target_ev_per_bin = ev / num_bins
         # TODO: how to pick the left and right bounds?
 
@@ -130,10 +131,16 @@ class ProbabilityMassHistogram:
     weighted by probability, so you can effectively represent many times more
     samples than you actually have values."""
 
-    def __init__(self, values: np.ndarray, masses: np.ndarray):
+    def __init__(
+        self,
+        values: np.ndarray,
+        masses: np.ndarray,
+        exact_mean: Optional[float] = None,
+    ):
         assert len(values) == len(masses)
         self.values = values
         self.masses = masses
+        self.exact_mean = exact_mean
 
     def __len__(self):
         return len(self.values)
@@ -206,13 +213,15 @@ class ProbabilityMassHistogram:
             edge_values = []
             boundary = 1 / num_bins
 
-            edge_values = np.concatenate((
-                [0],
-                dist.inv_contribution_to_ev(
-                    np.linspace(boundary, 1 - boundary, num_bins - 1)
-                ),
-                [np.inf],
-            ))
+            edge_values = np.concatenate(
+                (
+                    [0],
+                    dist.inv_fraction_of_ev(
+                        np.linspace(boundary, 1 - boundary, num_bins - 1)
+                    ),
+                    [np.inf],
+                )
+            )
 
             # How much each bin contributes to total EV.
             contribution_to_ev = (
