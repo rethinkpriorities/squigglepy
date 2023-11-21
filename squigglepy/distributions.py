@@ -740,9 +740,7 @@ class NormalDistribution(ContinuousDistribution):
 
         if (self.x is None or self.y is None) and self.sd is None:
             raise ValueError("must define either x/y or mean/sd")
-        elif (
-            self.x is not None or self.y is not None
-        ) and self.sd is not None:
+        elif (self.x is not None or self.y is not None) and self.sd is not None:
             raise ValueError(
                 "must define either x/y or mean/sd -- cannot define both"
             )
@@ -917,74 +915,6 @@ class LognormalDistribution(ContinuousDistribution):
         out += ")"
         return out
 
-    def inv_expectile(self, e: np.ndarray | float):
-        """
-        Compute the inverse expectile for the specified value.
-
-        Expectiles are a generalization of expectation in the same way that quantiles are a generalization of the median. The inverse expectile of the mean equals 0.5.
-
-        Just as `cdf(x)` gives the value `q` such that `x` is the `q`th quantile, `inv_expectile(x)` gives the value `alpha` such that `x` is the `alpha`th expectile.
-        """
-        # translated from R package "expectreg" function `pelnorm`
-        # TODO: handle divisions by 0, which can happen for extreme values
-        if isinstance(e, float):
-            return self.inv_expectile(np.array([e]))[0]
-
-        meanlog = self.norm_mean
-        sdlog = self.norm_sd
-        u = np.exp(meanlog + 0.5 * sdlog**2) * (
-            1
-            - scipy.stats.norm.cdf((meanlog + sdlog**2 - np.log(e)) / sdlog)
-        ) - e * scipy.stats.lognorm.cdf(e, sdlog, scale=np.exp(meanlog))
-        alphas = u / (2 * u + e - np.exp(meanlog + 0.5 * sdlog**2))
-        return alphas
-
-    def expectile(
-        self, alphas: np.ndarray | float, precision=1e-10, max_iter=1000
-    ):
-        # translated from R package "expectreg" function `elnorm` This function
-        # uses root finding to find the expectile such that
-        # inv_expectile(expectile) equals alphas.
-        if isinstance(alphas, float):
-            return self.expectile(
-                np.array([alphas]), precision=precision, max_iter=max_iter
-            )[0]
-
-        if any(alphas <= 0) or any(alphas >= 1):
-            raise ValueError("alphas must be between 0 and 1")
-
-        meanlog = self.norm_mean
-        sdlog = self.norm_sd
-
-        zz = 0 * alphas
-        lower = 0 * alphas
-        # TODO: this only checks up to a constant multiple of the 0.995 quantile
-        # so it will break if the true value is higher than that
-        upper = np.repeat(
-            1.5 * scipy.stats.lognorm.ppf(0.995, sdlog, scale=np.exp(meanlog)),
-            len(alphas),
-        )
-        diff = 1
-        iter_count = 1
-        while diff > precision and iter_count < max_iter:
-            root = self.inv_expectile(zz) - alphas
-
-            # in the positions where root < 0, set lower = zz; and similarly
-            # for upper
-            lower = lower + (root < 0) * (zz - lower)
-            upper = upper + (root > 0) * (zz - upper)
-            zz = (upper + lower) / 2
-            diff = np.max(np.abs(root))
-            iter_count += 1
-
-        if iter_count == max_iter:
-            warnings.warn(
-                f"expectile({alphas}, {meanlog}, {sdlog}) failed to converge in {max_iter} iterations; last iterations differed by {diff}",
-                ConvergenceWarning,
-            )
-
-        return zz
-
     def fraction_of_ev(self, x: np.ndarray | float):
         """Find the proportion of expected value given by the portion of the
         distribution that lies to the left of x.
@@ -1001,8 +931,15 @@ class LognormalDistribution(ContinuousDistribution):
         mu = self.norm_mean
         sigma = self.norm_sd
         u = np.log(x)
-        left_bound = -1/2 * np.exp(mu + sigma**2/2)  # at x=0 / u=-infinity
-        right_bound = -1/2 * np.exp(mu + sigma**2/2) * erf((-u + mu + sigma**2)/(np.sqrt(2) * sigma))
+        left_bound = (
+            -1 / 2 * np.exp(mu + sigma**2 / 2)
+        )  # at x=0 / u=-infinity
+        right_bound = (
+            -1
+            / 2
+            * np.exp(mu + sigma**2 / 2)
+            * erf((-u + mu + sigma**2) / (np.sqrt(2) * sigma))
+        )
 
         return (right_bound - left_bound) / self.lognorm_mean
 
@@ -1023,7 +960,13 @@ class LognormalDistribution(ContinuousDistribution):
         mu = self.norm_mean
         sigma = self.norm_sd
         y = alphas * self.lognorm_mean
-        return np.exp(mu + sigma**2 - np.sqrt(2) * sigma * erfinv(1 - 2 * np.exp(-mu - sigma**2/2) * y))
+        return np.exp(
+            mu
+            + sigma**2
+            - np.sqrt(2)
+            * sigma
+            * erfinv(1 - 2 * np.exp(-mu - sigma**2 / 2) * y)
+        )
 
 
 def lognorm(
@@ -1134,9 +1077,7 @@ def to(
             x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip
         )
     else:
-        return norm(
-            x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip
-        )
+        return norm(x=x, y=y, credibility=credibility, lclip=lclip, rclip=rclip)
 
 
 class BinomialDistribution(DiscreteDistribution):
@@ -1725,9 +1666,7 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
     >>> gamma(10, 1)
     <Distribution> gamma(shape=10, scale=1)
     """
-    return GammaDistribution(
-        shape=shape, scale=scale, lclip=lclip, rclip=rclip
-    )
+    return GammaDistribution(shape=shape, scale=scale, lclip=lclip, rclip=rclip)
 
 
 class ParetoDistribution(ContinuousDistribution):
@@ -1782,15 +1721,11 @@ class MixtureDistribution(CompositeDistribution):
     def __str__(self):
         out = "<Distribution> mixture"
         for i in range(len(self.dists)):
-            out += "\n - {} weight on {}".format(
-                self.weights[i], self.dists[i]
-            )
+            out += "\n - {} weight on {}".format(self.weights[i], self.dists[i])
         return out
 
 
-def mixture(
-    dists, weights=None, relative_weights=None, lclip=None, rclip=None
-):
+def mixture(dists, weights=None, relative_weights=None, lclip=None, rclip=None):
     """
     Initialize a mixture distribution, which is a combination of different distributions.
 

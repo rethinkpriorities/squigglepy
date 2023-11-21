@@ -271,5 +271,7 @@ class ProbabilityMassHistogram:
         if fraction <= 0:
             raise ValueError("fraction must be greater than 0")
         epsilon = 1e-6  # to avoid floating point rounding issues
-        index = np.searchsorted(self.fraction_of_ev(self.values), fraction - epsilon)
+        index = np.searchsorted(
+            self.fraction_of_ev(self.values), fraction - epsilon
+        )
         return self.values[index]
