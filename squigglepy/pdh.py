@@ -160,45 +160,34 @@ class ProbabilityMassHistogram:
 
         # Squash the x values into a shorter array such that each x value has
         # equal contribution to expected value
-        contributions_to_ev = extended_masses * extended_values
-        ev = sum(contributions_to_ev)
-        ev_per_bin = ev / max(len(x), len(y))
-
-        working_ev = 0
-        working_mass = 0
+        elem_evs = extended_masses * extended_values
+        ev = sum(elem_evs)
+        num_bins = max(len(x), len(y))
+        ev_per_bin = ev / num_bins
 
         bin_values = []
         bin_masses = []
 
-        # Note: I could do the same thing by repeatedly calling
-        # scipy.stats.expectile, but I'd have to call it `num_bins` times, and
-        # `expectile` internally uses root finding (idk why, wouldn't a linear
-        # search be faster?).
-        for i in range(len(extended_values)):
-            element_ev = extended_values[i] * extended_masses[i]
+        cumulative_evs = np.cumsum(elem_evs)
 
-            if working_ev + element_ev > ev_per_bin:
-                # If adding this element would put us over the expected value,
-                # split this element across the current and the next bin
-                partial_ev = ev_per_bin - working_ev
-                leftover_ev = element_ev - partial_ev
-                partial_mass = partial_ev / extended_values[i]
-                leftover_mass = extended_masses[i] - partial_mass
+        bin_boundaries = np.searchsorted(
+            cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin)
+        )
 
-                bin_ev = working_ev + partial_ev
-                bin_mass = working_mass + partial_mass
+        # Split elem_evs and extended_masses into bins
+        split_element_evs = np.split(elem_evs, bin_boundaries)
+        split_extended_masses = np.split(extended_masses, bin_boundaries)
 
-                # the value of this bin is the weighted average of the squashed
-                # values
-                bin_values.append(bin_ev / bin_mass)
-                bin_masses.append(bin_mass)
-            else:
-                working_ev += element_ev
-                working_mass += extended_masses[i]
+        for elem_evs, elem_masses in zip(split_element_evs, split_extended_masses):
+            total_mass = np.sum(elem_masses)
+            weighted_value = np.sum(elem_evs) / total_mass
+            bin_values.append(weighted_value)
+            bin_masses.append(total_mass)
 
-        return ProbabilityMassHistogram(
+        res = ProbabilityMassHistogram(
             np.array(bin_values), np.array(bin_masses)
         )
+        return res
 
     @classmethod
     def from_distribution(cls, dist, num_bins=1000):
@@ -248,8 +237,19 @@ class ProbabilityMassHistogram:
 
             return cls(np.array(values), np.array(masses))
 
-    def mean(self):
+    def histogram_mean(self):
+        """Mean of the distribution, calculated using the histogram data."""
         return np.sum(self.values * self.masses)
+
+    def mean(self):
+        """Mean of the distribution. May be calculated using a stored exact
+        value or the histogram data."""
+        return self.histogram_mean()
+
+    def std(self):
+        """Standard deviation of the distribution."""
+        mean = self.mean()
+        return np.sqrt(np.sum(self.masses * (self.values - mean)**2))
 
     def fraction_of_ev(self, x: np.ndarray | float):
         """Return the approximate fraction of expected value that is less than
