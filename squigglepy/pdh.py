@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from scipy import stats
+from scipy import optimize, stats
 from typing import Optional
 
 from .distributions import LognormalDistribution, lognorm
@@ -8,124 +8,201 @@ from .samplers import sample
 
 
 class PDHBase(ABC):
-    @abstractmethod
-    def bin_density(self, index: int) -> float:
-        ...
+    def histogram_mean(self):
+        """Mean of the distribution, calculated using the histogram data."""
+        return np.sum(self.masses * self.values)
 
-    @abstractmethod
-    def bin_width(self, index: int) -> float:
-        ...
+    def mean(self):
+        """Mean of the distribution. May be calculated using a stored exact
+        value or the histogram data."""
+        return self.histogram_mean()
 
-    @abstractmethod
-    def group_masses(self, num_bins: int, masses: np.ndarray):
-        """Group the given masses into the given number of bins."""
-        ...
+    def std(self):
+        """Standard deviation of the distribution."""
+        mean = self.mean()
+        return np.sqrt(np.sum(self.masses * (self.values - mean) ** 2))
 
-    def old__mul__(self, other):
-        """Multiply two PDHs together."""
-        new_num_bins: int = max(self.num_bins, other.num_bins)
-        masses_per_bin: int = (self.num_bins * other.num_bins) // new_num_bins
-        masses = []
-        for i in range(self.num_bins):
-            for j in range(other.num_bins):
-                xval = self.bin_edges[i] * other.bin_edges[j]
+    @classmethod
+    def _fraction_of_ev(cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float):
+        """Return the approximate fraction of expected value that is less than
+        the given value.
+        """
+        if isinstance(x, np.ndarray):
+            return np.array([cls._fraction_of_ev(values, masses, xi) for xi in x])
+        mean = np.sum(masses * values)
+        return np.sum(masses * values * (values <= x)) / mean
 
-                mass = (
-                    self.bin_density(i)
-                    * self.bin_width(i)
-                    * other.bin_density(j)
-                    * other.bin_width(j)
-                )
-                masses.push(xval, mass)
+    @classmethod
+    def _inv_fraction_of_ev(
+            cls, values: np.ndarray, masses: np.ndarray, fraction: np.ndarray | float
+    ):
+        if isinstance(fraction, np.ndarray):
+            return np.array([cls.inv_fraction_of_ev(values, masses, xi) for xi in fraction])
+        if fraction <= 0:
+            raise ValueError("fraction must be greater than 0")
+        mean = np.sum(masses * values)
+        fractions_of_ev = np.cumsum(masses * values) / mean
+        epsilon = 1e-6  # to avoid floating point rounding issues
+        index = np.searchsorted(fractions_of_ev, fraction - epsilon)
+        return values[index]
 
-        masses.sort(key=lambda pair: pair[0])
-        return self.group_masses(new_num_bins, masses)
+    def fraction_of_ev(self, x: np.ndarray | float):
+        """Return the approximate fraction of expected value that is less than
+        the given value.
+        """
+        return self._fraction_of_ev(self.values, self.masses, fraction)
 
-    def __mul__(self, other):
-        """Multiply two PDHs together."""
-        x = self
-        y = other
-
-        # Create lists representing all n^2 bins over a double integral
-        prod_edges = np.outer(x.bin_edges, y.bin_edges).flatten()
-        prod_densities = np.outer(x.edge_densities, y.edge_densities).flatten()
-
-        # TODO: this isn't quite right, we want the product of the x and y
-        # values in the middle of the bins, not the edges
-        xy_product = np.outer(x.bin_edges, y.bin_edges).flatten()
-
-        # Sort the arrays so bin edges are in order
-        bin_data = np.column_stack((prod_edges, prod_densities, xy_product))
-        bin_data = bin_data[bin_data[:, 0].argsort()]
-
-        new_num_bins: int = max(self.num_bins, other.num_bins)
-        return self.group_masses(new_num_bins, bin_data)
+    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
+        """Return the value such that `fraction` of the contribution to
+        expected value lies to the left of that value.
+        """
+        return self._inv_fraction_of_ev(self.values, self.masses, fraction)
 
 
-class PHDArbitraryBins(PDHBase):
-    """A probability density histogram (PDH) is a numerical representation of
-    a probability density function. A PDH is defined by a set of bin edges and
-    a set of bin densities. The bin edges are the boundaries of the bins, and
-    the bin densities are the probability densities. Bins do not necessarily
-    have uniform width.
-    """
-
-    def __init__(self, bin_edges: np.ndarray, edge_densities: np.ndarray):
-        assert len(bin_edges) == len(edge_densities)
-        self.bin_edges = bin_edges
-        self.edge_densities = edge_densities
-        self.num_bins = len(bin_edges) - 1
-
-    def scale(self, scale_factor: float):
-        """Scale the PDF by the given scale factor."""
-        self.bin_edges *= scale_factor
-
-    def group_masses(self, num_bins: int, bin_data: np.ndarray) -> np.ndarray:
-        """Group masses such that each bin has equal contribution to expected
-        value."""
-        masses = bin_data[:, 0] * bin_data[:, 1]
-        # formula for expected value is density * bin width * bin center
-        fraction_of_ev = TODO
-        ev = sum(fraction_of_ev)
-        target_ev_per_bin = ev / num_bins
-        # TODO: how to pick the left and right bounds?
-
-
-class ProbabilityDensityHistogram(PDHBase):
+class ScaledBinHistogram(PDHBase):
     """PDH with exponentially growing bin widths."""
 
     def __init__(
         self,
         left_bound: float,
         right_bound: float,
-        bin_growth_rate: float,
+        bin_scale_rate: float,
         bin_densities: np.ndarray,
     ):
+        # TODO: currently only supports positive-everywhere distributions
         self.left_bound = left_bound
         self.right_bound = right_bound
-        self.bin_growth_rate = bin_growth_rate
+        self.bin_scale_rate = bin_scale_rate
         self.bin_densities = bin_densities
         self.num_bins = len(bin_densities)
+        self.bin_edges = self.get_bin_edges(
+            self.left_bound, self.right_bound, self.bin_scale_rate, self.num_bins
+        )
+        self.values = (self.bin_edges[:-1] + self.bin_edges[1:]) / 2
+        self.bin_widths = np.diff(self.bin_edges)
+        self.masses = self.bin_densities * self.bin_widths
+
+    @staticmethod
+    def get_bin_edges(left_bound: float, right_bound: float, bin_scale_rate: float, num_bins: int):
+        num_scaled_bins = int(num_bins / 2)
+        num_fixed_bins = num_bins - num_scaled_bins
+        min_width = (right_bound - left_bound) / (
+            num_fixed_bins + sum(bin_scale_rate**i for i in range(num_scaled_bins))
+        )
+        bin_widths = np.concatenate(
+            (
+                [min_width for _ in range(num_fixed_bins)],
+                [min_width * bin_scale_rate**i for i in range(num_scaled_bins)],
+            )
+        )
+        return np.cumsum(np.concatenate(([left_bound], bin_widths)))
+
+    def __len__(self):
+        return self.num_bins
 
     def bin_density(self, index: int) -> float:
         return self.bin_densities[index]
 
-    def _weighted_error(
-        self,
-        left_bound: float,
-        right_bound: float,
-        bin_growth_rate: float,
-        masses: np.ndarray,
-    ) -> float:
-        raise NotImplementedError
+    def __mul__(x, y):
+        extended_masses = np.outer(
+            x.bin_densities * x.bin_widths, y.bin_densities * y.bin_widths
+        ).flatten()
+        extended_values = np.outer(x.values, y.values).flatten()
+        return x.binary_op(y, extended_masses, extended_values)
 
-    def group_masses(self, num_bins: int, masses: np.ndarray) -> np.ndarray:
-        # Use gradient descent to choose bounds and growth rate that minimize
-        # weighted error
-        pass
+    def binary_op(x, y, extended_masses, extended_values):
+        # Sort the arrays so product values are in order
+        sorted_indexes = extended_values.argsort()
+        extended_values = extended_values[sorted_indexes]
+        extended_masses = extended_masses[sorted_indexes]
+
+        num_bins = max(len(x), len(y))
+        outer_ev = 1 / num_bins / 2
+
+        left_bound = PDHBase._inv_fraction_of_ev(extended_values, extended_masses, outer_ev)
+        right_bound = PDHBase._inv_fraction_of_ev(extended_values, extended_masses, 1 - outer_ev)
+        bin_scale_rate = np.sqrt(x.bin_scale_rate * y.bin_scale_rate)
+        bin_edges = ScaledBinHistogram.get_bin_edges(
+            left_bound, right_bound, bin_scale_rate, num_bins
+        )
+
+        # Split masses into bins with bin_edges as delimiters
+        split_masses = np.split(extended_masses, np.searchsorted(extended_values, bin_edges))[1:-1]
+
+        bin_densities = []
+        for i, elem_masses in enumerate(split_masses):
+            mass = np.sum(elem_masses)
+            density = mass / (bin_edges[i + 1] - bin_edges[i])
+            bin_densities.append(density)
+
+        return ScaledBinHistogram(left_bound, right_bound, bin_scale_rate, np.array(bin_densities))
+
+    def mean(self):
+        """Mean of the distribution."""
+        return np.sum(self.values * self.masses)
+
+    def std(self):
+        return np.sqrt(np.sum(self.masses * (self.values - self.mean()) ** 2))
+
+    @classmethod
+    def from_distribution(cls, dist, num_bins=1000):
+        if not isinstance(dist, LognormalDistribution):
+            raise ValueError("Only LognormalDistributions are supported")
+
+        left_bound = dist.inv_fraction_of_ev(1 / num_bins / 2)
+        right_bound = dist.inv_fraction_of_ev(1 - 1 / num_bins / 2)
+
+        def compute_bin_densities(bin_scale_rate):
+            bin_edges = cls.get_bin_edges(left_bound, right_bound, bin_scale_rate, num_bins)
+            bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+            edge_densities = stats.lognorm.pdf(
+                bin_edges, dist.norm_sd, scale=np.exp(dist.norm_mean)
+            )
+            center_densities = stats.lognorm.pdf(
+                bin_centers, dist.norm_sd, scale=np.exp(dist.norm_mean)
+            )
+            # Simpson's rule
+            bin_densities = (edge_densities[:-1] + 4 * center_densities + edge_densities[1:]) / 6
+            return bin_densities
+
+        def loss(bin_scale_rate_arr):
+            bin_scale_rate = bin_scale_rate_arr[0]
+            bin_densities = compute_bin_densities(bin_scale_rate)
+            hist = cls(left_bound, right_bound, bin_scale_rate, bin_densities)
+            mean_error = (hist.mean() - dist.lognorm_mean) ** 2
+            sd_error = (hist.std() - dist.lognorm_sd) ** 2
+            return mean_error
+
+        bin_scale_rate = 1.04
+        if num_bins != 1000:
+            bin_scale_rate = optimize.minimize(loss, bin_scale_rate, bounds=[(1, 2)]).x[0]
+        bin_edges = cls.get_bin_edges(left_bound, right_bound, bin_scale_rate, num_bins)
+        bin_densities = compute_bin_densities(bin_scale_rate)
+
+        return cls(left_bound, right_bound, bin_scale_rate, bin_densities)
+
+    def fraction_of_ev(self, x: np.ndarray | float):
+        """Return the approximate fraction of expected value that is less than
+        the given value.
+        """
+        if isinstance(x, np.ndarray):
+            return np.array([self.fraction_of_ev(xi) for xi in x])
+        return np.sum(self.masses * self.values * (self.values <= x)) / self.mean()
+
+    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
+        """Return the value such that `fraction` of the contribution to
+        expected value lies to the left of that value.
+        """
+        if isinstance(fraction, np.ndarray):
+            return np.array([self.inv_fraction_of_ev(xi) for xi in fraction])
+        if fraction <= 0:
+            raise ValueError("fraction must be greater than 0")
+        epsilon = 1e-6  # to avoid floating point rounding issues
+        index = np.searchsorted(self.fraction_of_ev(self.values), fraction - epsilon)
+        return self.values[index]
 
 
-class ProbabilityMassHistogram:
+class ProbabilityMassHistogram(PDHBase):
     """Represent a probability distribution as an array of x values and their
     probability masses. Like Monte Carlo samples except that values are
     weighted by probability, so you can effectively represent many times more
@@ -148,9 +225,15 @@ class ProbabilityMassHistogram:
 
     def __mul__(x, y):
         extended_values = np.outer(x.values, y.values).flatten()
-        return x.binary_op(y, extended_values)
+        return x.binary_op(
+            y,
+            extended_values,
+            exact_mean=x.exact_mean * y.exact_mean
+            if x.exact_mean is not None and y.exact_mean is not None
+            else None,
+        )
 
-    def binary_op(x, y, extended_values):
+    def binary_op(x, y, extended_values, exact_mean=None):
         extended_masses = np.outer(x.masses, y.masses).flatten()
 
         # Sort the arrays so product values are in order
@@ -165,27 +248,27 @@ class ProbabilityMassHistogram:
         num_bins = max(len(x), len(y))
         ev_per_bin = ev / num_bins
 
-        bin_values = []
-        bin_masses = []
-
+        # Cut boundaries between bins such that each bin has equal contribution
+        # to expected value
         cumulative_evs = np.cumsum(elem_evs)
-
-        bin_boundaries = np.searchsorted(
-            cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin)
-        )
+        bin_boundaries = np.searchsorted(cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin))
 
         # Split elem_evs and extended_masses into bins
         split_element_evs = np.split(elem_evs, bin_boundaries)
         split_extended_masses = np.split(extended_masses, bin_boundaries)
 
+        bin_values = []
+        bin_masses = []
         for elem_evs, elem_masses in zip(split_element_evs, split_extended_masses):
-            total_mass = np.sum(elem_masses)
-            weighted_value = np.sum(elem_evs) / total_mass
-            bin_values.append(weighted_value)
-            bin_masses.append(total_mass)
+            # TODO: could optimize this further by using cumulative_evs and
+            # creating an equivalent for masses. might not even need to use np.split
+            mass = np.sum(elem_masses)
+            value = np.sum(elem_evs) / mass
+            bin_values.append(value)
+            bin_masses.append(mass)
 
         res = ProbabilityMassHistogram(
-            np.array(bin_values), np.array(bin_masses)
+            np.array(bin_values), np.array(bin_masses), exact_mean=exact_mean
         )
         return res
 
@@ -198,80 +281,39 @@ class ProbabilityMassHistogram:
         fat-tailed distributions, but this can cause computational problems for
         very fat-tailed distributions.
         """
-        if isinstance(dist, LognormalDistribution):
-            assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
-            edge_values = []
-            boundary = 1 / num_bins
+        if not isinstance(dist, LognormalDistribution):
+            raise ValueError("Only LognormalDistributions are supported")
 
-            edge_values = np.concatenate(
-                (
-                    [0],
-                    dist.inv_fraction_of_ev(
-                        np.linspace(boundary, 1 - boundary, num_bins - 1)
-                    ),
-                    [np.inf],
-                )
+        assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
+        edge_values = []
+        boundary = 1 / num_bins
+
+        edge_values = np.concatenate(
+            (
+                [0],
+                dist.inv_fraction_of_ev(np.linspace(boundary, 1 - boundary, num_bins - 1)),
+                [np.inf],
             )
-
-            # How much each bin contributes to total EV.
-            contribution_to_ev = dist.lognorm_mean / num_bins
-
-            # We can compute the exact mass of each bin as the difference in
-            # CDF between the left and right edges.
-            masses = np.diff(
-                stats.lognorm.cdf(
-                    edge_values, dist.norm_sd, scale=np.exp(dist.norm_mean)
-                ),
-            )
-
-            # Assume the value exactly equals the bin's contribution to EV
-            # divided by its mass. This means the values will not be exactly
-            # centered, but it guarantees that the expected value of the
-            # histogram exactly equals the expected value of the distribution
-            # (modulo floating point rounding).
-            values = contribution_to_ev / masses
-
-            # For sufficiently large values, CDF rounds to 1 which makes the
-            # mass 0. In that case, ignore the value.
-            values = np.where(masses == 0, 0, values)
-
-            return cls(np.array(values), np.array(masses))
-
-    def histogram_mean(self):
-        """Mean of the distribution, calculated using the histogram data."""
-        return np.sum(self.values * self.masses)
-
-    def mean(self):
-        """Mean of the distribution. May be calculated using a stored exact
-        value or the histogram data."""
-        return self.histogram_mean()
-
-    def std(self):
-        """Standard deviation of the distribution."""
-        mean = self.mean()
-        return np.sqrt(np.sum(self.masses * (self.values - mean)**2))
-
-    def fraction_of_ev(self, x: np.ndarray | float):
-        """Return the approximate fraction of expected value that is less than
-        the given value.
-        """
-        if isinstance(x, np.ndarray):
-            return np.array([self.fraction_of_ev(xi) for xi in x])
-        return (
-            np.sum(self.masses * self.values * (self.values <= x))
-            / self.mean()
         )
 
-    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
-        """Return the value such that `fraction` of the contribution to
-        expected value lies to the left of that value.
-        """
-        if isinstance(fraction, np.ndarray):
-            return np.array([self.inv_fraction_of_ev(xi) for xi in fraction])
-        if fraction <= 0:
-            raise ValueError("fraction must be greater than 0")
-        epsilon = 1e-6  # to avoid floating point rounding issues
-        index = np.searchsorted(
-            self.fraction_of_ev(self.values), fraction - epsilon
+        # How much each bin contributes to total EV.
+        contribution_to_ev = dist.lognorm_mean / num_bins
+
+        # We can compute the exact mass of each bin as the difference in
+        # CDF between the left and right edges.
+        masses = np.diff(
+            stats.lognorm.cdf(edge_values, dist.norm_sd, scale=np.exp(dist.norm_mean)),
         )
-        return self.values[index]
+
+        # Assume the value exactly equals the bin's contribution to EV
+        # divided by its mass. This means the values will not be exactly
+        # centered, but it guarantees that the expected value of the
+        # histogram exactly equals the expected value of the distribution
+        # (modulo floating point rounding).
+        values = contribution_to_ev / masses
+
+        # For sufficiently large values, CDF rounds to 1 which makes the
+        # mass 0. In that case, ignore the value.
+        values = np.where(masses == 0, 0, values)
+
+        return cls(np.array(values), np.array(masses))
