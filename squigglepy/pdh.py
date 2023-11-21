@@ -8,6 +8,9 @@ from .samplers import sample
 
 
 class PDHBase(ABC):
+    def __len__(self):
+        return self.num_bins
+
     def histogram_mean(self):
         """Mean of the distribution, calculated using the histogram data."""
         return np.sum(self.masses * self.values)
@@ -34,7 +37,7 @@ class PDHBase(ABC):
 
     @classmethod
     def _inv_fraction_of_ev(
-            cls, values: np.ndarray, masses: np.ndarray, fraction: np.ndarray | float
+        cls, values: np.ndarray, masses: np.ndarray, fraction: np.ndarray | float
     ):
         if isinstance(fraction, np.ndarray):
             return np.array([cls.inv_fraction_of_ev(values, masses, xi) for xi in fraction])
@@ -58,6 +61,28 @@ class PDHBase(ABC):
         """
         return self._inv_fraction_of_ev(self.values, self.masses, fraction)
 
+    def __add__(x, y):
+        extended_values = np.add.outer(x.values, y.values).flatten()
+        res = x.binary_op(y, extended_values)
+        if x.exact_mean is not None and y.exact_mean is not None:
+            res.exact_mean = x.exact_mean + y.exact_mean
+        if x.exact_sd is not None and y.exact_sd is not None:
+            res.exact_sd = np.sqrt(x.exact_sd**2 + y.exact_sd**2)
+        return res
+
+    def __mul__(x, y):
+        extended_values = np.outer(x.values, y.values).flatten()
+        res = x.binary_op(y, extended_values)
+        if x.exact_mean is not None and y.exact_mean is not None:
+            res.exact_mean = x.exact_mean * y.exact_mean
+        if x.exact_sd is not None and y.exact_sd is not None:
+            res.exact_sd = np.sqrt(
+                (x.exact_sd * y.exact_mean) ** 2
+                + (y.exact_sd * x.exact_mean) ** 2
+                + (x.exact_sd * y.exact_sd) ** 2
+            )
+        return res
+
 
 class ScaledBinHistogram(PDHBase):
     """PDH with exponentially growing bin widths."""
@@ -68,12 +93,16 @@ class ScaledBinHistogram(PDHBase):
         right_bound: float,
         bin_scale_rate: float,
         bin_densities: np.ndarray,
+        exact_mean: Optional[float] = None,
+        exact_sd: Optional[float] = None,
     ):
         # TODO: currently only supports positive-everywhere distributions
         self.left_bound = left_bound
         self.right_bound = right_bound
         self.bin_scale_rate = bin_scale_rate
         self.bin_densities = bin_densities
+        self.exact_mean = exact_mean
+        self.exact_sd = exact_sd
         self.num_bins = len(bin_densities)
         self.bin_edges = self.get_bin_edges(
             self.left_bound, self.right_bound, self.bin_scale_rate, self.num_bins
@@ -97,20 +126,12 @@ class ScaledBinHistogram(PDHBase):
         )
         return np.cumsum(np.concatenate(([left_bound], bin_widths)))
 
-    def __len__(self):
-        return self.num_bins
-
     def bin_density(self, index: int) -> float:
         return self.bin_densities[index]
 
-    def __mul__(x, y):
-        extended_masses = np.outer(
-            x.bin_densities * x.bin_widths, y.bin_densities * y.bin_widths
-        ).flatten()
-        extended_values = np.outer(x.values, y.values).flatten()
-        return x.binary_op(y, extended_masses, extended_values)
+    def binary_op(x, y, extended_values):
+        extended_masses = np.outer(x.masses, y.masses).flatten()
 
-    def binary_op(x, y, extended_masses, extended_values):
         # Sort the arrays so product values are in order
         sorted_indexes = extended_values.argsort()
         extended_values = extended_values[sorted_indexes]
@@ -179,27 +200,14 @@ class ScaledBinHistogram(PDHBase):
         bin_edges = cls.get_bin_edges(left_bound, right_bound, bin_scale_rate, num_bins)
         bin_densities = compute_bin_densities(bin_scale_rate)
 
-        return cls(left_bound, right_bound, bin_scale_rate, bin_densities)
-
-    def fraction_of_ev(self, x: np.ndarray | float):
-        """Return the approximate fraction of expected value that is less than
-        the given value.
-        """
-        if isinstance(x, np.ndarray):
-            return np.array([self.fraction_of_ev(xi) for xi in x])
-        return np.sum(self.masses * self.values * (self.values <= x)) / self.mean()
-
-    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
-        """Return the value such that `fraction` of the contribution to
-        expected value lies to the left of that value.
-        """
-        if isinstance(fraction, np.ndarray):
-            return np.array([self.inv_fraction_of_ev(xi) for xi in fraction])
-        if fraction <= 0:
-            raise ValueError("fraction must be greater than 0")
-        epsilon = 1e-6  # to avoid floating point rounding issues
-        index = np.searchsorted(self.fraction_of_ev(self.values), fraction - epsilon)
-        return self.values[index]
+        return cls(
+            left_bound,
+            right_bound,
+            bin_scale_rate,
+            bin_densities,
+            exact_mean=dist.lognorm_mean,
+            exact_sd=dist.lognorm_sd,
+        )
 
 
 class ProbabilityMassHistogram(PDHBase):
@@ -213,27 +221,16 @@ class ProbabilityMassHistogram(PDHBase):
         values: np.ndarray,
         masses: np.ndarray,
         exact_mean: Optional[float] = None,
+        exact_sd: Optional[float] = None,
     ):
         assert len(values) == len(masses)
         self.values = values
         self.masses = masses
         self.num_bins = len(values)
         self.exact_mean = exact_mean
+        self.exact_sd = exact_sd
 
-    def __len__(self):
-        return len(self.values)
-
-    def __mul__(x, y):
-        extended_values = np.outer(x.values, y.values).flatten()
-        return x.binary_op(
-            y,
-            extended_values,
-            exact_mean=x.exact_mean * y.exact_mean
-            if x.exact_mean is not None and y.exact_mean is not None
-            else None,
-        )
-
-    def binary_op(x, y, extended_values, exact_mean=None):
+    def binary_op(x, y, extended_values):
         extended_masses = np.outer(x.masses, y.masses).flatten()
 
         # Sort the arrays so product values are in order
@@ -267,10 +264,7 @@ class ProbabilityMassHistogram(PDHBase):
             bin_values.append(value)
             bin_masses.append(mass)
 
-        res = ProbabilityMassHistogram(
-            np.array(bin_values), np.array(bin_masses), exact_mean=exact_mean
-        )
-        return res
+        return ProbabilityMassHistogram(np.array(bin_values), np.array(bin_masses))
 
     @classmethod
     def from_distribution(cls, dist, num_bins=1000):
@@ -285,9 +279,7 @@ class ProbabilityMassHistogram(PDHBase):
             raise ValueError("Only LognormalDistributions are supported")
 
         assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
-        edge_values = []
         boundary = 1 / num_bins
-
         edge_values = np.concatenate(
             (
                 [0],
@@ -316,4 +308,9 @@ class ProbabilityMassHistogram(PDHBase):
         # mass 0. In that case, ignore the value.
         values = np.where(masses == 0, 0, values)
 
-        return cls(np.array(values), np.array(masses))
+        return cls(
+            np.array(values),
+            np.array(masses),
+            exact_mean=dist.lognorm_mean,
+            exact_sd=dist.lognorm_sd,
+        )
