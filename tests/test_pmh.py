@@ -29,7 +29,8 @@ def print_accuracy_ratio(x, y, extra_message=None):
 )
 def test_pmh_mean(norm_mean, norm_sd):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    hist = ProbabilityMassHistogram.from_distribution(dist)
+    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing='mass')
+    print("Values:", hist.values)
     assert hist.histogram_mean() == approx(stats.lognorm.mean(dist.norm_sd, scale=np.exp(dist.norm_mean)))
 
 
@@ -46,9 +47,8 @@ def test_pmh_sd(norm_mean, norm_sd):
     #
     # Note: Adding more bins increases accuracy overall, but decreases accuracy
     # on the far right tail.
-    num_bins = 1000
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
+    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing='mass')
 
     def true_variance(left, right):
         return integrate.quad(
@@ -67,8 +67,9 @@ def test_pmh_sd(norm_mean, norm_sd):
     midpoint_index = int(len(hist) * hist.fraction_of_ev(midpoint))
     observed_left_variance = observed_variance(0, midpoint_index)
     observed_right_variance = observed_variance(midpoint_index, len(hist))
-    print_accuracy_ratio(observed_left_variance, expected_left_variance, "Left ")
-    print_accuracy_ratio(observed_right_variance, expected_right_variance, "Right")
+    print_accuracy_ratio(observed_left_variance, expected_left_variance,   "Left   ")
+    print_accuracy_ratio(observed_right_variance, expected_right_variance, "Right  ")
+    print_accuracy_ratio(hist.histogram_sd(), dist.lognorm_sd, "Overall")
     assert hist.histogram_sd() == approx(dist.lognorm_sd)
 
 
@@ -76,11 +77,43 @@ def relative_error(observed, expected):
     return np.exp(abs(np.log(observed / expected))) - 1
 
 
+def test_mean_error_propagation(verbose=True):
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing='mass')
+    hist_base = ProbabilityMassHistogram.from_distribution(dist, bin_sizing='mass')
+    abs_error = []
+    rel_error = []
+
+    if verbose:
+        print("")
+    for i in [1, 2, 4, 8, 16, 32, 64]:
+        true_mean = stats.lognorm.mean(np.sqrt(i))
+        abs_error.append(abs(hist.histogram_mean() - true_mean))
+        rel_error.append(relative_error(hist.histogram_mean(), true_mean))
+        if verbose:
+            print(f"n = {i:2d}: {abs_error[-1]} ({rel_error[-1]*100:7.3f}%) from mean {hist.histogram_mean():.3f}")
+        hist = hist * hist_base
+
+
+def test_mc_mean_error_propagation():
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    rel_error = [0]
+    print("")
+    for i in [1, 2, 4, 8, 16, 32, 64]:
+        true_mean = stats.lognorm.mean(np.sqrt(i))
+        curr_rel_errors = []
+        for _ in range(10):
+            mcs = [samplers.sample(dist, 100**2) for _ in range(i)]
+            mc = reduce(lambda acc, mc: acc * mc, mcs)
+            curr_rel_errors.append(relative_error(np.mean(mc), true_mean))
+        rel_error.append(np.mean(curr_rel_errors))
+        print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% (up {(rel_error[-1] + 1) / (rel_error[-2] + 1):.2f}x)")
+
+
 def test_sd_error_propagation(verbose=True):
     dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    num_bins = 1000
+    num_bins = 100
     hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
-    hist_base = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
     abs_error = []
     rel_error = []
 
@@ -95,7 +128,7 @@ def test_sd_error_propagation(verbose=True):
             print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% from SD {hist.histogram_sd():.3f}, mean {hist.histogram_mean():.3f}")
         hist = hist * hist
 
-    expected_error_pcts = [0.2, 0.6, 2.5, 13.2, 77.2, 751]
+    expected_error_pcts = [0.9, 2.8, 9.9, 40.7, 211, 2678, 630485]
     for i in range(len(expected_error_pcts)):
         assert rel_error[i] < expected_error_pcts[i] / 100
 

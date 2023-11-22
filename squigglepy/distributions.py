@@ -2,6 +2,7 @@ import math
 import operator
 import warnings
 import numpy as np
+from numpy import exp, log, pi, sqrt
 import scipy.stats
 from scipy.special import erf, erfinv
 
@@ -65,6 +66,30 @@ class BaseDistribution(ABC):
                 + f" (version {self._version}, corr_group {self.correlation_group})"
             )
         return self.__str__() + f" (version {self._version})"
+
+    @abstractmethod
+    def fraction_of_ev(self, x: np.ndarray | float):
+        """Find the fraction of this distribution's expected value given by the
+        portion of the distribution that lies to the left of x.
+
+        `fraction_of_ev(x)` is equivalent to
+
+        .. math::
+          \\int_0^x t f(t) dt
+        where `f(t)` is the PDF of the normal distribution.
+        """
+        ...
+
+    @abstractmethod
+    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
+        """For a given fraction of expected value, find the number such that
+        that fraction lies to the left of that number. The inverse of
+        `fraction_of_ev`.
+
+        This function is analogous to `lognorm.ppf` except that
+        the integrand is `x * f(x) dx` instead of `f(x) dx`.
+        """
+        ...
 
 
 class OperableDistribution(BaseDistribution):
@@ -764,6 +789,21 @@ class NormalDistribution(ContinuousDistribution):
         out += ")"
         return out
 
+    def fraction_of_ev(self, x: np.ndarray | float):
+        # TODO: this is the formula for cumulative EV. fraction of EV is undefined if EV = 0. and "equal contribution to EV" is undefined because it can be positive or negative
+        x = np.asarray(x)
+        mu = self.mean
+        sigma = self.sd
+        right = -(exp(-(x - mu)**2/(2 * sigma**2)) * sigma)/sqrt(2 * pi) + 1/2 * mu * erf((x - mu)/(sqrt(2) * sigma))
+        left = -1/2 * mu
+        return np.squeeze(right - left)
+
+    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
+        fraction = np.asarray(fraction)
+        mu = self.mean
+        sigma = self.sd
+        # TODO
+
 
 def norm(
     x=None, y=None, credibility=90, mean=None, sd=None, lclip=None, rclip=None
@@ -878,26 +918,26 @@ class LognormalDistribution(ContinuousDistribution):
             self.lognorm_mean = 1
 
         if self.x is not None:
-            self.norm_mean = (np.log(self.x) + np.log(self.y)) / 2
+            self.norm_mean = (log(self.x) + log(self.y)) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = scipy.stats.norm.ppf(cdf_value)
-            self.norm_sd = (np.log(self.y) - self.norm_mean) / normed_sigma
+            self.norm_sd = (log(self.y) - self.norm_mean) / normed_sigma
 
         if self.lognorm_sd is None:
-            self.lognorm_mean = np.exp(self.norm_mean + self.norm_sd**2 / 2)
+            self.lognorm_mean = exp(self.norm_mean + self.norm_sd**2 / 2)
             self.lognorm_sd = (
-                (np.exp(self.norm_sd**2) - 1)
-                * np.exp(2 * self.norm_mean + self.norm_sd**2)
+                (exp(self.norm_sd**2) - 1)
+                * exp(2 * self.norm_mean + self.norm_sd**2)
             ) ** 0.5
         elif self.norm_sd is None:
-            self.norm_mean = np.log(
+            self.norm_mean = log(
                 (
                     self.lognorm_mean**2
-                    / np.sqrt(self.lognorm_sd**2 + self.lognorm_mean**2)
+                    / sqrt(self.lognorm_sd**2 + self.lognorm_mean**2)
                 )
             )
-            self.norm_sd = np.sqrt(
-                np.log(1 + self.lognorm_sd**2 / self.lognorm_mean**2)
+            self.norm_sd = sqrt(
+                log(1 + self.lognorm_sd**2 / self.lognorm_mean**2)
             )
 
     def __str__(self):
@@ -916,34 +956,23 @@ class LognormalDistribution(ContinuousDistribution):
         return out
 
     def fraction_of_ev(self, x: np.ndarray | float):
-        """Find the proportion of expected value given by the portion of the
-        distribution that lies to the left of x.
-
-        `fraction_of_ev(x)` is equivalent to
-
-        .. math::
-          \\int_0^x t f(t) dt
-        where `f(t)` is the PDF of the lognormal distribution.
-        """
-        if isinstance(x, float):
-            return self.fraction_of_ev(np.array([x]))[0]
-
+        x = np.asarray(x)
         mu = self.norm_mean
         sigma = self.norm_sd
-        u = np.log(x)
+        u = log(x)
         left_bound = (
-            -1 / 2 * np.exp(mu + sigma**2 / 2)
+            -1 / 2 * exp(mu + sigma**2 / 2)
         )  # at x=0 / u=-infinity
         right_bound = (
             -1
             / 2
-            * np.exp(mu + sigma**2 / 2)
-            * erf((-u + mu + sigma**2) / (np.sqrt(2) * sigma))
+            * exp(mu + sigma**2 / 2)
+            * erf((-u + mu + sigma**2) / (sqrt(2) * sigma))
         )
 
-        return (right_bound - left_bound) / self.lognorm_mean
+        return np.squeeze((right_bound - left_bound) / self.lognorm_mean)
 
-    def inv_fraction_of_ev(self, alphas: np.ndarray | float):
+    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
         """For a given fraction of expected value, find the number such that
         that fraction lies to the left of that number. The inverse of
         `fraction_of_ev`.
@@ -951,22 +980,20 @@ class LognormalDistribution(ContinuousDistribution):
         This function is analogous to `lognorm.ppf` except that
         the integrand is `x * f(x) dx` instead of `f(x) dx`.
         """
-        if isinstance(alphas, float) or isinstance(alphas, int):
-            return self.inv_fraction_of_ev(np.array([alphas]))[0]
-
-        if any(alphas <= 0) or any(alphas >= 1):
-            raise ValueError("alphas must be between 0 and 1")
+        fraction = np.asarray(fraction)
+        if any(fraction <= 0) or any(fraction >= 1):
+            raise ValueError("fraction must be between 0 and 1")
 
         mu = self.norm_mean
         sigma = self.norm_sd
-        y = alphas * self.lognorm_mean
-        return np.exp(
+        y = fraction * self.lognorm_mean
+        return np.squeeze(exp(
             mu
             + sigma**2
-            - np.sqrt(2)
+            - sqrt(2)
             * sigma
-            * erfinv(1 - 2 * np.exp(-mu - sigma**2 / 2) * y)
-        )
+            * erfinv(1 - 2 * exp(-mu - sigma**2 / 2) * y)
+        ))
 
 
 def lognorm(

@@ -1,12 +1,19 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 import numpy as np
 from scipy import optimize, stats
 import sortednp as snp
-from typing import Optional
+from typing import Literal, Optional
 import warnings
 
 from .distributions import LognormalDistribution, lognorm
 from .samplers import sample
+
+
+class BinSizing(Enum):
+    ev = "ev"
+    mass = "mass"
+    uniform = "uniform"
 
 
 class PDHBase(ABC):
@@ -228,6 +235,7 @@ class ProbabilityMassHistogram(PDHBase):
         self,
         values: np.ndarray,
         masses: np.ndarray,
+        bin_sizing: Literal["ev", "quantile", "uniform"],
         exact_mean: Optional[float] = None,
         exact_sd: Optional[float] = None,
     ):
@@ -235,10 +243,15 @@ class ProbabilityMassHistogram(PDHBase):
         self.values = values
         self.masses = masses
         self.num_bins = len(values)
+        self.bin_sizing = BinSizing(bin_sizing)
         self.exact_mean = exact_mean
         self.exact_sd = exact_sd
 
     def binary_op(x, y, extended_values, ev, is_mul=False):
+        assert (
+            x.bin_sizing == y.bin_sizing
+        ), f"Can only combine histograms that use the same bin sizing method (cannot combine {x.bin_sizing} and {y.bin_sizing})"
+        bin_sizing = x.bin_sizing
         extended_masses = np.ravel(np.outer(x.masses, y.masses))
         num_bins = max(len(x), len(y))
         len_per_bin = int(len(extended_values) / num_bins)
@@ -247,7 +260,7 @@ class ProbabilityMassHistogram(PDHBase):
 
         # Cut boundaries between bins such that each bin has equal contribution
         # to expected value.
-        if is_mul:
+        if is_mul or bin_sizing == BinSizing.uniform:
             # When multiplying, the values of extended_evs are all equal. x and
             # y both have the property that every bin contributes equally to
             # EV, which means the outputs of their outer product must all be
@@ -256,8 +269,16 @@ class ProbabilityMassHistogram(PDHBase):
             # for extreme values).
             bin_boundaries = np.arange(1, num_bins) * len_per_bin
         else:
-            cumulative_evs = np.cumsum(extended_evs)
-            bin_boundaries = np.searchsorted(cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin))
+            if bin_sizing == BinSizing.ev:
+                cumulative_evs = np.cumsum(extended_evs)
+                bin_boundaries = np.searchsorted(
+                    cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin)
+                )
+            elif bin_sizing == BinSizing.mass:
+                cumulative_masses = np.cumsum(extended_masses)
+                bin_boundaries = np.searchsorted(
+                    cumulative_masses, np.arange(1, num_bins) / num_bins
+                )
 
         # Partition the arrays so every value in a bin is smaller than every
         # value in the next bin, but don't sort within bins. (Partitioning is
@@ -272,21 +293,29 @@ class ProbabilityMassHistogram(PDHBase):
             # Take advantage of the fact that all bins contain the same number
             # of elements
             bin_masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
-            bin_values = ev_per_bin / bin_masses
+            if bin_sizing == BinSizing.ev:
+                bin_values = ev_per_bin / bin_masses
+            elif bin_sizing == BinSizing.mass:
+                bin_values = extended_values.reshape((num_bins, -1)).mean(axis=1)
+                # bin_values = stats.gmean(extended_values.reshape((num_bins, -1)), axis=1)
         else:
             bin_boundaries = np.concatenate(([0], bin_boundaries, [len(extended_evs)]))
             for i in range(len(bin_boundaries) - 1):
                 start = bin_boundaries[i]
-                end = bin_boundaries[i+1]
+                end = bin_boundaries[i + 1]
                 mass = np.sum(extended_masses[start:end])
-                value = np.sum(extended_evs[start:end]) / mass
+
+                if bin_sizing == BinSizing.ev:
+                    value = np.sum(extended_evs[start:end]) / mass
+                elif bin_sizing == BinSizing.mass:
+                    value = np.sum(extended_values[start:end] * extended_masses[start:end]) / mass
                 bin_values.append(value)
                 bin_masses.append(mass)
 
-        return ProbabilityMassHistogram(np.array(bin_values), np.array(bin_masses))
+        return ProbabilityMassHistogram(np.array(bin_values), np.array(bin_masses), bin_sizing)
 
     @classmethod
-    def from_distribution(cls, dist, num_bins=100):
+    def from_distribution(cls, dist, num_bins=100, bin_sizing="ev"):
         """Create a probability mass histogram from the given distribution. The
         histogram covers the full distribution except for the 1/num_bins/2
         expectile on the left and right tails. The boundaries are based on the
@@ -297,12 +326,17 @@ class ProbabilityMassHistogram(PDHBase):
         if not isinstance(dist, LognormalDistribution):
             raise ValueError("Only LognormalDistributions are supported")
 
+        get_edge_value = {
+            "ev": dist.inv_fraction_of_ev,
+            "mass": lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean)),
+        }[bin_sizing]
+
         assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
         boundary = 1 / num_bins
         edge_values = np.concatenate(
             (
                 [0],
-                dist.inv_fraction_of_ev(np.linspace(boundary, 1 - boundary, num_bins - 1)),
+                get_edge_value(np.linspace(boundary, 1 - boundary, num_bins - 1)),
                 [np.inf],
             )
         )
@@ -312,16 +346,19 @@ class ProbabilityMassHistogram(PDHBase):
 
         # We can compute the exact mass of each bin as the difference in
         # CDF between the left and right edges.
-        masses = np.diff(
-            stats.lognorm.cdf(edge_values, dist.norm_sd, scale=np.exp(dist.norm_mean)),
-        )
+        edge_cdfs = stats.lognorm.cdf(edge_values, dist.norm_sd, scale=np.exp(dist.norm_mean))
+        masses = np.diff(edge_cdfs)
 
         # Assume the value exactly equals the bin's contribution to EV
         # divided by its mass. This means the values will not be exactly
         # centered, but it guarantees that the expected value of the
         # histogram exactly equals the expected value of the distribution
         # (modulo floating point rounding).
-        values = contribution_to_ev / masses
+        if bin_sizing == "ev":
+            values = contribution_to_ev / masses
+        elif bin_sizing == "mass":
+            midpoints = (edge_cdfs[:-1] + edge_cdfs[1:]) / 2
+            values = stats.lognorm.ppf(midpoints, dist.norm_sd, scale=np.exp(dist.norm_mean))
 
         # For sufficiently large values, CDF rounds to 1 which makes the
         # mass 0.
@@ -335,11 +372,14 @@ class ProbabilityMassHistogram(PDHBase):
 
         if any(masses == 0):
             num_zeros = np.sum(masses == 0)
-            warnings.warn(f"{num_zeros} values greater than {values[-1]} had CDFs of 1.", RuntimeWarning)
+            warnings.warn(
+                f"{num_zeros} values greater than {values[-1]} had CDFs of 1.", RuntimeWarning
+            )
 
         return cls(
             np.array(values),
             np.array(masses),
+            bin_sizing=bin_sizing,
             exact_mean=dist.lognorm_mean,
             exact_sd=dist.lognorm_sd,
         )
