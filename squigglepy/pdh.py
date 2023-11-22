@@ -238,8 +238,9 @@ class ProbabilityMassHistogram(PDHBase):
         self.exact_sd = exact_sd
 
     def binary_op(x, y, extended_values, ev, is_mul=False):
-        extended_masses = np.ravel(np.outer(x.masses, y.masses))  # flatten
+        extended_masses = np.ravel(np.outer(x.masses, y.masses))
         num_bins = max(len(x), len(y))
+        len_per_bin = int(len(extended_values) / num_bins)
         ev_per_bin = ev / num_bins
         extended_evs = extended_masses * extended_values
 
@@ -252,7 +253,7 @@ class ProbabilityMassHistogram(PDHBase):
             # equal. We can use this fact to avoid a relatively slow call to
             # `cumsum` (which can also introduce floating point rounding errors
             # for extreme values).
-            bin_boundaries = np.arange(1, num_bins) * num_bins
+            bin_boundaries = np.arange(1, num_bins) * len_per_bin
         else:
             cumulative_evs = np.cumsum(extended_evs)
             bin_boundaries = np.searchsorted(cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin))
@@ -269,7 +270,7 @@ class ProbabilityMassHistogram(PDHBase):
         if is_mul:
             # Take advantage of the fact that all bins contain the same number
             # of elements
-            bin_masses = extended_masses.reshape((-1, num_bins)).sum(axis=1)
+            bin_masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
             bin_values = ev_per_bin / bin_masses
         else:
             bin_boundaries = np.concatenate(([0], bin_boundaries, [len(extended_evs)]))
@@ -323,11 +324,17 @@ class ProbabilityMassHistogram(PDHBase):
 
         # For sufficiently large values, CDF rounds to 1 which makes the
         # mass 0.
-        values = values[masses > 0]
-        masses = masses[masses > 0]
+        #
+        # Note: It would make logical sense to remove zero values, but it
+        # messes up the binning algorithm for products which expects the number
+        # of values to be a multiple of the number of bins.
+        # values = values[masses > 0]
+        # masses = masses[masses > 0]
+        values = np.where(masses == 0, 0, values)
 
-        if len(values) < num_bins:
-            warnings.warn(f"{num_bins - len(values)} values greater than {values[-1]} had CDFs of 1 and will be ignored.", RuntimeWarning)
+        if any(masses == 0):
+            num_zeros = np.sum(masses == 0)
+            warnings.warn(f"{num_zeros} values greater than {values[-1]} had CDFs of 1.", RuntimeWarning)
 
         return cls(
             np.array(values),

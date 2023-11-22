@@ -72,6 +72,10 @@ def test_pmh_sd(norm_mean, norm_sd):
     assert hist.histogram_sd() == approx(dist.lognorm_sd)
 
 
+def relative_error(observed, expected):
+    return np.exp(abs(np.log(observed / expected))) - 1
+
+
 def test_sd_error_propagation(verbose=True):
     dist = LognormalDistribution(norm_mean=0, norm_sd=1)
     num_bins = 1000
@@ -86,7 +90,7 @@ def test_sd_error_propagation(verbose=True):
         true_mean = stats.lognorm.mean(np.sqrt(i))
         true_sd = hist.exact_sd
         abs_error.append(abs(hist.histogram_sd() - true_sd))
-        rel_error.append(np.exp(abs(np.log(hist.histogram_sd() / true_sd))) - 1)
+        rel_error.append(relative_error(hist.histogram_sd(), true_sd))
         if verbose:
             print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% from SD {hist.histogram_sd():.3f}, mean {hist.histogram_mean():.3f}")
         hist = hist * hist
@@ -94,6 +98,51 @@ def test_sd_error_propagation(verbose=True):
     expected_error_pcts = [0.2, 0.6, 2.5, 13.2, 77.2, 751]
     for i in range(len(expected_error_pcts)):
         assert rel_error[i] < expected_error_pcts[i] / 100
+
+
+def test_mc_sd_error_propagation():
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    num_bins = 100  # we don't actually care about the histogram, we just use it
+                    # to calculate exact_sd
+    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
+    hist_base = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
+    abs_error = []
+    rel_error = [0]
+    print("")
+    for i in range(1, 17):
+        true_mean = stats.lognorm.mean(np.sqrt(i))
+        true_sd = hist.exact_sd
+        curr_rel_errors = []
+        for _ in range(10):
+            mcs = [samplers.sample(dist, 1000**2) for _ in range(i)]
+            mc = reduce(lambda acc, mc: acc * mc, mcs)
+            mc_sd = np.std(mc)
+            curr_rel_errors.append(relative_error(mc_sd, true_sd))
+        rel_error.append(np.mean(curr_rel_errors))
+        print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% (up {(rel_error[-1] + 1) / (rel_error[-2] + 1):.2f}x)")
+        hist = hist * hist_base
+
+
+def test_sd_accuracy_vs_monte_carlo():
+    num_bins = 100
+    num_samples = 1000**2
+    dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i/4) for i in range(5)]
+    hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
+    hist = reduce(lambda acc, hist: acc * hist, hists)
+    true_sd = hist.exact_sd
+    dist_abs_error = abs(hist.histogram_sd() - true_sd)
+
+    mc_abs_error = []
+    for i in range(10):
+        mcs = [samplers.sample(dist, num_samples) for dist in dists]
+        mc = reduce(lambda acc, mc: acc * mc, mcs)
+        mc_abs_error.append(abs(np.std(mc) - true_sd))
+
+    mc_abs_error.sort()
+
+    # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
+    assert dist_abs_error < mc_abs_error[7]
+
 
 
 @given(
@@ -241,11 +290,6 @@ def test_accuracy_scaled_vs_flexible():
         print(f"SD   error: scaled = {scaled_sd_error:.3f}, flexible = {flexible_sd_error:.3f}")
 
 
-def test_accuracy_vs_monte_carlo():
-    # TODO: implement
-    raise NotImplementedError
-
-
 def test_performance():
     import cProfile
     import pstats
@@ -257,7 +301,7 @@ def test_performance():
     pr.enable()
 
     for i in range(100):
-        hist = ProbabilityMassHistogram.from_distribution(dist)
+        hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=1000)
         for _ in range(4):
             hist = hist * hist
 
