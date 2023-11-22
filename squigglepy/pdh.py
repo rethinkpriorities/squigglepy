@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from scipy import optimize, stats
+import sortednp as snp
 from typing import Optional
 import warnings
 
@@ -139,7 +140,9 @@ class ScaledBinHistogram(PDHBase):
     def bin_density(self, index: int) -> float:
         return self.bin_densities[index]
 
-    def binary_op(x, y, extended_values):
+    def binary_op(x, y, extended_values, ev, is_mul=False):
+        # Note: This implementation is not nearly as well-optimized as
+        # ProbabilityMassHistogram.
         extended_masses = np.outer(x.masses, y.masses).flatten()
 
         # Sort the arrays so product values are in order
@@ -235,50 +238,48 @@ class ProbabilityMassHistogram(PDHBase):
         self.exact_sd = exact_sd
 
     def binary_op(x, y, extended_values, ev, is_mul=False):
-        extended_masses = np.outer(x.masses, y.masses).flatten()
-
-        # Sort the arrays so product values are in order. Note: Mergesort
-        # (actually timsort) is ~30% faster than the default
-        # (quicksort/introsort) because extended_values contains many
-        # ordered runs
-        sorted_indexes = extended_values.argsort(kind='mergesort')
-        extended_values = extended_values[sorted_indexes]
-        extended_masses = extended_masses[sorted_indexes]
-
-        # Squash the x values into a shorter array such that each x value has
-        # equal contribution to expected value
-        extended_evs = extended_masses * extended_values
+        extended_masses = np.ravel(np.outer(x.masses, y.masses))  # flatten
         num_bins = max(len(x), len(y))
         ev_per_bin = ev / num_bins
+        extended_evs = extended_masses * extended_values
 
         # Cut boundaries between bins such that each bin has equal contribution
         # to expected value.
         if is_mul:
-            # For a product operation, every element of extended_evs has equal
-            # contribution to EV, so every bin can take an equal number of
-            # elements. Recall that x.ev = x.mass * x.value, therefore:
-            #
-            # extended_evs = (x.mass * y.mass) * (x.value * y.value)
-            #              = (x.mass * x.value) * (y.mass * y.value)
-            #              = x.ev_contribution * y.ev_contribution
-            #
-            # And since EV contribution is equal across all bins, their
-            # products must also be equal.
+            # When multiplying, the values of extended_evs are all equal. x and
+            # y both have the property that every bin contributes equally to
+            # EV, which means the outputs of their outer product must all be
+            # equal. We can use this fact to avoid a relatively slow call to
+            # `cumsum` (which can also introduce floating point rounding errors
+            # for extreme values).
             bin_boundaries = np.arange(1, num_bins) * num_bins
         else:
             cumulative_evs = np.cumsum(extended_evs)
             bin_boundaries = np.searchsorted(cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin))
+
+        # Partition the arrays so every value in a bin is smaller than every
+        # value in the next bin, but don't sort within bins. (Partitioning is
+        # about 10% faster than mergesort.)
+        sorted_indexes = extended_values.argpartition(bin_boundaries)
+        extended_values = extended_values[sorted_indexes]
+        extended_masses = extended_masses[sorted_indexes]
+
         bin_values = []
         bin_masses = []
-
-        bin_boundaries = np.concatenate(([0], bin_boundaries, [len(extended_evs)]))
-        for i in range(len(bin_boundaries) - 1):
-            start = bin_boundaries[i]
-            end = bin_boundaries[i+1]
-            mass = np.sum(extended_masses[start:end])
-            value = np.sum(extended_evs[start:end]) / mass
-            bin_values.append(value)
-            bin_masses.append(mass)
+        if is_mul:
+            # Take advantage of the fact that all bins contain the same number
+            # of elements
+            bin_masses = extended_masses.reshape((-1, num_bins)).sum(axis=1)
+            bin_values = ev_per_bin / bin_masses
+        else:
+            bin_boundaries = np.concatenate(([0], bin_boundaries, [len(extended_evs)]))
+            for i in range(len(bin_boundaries) - 1):
+                start = bin_boundaries[i]
+                end = bin_boundaries[i+1]
+                mass = np.sum(extended_masses[start:end])
+                value = np.sum(extended_evs[start:end]) / mass
+                bin_values.append(value)
+                bin_masses.append(mass)
 
         return ProbabilityMassHistogram(np.array(bin_values), np.array(bin_masses))
 

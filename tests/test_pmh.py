@@ -40,8 +40,15 @@ def test_pmh_mean(norm_mean, norm_sd):
     norm_sd=st.just(1),
 )
 def test_pmh_sd(norm_mean, norm_sd):
+    # TODO: The margin of error on the SD estimate is pretty big, mostly
+    # because the right tail is underestimating variance. But that might be an
+    # acceptable cost. Try to see if there's a way to improve it without compromising the fidelity of the EV estimate.
+    #
+    # Note: Adding more bins increases accuracy overall, but decreases accuracy
+    # on the far right tail.
+    num_bins = 1000
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    hist = ProbabilityMassHistogram.from_distribution(dist)
+    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
 
     def true_variance(left, right):
         return integrate.quad(
@@ -54,7 +61,7 @@ def test_pmh_sd(norm_mean, norm_sd):
     def observed_variance(left, right):
         return np.sum(hist.masses[left:right] * (hist.values[left:right] - hist.histogram_mean()) ** 2)
 
-    midpoint = hist.values[990]
+    midpoint = hist.values[int(num_bins * 9/10)]
     expected_left_variance = true_variance(0, midpoint)
     expected_right_variance = true_variance(midpoint, np.inf)
     midpoint_index = int(len(hist) * hist.fraction_of_ev(midpoint))
@@ -81,7 +88,7 @@ def test_sd_error_propagation(verbose=True):
         abs_error.append(abs(hist.histogram_sd() - true_sd))
         rel_error.append(np.exp(abs(np.log(hist.histogram_sd() / true_sd))) - 1)
         if verbose:
-            print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% from {hist.histogram_sd():.3f}, mean {hist.histogram_mean():.3f}")
+            print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% from SD {hist.histogram_sd():.3f}, mean {hist.histogram_mean():.3f}")
         hist = hist * hist
 
     expected_error_pcts = [0.2, 0.6, 2.5, 13.2, 77.2, 751]
@@ -234,6 +241,11 @@ def test_accuracy_scaled_vs_flexible():
         print(f"SD   error: scaled = {scaled_sd_error:.3f}, flexible = {flexible_sd_error:.3f}")
 
 
+def test_accuracy_vs_monte_carlo():
+    # TODO: implement
+    raise NotImplementedError
+
+
 def test_performance():
     import cProfile
     import pstats
@@ -244,7 +256,7 @@ def test_performance():
     pr = cProfile.Profile()
     pr.enable()
 
-    for i in range(10):
+    for i in range(100):
         hist = ProbabilityMassHistogram.from_distribution(dist)
         for _ in range(4):
             hist = hist * hist
