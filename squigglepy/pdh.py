@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from scipy import optimize, stats
 from typing import Optional
+import warnings
 
 from .distributions import LognormalDistribution, lognorm
 from .samplers import sample
@@ -12,18 +13,27 @@ class PDHBase(ABC):
         return self.num_bins
 
     def histogram_mean(self):
-        """Mean of the distribution, calculated using the histogram data."""
+        """Mean of the distribution, calculated using the histogram data (even
+        if the exact mean is known)."""
         return np.sum(self.masses * self.values)
 
     def mean(self):
         """Mean of the distribution. May be calculated using a stored exact
         value or the histogram data."""
+        if self.exact_mean is not None:
+            return self.exact_mean
         return self.histogram_mean()
 
-    def std(self):
-        """Standard deviation of the distribution."""
+    def histogram_sd(self):
+        """Standard deviation of the distribution, calculated using the
+        histogram data (even if the exact SD is known)."""
         mean = self.mean()
         return np.sqrt(np.sum(self.masses * (self.values - mean) ** 2))
+
+    def sd(self):
+        """Standard deviation of the distribution. May be calculated using a
+        stored exact value or the histogram data."""
+        return self.histogram_sd()
 
     @classmethod
     def _fraction_of_ev(cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float):
@@ -45,7 +55,7 @@ class PDHBase(ABC):
             raise ValueError("fraction must be greater than 0")
         mean = np.sum(masses * values)
         fractions_of_ev = np.cumsum(masses * values) / mean
-        epsilon = 1e-6  # to avoid floating point rounding issues
+        epsilon = 1e-10  # to avoid floating point rounding issues
         index = np.searchsorted(fractions_of_ev, fraction - epsilon)
         return values[index]
 
@@ -53,7 +63,7 @@ class PDHBase(ABC):
         """Return the approximate fraction of expected value that is less than
         the given value.
         """
-        return self._fraction_of_ev(self.values, self.masses, fraction)
+        return self._fraction_of_ev(self.values, self.masses, x)
 
     def inv_fraction_of_ev(self, fraction: np.ndarray | float):
         """Return the value such that `fraction` of the contribution to
@@ -63,7 +73,7 @@ class PDHBase(ABC):
 
     def __add__(x, y):
         extended_values = np.add.outer(x.values, y.values).flatten()
-        res = x.binary_op(y, extended_values)
+        res = x.binary_op(y, extended_values, ev=x.mean() + y.mean())
         if x.exact_mean is not None and y.exact_mean is not None:
             res.exact_mean = x.exact_mean + y.exact_mean
         if x.exact_sd is not None and y.exact_sd is not None:
@@ -72,7 +82,7 @@ class PDHBase(ABC):
 
     def __mul__(x, y):
         extended_values = np.outer(x.values, y.values).flatten()
-        res = x.binary_op(y, extended_values)
+        res = x.binary_op(y, extended_values, ev=x.mean() * y.mean(), is_mul=True)
         if x.exact_mean is not None and y.exact_mean is not None:
             res.exact_mean = x.exact_mean * y.exact_mean
         if x.exact_sd is not None and y.exact_sd is not None:
@@ -158,15 +168,8 @@ class ScaledBinHistogram(PDHBase):
 
         return ScaledBinHistogram(left_bound, right_bound, bin_scale_rate, np.array(bin_densities))
 
-    def mean(self):
-        """Mean of the distribution."""
-        return np.sum(self.values * self.masses)
-
-    def std(self):
-        return np.sqrt(np.sum(self.masses * (self.values - self.mean()) ** 2))
-
     @classmethod
-    def from_distribution(cls, dist, num_bins=1000):
+    def from_distribution(cls, dist, num_bins=1000, bin_scale_rate=None):
         if not isinstance(dist, LognormalDistribution):
             raise ValueError("Only LognormalDistributions are supported")
 
@@ -191,11 +194,12 @@ class ScaledBinHistogram(PDHBase):
             bin_densities = compute_bin_densities(bin_scale_rate)
             hist = cls(left_bound, right_bound, bin_scale_rate, bin_densities)
             mean_error = (hist.mean() - dist.lognorm_mean) ** 2
-            sd_error = (hist.std() - dist.lognorm_sd) ** 2
+            sd_error = (hist.sd() - dist.lognorm_sd) ** 2
             return mean_error
 
-        bin_scale_rate = 1.04
-        if num_bins != 1000:
+        if bin_scale_rate is None and num_bins == 1000:
+            bin_scale_rate = 1.04
+        elif bin_scale_rate is None:
             bin_scale_rate = optimize.minimize(loss, bin_scale_rate, bounds=[(1, 2)]).x[0]
         bin_edges = cls.get_bin_edges(left_bound, right_bound, bin_scale_rate, num_bins)
         bin_densities = compute_bin_densities(bin_scale_rate)
@@ -230,37 +234,49 @@ class ProbabilityMassHistogram(PDHBase):
         self.exact_mean = exact_mean
         self.exact_sd = exact_sd
 
-    def binary_op(x, y, extended_values):
+    def binary_op(x, y, extended_values, ev, is_mul=False):
         extended_masses = np.outer(x.masses, y.masses).flatten()
 
-        # Sort the arrays so product values are in order
-        sorted_indexes = extended_values.argsort()
+        # Sort the arrays so product values are in order. Note: Mergesort
+        # (actually timsort) is ~30% faster than the default
+        # (quicksort/introsort) because extended_values contains many
+        # ordered runs
+        sorted_indexes = extended_values.argsort(kind='mergesort')
         extended_values = extended_values[sorted_indexes]
         extended_masses = extended_masses[sorted_indexes]
 
         # Squash the x values into a shorter array such that each x value has
         # equal contribution to expected value
-        elem_evs = extended_masses * extended_values
-        ev = sum(elem_evs)
+        extended_evs = extended_masses * extended_values
         num_bins = max(len(x), len(y))
         ev_per_bin = ev / num_bins
 
         # Cut boundaries between bins such that each bin has equal contribution
-        # to expected value
-        cumulative_evs = np.cumsum(elem_evs)
-        bin_boundaries = np.searchsorted(cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin))
-
-        # Split elem_evs and extended_masses into bins
-        split_element_evs = np.split(elem_evs, bin_boundaries)
-        split_extended_masses = np.split(extended_masses, bin_boundaries)
-
+        # to expected value.
+        if is_mul:
+            # For a product operation, every element of extended_evs has equal
+            # contribution to EV, so every bin can take an equal number of
+            # elements. Recall that x.ev = x.mass * x.value, therefore:
+            #
+            # extended_evs = (x.mass * y.mass) * (x.value * y.value)
+            #              = (x.mass * x.value) * (y.mass * y.value)
+            #              = x.ev_contribution * y.ev_contribution
+            #
+            # And since EV contribution is equal across all bins, their
+            # products must also be equal.
+            bin_boundaries = np.arange(1, num_bins) * num_bins
+        else:
+            cumulative_evs = np.cumsum(extended_evs)
+            bin_boundaries = np.searchsorted(cumulative_evs, np.arange(ev_per_bin, ev, ev_per_bin))
         bin_values = []
         bin_masses = []
-        for elem_evs, elem_masses in zip(split_element_evs, split_extended_masses):
-            # TODO: could optimize this further by using cumulative_evs and
-            # creating an equivalent for masses. might not even need to use np.split
-            mass = np.sum(elem_masses)
-            value = np.sum(elem_evs) / mass
+
+        bin_boundaries = np.concatenate(([0], bin_boundaries, [len(extended_evs)]))
+        for i in range(len(bin_boundaries) - 1):
+            start = bin_boundaries[i]
+            end = bin_boundaries[i+1]
+            mass = np.sum(extended_masses[start:end])
+            value = np.sum(extended_evs[start:end]) / mass
             bin_values.append(value)
             bin_masses.append(mass)
 
@@ -305,8 +321,12 @@ class ProbabilityMassHistogram(PDHBase):
         values = contribution_to_ev / masses
 
         # For sufficiently large values, CDF rounds to 1 which makes the
-        # mass 0. In that case, ignore the value.
-        values = np.where(masses == 0, 0, values)
+        # mass 0.
+        values = values[masses > 0]
+        masses = masses[masses > 0]
+
+        if len(values) < num_bins:
+            warnings.warn(f"{num_bins - len(values)} values greater than {values[-1]} had CDFs of 1 and will be ignored.", RuntimeWarning)
 
         return cls(
             np.array(values),
