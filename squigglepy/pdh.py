@@ -172,7 +172,7 @@ class ScaledBinHistogram(PDHBase):
         return ScaledBinHistogram(left_bound, right_bound, bin_scale_rate, np.array(bin_densities))
 
     @classmethod
-    def from_distribution(cls, dist, num_bins=1000, bin_scale_rate=None):
+    def from_distribution(cls, dist, num_bins=100, bin_scale_rate=None):
         if not isinstance(dist, LognormalDistribution):
             raise ValueError("Only LognormalDistributions are supported")
 
@@ -204,6 +204,7 @@ class ScaledBinHistogram(PDHBase):
             bin_scale_rate = 1.04
         elif bin_scale_rate is None:
             bin_scale_rate = optimize.minimize(loss, bin_scale_rate, bounds=[(1, 2)]).x[0]
+            print("bin scale rate:", bin_scale_rate)
         bin_edges = cls.get_bin_edges(left_bound, right_bound, bin_scale_rate, num_bins)
         bin_densities = compute_bin_densities(bin_scale_rate)
 
@@ -285,7 +286,7 @@ class ProbabilityMassHistogram(PDHBase):
         return ProbabilityMassHistogram(np.array(bin_values), np.array(bin_masses))
 
     @classmethod
-    def from_distribution(cls, dist, num_bins=1000):
+    def from_distribution(cls, dist, num_bins=100):
         """Create a probability mass histogram from the given distribution. The
         histogram covers the full distribution except for the 1/num_bins/2
         expectile on the left and right tails. The boundaries are based on the
