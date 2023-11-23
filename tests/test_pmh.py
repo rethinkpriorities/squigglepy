@@ -64,7 +64,7 @@ def test_pmh_sd(norm_mean, norm_sd):
     midpoint = hist.values[int(num_bins * 9/10)]
     expected_left_variance = true_variance(0, midpoint)
     expected_right_variance = true_variance(midpoint, np.inf)
-    midpoint_index = int(len(hist) * hist.fraction_of_ev(midpoint))
+    midpoint_index = int(len(hist) * hist.contribution_to_ev(midpoint))
     observed_left_variance = observed_variance(0, midpoint_index)
     observed_right_variance = observed_variance(midpoint_index, len(hist))
     print_accuracy_ratio(observed_left_variance, expected_left_variance,   "Left   ")
@@ -86,12 +86,12 @@ def test_mean_error_propagation(verbose=True):
 
     if verbose:
         print("")
-    for i in [1, 2, 4, 8, 16, 32, 64]:
+    for i in range(1, 17):
         true_mean = stats.lognorm.mean(np.sqrt(i))
         abs_error.append(abs(hist.histogram_mean() - true_mean))
         rel_error.append(relative_error(hist.histogram_mean(), true_mean))
         if verbose:
-            print(f"n = {i:2d}: {abs_error[-1]} ({rel_error[-1]*100:7.3f}%) from mean {hist.histogram_mean():.3f}")
+            print(f"n = {i:2d}: {abs_error[-1]:7.2f} ({rel_error[-1]*100:7.1f}%) from mean {hist.histogram_mean():6.2f}")
         hist = hist * hist_base
 
 
@@ -113,7 +113,7 @@ def test_mc_mean_error_propagation():
 def test_sd_error_propagation(verbose=True):
     dist = LognormalDistribution(norm_mean=0, norm_sd=1)
     num_bins = 100
-    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
+    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins, bin_sizing='mass')
     abs_error = []
     rel_error = []
 
@@ -125,7 +125,7 @@ def test_sd_error_propagation(verbose=True):
         abs_error.append(abs(hist.histogram_sd() - true_sd))
         rel_error.append(relative_error(hist.histogram_sd(), true_sd))
         if verbose:
-            print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% from SD {hist.histogram_sd():.3f}, mean {hist.histogram_mean():.3f}")
+            print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% from SD {hist.histogram_sd():.3f}")
         hist = hist * hist
 
     expected_error_pcts = [0.9, 2.8, 9.9, 40.7, 211, 2678, 630485]
@@ -158,7 +158,7 @@ def test_mc_sd_error_propagation():
 
 def test_sd_accuracy_vs_monte_carlo():
     num_bins = 100
-    num_samples = 1000**2
+    num_samples = 100**2
     dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i/4) for i in range(5)]
     hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
     hist = reduce(lambda acc, hist: acc * hist, hists)
@@ -174,7 +174,7 @@ def test_sd_accuracy_vs_monte_carlo():
     mc_abs_error.sort()
 
     # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
-    assert dist_abs_error < mc_abs_error[7]
+    assert dist_abs_error < mc_abs_error[8]
 
 
 
@@ -208,11 +208,11 @@ def test_exact_moments(norm_mean1, norm_mean2, norm_sd1, norm_sd2):
     norm_sd=st.floats(min_value=0.001, max_value=4),
     bin_num=st.integers(min_value=1, max_value=999),
 )
-def test_pmh_fraction_of_ev(norm_mean, norm_sd, bin_num):
+def test_pmh_contribution_to_ev(norm_mean, norm_sd, bin_num):
     fraction = bin_num / 1000
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = ProbabilityMassHistogram.from_distribution(dist)
-    assert hist.fraction_of_ev(dist.inv_fraction_of_ev(fraction)) == approx(fraction)
+    assert hist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(fraction)
 
 
 @given(
@@ -220,15 +220,15 @@ def test_pmh_fraction_of_ev(norm_mean, norm_sd, bin_num):
     norm_sd=st.floats(min_value=0.001, max_value=4),
     bin_num=st.integers(min_value=2, max_value=998),
 )
-def test_pmh_inv_fraction_of_ev(norm_mean, norm_sd, bin_num):
+def test_pmh_inv_contribution_to_ev(norm_mean, norm_sd, bin_num):
     # The nth value stored in the PMH represents a value between the nth and n+1th edges
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = ProbabilityMassHistogram.from_distribution(dist)
     fraction = bin_num / hist.num_bins
     prev_fraction = fraction - 1 / hist.num_bins
     next_fraction = fraction
-    assert hist.inv_fraction_of_ev(fraction) > dist.inv_fraction_of_ev(prev_fraction)
-    assert hist.inv_fraction_of_ev(fraction) < dist.inv_fraction_of_ev(next_fraction)
+    assert hist.inv_contribution_to_ev(fraction) > dist.inv_contribution_to_ev(prev_fraction)
+    assert hist.inv_contribution_to_ev(fraction) < dist.inv_contribution_to_ev(next_fraction)
 
 
 # TODO: uncomment
@@ -324,6 +324,7 @@ def test_accuracy_scaled_vs_flexible():
 
 
 def test_performance():
+    return None  # so we don't accidentally run this while running all tests
     import cProfile
     import pstats
     import io

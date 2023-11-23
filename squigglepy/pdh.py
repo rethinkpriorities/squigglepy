@@ -44,21 +44,21 @@ class PDHBase(ABC):
         return self.histogram_sd()
 
     @classmethod
-    def _fraction_of_ev(cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float):
+    def _contribution_to_ev(cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float):
         """Return the approximate fraction of expected value that is less than
         the given value.
         """
         if isinstance(x, np.ndarray):
-            return np.array([cls._fraction_of_ev(values, masses, xi) for xi in x])
+            return np.array([cls._contribution_to_ev(values, masses, xi) for xi in x])
         mean = np.sum(masses * values)
         return np.sum(masses * values * (values <= x)) / mean
 
     @classmethod
-    def _inv_fraction_of_ev(
+    def _inv_contribution_to_ev(
         cls, values: np.ndarray, masses: np.ndarray, fraction: np.ndarray | float
     ):
         if isinstance(fraction, np.ndarray):
-            return np.array([cls.inv_fraction_of_ev(values, masses, xi) for xi in fraction])
+            return np.array([cls.inv_contribution_to_ev(values, masses, xi) for xi in fraction])
         if fraction <= 0:
             raise ValueError("fraction must be greater than 0")
         mean = np.sum(masses * values)
@@ -67,17 +67,17 @@ class PDHBase(ABC):
         index = np.searchsorted(fractions_of_ev, fraction - epsilon)
         return values[index]
 
-    def fraction_of_ev(self, x: np.ndarray | float):
+    def contribution_to_ev(self, x: np.ndarray | float):
         """Return the approximate fraction of expected value that is less than
         the given value.
         """
-        return self._fraction_of_ev(self.values, self.masses, x)
+        return self._contribution_to_ev(self.values, self.masses, x)
 
-    def inv_fraction_of_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
         """Return the value such that `fraction` of the contribution to
         expected value lies to the left of that value.
         """
-        return self._inv_fraction_of_ev(self.values, self.masses, fraction)
+        return self._inv_contribution_to_ev(self.values, self.masses, fraction)
 
     def __add__(x, y):
         extended_values = np.add.outer(x.values, y.values).flatten()
@@ -160,8 +160,8 @@ class ScaledBinHistogram(PDHBase):
         num_bins = max(len(x), len(y))
         outer_ev = 1 / num_bins / 2
 
-        left_bound = PDHBase._inv_fraction_of_ev(extended_values, extended_masses, outer_ev)
-        right_bound = PDHBase._inv_fraction_of_ev(extended_values, extended_masses, 1 - outer_ev)
+        left_bound = PDHBase._inv_contribution_to_ev(extended_values, extended_masses, outer_ev)
+        right_bound = PDHBase._inv_contribution_to_ev(extended_values, extended_masses, 1 - outer_ev)
         bin_scale_rate = np.sqrt(x.bin_scale_rate * y.bin_scale_rate)
         bin_edges = ScaledBinHistogram.get_bin_edges(
             left_bound, right_bound, bin_scale_rate, num_bins
@@ -183,8 +183,8 @@ class ScaledBinHistogram(PDHBase):
         if not isinstance(dist, LognormalDistribution):
             raise ValueError("Only LognormalDistributions are supported")
 
-        left_bound = dist.inv_fraction_of_ev(1 / num_bins / 2)
-        right_bound = dist.inv_fraction_of_ev(1 - 1 / num_bins / 2)
+        left_bound = dist.inv_contribution_to_ev(1 / num_bins / 2)
+        right_bound = dist.inv_contribution_to_ev(1 - 1 / num_bins / 2)
 
         def compute_bin_densities(bin_scale_rate):
             bin_edges = cls.get_bin_edges(left_bound, right_bound, bin_scale_rate, num_bins)
@@ -297,7 +297,6 @@ class ProbabilityMassHistogram(PDHBase):
                 bin_values = ev_per_bin / bin_masses
             elif bin_sizing == BinSizing.mass:
                 bin_values = extended_values.reshape((num_bins, -1)).mean(axis=1)
-                # bin_values = stats.gmean(extended_values.reshape((num_bins, -1)), axis=1)
         else:
             bin_boundaries = np.concatenate(([0], bin_boundaries, [len(extended_evs)]))
             for i in range(len(bin_boundaries) - 1):
@@ -326,8 +325,10 @@ class ProbabilityMassHistogram(PDHBase):
         if not isinstance(dist, LognormalDistribution):
             raise ValueError("Only LognormalDistributions are supported")
 
+        exact_mean = dist.lognorm_mean
+
         get_edge_value = {
-            "ev": dist.inv_fraction_of_ev,
+            "ev": dist.inv_contribution_to_ev,
             "mass": lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean)),
         }[bin_sizing]
 
@@ -342,7 +343,7 @@ class ProbabilityMassHistogram(PDHBase):
         )
 
         # How much each bin contributes to total EV.
-        contribution_to_ev = dist.lognorm_mean / num_bins
+        contribution_to_ev = exact_mean / num_bins
 
         # We can compute the exact mass of each bin as the difference in
         # CDF between the left and right edges.
@@ -358,7 +359,9 @@ class ProbabilityMassHistogram(PDHBase):
             values = contribution_to_ev / masses
         elif bin_sizing == "mass":
             midpoints = (edge_cdfs[:-1] + edge_cdfs[1:]) / 2
-            values = stats.lognorm.ppf(midpoints, dist.norm_sd, scale=np.exp(dist.norm_mean))
+            raw_values = stats.lognorm.ppf(midpoints, dist.norm_sd, scale=np.exp(dist.norm_mean))
+            estimated_mean = np.sum(raw_values * masses)
+            values = raw_values * exact_mean / estimated_mean
 
         # For sufficiently large values, CDF rounds to 1 which makes the
         # mass 0.
@@ -380,6 +383,6 @@ class ProbabilityMassHistogram(PDHBase):
             np.array(values),
             np.array(masses),
             bin_sizing=bin_sizing,
-            exact_mean=dist.lognorm_mean,
+            exact_mean=exact_mean,
             exact_sd=dist.lognorm_sd,
         )
