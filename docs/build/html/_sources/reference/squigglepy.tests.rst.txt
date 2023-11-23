@@ -1,0 +1,86 @@
+squigglepy.tests package
+========================
+
+Submodules
+----------
+
+squigglepy.tests.integration module
+-----------------------------------
+
+.. automodule:: squigglepy.tests.integration
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.strategies module
+----------------------------------
+
+.. automodule:: squigglepy.tests.strategies
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.test\_bayes module
+-----------------------------------
+
+.. automodule:: squigglepy.tests.test_bayes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.test\_correlation module
+-----------------------------------------
+
+.. automodule:: squigglepy.tests.test_correlation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.test\_distributions module
+-------------------------------------------
+
+.. automodule:: squigglepy.tests.test_distributions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.test\_numbers module
+-------------------------------------
+
+.. automodule:: squigglepy.tests.test_numbers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.test\_rng module
+---------------------------------
+
+.. automodule:: squigglepy.tests.test_rng
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.test\_samplers module
+--------------------------------------
+
+.. automodule:: squigglepy.tests.test_samplers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.tests.test\_utils module
+-----------------------------------
+
+.. automodule:: squigglepy.tests.test_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: squigglepy.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

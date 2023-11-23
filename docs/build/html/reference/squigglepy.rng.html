@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Squigglepy: Implementation of Squiggle in Python &#8212; Squigglepy  documentation</title>
+    <title>squigglepy.rng module &#8212; Squigglepy  documentation</title>
   
   
   
@@ -18,30 +18,31 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
-<link href="_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
 
   
-  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=362ab14a" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=362ab14a" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
-  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
 
-    <script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="squigglepy" href="reference/modules.html" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/squigglepy.rng';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="squigglepy.samplers module" href="squigglepy.samplers.html" />
+    <link rel="prev" title="squigglepy.numbers module" href="squigglepy.numbers.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -78,7 +79,7 @@
     <div class="search-button__overlay"></div>
     <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
-      action="search.html"
+      action="../search.html"
       method="get">
   <i class="fa-solid fa-magnifying-glass"></i>
   <input type="search"
@@ -107,7 +108,7 @@
       <div class="navbar-item">
   
 
-<a class="navbar-brand logo" href="#">
+<a class="navbar-brand logo" href="../index.html">
   
   
   
@@ -133,15 +134,15 @@
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="reference/modules.html">
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="modules.html">
                         API Reference
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="examples.html">
+                      <a class="nav-link nav-internal" href="../examples.html">
                         Examples
                       </a>
                     </li>
@@ -209,7 +210,7 @@ document.write(`
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
       
-      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -227,15 +228,15 @@ document.write(`
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="reference/modules.html">
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="modules.html">
                         API Reference
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="examples.html">
+                      <a class="nav-link nav-internal" href="../examples.html">
                         Examples
                       </a>
                     </li>
@@ -264,6 +265,27 @@ document.write(`
     
   </div>
   
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="squigglepy.html">squigglepy package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.bayes.html">squigglepy.bayes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.correlation.html">squigglepy.correlation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html">squigglepy.distributions module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.numbers.html">squigglepy.numbers module</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">squigglepy.rng module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.samplers.html">squigglepy.samplers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html">squigglepy.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.version.html">squigglepy.version module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
   </div>
@@ -279,7 +301,39 @@ document.write(`
           <div class="bd-content">
             <div class="bd-article-container">
               
-              <div class="bd-header-article"></div>
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="modules.html" class="nav-link">squigglepy</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="squigglepy.html" class="nav-link">squigglepy package</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">squigglepy.r...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
               
               
               
@@ -287,89 +341,36 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="squigglepy-implementation-of-squiggle-in-python">
-<h1>Squigglepy: Implementation of Squiggle in Python<a class="headerlink" href="#squigglepy-implementation-of-squiggle-in-python" title="Link to this heading">#</a></h1>
-<p><a class="reference external" href="https://www.squiggle-language.com/">Squiggle</a> is a “simple
-programming language for intuitive probabilistic estimation”. It serves
-as its own standalone programming language with its own syntax, but it
-is implemented in JavaScript. I like the features of Squiggle and intend
-to use it frequently, but I also sometimes want to use similar
-functionalities in Python, especially alongside other Python statistical
-programming packages like Numpy, Pandas, and Matplotlib. The
-<strong>squigglepy</strong> package here implements many Squiggle-like
-functionalities in Python.</p>
-<div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="reference/modules.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="reference/squigglepy.html">squigglepy package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="reference/squigglepy.html#submodules">Submodules</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#piano-tuners-example">Piano Tuners Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#distributions">Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#additional-features">Additional Features</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="examples.html#example-rolling-a-die">Example: Rolling a Die</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#bayesian-inference">Bayesian inference</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="examples.html#example-alarm-net">Example: Alarm net</a></li>
-<li class="toctree-l3"><a class="reference internal" href="examples.html#example-a-demonstration-of-the-monty-hall-problem">Example: A Demonstration of the Monty Hall Problem</a></li>
-<li class="toctree-l3"><a class="reference internal" href="examples.html#example-more-complex-coin-dice-interactions">Example: More complex coin/dice interactions</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#kelly-betting">Kelly betting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#more-examples">More examples</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>squigglepy
-</pre></div>
-</div>
-<p>For plotting support, you can also use the <code class="docutils literal notranslate"><span class="pre">plots</span></code> extra:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>squigglepy<span class="o">[</span>plots<span class="o">]</span>
+  <section id="module-squigglepy.rng">
+<span id="squigglepy-rng-module"></span><h1>squigglepy.rng module<a class="headerlink" href="#module-squigglepy.rng" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.rng.set_seed">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.rng.</span></span><span class="sig-name descname"><span class="pre">set_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/rng.html#set_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.rng.set_seed" title="Link to this definition">#</a></dt>
+<dd><p>Set the seed of the random number generator used by Squigglepy.</p>
+<p>The RNG is a <code class="docutils literal notranslate"><span class="pre">np.random.default_rng</span></code> under the hood.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>seed<span class="classifier">float</span></dt><dd><p>The seed to use for the RNG.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>np.random.default_rng</dt><dd><p>The RNG used internally.</p>
+</dd>
+</dl>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="go">Generator(PCG64) at 0x127EDE9E0</span>
 </pre></div>
 </div>
 </section>
-<section id="run-tests">
-<h2>Run tests<a class="headerlink" href="#run-tests" title="Link to this heading">#</a></h2>
-<p>Use <code class="docutils literal notranslate"><span class="pre">black</span> <span class="pre">.</span></code> for formatting.</p>
-<p>Run
-<code class="docutils literal notranslate"><span class="pre">ruff</span> <span class="pre">check</span> <span class="pre">.</span> <span class="pre">&amp;&amp;</span> <span class="pre">pytest</span> <span class="pre">&amp;&amp;</span> <span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">.</span> <span class="pre">&amp;&amp;</span> <span class="pre">python3</span> <span class="pre">tests/integration.py</span></code></p>
-</section>
-<section id="disclaimers">
-<h2>Disclaimers<a class="headerlink" href="#disclaimers" title="Link to this heading">#</a></h2>
-<p>This package is unofficial and supported by Peter Wildeford and Rethink
-Priorities. It is not affiliated with or associated with the Quantified
-Uncertainty Research Institute, which maintains the Squiggle language
-(in JavaScript).</p>
-<p>This package is also new and not yet in a stable production version, so
-you may encounter bugs and other errors. Please report those so they can
-be fixed. It’s also possible that future versions of the package may
-introduce breaking changes.</p>
-<p>This package is available under an MIT License.</p>
-</section>
-<section id="acknowledgements">
-<h2>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>The primary author of this package is Peter Wildeford. Agustín
-Covarrubias and Bernardo Baron contributed several key features and
-developments.</p></li>
-<li><p>Thanks to Ozzie Gooen and the Quantified Uncertainty Research
-Institute for creating and maintaining the original Squiggle
-language.</p></li>
-<li><p>Thanks to Dawn Drescher for helping me implement math between
-distributions.</p></li>
-<li><p>Thanks to Dawn Drescher for coming up with the idea to use <code class="docutils literal notranslate"><span class="pre">~</span></code> as a
-shorthand for <code class="docutils literal notranslate"><span class="pre">sample</span></code>, as well as helping me implement it.</p></li>
-</ul>
-</section>
+</dd></dl>
+
 </section>
 
 
@@ -382,12 +383,21 @@ shorthand for <code class="docutils literal notranslate"><span class="pre">sampl
                 <footer class="prev-next-footer">
                   <!-- Previous / next buttons -->
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="squigglepy.numbers.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">squigglepy.numbers module</p>
+      </div>
+    </a>
     <a class="right-next"
-       href="reference/modules.html"
+       href="squigglepy.samplers.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">squigglepy</p>
+        <p class="prev-next-title">squigglepy.samplers module</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -406,16 +416,13 @@ shorthand for <code class="docutils literal notranslate"><span class="pre">sampl
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-tests">Run tests</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#disclaimers">Disclaimers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#acknowledgements">Acknowledgements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.rng.set_seed"><code class="docutils literal notranslate"><span class="pre">set_seed()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="_sources/index.rst.txt">
+    <a href="../_sources/reference/squigglepy.rng.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
@@ -434,8 +441,8 @@ shorthand for <code class="docutils literal notranslate"><span class="pre">sampl
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
-<script src="_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">

@@ -1,0 +1,1179 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>squigglepy.samplers module &#8212; Squigglepy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=362ab14a" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
+
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/squigglepy.samplers';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="squigglepy.utils module" href="squigglepy.utils.html" />
+    <link rel="prev" title="squigglepy.rng module" href="squigglepy.rng.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Squigglepy  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary" tabindex="0">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="squigglepy.html">squigglepy package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.bayes.html">squigglepy.bayes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.correlation.html">squigglepy.correlation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html">squigglepy.distributions module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.numbers.html">squigglepy.numbers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.rng.html">squigglepy.rng module</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">squigglepy.samplers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html">squigglepy.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.version.html">squigglepy.version module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="modules.html" class="nav-link">squigglepy</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="squigglepy.html" class="nav-link">squigglepy package</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">squigglepy.s...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="module-squigglepy.samplers">
+<span id="squigglepy-samplers-module"></span><h1>squigglepy.samplers module<a class="headerlink" href="#module-squigglepy.samplers" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.bernoulli_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">bernoulli_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#bernoulli_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.bernoulli_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample 1 with probability <code class="docutils literal notranslate"><span class="pre">p</span></code> and 0 otherwise.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>p<span class="classifier">float</span></dt><dd><p>The probability of success. Must be between 0 and 1.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>int</dt><dd><p>Either 0 or 1</p>
+</dd>
+</dl>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bernoulli_sample</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="go">0</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.beta_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">beta_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#beta_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.beta_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a beta distribution.</p>
+<section id="id1">
+<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>a<span class="classifier">float</span></dt><dd><p>The alpha shape value of the distribution. Typically takes the value of the
+number of trials that resulted in a success.</p>
+</dd>
+<dt>b<span class="classifier">float</span></dt><dd><p>The beta shape value of the distribution. Typically takes the value of the
+number of trials that resulted in a failure.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a beta distribution defined by
+<code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h2>Examples<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">beta_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">0.22145847498048798</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.binomial_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">binomial_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#binomial_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.binomial_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a binomial distribution.</p>
+<section id="id4">
+<h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>n<span class="classifier">int</span></dt><dd><p>The number of trials.</p>
+</dd>
+<dt>p<span class="classifier">float</span></dt><dd><p>The probability of success for each trial. Must be between 0 and 1.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id5">
+<h2>Returns<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>int</dt><dd><p>A random number sampled from a binomial distribution defined by
+<code class="docutils literal notranslate"><span class="pre">n</span></code> and <code class="docutils literal notranslate"><span class="pre">p</span></code>. The random number should be between 0 and <code class="docutils literal notranslate"><span class="pre">n</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="id6">
+<h2>Examples<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">binomial_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.chi_square_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">chi_square_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#chi_square_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.chi_square_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a chi-square distribution.</p>
+<section id="id7">
+<h2>Parameters<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>df<span class="classifier">float</span></dt><dd><p>The number of degrees of freedom</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id8">
+<h2>Returns<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a chi-square distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id9">
+<h2>Examples<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chi_square_sample</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">4.808417207931989</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.discrete_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">discrete_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#discrete_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.discrete_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random value from a discrete distribution (aka categorical distribution).</p>
+<section id="id10">
+<h2>Parameters<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>items<span class="classifier">list or dict</span></dt><dd><p>The values that the discrete distribution will return and their associated
+weights (or likelihoods of being returned when sampled).</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+<dt>verbose<span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
+</dd>
+<dt>_multicore_tqdm_n<span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
+be used internally by squigglepy to make the progress bar printing work well for
+multicore. This parameter can be safely ignored by the user.</p>
+</dd>
+<dt>_multicore_tqdm_cores<span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
+be used internally by squigglepy to make the progress bar printing work well for
+multicore. This parameter can be safely ignored by the user.</p>
+</dd>
+</dl>
+</section>
+<section id="id11">
+<h2>Returns<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
+<p>Various, based on items in <code class="docutils literal notranslate"><span class="pre">items</span></code></p>
+</section>
+<section id="id12">
+<h2>Examples<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 10% chance of returning 0, 90% chance of returning 1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">discrete_sample</span><span class="p">({</span><span class="mi">0</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">})</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">discrete_sample</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>  <span class="c1"># Different notation for the same thing.</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># When no weights are given, all have equal chance of happening.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">discrete_sample</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">discrete_sample</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">})</span>  <span class="c1"># Values do not have to be numbers.</span>
+<span class="go">&#39;b&#39;</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.exponential_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">exponential_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#exponential_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.exponential_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to an exponential distribution.</p>
+<section id="id13">
+<h2>Parameters<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>scale<span class="classifier">float</span></dt><dd><p>The scale value of the exponential distribution.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id14">
+<h2>Returns<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>int</dt><dd><p>A random number sampled from an exponential distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id15">
+<h2>Examples<a class="headerlink" href="#id15" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">exponential_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="go">24.042086039659946</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.gamma_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">gamma_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#gamma_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.gamma_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a gamma distribution.</p>
+<section id="id16">
+<h2>Parameters<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>shape<span class="classifier">float</span></dt><dd><p>The shape value of the gamma distribution.</p>
+</dd>
+<dt>scale<span class="classifier">float</span></dt><dd><p>The scale value of the gamma distribution. Defaults to 1.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id17">
+<h2>Returns<a class="headerlink" href="#id17" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>int</dt><dd><p>A random number sampled from an gamma distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id18">
+<h2>Examples<a class="headerlink" href="#id18" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gamma_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">21.290716894247602</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.geometric_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">geometric_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#geometric_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.geometric_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a geometric distribution.</p>
+<section id="id19">
+<h2>Parameters<a class="headerlink" href="#id19" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>p<span class="classifier">float</span></dt><dd><p>The probability of success of an individual trial. Must be between 0 and 1.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id20">
+<h2>Returns<a class="headerlink" href="#id20" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>int</dt><dd><p>A random number sampled from a geometric distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id21">
+<h2>Examples<a class="headerlink" href="#id21" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">geometric_sample</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.log_t_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">log_t_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">credibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#log_t_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.log_t_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a log-t-distribution.</p>
+<p>The log-t-distribution is a t-distribution in log-space. It is defined with
+degrees of freedom via the <code class="docutils literal notranslate"><span class="pre">t</span></code> parameter. Additionally, a loose credibility
+interval can be defined via the t-distribution using the <code class="docutils literal notranslate"><span class="pre">low</span></code> and <code class="docutils literal notranslate"><span class="pre">high</span></code>
+values. This will be a 90% CI by default unless you change <code class="docutils literal notranslate"><span class="pre">credibility.</span></code>
+Unlike the normal and lognormal samplers, this credible interval is an
+approximation and is not precisely defined.</p>
+<section id="id22">
+<h2>Parameters<a class="headerlink" href="#id22" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>low<span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>.
+Must be greater than 0. Defaults to a 90% CI.</p>
+</dd>
+<dt>high<span class="classifier">float or None</span></dt><dd><p>The high value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
+</dd>
+<dt>t<span class="classifier">float</span></dt><dd><p>The number of degrees of freedom of the t-distribution. Defaults to 20.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+<dt>credibility<span class="classifier">float</span></dt><dd><p>The range of the credibility interval. Defaults to 90.</p>
+</dd>
+</dl>
+</section>
+<section id="id23">
+<h2>Returns<a class="headerlink" href="#id23" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a lognormal distribution defined by
+<code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="id24">
+<h2>Examples<a class="headerlink" href="#id24" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_t_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="go">2.052949773846356</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.lognormal_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">lognormal_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#lognormal_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.lognormal_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a lognormal distribution.</p>
+<section id="id25">
+<h2>Parameters<a class="headerlink" href="#id25" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>mean<span class="classifier">float</span></dt><dd><p>The mean of the lognormal distribution that is being sampled.</p>
+</dd>
+<dt>sd<span class="classifier">float</span></dt><dd><p>The standard deviation of the lognormal distribution that is being sampled.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id26">
+<h2>Returns<a class="headerlink" href="#id26" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a lognormal distribution defined by
+<code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="id27">
+<h2>Examples<a class="headerlink" href="#id27" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lognormal_sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">1.3562412406168636</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.mixture_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">mixture_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#mixture_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.mixture_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a ranom number from a mixture distribution.</p>
+<section id="id28">
+<h2>Parameters<a class="headerlink" href="#id28" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>values<span class="classifier">list or dict</span></dt><dd><p>The distributions to mix. Can also be defined as a list of weights and distributions.</p>
+</dd>
+<dt>weights<span class="classifier">list or None</span></dt><dd><p>The weights for each distribution.</p>
+</dd>
+<dt>relative_weights<span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
+to sum to 1.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+<dt>verbose<span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
+</dd>
+<dt>_multicore_tqdm_n<span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
+be used internally by squigglepy to make the progress bar printing work well for
+multicore. This parameter can be safely ignored by the user.</p>
+</dd>
+<dt>_multicore_tqdm_cores<span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
+be used internally by squigglepy to make the progress bar printing work well for
+multicore. This parameter can be safely ignored by the user.</p>
+</dd>
+</dl>
+</section>
+<section id="id29">
+<h2>Returns<a class="headerlink" href="#id29" title="Link to this heading">#</a></h2>
+<p>Various, based on items in <code class="docutils literal notranslate"><span class="pre">values</span></code></p>
+</section>
+<section id="id30">
+<h2>Examples<a class="headerlink" href="#id30" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mixture_sample</span><span class="p">([</span><span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
+<span class="go">3.183867278765718</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Different notation for the same thing.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mixture_sample</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]])</span>
+<span class="go">3.7859113725925972</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># When no weights are given, all have equal chance of happening.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mixture_sample</span><span class="p">([</span><span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)])</span>
+<span class="go">1.1041655362137777</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.normal_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">normal_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#normal_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.normal_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a normal distribution.</p>
+<section id="id31">
+<h2>Parameters<a class="headerlink" href="#id31" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>mean<span class="classifier">float</span></dt><dd><p>The mean of the normal distribution that is being sampled.</p>
+</dd>
+<dt>sd<span class="classifier">float</span></dt><dd><p>The standard deviation of the normal distribution that is being sampled.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id32">
+<h2>Returns<a class="headerlink" href="#id32" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a normal distribution defined by
+<code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="id33">
+<h2>Examples<a class="headerlink" href="#id33" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normal_sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">0.30471707975443135</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.pareto_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">pareto_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#pareto_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.pareto_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a pareto distribution.</p>
+<section id="id34">
+<h2>Parameters<a class="headerlink" href="#id34" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>shape<span class="classifier">float</span></dt><dd><p>The shape value of the pareto distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id35">
+<h2>Returns<a class="headerlink" href="#id35" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>int</dt><dd><p>A random number sampled from an pareto distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id36">
+<h2>Examples<a class="headerlink" href="#id36" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pareto_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">10.069666324736094</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.pert_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">pert_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#pert_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.pert_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a PERT distribution.</p>
+<section id="id37">
+<h2>Parameters<a class="headerlink" href="#id37" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>left<span class="classifier">float</span></dt><dd><p>The smallest value of the PERT distribution.</p>
+</dd>
+<dt>mode<span class="classifier">float</span></dt><dd><p>The most common value of the PERT distribution.</p>
+</dd>
+<dt>right<span class="classifier">float</span></dt><dd><p>The largest value of the PERT distribution.</p>
+</dd>
+<dt>lam<span class="classifier">float</span></dt><dd><p>The lambda of the PERT distribution.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id38">
+<h2>Returns<a class="headerlink" href="#id38" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a PERT distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id39">
+<h2>Examples<a class="headerlink" href="#id39" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pert_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="go">2.327625176788963</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.poisson_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">poisson_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#poisson_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.poisson_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a poisson distribution.</p>
+<section id="id40">
+<h2>Parameters<a class="headerlink" href="#id40" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>lam<span class="classifier">float</span></dt><dd><p>The lambda value of the poisson distribution.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id41">
+<h2>Returns<a class="headerlink" href="#id41" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>int</dt><dd><p>A random number sampled from a poisson distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id42">
+<h2>Examples<a class="headerlink" href="#id42" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">poisson_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="go">13</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memcache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dump_cache_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_cache_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_file_primary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_correlate_if_needed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample random numbers from a given distribution.</p>
+<section id="id43">
+<h2>Parameters<a class="headerlink" href="#id43" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>dist<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample random number from.</p>
+</dd>
+<dt>n<span class="classifier">int</span></dt><dd><p>The number of random numbers to sample from the distribution. Default to 1.</p>
+</dd>
+<dt>lclip<span class="classifier">float or None</span></dt><dd><p>If not None, any value below <code class="docutils literal notranslate"><span class="pre">lclip</span></code> will be coerced to <code class="docutils literal notranslate"><span class="pre">lclip</span></code>.</p>
+</dd>
+<dt>rclip<span class="classifier">float or None</span></dt><dd><p>If not None, any value below <code class="docutils literal notranslate"><span class="pre">rclip</span></code> will be coerced to <code class="docutils literal notranslate"><span class="pre">rclip</span></code>.</p>
+</dd>
+<dt>memcache<span class="classifier">bool</span></dt><dd><p>If True, will attempt to load the results in-memory for future calculations if
+a cache is present. Otherwise will save the results to an in-memory cache. Each cache
+will be matched based on <code class="docutils literal notranslate"><span class="pre">dist</span></code>. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt>reload_cache<span class="classifier">bool</span></dt><dd><p>If True, any existing cache will be ignored and recalculated. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt>dump_cache_file<span class="classifier">str or None</span></dt><dd><p>If present, will write out the cache to a numpy file with this path with
+<code class="docutils literal notranslate"><span class="pre">.sqlcache.npy</span></code> appended to the file name.</p>
+</dd>
+<dt>load_cache_file<span class="classifier">str or None</span></dt><dd><p>If present, will first attempt to load and use a cache from a file with this
+path with <code class="docutils literal notranslate"><span class="pre">.sqlcache.npy</span></code> appended to the file name.</p>
+</dd>
+<dt>cache_file_primary<span class="classifier">bool</span></dt><dd><p>If both an in-memory cache and file cache are present, the file
+cache will be used for the cache if this is True, and the in-memory cache
+will be used otherwise. Defaults to False.</p>
+</dd>
+<dt>verbose<span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress. If False, will not.
+If None (default), will be True when <code class="docutils literal notranslate"><span class="pre">n</span></code> is greater than or equal to 1M.</p>
+</dd>
+<dt>cores<span class="classifier">int</span></dt><dd><p>If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
+pool with that many cores / processes.</p>
+</dd>
+<dt>_multicore_tqdm_n<span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
+be used internally by squigglepy to make the progress bar printing work well for
+multicore. This parameter can be safely ignored by the user.</p>
+</dd>
+<dt>_multicore_tqdm_cores<span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
+be used internally by squigglepy to make the progress bar printing work well for
+multicore. This parameter can be safely ignored by the user.</p>
+</dd>
+</dl>
+</section>
+<section id="id44">
+<h2>Returns<a class="headerlink" href="#id44" title="Link to this heading">#</a></h2>
+<p>Various, based on <code class="docutils literal notranslate"><span class="pre">dist</span></code>.</p>
+</section>
+<section id="id45">
+<h2>Examples<a class="headerlink" href="#id45" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="go">1.592627415218455</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">(</span><span class="n">mixture</span><span class="p">([</span><span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]))</span>
+<span class="go">1.7281209657534462</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">(</span><span class="n">lognorm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="go">array([6.10817361, 3.        , 3.        , 3.45828454, 3.        ])</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.sample_correlated_group">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">sample_correlated_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requested_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BaseDistribution" title="squigglepy.distributions.BaseDistribution"><span class="pre">BaseDistribution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/squigglepy/samplers.html#sample_correlated_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.sample_correlated_group" title="Link to this definition">#</a></dt>
+<dd><p>Samples a correlated distribution, alongside
+all other correlated distributions in the same group.</p>
+<p>The samples for other variables are stored in the distributions themselves
+(in <cite>_correlated_samples</cite>).</p>
+<p>This is necessary, because the sampling needs to happen all at once, regardless
+of where the distributions are used in the binary tree of operations.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.t_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">t_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">credibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#t_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.t_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a t-distribution.</p>
+<p>The t-distribution is defined with degrees of freedom via the <code class="docutils literal notranslate"><span class="pre">t</span></code>
+parameter. Additionally, a loose credibility interval can be defined
+via the t-distribution using the <code class="docutils literal notranslate"><span class="pre">low</span></code> and <code class="docutils literal notranslate"><span class="pre">high</span></code> values. This will be a
+90% CI by default unless you change <code class="docutils literal notranslate"><span class="pre">credibility.</span></code> Unlike the normal and
+lognormal samplers, this credible interval is an approximation and is
+not precisely defined.</p>
+<section id="id46">
+<h2>Parameters<a class="headerlink" href="#id46" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>low<span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
+</dd>
+<dt>high<span class="classifier">float or None</span></dt><dd><p>The high value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
+</dd>
+<dt>t<span class="classifier">float</span></dt><dd><p>The number of degrees of freedom of the t-distribution. Defaults to 20.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+<dt>credibility<span class="classifier">float</span></dt><dd><p>The range of the credibility interval. Defaults to 90.</p>
+</dd>
+</dl>
+</section>
+<section id="id47">
+<h2>Returns<a class="headerlink" href="#id47" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a lognormal distribution defined by
+<code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="id48">
+<h2>Examples<a class="headerlink" href="#id48" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="go">2.7887113716855985</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.triangular_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">triangular_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#triangular_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.triangular_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a triangular distribution.</p>
+<section id="id49">
+<h2>Parameters<a class="headerlink" href="#id49" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>left<span class="classifier">float</span></dt><dd><p>The smallest value of the triangular distribution.</p>
+</dd>
+<dt>mode<span class="classifier">float</span></dt><dd><p>The most common value of the triangular distribution.</p>
+</dd>
+<dt>right<span class="classifier">float</span></dt><dd><p>The largest value of the triangular distribution.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id50">
+<h2>Returns<a class="headerlink" href="#id50" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a triangular distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id51">
+<h2>Examples<a class="headerlink" href="#id51" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">triangular_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="go">2.327625176788963</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.samplers.uniform_sample">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">uniform_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">low</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#uniform_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.uniform_sample" title="Link to this definition">#</a></dt>
+<dd><p>Sample a random number according to a uniform distribution.</p>
+<section id="id52">
+<h2>Parameters<a class="headerlink" href="#id52" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>low<span class="classifier">float</span></dt><dd><p>The smallest value the uniform distribution will return.</p>
+</dd>
+<dt>high<span class="classifier">float</span></dt><dd><p>The largest value the uniform distribution will return.</p>
+</dd>
+<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+</dd>
+</dl>
+</section>
+<section id="id53">
+<h2>Returns<a class="headerlink" href="#id53" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>A random number sampled from a uniform distribution between
+<code class="docutils literal notranslate"><span class="pre">`low`</span></code> and <code class="docutils literal notranslate"><span class="pre">`high`</span></code>.</p>
+</dd>
+</dl>
+</section>
+<section id="id54">
+<h2>Examples<a class="headerlink" href="#id54" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">uniform_sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">0.7739560485559633</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="squigglepy.rng.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">squigglepy.rng module</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="squigglepy.utils.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">squigglepy.utils module</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.bernoulli_sample"><code class="docutils literal notranslate"><span class="pre">bernoulli_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.beta_sample"><code class="docutils literal notranslate"><span class="pre">beta_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.binomial_sample"><code class="docutils literal notranslate"><span class="pre">binomial_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.chi_square_sample"><code class="docutils literal notranslate"><span class="pre">chi_square_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.discrete_sample"><code class="docutils literal notranslate"><span class="pre">discrete_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.exponential_sample"><code class="docutils literal notranslate"><span class="pre">exponential_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.gamma_sample"><code class="docutils literal notranslate"><span class="pre">gamma_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.geometric_sample"><code class="docutils literal notranslate"><span class="pre">geometric_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.log_t_sample"><code class="docutils literal notranslate"><span class="pre">log_t_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.lognormal_sample"><code class="docutils literal notranslate"><span class="pre">lognormal_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.mixture_sample"><code class="docutils literal notranslate"><span class="pre">mixture_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.normal_sample"><code class="docutils literal notranslate"><span class="pre">normal_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.pareto_sample"><code class="docutils literal notranslate"><span class="pre">pareto_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.pert_sample"><code class="docutils literal notranslate"><span class="pre">pert_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.poisson_sample"><code class="docutils literal notranslate"><span class="pre">poisson_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.sample_correlated_group"><code class="docutils literal notranslate"><span class="pre">sample_correlated_group()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.t_sample"><code class="docutils literal notranslate"><span class="pre">t_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.triangular_sample"><code class="docutils literal notranslate"><span class="pre">triangular_sample()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.samplers.uniform_sample"><code class="docutils literal notranslate"><span class="pre">uniform_sample()</span></code></a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../_sources/reference/squigglepy.samplers.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2023, Peter Wildeford.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

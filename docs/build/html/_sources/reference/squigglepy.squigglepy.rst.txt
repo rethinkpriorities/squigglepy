@@ -1,0 +1,78 @@
+squigglepy.squigglepy package
+=============================
+
+Submodules
+----------
+
+squigglepy.squigglepy.bayes module
+----------------------------------
+
+.. automodule:: squigglepy.squigglepy.bayes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.squigglepy.correlation module
+----------------------------------------
+
+.. automodule:: squigglepy.squigglepy.correlation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.squigglepy.distributions module
+------------------------------------------
+
+.. automodule:: squigglepy.squigglepy.distributions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.squigglepy.numbers module
+------------------------------------
+
+.. automodule:: squigglepy.squigglepy.numbers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.squigglepy.rng module
+--------------------------------
+
+.. automodule:: squigglepy.squigglepy.rng
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.squigglepy.samplers module
+-------------------------------------
+
+.. automodule:: squigglepy.squigglepy.samplers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.squigglepy.utils module
+----------------------------------
+
+.. automodule:: squigglepy.squigglepy.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+squigglepy.squigglepy.version module
+------------------------------------
+
+.. automodule:: squigglepy.squigglepy.version
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: squigglepy.squigglepy
+    :members:
+    :undoc-members:
+    :show-inheritance:
