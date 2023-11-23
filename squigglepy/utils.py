@@ -912,25 +912,25 @@ def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, cu
     -------
     dict
         A dict of values specifying:
-        * ``my_price``
-        * ``market_price``
-        * ``deference``
-        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
-          into account.
-        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
-        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
-          ``market_price``.
-        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
-          you should bet.
-        * ``target`` : the target amount of money you should have invested
-        * ``current``
-        * ``delta`` : the amount of money you should invest given what you already
-          have invested
-        * ``max_gain`` : the amount of money you would gain if you win
-        * ``modeled_gain`` : the expected value you would win given ``adj_price``
-        * ``expected_roi`` : the expected return on investment
-        * ``expected_arr`` : the expected ARR given ``resolve_date``
-        * ``resolve_date``
+            * ``my_price``
+            * ``market_price``
+            * ``deference``
+            * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+              into account.
+            * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+            * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+              ``market_price``.
+            * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+              you should bet.
+            * ``target`` : the target amount of money you should have invested
+            * ``current``
+            * ``delta`` : the amount of money you should invest given what you already
+              have invested
+            * ``max_gain`` : the amount of money you would gain if you win
+            * ``modeled_gain`` : the expected value you would win given ``adj_price``
+            * ``expected_roi`` : the expected return on investment
+            * ``expected_arr`` : the expected ARR given ``resolve_date``
+            * ``resolve_date``
 
     Examples
     --------
@@ -1000,25 +1000,25 @@ def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
     -------
     dict
         A dict of values specifying:
-        * ``my_price``
-        * ``market_price``
-        * ``deference``
-        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
-          into account.
-        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
-        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
-          ``market_price``.
-        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
-          you should bet.
-        * ``target`` : the target amount of money you should have invested
-        * ``current``
-        * ``delta`` : the amount of money you should invest given what you already
-          have invested
-        * ``max_gain`` : the amount of money you would gain if you win
-        * ``modeled_gain`` : the expected value you would win given ``adj_price``
-        * ``expected_roi`` : the expected return on investment
-        * ``expected_arr`` : the expected ARR given ``resolve_date``
-        * ``resolve_date``
+            * ``my_price``
+            * ``market_price``
+            * ``deference``
+            * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+              into account.
+            * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+            * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+              ``market_price``.
+            * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+              you should bet.
+            * ``target`` : the target amount of money you should have invested
+            * ``current``
+            * ``delta`` : the amount of money you should invest given what you already
+              have invested
+            * ``max_gain`` : the amount of money you would gain if you win
+            * ``modeled_gain`` : the expected value you would win given ``adj_price``
+            * ``expected_roi`` : the expected return on investment
+            * ``expected_arr`` : the expected ARR given ``resolve_date``
+            * ``resolve_date``
 
     Examples
     --------
@@ -1062,25 +1062,25 @@ def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
     -------
     dict
         A dict of values specifying:
-        * ``my_price``
-        * ``market_price``
-        * ``deference``
-        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
-          into account.
-        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
-        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
-          ``market_price``.
-        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
-          you should bet.
-        * ``target`` : the target amount of money you should have invested
-        * ``current``
-        * ``delta`` : the amount of money you should invest given what you already
-          have invested
-        * ``max_gain`` : the amount of money you would gain if you win
-        * ``modeled_gain`` : the expected value you would win given ``adj_price``
-        * ``expected_roi`` : the expected return on investment
-        * ``expected_arr`` : the expected ARR given ``resolve_date``
-        * ``resolve_date``
+            * ``my_price``
+            * ``market_price``
+            * ``deference``
+            * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+              into account.
+            * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+            * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+              ``market_price``.
+            * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+              you should bet.
+            * ``target`` : the target amount of money you should have invested
+            * ``current``
+            * ``delta`` : the amount of money you should invest given what you already
+              have invested
+            * ``max_gain`` : the amount of money you would gain if you win
+            * ``modeled_gain`` : the expected value you would win given ``adj_price``
+            * ``expected_roi`` : the expected return on investment
+            * ``expected_arr`` : the expected ARR given ``resolve_date``
+            * ``resolve_date``
 
     Examples
     --------
@@ -1124,25 +1124,25 @@ def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current
     -------
     dict
         A dict of values specifying:
-        * ``my_price``
-        * ``market_price``
-        * ``deference``
-        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
-          into account.
-        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
-        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
-          ``market_price``.
-        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
-          you should bet.
-        * ``target`` : the target amount of money you should have invested
-        * ``current``
-        * ``delta`` : the amount of money you should invest given what you already
-          have invested
-        * ``max_gain`` : the amount of money you would gain if you win
-        * ``modeled_gain`` : the expected value you would win given ``adj_price``
-        * ``expected_roi`` : the expected return on investment
-        * ``expected_arr`` : the expected ARR given ``resolve_date``
-        * ``resolve_date``
+            * ``my_price``
+            * ``market_price``
+            * ``deference``
+            * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+              into account.
+            * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+            * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+              ``market_price``.
+            * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+              you should bet.
+            * ``target`` : the target amount of money you should have invested
+            * ``current``
+            * ``delta`` : the amount of money you should invest given what you already
+              have invested
+            * ``max_gain`` : the amount of money you would gain if you win
+            * ``modeled_gain`` : the expected value you would win given ``adj_price``
+            * ``expected_roi`` : the expected return on investment
+            * ``expected_arr`` : the expected ARR given ``resolve_date``
+            * ``resolve_date``
 
     Examples
     --------
