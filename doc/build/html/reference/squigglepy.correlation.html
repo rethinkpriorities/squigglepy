@@ -366,6 +366,17 @@ document.write(`
 <p>An object that holds metadata for a group of correlated distributions.
 This object is not intended to be used directly by the user, but
 rather during sampling to induce correlations between distributions.</p>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#squigglepy.correlation.CorrelationGroup.has_sufficient_sample_diversity" title="squigglepy.correlation.CorrelationGroup.has_sufficient_sample_diversity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_sufficient_sample_diversity</span></code></a>(samples[, ...])</p></td>
+<td><p>Check if there is there are sufficient unique samples to work with in the data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#squigglepy.correlation.CorrelationGroup.induce_correlation" title="squigglepy.correlation.CorrelationGroup.induce_correlation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">induce_correlation</span></code></a>(data)</p></td>
+<td><p>Induce a set of correlations on a column-wise dataset</p></td>
+</tr>
+</tbody>
+</table>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="squigglepy.correlation.CorrelationGroup.correlated_dists">
 <span class="sig-name descname"><span class="pre">correlated_dists</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.OperableDistribution" title="squigglepy.distributions.OperableDistribution"><span class="pre">OperableDistribution</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#squigglepy.correlation.CorrelationGroup.correlated_dists" title="Link to this definition">#</a></dt>
@@ -391,26 +402,26 @@ rather during sampling to induce correlations between distributions.</p>
 <dt class="sig sig-object py" id="squigglepy.correlation.CorrelationGroup.induce_correlation">
 <span class="sig-name descname"><span class="pre">induce_correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/squigglepy/correlation.html#CorrelationGroup.induce_correlation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.correlation.CorrelationGroup.induce_correlation" title="Link to this definition">#</a></dt>
 <dd><p>Induce a set of correlations on a column-wise dataset</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>data<span class="classifier">2d-array</span></dt><dd><p>An m-by-n array where m is the number of samples and n is the
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data</strong><span class="classifier">2d-array</span></dt><dd><p>An m-by-n array where m is the number of samples and n is the
 number of independent variables, each column of the array corresponding
 to each variable</p>
 </dd>
-<dt>corrmat<span class="classifier">2d-array</span></dt><dd><p>An n-by-n array that defines the desired correlation coefficients
+<dt><strong>corrmat</strong><span class="classifier">2d-array</span></dt><dd><p>An n-by-n array that defines the desired correlation coefficients
 (between -1 and 1). Note: the matrix must be symmetric and
 positive-definite in order to induce.</p>
 </dd>
 </dl>
-</section>
-<section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>new_data<span class="classifier">2d-array</span></dt><dd><p>An m-by-n array that has the desired correlations.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>new_data</strong><span class="classifier">2d-array</span></dt><dd><p>An m-by-n array that has the desired correlations.</p>
 </dd>
 </dl>
-</section>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -429,38 +440,37 @@ preserving the original marginal distributions.</p>
 <p>This method works on a best-effort basis, and may fail to induce the desired
 correlation depending on the distributions provided. An exception will be raised
 if that’s the case.</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<dl>
-<dt>variables<span class="classifier">tuple of distributions</span></dt><dd><p>The variables to correlate as a tuple of distributions.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>variables</strong><span class="classifier">tuple of distributions</span></dt><dd><p>The variables to correlate as a tuple of distributions.</p>
 <p>The distributions must be able to produce enough unique samples for the method
 to be able to induce the desired correlation by shuffling the samples.</p>
 <p>Discrete distributions are notably hard to correlate this way,
 as it’s common for them to result in very few unique samples.</p>
 </dd>
-<dt>correlation<span class="classifier">2d-array or float</span></dt><dd><p>An n-by-n array that defines the desired Spearman rank correlation coefficients.
+<dt><strong>correlation</strong><span class="classifier">2d-array or float</span></dt><dd><p>An n-by-n array that defines the desired Spearman rank correlation coefficients.
 This matrix must be symmetric and positive semi-definite; and must not be confused with
 a covariance matrix.</p>
 <p>Correlation parameters can only be between -1 and 1, exclusive
 (including extremely close approximations).</p>
 <p>If a float is provided, all variables will be correlated with the same coefficient.</p>
 </dd>
-<dt>tolerance<span class="classifier">float, optional</span></dt><dd><p>If provided, overrides the absolute tolerance used to check if the resulting
+<dt><strong>tolerance</strong><span class="classifier">float, optional</span></dt><dd><p>If provided, overrides the absolute tolerance used to check if the resulting
 correlation matrix matches the desired correlation matrix. Defaults to 0.05.</p>
 <p>Checking can also be disabled by passing None.</p>
 </dd>
 </dl>
-</section>
-<section id="id2">
-<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>correlated_variables<span class="classifier">tuple of distributions</span></dt><dd><p>The correlated variables as a tuple of distributions in the same order as
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>correlated_variables</strong><span class="classifier">tuple of distributions</span></dt><dd><p>The correlated variables as a tuple of distributions in the same order as
 the input variables.</p>
 </dd>
 </dl>
-</section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <p>Suppose we want to correlate two variables with a correlation coefficient of 0.65:
 &gt;&gt;&gt; solar_radiation, temperature = sq.gamma(300, 100), sq.to(22, 28)
 &gt;&gt;&gt; solar_radiation, temperature = sq.correlate((solar_radiation, temperature), 0.7)
@@ -480,7 +490,6 @@ the input variables.</p>
 <span class="go">       [-0.480149, -0.187831  ,  1.        ]])</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 </section>

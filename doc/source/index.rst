@@ -47,3 +47,5 @@ Acknowledgements
    distributions.
 -  Thanks to Dawn Drescher for coming up with the idea to use ``~`` as a
    shorthand for ``sample``, as well as helping me implement it.
+
+.. autosummary::

@@ -367,27 +367,25 @@ same, so if we’ve got a doubling time of 2 years, the returned value is the an
 growth rate.</p>
 <p>NOTE: This only works works for numbers, arrays and distributions where all numbers
 are above 0. (Otherwise it makes no sense to talk about doubling times.)</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>doubling_time<span class="classifier">float or np.array or BaseDistribution</span></dt><dd><p>The doubling time expressed in any time unit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>doubling_time</strong><span class="classifier">float or np.array or BaseDistribution</span></dt><dd><p>The doubling time expressed in any time unit.</p>
 </dd>
 </dl>
-</section>
-<section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float or np.array or ComplexDistribution</dt><dd><p>Returns the growth rate expressed as a fraction (the percentage divided by 100).</p>
 </dd>
 </dl>
-</section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">doubling_time_to_growth_rate</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
 <span class="go">0.05946309435929531</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -395,25 +393,25 @@ are above 0. (Otherwise it makes no sense to talk about doubling times.)</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.event" title="Link to this definition">#</a></dt>
 <dd><p>Return True with probability <code class="docutils literal notranslate"><span class="pre">p</span></code> and False with probability <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">p</span></code>.</p>
 <p>Alias for <code class="docutils literal notranslate"><span class="pre">event_occurs</span></code>.</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability of returning True. Must be between 0 and 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability of returning True. Must be between 0 and 1.</p>
 </dd>
 </dl>
-</section>
-<section id="id2">
-<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<p>bool</p>
-</section>
-<section id="id3">
-<h2>Examples<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">event</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="go">False</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -421,127 +419,120 @@ are above 0. (Otherwise it makes no sense to talk about doubling times.)</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">event_happens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#event_happens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.event_happens" title="Link to this definition">#</a></dt>
 <dd><p>Return True with probability <code class="docutils literal notranslate"><span class="pre">p</span></code> and False with probability <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">p</span></code>.</p>
 <p>Alias for <code class="docutils literal notranslate"><span class="pre">event_occurs</span></code>.</p>
-<section id="id4">
-<h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability of returning True. Must be between 0 and 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability of returning True. Must be between 0 and 1.</p>
 </dd>
 </dl>
-</section>
-<section id="id5">
-<h2>Examples<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">event_happens</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="go">False</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.event_occurs">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">event_occurs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#event_occurs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.event_occurs" title="Link to this definition">#</a></dt>
 <dd><p>Return True with probability <code class="docutils literal notranslate"><span class="pre">p</span></code> and False with probability <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">p</span></code>.</p>
-<section id="id6">
-<h2>Parameters<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability of returning True. Must be between 0 and 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability of returning True. Must be between 0 and 1.</p>
 </dd>
 </dl>
-</section>
-<section id="id7">
-<h2>Examples<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">event_occurs</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="go">False</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.extremize">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">extremize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#extremize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.extremize" title="Link to this definition">#</a></dt>
 <dd><p>Extremize a prediction.</p>
-<section id="id8">
-<h2>Parameters<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The prediction to extremize. Must be within 0-1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The prediction to extremize. Must be within 0-1.</p>
 </dd>
-<dt>e<span class="classifier">float</span></dt><dd><p>The extremization factor.</p>
+<dt><strong>e</strong><span class="classifier">float</span></dt><dd><p>The extremization factor.</p>
 </dd>
 </dl>
-</section>
-<section id="id9">
-<h2>Returns<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>The extremized prediction</p>
 </dd>
 </dl>
-</section>
-<section id="id10">
-<h2>Examples<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Extremizing of 1.73 per https://arxiv.org/abs/2111.03153</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">extremize</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="mf">1.73</span><span class="p">)</span>
 <span class="go">0.875428191155692</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.flip_coin">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">flip_coin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#flip_coin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.flip_coin" title="Link to this definition">#</a></dt>
 <dd><p>Flip a coin.</p>
-<section id="id11">
-<h2>Parameters<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>n<span class="classifier">int</span></dt><dd><p>The number of coins to be flipped.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>The number of coins to be flipped.</p>
 </dd>
 </dl>
-</section>
-<section id="id12">
-<h2>Returns<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>str or list</dt><dd><p>Returns the value of each coin flip, as either “heads” or “tails”</p>
 </dd>
 </dl>
-</section>
-<section id="id13">
-<h2>Examples<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">flip_coin</span><span class="p">()</span>
 <span class="go">&#39;heads&#39;</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.full_kelly">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">full_kelly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">my_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">market_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bankroll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolve_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#full_kelly"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.full_kelly" title="Link to this definition">#</a></dt>
 <dd><p>Alias for <code class="docutils literal notranslate"><span class="pre">kelly</span></code> where <code class="docutils literal notranslate"><span class="pre">deference</span></code> is 0.</p>
-<section id="id14">
-<h2>Parameters<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>my_price<span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>my_price</strong><span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
 </dd>
-<dt>market_price<span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
+<dt><strong>market_price</strong><span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
 </dd>
-<dt>bankroll<span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
+<dt><strong>bankroll</strong><span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
 </dd>
-<dt>resolve_date<span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
+<dt><strong>resolve_date</strong><span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
 calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
 ARR is not calculated.</p>
 </dd>
-<dt>current<span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
+<dt><strong>current</strong><span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
 additional amount you should invest. Defaults to 0.</p>
 </dd>
 </dl>
-</section>
-<section id="id15">
-<h2>Returns<a class="headerlink" href="#id15" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><dl class="simple">
 <dt>A dict of values specifying:</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">my_price</span></code></p></li>
@@ -568,9 +559,9 @@ have invested</p></li>
 </dl>
 </dd>
 </dl>
-</section>
-<section id="id16">
-<h2>Examples<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">full_kelly</span><span class="p">(</span><span class="n">my_price</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">market_price</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">bankroll</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 <span class="go">{&#39;my_price&#39;: 0.7, &#39;market_price&#39;: 0.4, &#39;deference&#39;: 0, &#39;adj_price&#39;: 0.7,</span>
 <span class="go"> &#39;delta_price&#39;: 0.3, &#39;adj_delta_price&#39;: 0.3, &#39;kelly&#39;: 0.5, &#39;target&#39;: 50.0,</span>
@@ -578,203 +569,194 @@ have invested</p></li>
 <span class="go"> &#39;expected_roi&#39;: 0.75, &#39;expected_arr&#39;: None, &#39;resolve_date&#39;: None}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.geomean">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">geomean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_na</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#geomean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.geomean" title="Link to this definition">#</a></dt>
 <dd><p>Calculate the geometric mean.</p>
-<section id="id17">
-<h2>Parameters<a class="headerlink" href="#id17" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>a<span class="classifier">list or np.array</span></dt><dd><p>The values to calculate the geometric mean of.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>a</strong><span class="classifier">list or np.array</span></dt><dd><p>The values to calculate the geometric mean of.</p>
 </dd>
-<dt>weights<span class="classifier">list or None</span></dt><dd><p>The weights, if a weighted geometric mean is desired.</p>
+<dt><strong>weights</strong><span class="classifier">list or None</span></dt><dd><p>The weights, if a weighted geometric mean is desired.</p>
 </dd>
-<dt>relative_weights<span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
+<dt><strong>relative_weights</strong><span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
 to sum to 1.</p>
 </dd>
-<dt>drop_na<span class="classifier">boolean</span></dt><dd><p>Should NA-like values be dropped when calculating the geomean?</p>
+<dt><strong>drop_na</strong><span class="classifier">boolean</span></dt><dd><p>Should NA-like values be dropped when calculating the geomean?</p>
 </dd>
 </dl>
-</section>
-<section id="id18">
-<h2>Returns<a class="headerlink" href="#id18" title="Link to this heading">#</a></h2>
-<p>float</p>
-</section>
-<section id="id19">
-<h2>Examples<a class="headerlink" href="#id19" title="Link to this heading">#</a></h2>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>float</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">geomean</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
 <span class="go">3.1072325059538595</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.geomean_odds">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">geomean_odds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_na</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#geomean_odds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.geomean_odds" title="Link to this definition">#</a></dt>
 <dd><p>Calculate the geometric mean of odds.</p>
-<section id="id20">
-<h2>Parameters<a class="headerlink" href="#id20" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>a<span class="classifier">list or np.array</span></dt><dd><p>The probabilities to calculate the geometric mean of. These are converted to odds
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>a</strong><span class="classifier">list or np.array</span></dt><dd><p>The probabilities to calculate the geometric mean of. These are converted to odds
 before the geometric mean is taken..</p>
 </dd>
-<dt>weights<span class="classifier">list or None</span></dt><dd><p>The weights, if a weighted geometric mean is desired.</p>
+<dt><strong>weights</strong><span class="classifier">list or None</span></dt><dd><p>The weights, if a weighted geometric mean is desired.</p>
 </dd>
-<dt>relative_weights<span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
+<dt><strong>relative_weights</strong><span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
 to sum to 1.</p>
 </dd>
-<dt>drop_na<span class="classifier">boolean</span></dt><dd><p>Should NA-like values be dropped when calculating the geomean?</p>
+<dt><strong>drop_na</strong><span class="classifier">boolean</span></dt><dd><p>Should NA-like values be dropped when calculating the geomean?</p>
 </dd>
 </dl>
-</section>
-<section id="id21">
-<h2>Returns<a class="headerlink" href="#id21" title="Link to this heading">#</a></h2>
-<p>float</p>
-</section>
-<section id="id22">
-<h2>Examples<a class="headerlink" href="#id22" title="Link to this heading">#</a></h2>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>float</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">geomean_odds</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
 <span class="go">0.42985748800076845</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.get_log_percentiles">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">get_log_percentiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">5,</span> <span class="pre">10,</span> <span class="pre">20,</span> <span class="pre">30,</span> <span class="pre">40,</span> <span class="pre">50,</span> <span class="pre">60,</span> <span class="pre">70,</span> <span class="pre">80,</span> <span class="pre">90,</span> <span class="pre">95,</span> <span class="pre">99]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#get_log_percentiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.get_log_percentiles" title="Link to this definition">#</a></dt>
 <dd><p>Print the log (base 10) of the percentiles of the data.</p>
-<section id="id23">
-<h2>Parameters<a class="headerlink" href="#id23" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>data<span class="classifier">list or np.array</span></dt><dd><p>The data to calculate percentiles for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data</strong><span class="classifier">list or np.array</span></dt><dd><p>The data to calculate percentiles for.</p>
 </dd>
-<dt>percentiles<span class="classifier">list</span></dt><dd><p>A list of percentiles to calculate. Must be values between 0 and 100.</p>
+<dt><strong>percentiles</strong><span class="classifier">list</span></dt><dd><p>A list of percentiles to calculate. Must be values between 0 and 100.</p>
 </dd>
-<dt>reverse<span class="classifier">bool</span></dt><dd><p>If True, the percentile values are reversed (e.g., 95th and 5th percentile
+<dt><strong>reverse</strong><span class="classifier">bool</span></dt><dd><p>If True, the percentile values are reversed (e.g., 95th and 5th percentile
 swap values.)</p>
 </dd>
-<dt>display<span class="classifier">bool</span></dt><dd><p>If True, the function returns an easy to read display.</p>
+<dt><strong>display</strong><span class="classifier">bool</span></dt><dd><p>If True, the function returns an easy to read display.</p>
 </dd>
-<dt>digits<span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
+<dt><strong>digits</strong><span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
 </dd>
 </dl>
-</section>
-<section id="id24">
-<h2>Returns<a class="headerlink" href="#id24" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><p>A dictionary of the given percentiles. If <code class="docutils literal notranslate"><span class="pre">display</span></code> is true, will be str values.
 Otherwise will be float values. 10 to the power of the value gives the true percentile.</p>
 </dd>
 </dl>
-</section>
-<section id="id25">
-<h2>Examples<a class="headerlink" href="#id25" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_percentiles</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">percentiles</span><span class="o">=</span><span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">75</span><span class="p">])</span>
 <span class="go">{25: 24.75, 50: 49.5, 75: 74.25}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.get_mean_and_ci">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">get_mean_and_ci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">credibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#get_mean_and_ci"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.get_mean_and_ci" title="Link to this definition">#</a></dt>
 <dd><p>Return the mean and percentiles of the data.</p>
-<section id="id26">
-<h2>Parameters<a class="headerlink" href="#id26" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>data<span class="classifier">list or np.array</span></dt><dd><p>The data to calculate the mean and CI for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data</strong><span class="classifier">list or np.array</span></dt><dd><p>The data to calculate the mean and CI for.</p>
 </dd>
-<dt>credibility<span class="classifier">float</span></dt><dd><p>The credibility of the interval. Must be values between 0 and 100. Default 90 for 90% CI.</p>
+<dt><strong>credibility</strong><span class="classifier">float</span></dt><dd><p>The credibility of the interval. Must be values between 0 and 100. Default 90 for 90% CI.</p>
 </dd>
-<dt>digits<span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
+<dt><strong>digits</strong><span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
 </dd>
 </dl>
-</section>
-<section id="id27">
-<h2>Returns<a class="headerlink" href="#id27" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><p>A dictionary with the mean and CI.</p>
 </dd>
 </dl>
-</section>
-<section id="id28">
-<h2>Examples<a class="headerlink" href="#id28" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_mean_and_ci</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="go">{&#39;mean&#39;: 49.5, &#39;ci_low&#39;: 4.95, &#39;ci_high&#39;: 94.05}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.get_median_and_ci">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">get_median_and_ci</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">credibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#get_median_and_ci"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.get_median_and_ci" title="Link to this definition">#</a></dt>
 <dd><p>Return the median and percentiles of the data.</p>
-<section id="id29">
-<h2>Parameters<a class="headerlink" href="#id29" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>data<span class="classifier">list or np.array</span></dt><dd><p>The data to calculate the mean and CI for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data</strong><span class="classifier">list or np.array</span></dt><dd><p>The data to calculate the mean and CI for.</p>
 </dd>
-<dt>credibility<span class="classifier">float</span></dt><dd><p>The credibility of the interval. Must be values between 0 and 100. Default 90 for 90% CI.</p>
+<dt><strong>credibility</strong><span class="classifier">float</span></dt><dd><p>The credibility of the interval. Must be values between 0 and 100. Default 90 for 90% CI.</p>
 </dd>
-<dt>digits<span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
+<dt><strong>digits</strong><span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
 </dd>
 </dl>
-</section>
-<section id="id30">
-<h2>Returns<a class="headerlink" href="#id30" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><p>A dictionary with the median and CI.</p>
 </dd>
 </dl>
-</section>
-<section id="id31">
-<h2>Examples<a class="headerlink" href="#id31" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_median_and_ci</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 <span class="go">{&#39;mean&#39;: 49.5, &#39;ci_low&#39;: 4.95, &#39;ci_high&#39;: 94.05}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.get_percentiles">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">get_percentiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">5,</span> <span class="pre">10,</span> <span class="pre">20,</span> <span class="pre">30,</span> <span class="pre">40,</span> <span class="pre">50,</span> <span class="pre">60,</span> <span class="pre">70,</span> <span class="pre">80,</span> <span class="pre">90,</span> <span class="pre">95,</span> <span class="pre">99]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#get_percentiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.get_percentiles" title="Link to this definition">#</a></dt>
 <dd><p>Print the percentiles of the data.</p>
-<section id="id32">
-<h2>Parameters<a class="headerlink" href="#id32" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>data<span class="classifier">list or np.array</span></dt><dd><p>The data to calculate percentiles for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data</strong><span class="classifier">list or np.array</span></dt><dd><p>The data to calculate percentiles for.</p>
 </dd>
-<dt>percentiles<span class="classifier">list</span></dt><dd><p>A list of percentiles to calculate. Must be values between 0 and 100.</p>
+<dt><strong>percentiles</strong><span class="classifier">list</span></dt><dd><p>A list of percentiles to calculate. Must be values between 0 and 100.</p>
 </dd>
-<dt>reverse<span class="classifier">bool</span></dt><dd><p>If <cite>True</cite>, the percentile values are reversed (e.g., 95th and 5th percentile
+<dt><strong>reverse</strong><span class="classifier">bool</span></dt><dd><p>If <cite>True</cite>, the percentile values are reversed (e.g., 95th and 5th percentile
 swap values.)</p>
 </dd>
-<dt>digits<span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
+<dt><strong>digits</strong><span class="classifier">int or None</span></dt><dd><p>The number of digits to display (using rounding).</p>
 </dd>
 </dl>
-</section>
-<section id="id33">
-<h2>Returns<a class="headerlink" href="#id33" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><p>A dictionary of the given percentiles.</p>
 </dd>
 </dl>
-</section>
-<section id="id34">
-<h2>Examples<a class="headerlink" href="#id34" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_percentiles</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">percentiles</span><span class="o">=</span><span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">75</span><span class="p">])</span>
 <span class="go">{25: 24.75, 50: 49.5, 75: 74.25}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -786,54 +768,51 @@ where 0.05 means +5% to a doubling time. The time unit remains the same, so if w
 got +5% annual growth, the returned value is the doubling time in years.</p>
 <p>NOTE: This only works works for numbers, arrays and distributions where all numbers
 are above 0. (Otherwise it makes no sense to talk about doubling times.)</p>
-<section id="id35">
-<h2>Parameters<a class="headerlink" href="#id35" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>growth_rate<span class="classifier">float or np.array or BaseDistribution</span></dt><dd><p>The growth rate expressed as a fraction (the percentage divided by 100).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>growth_rate</strong><span class="classifier">float or np.array or BaseDistribution</span></dt><dd><p>The growth rate expressed as a fraction (the percentage divided by 100).</p>
 </dd>
 </dl>
-</section>
-<section id="id36">
-<h2>Returns<a class="headerlink" href="#id36" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float or np.array or ComplexDistribution</dt><dd><p>Returns the doubling time.</p>
 </dd>
 </dl>
-</section>
-<section id="id37">
-<h2>Examples<a class="headerlink" href="#id37" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">growth_rate_to_doubling_time</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
 <span class="go">69.66071689357483</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.half_kelly">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">half_kelly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">my_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">market_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bankroll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolve_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#half_kelly"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.half_kelly" title="Link to this definition">#</a></dt>
 <dd><p>Alias for <code class="docutils literal notranslate"><span class="pre">kelly</span></code> where <code class="docutils literal notranslate"><span class="pre">deference</span></code> is 0.5.</p>
-<section id="id38">
-<h2>Parameters<a class="headerlink" href="#id38" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>my_price<span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>my_price</strong><span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
 </dd>
-<dt>market_price<span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
+<dt><strong>market_price</strong><span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
 </dd>
-<dt>bankroll<span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
+<dt><strong>bankroll</strong><span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
 </dd>
-<dt>resolve_date<span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
+<dt><strong>resolve_date</strong><span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
 calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
 ARR is not calculated.</p>
 </dd>
-<dt>current<span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
+<dt><strong>current</strong><span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
 additional amount you should invest. Defaults to 0.</p>
 </dd>
 </dl>
-</section>
-<section id="id39">
-<h2>Returns<a class="headerlink" href="#id39" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><dl class="simple">
 <dt>A dict of values specifying:</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">my_price</span></code></p></li>
@@ -860,9 +839,9 @@ have invested</p></li>
 </dl>
 </dd>
 </dl>
-</section>
-<section id="id40">
-<h2>Examples<a class="headerlink" href="#id40" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">half_kelly</span><span class="p">(</span><span class="n">my_price</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">market_price</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">bankroll</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 <span class="go">{&#39;my_price&#39;: 0.7, &#39;market_price&#39;: 0.4, &#39;deference&#39;: 0.5, &#39;adj_price&#39;: 0.55,</span>
 <span class="go"> &#39;delta_price&#39;: 0.3, &#39;adj_delta_price&#39;: 0.15, &#39;kelly&#39;: 0.25, &#39;target&#39;: 25.0,</span>
@@ -870,7 +849,6 @@ have invested</p></li>
 <span class="go"> &#39;expected_roi&#39;: 0.375, &#39;expected_arr&#39;: None, &#39;resolve_date&#39;: None}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -882,29 +860,27 @@ have invested</p></li>
 <dt class="sig sig-object py" id="squigglepy.utils.is_dist">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">is_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#is_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.is_dist" title="Link to this definition">#</a></dt>
 <dd><p>Test if a given object is a Squigglepy distribution.</p>
-<section id="id41">
-<h2>Parameters<a class="headerlink" href="#id41" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>obj<span class="classifier">object</span></dt><dd><p>The object to test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>obj</strong><span class="classifier">object</span></dt><dd><p>The object to test.</p>
 </dd>
 </dl>
-</section>
-<section id="id42">
-<h2>Returns<a class="headerlink" href="#id42" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>bool</dt><dd><p>True, if the object is a distribution. False if not.</p>
 </dd>
 </dl>
-</section>
-<section id="id43">
-<h2>Examples<a class="headerlink" href="#id43" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">is_dist</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_dist</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="go">False</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -913,22 +889,21 @@ have invested</p></li>
 <dd><p>Test if a given object can be sampled from.</p>
 <p>This includes distributions, integers, floats, <cite>None</cite>,
 strings, and callables.</p>
-<section id="id44">
-<h2>Parameters<a class="headerlink" href="#id44" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>obj<span class="classifier">object</span></dt><dd><p>The object to test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>obj</strong><span class="classifier">object</span></dt><dd><p>The object to test.</p>
 </dd>
 </dl>
-</section>
-<section id="id45">
-<h2>Returns<a class="headerlink" href="#id45" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>bool</dt><dd><p>True, if the object can be sampled from. False if not.</p>
 </dd>
 </dl>
-</section>
-<section id="id46">
-<h2>Examples<a class="headerlink" href="#id46" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">is_sampleable</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_sampleable</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -937,37 +912,35 @@ strings, and callables.</p>
 <span class="go">False</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.kelly">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">kelly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">my_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">market_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bankroll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolve_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#kelly"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.kelly" title="Link to this definition">#</a></dt>
 <dd><p>Calculate the Kelly criterion.</p>
-<section id="id47">
-<h2>Parameters<a class="headerlink" href="#id47" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>my_price<span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>my_price</strong><span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
 </dd>
-<dt>market_price<span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
+<dt><strong>market_price</strong><span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
 </dd>
-<dt>deference<span class="classifier">float</span></dt><dd><p>How much deference (or weight) do you give the market price? Use 0.5 for half Kelly
+<dt><strong>deference</strong><span class="classifier">float</span></dt><dd><p>How much deference (or weight) do you give the market price? Use 0.5 for half Kelly
 and 0.75 for quarter Kelly. Defaults to 0, which is full Kelly.</p>
 </dd>
-<dt>bankroll<span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
+<dt><strong>bankroll</strong><span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
 </dd>
-<dt>resolve_date<span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
+<dt><strong>resolve_date</strong><span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
 calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
 ARR is not calculated.</p>
 </dd>
-<dt>current<span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
+<dt><strong>current</strong><span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
 additional amount you should invest. Defaults to 0.</p>
 </dd>
 </dl>
-</section>
-<section id="id48">
-<h2>Returns<a class="headerlink" href="#id48" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><dl class="simple">
 <dt>A dict of values specifying:</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">my_price</span></code></p></li>
@@ -994,9 +967,9 @@ have invested</p></li>
 </dl>
 </dd>
 </dl>
-</section>
-<section id="id49">
-<h2>Examples<a class="headerlink" href="#id49" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">kelly</span><span class="p">(</span><span class="n">my_price</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">market_price</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">deference</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">bankroll</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 <span class="go">{&#39;my_price&#39;: 0.7, &#39;market_price&#39;: 0.4, &#39;deference&#39;: 0.5, &#39;adj_price&#39;: 0.55,</span>
 <span class="go"> &#39;delta_price&#39;: 0.3, &#39;adj_delta_price&#39;: 0.15, &#39;kelly&#39;: 0.25, &#39;target&#39;: 25.0,</span>
@@ -1004,7 +977,6 @@ have invested</p></li>
 <span class="go"> &#39;expected_roi&#39;: 0.375, &#39;expected_arr&#39;: None, &#39;resolve_date&#39;: None}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -1013,36 +985,35 @@ have invested</p></li>
 <dd><p>Return probability of success on next trial given Laplace’s law of succession.</p>
 <p>Also can be used to calculate a time-invariant version defined in
 <a class="reference external" href="https://www.lesswrong.com/posts/wE7SK8w8AixqknArs/a-time-invariant-version-of-laplace-s-rule">https://www.lesswrong.com/posts/wE7SK8w8AixqknArs/a-time-invariant-version-of-laplace-s-rule</a></p>
-<section id="id50">
-<h2>Parameters<a class="headerlink" href="#id50" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>s<span class="classifier">int</span></dt><dd><p>The number of successes among <code class="docutils literal notranslate"><span class="pre">n</span></code> past trials or among <code class="docutils literal notranslate"><span class="pre">time_passed</span></code> amount of time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>s</strong><span class="classifier">int</span></dt><dd><p>The number of successes among <code class="docutils literal notranslate"><span class="pre">n</span></code> past trials or among <code class="docutils literal notranslate"><span class="pre">time_passed</span></code> amount of time.</p>
 </dd>
-<dt>n<span class="classifier">int or None</span></dt><dd><p>The number of trials that contain the successes (and/or failures). Leave as None if
+<dt><strong>n</strong><span class="classifier">int or None</span></dt><dd><p>The number of trials that contain the successes (and/or failures). Leave as None if
 time-invariant mode is desired.</p>
 </dd>
-<dt>time_passed<span class="classifier">float or None</span></dt><dd><p>The amount of time that has passed when the successes (and/or failures) occured for
+<dt><strong>time_passed</strong><span class="classifier">float or None</span></dt><dd><p>The amount of time that has passed when the successes (and/or failures) occured for
 calculating a time-invariant Laplace.</p>
 </dd>
-<dt>time_remaining<span class="classifier">float or None</span></dt><dd><p>We are calculating the likelihood of observing at least one success over this time
+<dt><strong>time_remaining</strong><span class="classifier">float or None</span></dt><dd><p>We are calculating the likelihood of observing at least one success over this time
 period.</p>
 </dd>
-<dt>time_fixed<span class="classifier">bool</span></dt><dd><p>This should be False if the time period is variable - that is, if the time period
+<dt><strong>time_fixed</strong><span class="classifier">bool</span></dt><dd><p>This should be False if the time period is variable - that is, if the time period
 was chosen specifically to include the most recent success. Otherwise the time period
 is fixed and this should be True. Defaults to False.</p>
 </dd>
 </dl>
-</section>
-<section id="id51">
-<h2>Returns<a class="headerlink" href="#id51" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>The probability of at least one success in the next trial or <code class="docutils literal notranslate"><span class="pre">time_remaining</span></code> amount
 of time.</p>
 </dd>
 </dl>
-</section>
-<section id="id52">
-<h2>Examples<a class="headerlink" href="#id52" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># The sun has risen the past 100,000 days. What are the odds it rises again tomorrow?</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">laplace</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="o">*</span><span class="n">K</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="o">*</span><span class="n">K</span><span class="p">)</span>
 <span class="go">0.999990000199996</span>
@@ -1052,144 +1023,136 @@ of time.</p>
 <span class="go">0.012820512820512664</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.normalize">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lst</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.normalize" title="Link to this definition">#</a></dt>
 <dd><p>Normalize a list to sum to 1.</p>
-<section id="id53">
-<h2>Parameters<a class="headerlink" href="#id53" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>lst<span class="classifier">list</span></dt><dd><p>The list to normalize.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>lst</strong><span class="classifier">list</span></dt><dd><p>The list to normalize.</p>
 </dd>
 </dl>
-</section>
-<section id="id54">
-<h2>Returns<a class="headerlink" href="#id54" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>list</dt><dd><p>A list where each value is normalized such that the list sums to 1.</p>
 </dd>
 </dl>
-</section>
-<section id="id55">
-<h2>Examples<a class="headerlink" href="#id55" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">])</span>
 <span class="go">[0.2, 0.4, 0.4]</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.odds_to_p">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">odds_to_p</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">odds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#odds_to_p"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.odds_to_p" title="Link to this definition">#</a></dt>
 <dd><p>Calculate the probability from given decimal odds.</p>
-<section id="id56">
-<h2>Parameters<a class="headerlink" href="#id56" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>odds<span class="classifier">float</span></dt><dd><p>The decimal odds to calculate the probability for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>odds</strong><span class="classifier">float</span></dt><dd><p>The decimal odds to calculate the probability for.</p>
 </dd>
 </dl>
-</section>
-<section id="id57">
-<h2>Returns<a class="headerlink" href="#id57" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>Probability</p>
 </dd>
 </dl>
-</section>
-<section id="id58">
-<h2>Examples<a class="headerlink" href="#id58" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">odds_to_p</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="go">0.09090909090909091</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.one_in">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">one_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#one_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.one_in" title="Link to this definition">#</a></dt>
 <dd><p>Convert a probability into “1 in X” notation.</p>
-<section id="id59">
-<h2>Parameters<a class="headerlink" href="#id59" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability to convert.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability to convert.</p>
 </dd>
-<dt>digits<span class="classifier">int</span></dt><dd><p>The number of digits to round the result to. Defaults to 0. If <code class="docutils literal notranslate"><span class="pre">digits</span></code>
+<dt><strong>digits</strong><span class="classifier">int</span></dt><dd><p>The number of digits to round the result to. Defaults to 0. If <code class="docutils literal notranslate"><span class="pre">digits</span></code>
 is 0, the result will be converted to int instead of float.</p>
 </dd>
-<dt>verbose<span class="classifier">logical</span></dt><dd><p>If True, will return a string with “1 in X”. If False, will just return X.</p>
+<dt><strong>verbose</strong><span class="classifier">logical</span></dt><dd><p>If True, will return a string with “1 in X”. If False, will just return X.</p>
 </dd>
 </dl>
-</section>
-<section id="id60">
-<h2>Returns<a class="headerlink" href="#id60" title="Link to this heading">#</a></h2>
-<p>str if <code class="docutils literal notranslate"><span class="pre">verbose</span></code> is True. Otherwise, int if <code class="docutils literal notranslate"><span class="pre">digits</span></code> is 0 or float if <code class="docutils literal notranslate"><span class="pre">digits</span></code> &gt; 0.</p>
-</section>
-<section id="id61">
-<h2>Examples<a class="headerlink" href="#id61" title="Link to this heading">#</a></h2>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>str if <code class="docutils literal notranslate"><span class="pre">verbose</span></code> is True. Otherwise, int if <code class="docutils literal notranslate"><span class="pre">digits</span></code> is 0 or float if <code class="docutils literal notranslate"><span class="pre">digits</span></code> &gt; 0.</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">one_in</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="go">&quot;1 in 10&quot;</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.p_to_odds">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">p_to_odds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#p_to_odds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.p_to_odds" title="Link to this definition">#</a></dt>
 <dd><p>Calculate the decimal odds from a given probability.</p>
-<section id="id62">
-<h2>Parameters<a class="headerlink" href="#id62" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability to calculate decimal odds for. Must be between 0 and 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability to calculate decimal odds for. Must be between 0 and 1.</p>
 </dd>
 </dl>
-</section>
-<section id="id63">
-<h2>Returns<a class="headerlink" href="#id63" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>Decimal odds</p>
 </dd>
 </dl>
-</section>
-<section id="id64">
-<h2>Examples<a class="headerlink" href="#id64" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">p_to_odds</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="go">0.1111111111111111</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.quarter_kelly">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">quarter_kelly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">my_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">market_price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bankroll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolve_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#quarter_kelly"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.quarter_kelly" title="Link to this definition">#</a></dt>
 <dd><p>Alias for <code class="docutils literal notranslate"><span class="pre">kelly</span></code> where <code class="docutils literal notranslate"><span class="pre">deference</span></code> is 0.75.</p>
-<section id="id65">
-<h2>Parameters<a class="headerlink" href="#id65" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>my_price<span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>my_price</strong><span class="classifier">float</span></dt><dd><p>The price (or probability) you give for the given event.</p>
 </dd>
-<dt>market_price<span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
+<dt><strong>market_price</strong><span class="classifier">float</span></dt><dd><p>The price the market is giving for that event.</p>
 </dd>
-<dt>bankroll<span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
+<dt><strong>bankroll</strong><span class="classifier">float</span></dt><dd><p>How much money do you have to bet? Defaults to 1.</p>
 </dd>
-<dt>resolve_date<span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
+<dt><strong>resolve_date</strong><span class="classifier">str or None</span></dt><dd><p>When will the event happen, the market resolve, and you get your money back? Used for
 calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
 ARR is not calculated.</p>
 </dd>
-<dt>current<span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
+<dt><strong>current</strong><span class="classifier">float</span></dt><dd><p>How much do you already have invested in this event? Used for calculating the
 additional amount you should invest. Defaults to 0.</p>
 </dd>
 </dl>
-</section>
-<section id="id66">
-<h2>Returns<a class="headerlink" href="#id66" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><dl class="simple">
 <dt>A dict of values specifying:</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">my_price</span></code></p></li>
@@ -1216,9 +1179,9 @@ have invested</p></li>
 </dl>
 </dd>
 </dl>
-</section>
-<section id="id67">
-<h2>Examples<a class="headerlink" href="#id67" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">quarter_kelly</span><span class="p">(</span><span class="n">my_price</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">market_price</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">bankroll</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 <span class="go">{&#39;my_price&#39;: 0.7, &#39;market_price&#39;: 0.4, &#39;deference&#39;: 0.75, &#39;adj_price&#39;: 0.48,</span>
 <span class="go"> &#39;delta_price&#39;: 0.3, &#39;adj_delta_price&#39;: 0.08, &#39;kelly&#39;: 0.125, &#39;target&#39;: 12.5,</span>
@@ -1226,37 +1189,34 @@ have invested</p></li>
 <span class="go"> &#39;expected_roi&#39;: 0.188, &#39;expected_arr&#39;: None, &#39;resolve_date&#39;: None}</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.utils.roll_die">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.utils.</span></span><span class="sig-name descname"><span class="pre">roll_die</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/utils.html#roll_die"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.utils.roll_die" title="Link to this definition">#</a></dt>
 <dd><p>Roll a die.</p>
-<section id="id68">
-<h2>Parameters<a class="headerlink" href="#id68" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>sides<span class="classifier">int</span></dt><dd><p>The number of sides of the die that is rolled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sides</strong><span class="classifier">int</span></dt><dd><p>The number of sides of the die that is rolled.</p>
 </dd>
-<dt>n<span class="classifier">int</span></dt><dd><p>The number of dice to be rolled.</p>
+<dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>The number of dice to be rolled.</p>
 </dd>
 </dl>
-</section>
-<section id="id69">
-<h2>Returns<a class="headerlink" href="#id69" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int or list</dt><dd><p>Returns the value of each die roll.</p>
 </dd>
 </dl>
-</section>
-<section id="id70">
-<h2>Examples<a class="headerlink" href="#id70" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">roll_die</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
 <span class="go">5</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 </section>

@@ -362,36 +362,34 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.bayes.average">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.bayes.</span></span><span class="sig-name descname"><span class="pre">average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evidence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.5,</span> <span class="pre">0.5]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/bayes.html#average"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.bayes.average" title="Link to this definition">#</a></dt>
 <dd><p>Average two distributions.</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>prior<span class="classifier">Distribution</span></dt><dd><p>The prior distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>prior</strong><span class="classifier">Distribution</span></dt><dd><p>The prior distribution.</p>
 </dd>
-<dt>evidence<span class="classifier">Distribution</span></dt><dd><p>The distribution used to average with the prior.</p>
+<dt><strong>evidence</strong><span class="classifier">Distribution</span></dt><dd><p>The distribution used to average with the prior.</p>
 </dd>
-<dt>weights<span class="classifier">list or np.array or float</span></dt><dd><p>How much weight to put on <code class="docutils literal notranslate"><span class="pre">prior</span></code> versus <code class="docutils literal notranslate"><span class="pre">evidence</span></code> when averaging? If
+<dt><strong>weights</strong><span class="classifier">list or np.array or float</span></dt><dd><p>How much weight to put on <code class="docutils literal notranslate"><span class="pre">prior</span></code> versus <code class="docutils literal notranslate"><span class="pre">evidence</span></code> when averaging? If
 only one weight is passed, the other weight will be inferred to make the
 total weights sum to 1. Defaults to 50-50 weights.</p>
 </dd>
-<dt>relative_weights<span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
+<dt><strong>relative_weights</strong><span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
 to sum to 1.</p>
 </dd>
 </dl>
-</section>
-<section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>Distribution</dt><dd><p>A mixture distribution that accords weights to <code class="docutils literal notranslate"><span class="pre">prior</span></code> and <code class="docutils literal notranslate"><span class="pre">evidence</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <p>&gt;&gt; prior = sq.norm(1,5)
 &gt;&gt; evidence = sq.norm(2,3)
 &gt;&gt; bayes.average(prior, evidence)
 &lt;Distribution&gt; mixture</p>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -400,59 +398,58 @@ to sum to 1.</p>
 <dd><p>Calculate a Bayesian network.</p>
 <p>Allows you to find conditional probabilities of custom events based on
 rejection sampling.</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>event_fn<span class="classifier">function</span></dt><dd><p>A function that defines the bayesian network</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>event_fn</strong><span class="classifier">function</span></dt><dd><p>A function that defines the bayesian network</p>
 </dd>
-<dt>n<span class="classifier">int</span></dt><dd><p>The number of samples to generate</p>
+<dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>The number of samples to generate</p>
 </dd>
-<dt>find<span class="classifier">a function or None</span></dt><dd><p>What do we want to know the probability of?</p>
+<dt><strong>find</strong><span class="classifier">a function or None</span></dt><dd><p>What do we want to know the probability of?</p>
 </dd>
-<dt>conditional_on<span class="classifier">a function or None</span></dt><dd><p>When finding the probability, what do we want to condition on?</p>
+<dt><strong>conditional_on</strong><span class="classifier">a function or None</span></dt><dd><p>When finding the probability, what do we want to condition on?</p>
 </dd>
-<dt>reduce_fn<span class="classifier">a function or None</span></dt><dd><p>When taking all the results of the simulations, how do we aggregate them
+<dt><strong>reduce_fn</strong><span class="classifier">a function or None</span></dt><dd><p>When taking all the results of the simulations, how do we aggregate them
 into a final answer? Defaults to <code class="docutils literal notranslate"><span class="pre">np.mean</span></code>.</p>
 </dd>
-<dt>raw<span class="classifier">bool</span></dt><dd><p>If True, just return the results of each simulation without aggregating.</p>
+<dt><strong>raw</strong><span class="classifier">bool</span></dt><dd><p>If True, just return the results of each simulation without aggregating.</p>
 </dd>
-<dt>memcache<span class="classifier">bool</span></dt><dd><p>If True, cache the results in-memory for future calculations. Each cache
+<dt><strong>memcache</strong><span class="classifier">bool</span></dt><dd><p>If True, cache the results in-memory for future calculations. Each cache
 will be matched based on the <code class="docutils literal notranslate"><span class="pre">event_fn</span></code>. Default <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
-<dt>memcache_load<span class="classifier">bool</span></dt><dd><p>If True, load cache from the in-memory. This will be true if <code class="docutils literal notranslate"><span class="pre">memcache</span></code>
+<dt><strong>memcache_load</strong><span class="classifier">bool</span></dt><dd><p>If True, load cache from the in-memory. This will be true if <code class="docutils literal notranslate"><span class="pre">memcache</span></code>
 is True. Cache will be matched based on the <code class="docutils literal notranslate"><span class="pre">event_fn</span></code>. Default <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
-<dt>memcache_save<span class="classifier">bool</span></dt><dd><p>If True, save results to an in-memory cache. This will be true if <code class="docutils literal notranslate"><span class="pre">memcache</span></code>
+<dt><strong>memcache_save</strong><span class="classifier">bool</span></dt><dd><p>If True, save results to an in-memory cache. This will be true if <code class="docutils literal notranslate"><span class="pre">memcache</span></code>
 is True. Cache will be matched based on the <code class="docutils literal notranslate"><span class="pre">event_fn</span></code>. Default <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
-<dt>reload_cache<span class="classifier">bool</span></dt><dd><p>If True, any existing cache will be ignored and recalculated. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<dt><strong>reload_cache</strong><span class="classifier">bool</span></dt><dd><p>If True, any existing cache will be ignored and recalculated. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
-<dt>dump_cache_file<span class="classifier">str or None</span></dt><dd><p>If present, will write out the cache to a binary file with this path with
+<dt><strong>dump_cache_file</strong><span class="classifier">str or None</span></dt><dd><p>If present, will write out the cache to a binary file with this path with
 <code class="docutils literal notranslate"><span class="pre">.sqlcache</span></code> appended to the file name.</p>
 </dd>
-<dt>load_cache_file<span class="classifier">str or None</span></dt><dd><p>If present, will first attempt to load and use a cache from a file with this
+<dt><strong>load_cache_file</strong><span class="classifier">str or None</span></dt><dd><p>If present, will first attempt to load and use a cache from a file with this
 path with <code class="docutils literal notranslate"><span class="pre">.sqlcache</span></code> appended to the file name.</p>
 </dd>
-<dt>cache_file_primary<span class="classifier">bool</span></dt><dd><p>If both an in-memory cache and file cache are present, the file
+<dt><strong>cache_file_primary</strong><span class="classifier">bool</span></dt><dd><p>If both an in-memory cache and file cache are present, the file
 cache will be used for the cache if this is True, and the in-memory cache
 will be used otherwise. Defaults to False.</p>
 </dd>
-<dt>verbose<span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
+<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
 </dd>
-<dt>cores<span class="classifier">int</span></dt><dd><p>If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
+<dt><strong>cores</strong><span class="classifier">int</span></dt><dd><p>If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
 pool with that many cores / processes.</p>
 </dd>
 </dl>
-</section>
-<section id="id2">
-<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>various</dt><dd><p>The result of <code class="docutils literal notranslate"><span class="pre">reduce_fn</span></code> on <code class="docutils literal notranslate"><span class="pre">n</span></code> simulations of <code class="docutils literal notranslate"><span class="pre">event_fn</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id3">
-<h2>Examples<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <p># Cancer example: prior of having cancer is 1%, the likelihood of a positive
 # mammography given cancer is 80% (true positive rate), and the likelihood of
 # a positive mammography given no cancer is 9.6% (false positive rate).
@@ -471,7 +468,6 @@ pool with that many cores / processes.</p>
 &gt;&gt;                conditional_on=lambda e: e[‘mammography’],
 &gt;&gt;                n=1*M)
 0.07723995880535531</p>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -482,33 +478,31 @@ pool with that many cores / processes.</p>
 p(h|e) is called posterior
 p(e|h) is called likelihood
 p(h) is called prior</p>
-<section id="id4">
-<h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>likelihood_h<span class="classifier">float</span></dt><dd><p>The likelihood (given that the hypothesis is true), aka p(e|h)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>likelihood_h</strong><span class="classifier">float</span></dt><dd><p>The likelihood (given that the hypothesis is true), aka p(e|h)</p>
 </dd>
-<dt>likelihood_not_h<span class="classifier">float</span></dt><dd><p>The likelihood given the hypothesis is not true, aka p(e|~h)</p>
+<dt><strong>likelihood_not_h</strong><span class="classifier">float</span></dt><dd><p>The likelihood given the hypothesis is not true, aka p(e|~h)</p>
 </dd>
-<dt>prior<span class="classifier">float</span></dt><dd><p>The prior probability, aka p(h)</p>
+<dt><strong>prior</strong><span class="classifier">float</span></dt><dd><p>The prior probability, aka p(h)</p>
 </dd>
 </dl>
-</section>
-<section id="id5">
-<h2>Returns<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>The result of Bayes rule, aka p(h|e)</p>
 </dd>
 </dl>
-</section>
-<section id="id6">
-<h2>Examples<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <p># Cancer example: prior of having cancer is 1%, the likelihood of a positive
 # mammography given cancer is 80% (true positive rate), and the likelihood of
 # a positive mammography given no cancer is 9.6% (false positive rate).
 # Given this, what is the probability of cancer given a positive mammography?
 &gt;&gt;&gt; simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)
 0.07763975155279504</p>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -517,34 +511,32 @@ p(h) is called prior</p>
 <dd><p>Update a distribution.</p>
 <p>Starting with a prior distribution, use Bayesian inference to perform an update,
 producing a posterior distribution from the evidence distribution.</p>
-<section id="id7">
-<h2>Parameters<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>prior<span class="classifier">Distribution</span></dt><dd><p>The prior distribution. Currently must either be normal or beta type. Other
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>prior</strong><span class="classifier">Distribution</span></dt><dd><p>The prior distribution. Currently must either be normal or beta type. Other
 types are not yet supported.</p>
 </dd>
-<dt>evidence<span class="classifier">Distribution</span></dt><dd><p>The distribution used to update the prior. Currently must either be normal
+<dt><strong>evidence</strong><span class="classifier">Distribution</span></dt><dd><p>The distribution used to update the prior. Currently must either be normal
 or beta type. Other types are not yet supported.</p>
 </dd>
-<dt>evidence_weight<span class="classifier">float</span></dt><dd><p>How much weight to put on the evidence distribution? Currently this only matters
+<dt><strong>evidence_weight</strong><span class="classifier">float</span></dt><dd><p>How much weight to put on the evidence distribution? Currently this only matters
 for normal distributions, where this should be equivalent to the sample weight.</p>
 </dd>
 </dl>
-</section>
-<section id="id8">
-<h2>Returns<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>Distribution</dt><dd><p>The posterior distribution</p>
 </dd>
 </dl>
-</section>
-<section id="id9">
-<h2>Examples<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <p>&gt;&gt; prior = sq.norm(1,5)
 &gt;&gt; evidence = sq.norm(2,3)
 &gt;&gt; bayes.update(prior, evidence)
 &lt;Distribution&gt; norm(mean=2.53, sd=0.29)</p>
-</section>
 </dd></dl>
 
 </section>

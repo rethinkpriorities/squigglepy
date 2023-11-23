@@ -131,6 +131,26 @@
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
   </ul>
 </nav></div>
       
@@ -208,6 +228,26 @@ document.write(`
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
   </ul>
 </nav></div>
         
@@ -306,7 +346,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BaseDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BaseDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BaseDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BaseDistribution</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="kc">None</span>
@@ -353,13 +393,13 @@ document.write(`
 
 
 <div class="viewcode-block" id="OperableDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.OperableDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.OperableDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">OperableDistribution</span><span class="p">(</span><span class="n">BaseDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
 <div class="viewcode-block" id="OperableDistribution.plot">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.OperableDistribution.plot">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.OperableDistribution.plot">[docs]</a>
     <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot a histogram of the samples.</span>
@@ -477,21 +517,21 @@ document.write(`
 
 
 <div class="viewcode-block" id="DiscreteDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.DiscreteDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.DiscreteDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">DiscreteDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="o">...</span></div>
 
 
 
 <div class="viewcode-block" id="ContinuousDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ContinuousDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ContinuousDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ContinuousDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="o">...</span></div>
 
 
 
 <div class="viewcode-block" id="CompositeDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.CompositeDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.CompositeDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">CompositeDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -514,7 +554,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ComplexDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ComplexDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ComplexDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ComplexDistribution</span><span class="p">(</span><span class="n">CompositeDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">fn_str</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">infix</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -565,7 +605,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_fn">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_fn">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_fn">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_fn</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a distribution that has a custom function applied to the result.</span>
@@ -636,7 +676,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_max">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_max">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_max">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_max</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the calculation of the maximum value of two distributions.</span>
@@ -669,7 +709,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_min">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_min">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_min">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_min</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the calculation of the minimum value of two distributions.</span>
@@ -701,7 +741,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_round">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_round">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_round">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_round</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the rounding of the output of the distribution.</span>
@@ -733,7 +773,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_ceil">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_ceil">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_ceil">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_ceil</span><span class="p">(</span><span class="n">dist1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the ceiling rounding of the output of the distribution.</span>
@@ -760,7 +800,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_floor">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_floor">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_floor">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_floor</span><span class="p">(</span><span class="n">dist1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the floor rounding of the output of the distribution.</span>
@@ -787,7 +827,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_log">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_log">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_log">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_log</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">e</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the log of the output of the distribution.</span>
@@ -814,7 +854,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_exp">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_exp">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_exp">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_exp</span><span class="p">(</span><span class="n">dist1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the exp of the output of the distribution.</span>
@@ -849,7 +889,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="lclip">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.lclip">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.lclip">[docs]</a>
 <span class="k">def</span> <span class="nf">lclip</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the clipping/bounding of the output of the distribution by the lower value.</span>
@@ -892,7 +932,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="rclip">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.rclip">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.rclip">[docs]</a>
 <span class="k">def</span> <span class="nf">rclip</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the clipping/bounding of the output of the distribution by the upper value.</span>
@@ -927,7 +967,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="clip">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.clip">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.clip">[docs]</a>
 <span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the clipping/bounding of the output of the distribution.</span>
@@ -966,7 +1006,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ConstantDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ConstantDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ConstantDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ConstantDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -978,7 +1018,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="const">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.const">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.const">[docs]</a>
 <span class="k">def</span> <span class="nf">const</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a constant distribution.</span>
@@ -1004,7 +1044,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="UniformDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.UniformDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.UniformDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">UniformDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1018,7 +1058,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="uniform">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.uniform">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.uniform">[docs]</a>
 <span class="k">def</span> <span class="nf">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a uniform random distribution.</span>
@@ -1044,7 +1084,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="NormalDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.NormalDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.NormalDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">NormalDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1084,7 +1124,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="norm">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.norm">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.norm">[docs]</a>
 <span class="k">def</span> <span class="nf">norm</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NormalDistribution</span><span class="p">:</span>
@@ -1130,7 +1170,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="LognormalDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.LognormalDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">LognormalDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1216,7 +1256,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="lognorm">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.lognorm">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.lognorm">[docs]</a>
 <span class="k">def</span> <span class="nf">lognorm</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1286,7 +1326,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="to">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.to">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.to">[docs]</a>
 <span class="k">def</span> <span class="nf">to</span><span class="p">(</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">LognormalDistribution</span><span class="p">,</span> <span class="n">NormalDistribution</span><span class="p">]:</span>
@@ -1331,7 +1371,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BinomialDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BinomialDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BinomialDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BinomialDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1346,7 +1386,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="binomial">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.binomial">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.binomial">[docs]</a>
 <span class="k">def</span> <span class="nf">binomial</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a binomial distribution.</span>
@@ -1372,7 +1412,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BetaDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BetaDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BetaDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BetaDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1385,7 +1425,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="beta">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.beta">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.beta">[docs]</a>
 <span class="k">def</span> <span class="nf">beta</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a beta distribution.</span>
@@ -1413,7 +1453,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BernoulliDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BernoulliDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BernoulliDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BernoulliDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1429,7 +1469,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="bernoulli">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.bernoulli">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.bernoulli">[docs]</a>
 <span class="k">def</span> <span class="nf">bernoulli</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a Bernoulli distribution.</span>
@@ -1453,7 +1493,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="CategoricalDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.CategoricalDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.CategoricalDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">CategoricalDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1468,7 +1508,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="discrete">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.discrete">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.discrete">[docs]</a>
 <span class="k">def</span> <span class="nf">discrete</span><span class="p">(</span><span class="n">items</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a discrete distribution (aka categorical distribution).</span>
@@ -1499,7 +1539,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="TDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.TDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.TDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">TDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1536,7 +1576,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="tdist">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.tdist">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.tdist">[docs]</a>
 <span class="k">def</span> <span class="nf">tdist</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a t-distribution.</span>
@@ -1579,7 +1619,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="LogTDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.LogTDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.LogTDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">LogTDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1618,7 +1658,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="log_tdist">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.log_tdist">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.log_tdist">[docs]</a>
 <span class="k">def</span> <span class="nf">log_tdist</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a log t-distribution, which is a t-distribution in log-space.</span>
@@ -1662,7 +1702,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="TriangularDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.TriangularDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.TriangularDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">TriangularDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1682,7 +1722,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="triangular">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.triangular">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.triangular">[docs]</a>
 <span class="k">def</span> <span class="nf">triangular</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a triangular distribution.</span>
@@ -1710,7 +1750,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="PERTDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.PERTDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.PERTDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">PERTDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1744,7 +1784,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="pert">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.pert">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.pert">[docs]</a>
 <span class="k">def</span> <span class="nf">pert</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a PERT distribution.</span>
@@ -1778,7 +1818,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="PoissonDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.PoissonDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.PoissonDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">PoissonDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1798,7 +1838,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="poisson">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.poisson">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.poisson">[docs]</a>
 <span class="k">def</span> <span class="nf">poisson</span><span class="p">(</span><span class="n">lam</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a poisson distribution.</span>
@@ -1826,7 +1866,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ChiSquareDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ChiSquareDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ChiSquareDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ChiSquareDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1840,7 +1880,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="chisquare">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.chisquare">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.chisquare">[docs]</a>
 <span class="k">def</span> <span class="nf">chisquare</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a chi-square distribution.</span>
@@ -1864,7 +1904,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ExponentialDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ExponentialDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ExponentialDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ExponentialDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1887,7 +1927,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="exponential">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.exponential">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.exponential">[docs]</a>
 <span class="k">def</span> <span class="nf">exponential</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize an exponential distribution.</span>
@@ -1915,7 +1955,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="GammaDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.GammaDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.GammaDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">GammaDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1936,7 +1976,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="gamma">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.gamma">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.gamma">[docs]</a>
 <span class="k">def</span> <span class="nf">gamma</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a gamma distribution.</span>
@@ -1966,7 +2006,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ParetoDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ParetoDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ParetoDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ParetoDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1978,7 +2018,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="pareto">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.pareto">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.pareto">[docs]</a>
 <span class="k">def</span> <span class="nf">pareto</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a pareto distribution.</span>
@@ -2002,7 +2042,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="MixtureDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.MixtureDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.MixtureDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">MixtureDistribution</span><span class="p">(</span><span class="n">CompositeDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dists</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">relative_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -2022,7 +2062,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="mixture">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.mixture">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.mixture">[docs]</a>
 <span class="k">def</span> <span class="nf">mixture</span><span class="p">(</span><span class="n">dists</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">relative_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a mixture distribution, which is a combination of different distributions.</span>
@@ -2072,7 +2112,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="zero_inflated">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.zero_inflated">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.zero_inflated">[docs]</a>
 <span class="k">def</span> <span class="nf">zero_inflated</span><span class="p">(</span><span class="n">p_zero</span><span class="p">,</span> <span class="n">dist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize an arbitrary zero-inflated distribution.</span>
@@ -2102,7 +2142,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="inf0">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.inf0">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.inf0">[docs]</a>
 <span class="k">def</span> <span class="nf">inf0</span><span class="p">(</span><span class="n">p_zero</span><span class="p">,</span> <span class="n">dist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize an arbitrary zero-inflated distribution.</span>
@@ -2132,7 +2172,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="GeometricDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.GeometricDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.GeometricDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">GeometricDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -2146,7 +2186,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="geometric">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.geometric">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.geometric">[docs]</a>
 <span class="k">def</span> <span class="nf">geometric</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a geometric distribution.</span>

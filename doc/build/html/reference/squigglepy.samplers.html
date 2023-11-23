@@ -361,160 +361,153 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.samplers.bernoulli_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">bernoulli_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#bernoulli_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.bernoulli_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample 1 with probability <code class="docutils literal notranslate"><span class="pre">p</span></code> and 0 otherwise.</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability of success. Must be between 0 and 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability of success. Must be between 0 and 1.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int</dt><dd><p>Either 0 or 1</p>
 </dd>
 </dl>
-</section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bernoulli_sample</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="go">0</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.beta_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">beta_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#beta_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.beta_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a beta distribution.</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>a<span class="classifier">float</span></dt><dd><p>The alpha shape value of the distribution. Typically takes the value of the
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>a</strong><span class="classifier">float</span></dt><dd><p>The alpha shape value of the distribution. Typically takes the value of the
 number of trials that resulted in a success.</p>
 </dd>
-<dt>b<span class="classifier">float</span></dt><dd><p>The beta shape value of the distribution. Typically takes the value of the
+<dt><strong>b</strong><span class="classifier">float</span></dt><dd><p>The beta shape value of the distribution. Typically takes the value of the
 number of trials that resulted in a failure.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id2">
-<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a beta distribution defined by
 <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id3">
-<h2>Examples<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">beta_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">0.22145847498048798</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.binomial_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">binomial_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#binomial_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.binomial_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a binomial distribution.</p>
-<section id="id4">
-<h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>n<span class="classifier">int</span></dt><dd><p>The number of trials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>The number of trials.</p>
 </dd>
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability of success for each trial. Must be between 0 and 1.</p>
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability of success for each trial. Must be between 0 and 1.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id5">
-<h2>Returns<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int</dt><dd><p>A random number sampled from a binomial distribution defined by
 <code class="docutils literal notranslate"><span class="pre">n</span></code> and <code class="docutils literal notranslate"><span class="pre">p</span></code>. The random number should be between 0 and <code class="docutils literal notranslate"><span class="pre">n</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id6">
-<h2>Examples<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">binomial_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
 <span class="go">2</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.chi_square_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">chi_square_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#chi_square_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.chi_square_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a chi-square distribution.</p>
-<section id="id7">
-<h2>Parameters<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>df<span class="classifier">float</span></dt><dd><p>The number of degrees of freedom</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">float</span></dt><dd><p>The number of degrees of freedom</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id8">
-<h2>Returns<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a chi-square distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id9">
-<h2>Examples<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chi_square_sample</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="go">4.808417207931989</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.discrete_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">discrete_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#discrete_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.discrete_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random value from a discrete distribution (aka categorical distribution).</p>
-<section id="id10">
-<h2>Parameters<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>items<span class="classifier">list or dict</span></dt><dd><p>The values that the discrete distribution will return and their associated
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>items</strong><span class="classifier">list or dict</span></dt><dd><p>The values that the discrete distribution will return and their associated
 weights (or likelihoods of being returned when sampled).</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
-<dt>verbose<span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
+<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
 </dd>
-<dt>_multicore_tqdm_n<span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
+<dt><strong>_multicore_tqdm_n</strong><span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
 be used internally by squigglepy to make the progress bar printing work well for
 multicore. This parameter can be safely ignored by the user.</p>
 </dd>
-<dt>_multicore_tqdm_cores<span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
+<dt><strong>_multicore_tqdm_cores</strong><span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
 be used internally by squigglepy to make the progress bar printing work well for
 multicore. This parameter can be safely ignored by the user.</p>
 </dd>
 </dl>
-</section>
-<section id="id11">
-<h2>Returns<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
-<p>Various, based on items in <code class="docutils literal notranslate"><span class="pre">items</span></code></p>
-</section>
-<section id="id12">
-<h2>Examples<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Various, based on items in <code class="docutils literal notranslate"><span class="pre">items</span></code></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># 10% chance of returning 0, 90% chance of returning 1</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">discrete_sample</span><span class="p">({</span><span class="mi">0</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">})</span>
@@ -528,99 +521,92 @@ multicore. This parameter can be safely ignored by the user.</p>
 <span class="go">&#39;b&#39;</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.exponential_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">exponential_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#exponential_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.exponential_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to an exponential distribution.</p>
-<section id="id13">
-<h2>Parameters<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>scale<span class="classifier">float</span></dt><dd><p>The scale value of the exponential distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>scale</strong><span class="classifier">float</span></dt><dd><p>The scale value of the exponential distribution.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id14">
-<h2>Returns<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int</dt><dd><p>A random number sampled from an exponential distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id15">
-<h2>Examples<a class="headerlink" href="#id15" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">exponential_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 <span class="go">24.042086039659946</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.gamma_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">gamma_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#gamma_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.gamma_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a gamma distribution.</p>
-<section id="id16">
-<h2>Parameters<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>shape<span class="classifier">float</span></dt><dd><p>The shape value of the gamma distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>shape</strong><span class="classifier">float</span></dt><dd><p>The shape value of the gamma distribution.</p>
 </dd>
-<dt>scale<span class="classifier">float</span></dt><dd><p>The scale value of the gamma distribution. Defaults to 1.</p>
+<dt><strong>scale</strong><span class="classifier">float</span></dt><dd><p>The scale value of the gamma distribution. Defaults to 1.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id17">
-<h2>Returns<a class="headerlink" href="#id17" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int</dt><dd><p>A random number sampled from an gamma distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id18">
-<h2>Examples<a class="headerlink" href="#id18" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">gamma_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="go">21.290716894247602</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.geometric_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">geometric_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#geometric_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.geometric_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a geometric distribution.</p>
-<section id="id19">
-<h2>Parameters<a class="headerlink" href="#id19" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>p<span class="classifier">float</span></dt><dd><p>The probability of success of an individual trial. Must be between 0 and 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">float</span></dt><dd><p>The probability of success of an individual trial. Must be between 0 and 1.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id20">
-<h2>Returns<a class="headerlink" href="#id20" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int</dt><dd><p>A random number sampled from a geometric distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id21">
-<h2>Examples<a class="headerlink" href="#id21" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">geometric_sample</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="go">2</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -633,107 +619,104 @@ interval can be defined via the t-distribution using the <code class="docutils l
 values. This will be a 90% CI by default unless you change <code class="docutils literal notranslate"><span class="pre">credibility.</span></code>
 Unlike the normal and lognormal samplers, this credible interval is an
 approximation and is not precisely defined.</p>
-<section id="id22">
-<h2>Parameters<a class="headerlink" href="#id22" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>low<span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>.
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>low</strong><span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>.
 Must be greater than 0. Defaults to a 90% CI.</p>
 </dd>
-<dt>high<span class="classifier">float or None</span></dt><dd><p>The high value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
+<dt><strong>high</strong><span class="classifier">float or None</span></dt><dd><p>The high value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
 </dd>
-<dt>t<span class="classifier">float</span></dt><dd><p>The number of degrees of freedom of the t-distribution. Defaults to 20.</p>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>The number of degrees of freedom of the t-distribution. Defaults to 20.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
-<dt>credibility<span class="classifier">float</span></dt><dd><p>The range of the credibility interval. Defaults to 90.</p>
+<dt><strong>credibility</strong><span class="classifier">float</span></dt><dd><p>The range of the credibility interval. Defaults to 90.</p>
 </dd>
 </dl>
-</section>
-<section id="id23">
-<h2>Returns<a class="headerlink" href="#id23" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a lognormal distribution defined by
 <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id24">
-<h2>Examples<a class="headerlink" href="#id24" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">log_t_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="go">2.052949773846356</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.lognormal_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">lognormal_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#lognormal_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.lognormal_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a lognormal distribution.</p>
-<section id="id25">
-<h2>Parameters<a class="headerlink" href="#id25" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>mean<span class="classifier">float</span></dt><dd><p>The mean of the lognormal distribution that is being sampled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mean</strong><span class="classifier">float</span></dt><dd><p>The mean of the lognormal distribution that is being sampled.</p>
 </dd>
-<dt>sd<span class="classifier">float</span></dt><dd><p>The standard deviation of the lognormal distribution that is being sampled.</p>
+<dt><strong>sd</strong><span class="classifier">float</span></dt><dd><p>The standard deviation of the lognormal distribution that is being sampled.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id26">
-<h2>Returns<a class="headerlink" href="#id26" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a lognormal distribution defined by
 <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id27">
-<h2>Examples<a class="headerlink" href="#id27" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lognormal_sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">1.3562412406168636</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.mixture_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">mixture_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#mixture_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.mixture_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a ranom number from a mixture distribution.</p>
-<section id="id28">
-<h2>Parameters<a class="headerlink" href="#id28" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>values<span class="classifier">list or dict</span></dt><dd><p>The distributions to mix. Can also be defined as a list of weights and distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>values</strong><span class="classifier">list or dict</span></dt><dd><p>The distributions to mix. Can also be defined as a list of weights and distributions.</p>
 </dd>
-<dt>weights<span class="classifier">list or None</span></dt><dd><p>The weights for each distribution.</p>
+<dt><strong>weights</strong><span class="classifier">list or None</span></dt><dd><p>The weights for each distribution.</p>
 </dd>
-<dt>relative_weights<span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
+<dt><strong>relative_weights</strong><span class="classifier">list or None</span></dt><dd><p>Relative weights, which if given will be weights that are normalized
 to sum to 1.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
-<dt>verbose<span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
+<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress.</p>
 </dd>
-<dt>_multicore_tqdm_n<span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
+<dt><strong>_multicore_tqdm_n</strong><span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
 be used internally by squigglepy to make the progress bar printing work well for
 multicore. This parameter can be safely ignored by the user.</p>
 </dd>
-<dt>_multicore_tqdm_cores<span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
+<dt><strong>_multicore_tqdm_cores</strong><span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
 be used internally by squigglepy to make the progress bar printing work well for
 multicore. This parameter can be safely ignored by the user.</p>
 </dd>
 </dl>
-</section>
-<section id="id29">
-<h2>Returns<a class="headerlink" href="#id29" title="Link to this heading">#</a></h2>
-<p>Various, based on items in <code class="docutils literal notranslate"><span class="pre">values</span></code></p>
-</section>
-<section id="id30">
-<h2>Examples<a class="headerlink" href="#id30" title="Link to this heading">#</a></h2>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Various, based on items in <code class="docutils literal notranslate"><span class="pre">values</span></code></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mixture_sample</span><span class="p">([</span><span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
 <span class="go">3.183867278765718</span>
@@ -745,189 +728,181 @@ multicore. This parameter can be safely ignored by the user.</p>
 <span class="go">1.1041655362137777</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.normal_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">normal_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#normal_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.normal_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a normal distribution.</p>
-<section id="id31">
-<h2>Parameters<a class="headerlink" href="#id31" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>mean<span class="classifier">float</span></dt><dd><p>The mean of the normal distribution that is being sampled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mean</strong><span class="classifier">float</span></dt><dd><p>The mean of the normal distribution that is being sampled.</p>
 </dd>
-<dt>sd<span class="classifier">float</span></dt><dd><p>The standard deviation of the normal distribution that is being sampled.</p>
+<dt><strong>sd</strong><span class="classifier">float</span></dt><dd><p>The standard deviation of the normal distribution that is being sampled.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id32">
-<h2>Returns<a class="headerlink" href="#id32" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a normal distribution defined by
 <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id33">
-<h2>Examples<a class="headerlink" href="#id33" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">normal_sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">0.30471707975443135</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.pareto_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">pareto_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#pareto_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.pareto_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a pareto distribution.</p>
-<section id="id34">
-<h2>Parameters<a class="headerlink" href="#id34" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>shape<span class="classifier">float</span></dt><dd><p>The shape value of the pareto distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>shape</strong><span class="classifier">float</span></dt><dd><p>The shape value of the pareto distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id35">
-<h2>Returns<a class="headerlink" href="#id35" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int</dt><dd><p>A random number sampled from an pareto distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id36">
-<h2>Examples<a class="headerlink" href="#id36" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pareto_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="go">10.069666324736094</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.pert_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">pert_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#pert_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.pert_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a PERT distribution.</p>
-<section id="id37">
-<h2>Parameters<a class="headerlink" href="#id37" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>left<span class="classifier">float</span></dt><dd><p>The smallest value of the PERT distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>left</strong><span class="classifier">float</span></dt><dd><p>The smallest value of the PERT distribution.</p>
 </dd>
-<dt>mode<span class="classifier">float</span></dt><dd><p>The most common value of the PERT distribution.</p>
+<dt><strong>mode</strong><span class="classifier">float</span></dt><dd><p>The most common value of the PERT distribution.</p>
 </dd>
-<dt>right<span class="classifier">float</span></dt><dd><p>The largest value of the PERT distribution.</p>
+<dt><strong>right</strong><span class="classifier">float</span></dt><dd><p>The largest value of the PERT distribution.</p>
 </dd>
-<dt>lam<span class="classifier">float</span></dt><dd><p>The lambda of the PERT distribution.</p>
+<dt><strong>lam</strong><span class="classifier">float</span></dt><dd><p>The lambda of the PERT distribution.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id38">
-<h2>Returns<a class="headerlink" href="#id38" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a PERT distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id39">
-<h2>Examples<a class="headerlink" href="#id39" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pert_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="go">2.327625176788963</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.poisson_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">poisson_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#poisson_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.poisson_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a poisson distribution.</p>
-<section id="id40">
-<h2>Parameters<a class="headerlink" href="#id40" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>lam<span class="classifier">float</span></dt><dd><p>The lambda value of the poisson distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>lam</strong><span class="classifier">float</span></dt><dd><p>The lambda value of the poisson distribution.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id41">
-<h2>Returns<a class="headerlink" href="#id41" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>int</dt><dd><p>A random number sampled from a poisson distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id42">
-<h2>Examples<a class="headerlink" href="#id42" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">poisson_sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 <span class="go">13</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memcache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dump_cache_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_cache_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_file_primary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multicore_tqdm_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_correlate_if_needed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample random numbers from a given distribution.</p>
-<section id="id43">
-<h2>Parameters<a class="headerlink" href="#id43" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>dist<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample random number from.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dist</strong><span class="classifier">Distribution</span></dt><dd><p>The distribution to sample random number from.</p>
 </dd>
-<dt>n<span class="classifier">int</span></dt><dd><p>The number of random numbers to sample from the distribution. Default to 1.</p>
+<dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>The number of random numbers to sample from the distribution. Default to 1.</p>
 </dd>
-<dt>lclip<span class="classifier">float or None</span></dt><dd><p>If not None, any value below <code class="docutils literal notranslate"><span class="pre">lclip</span></code> will be coerced to <code class="docutils literal notranslate"><span class="pre">lclip</span></code>.</p>
+<dt><strong>lclip</strong><span class="classifier">float or None</span></dt><dd><p>If not None, any value below <code class="docutils literal notranslate"><span class="pre">lclip</span></code> will be coerced to <code class="docutils literal notranslate"><span class="pre">lclip</span></code>.</p>
 </dd>
-<dt>rclip<span class="classifier">float or None</span></dt><dd><p>If not None, any value below <code class="docutils literal notranslate"><span class="pre">rclip</span></code> will be coerced to <code class="docutils literal notranslate"><span class="pre">rclip</span></code>.</p>
+<dt><strong>rclip</strong><span class="classifier">float or None</span></dt><dd><p>If not None, any value below <code class="docutils literal notranslate"><span class="pre">rclip</span></code> will be coerced to <code class="docutils literal notranslate"><span class="pre">rclip</span></code>.</p>
 </dd>
-<dt>memcache<span class="classifier">bool</span></dt><dd><p>If True, will attempt to load the results in-memory for future calculations if
+<dt><strong>memcache</strong><span class="classifier">bool</span></dt><dd><p>If True, will attempt to load the results in-memory for future calculations if
 a cache is present. Otherwise will save the results to an in-memory cache. Each cache
 will be matched based on <code class="docutils literal notranslate"><span class="pre">dist</span></code>. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
-<dt>reload_cache<span class="classifier">bool</span></dt><dd><p>If True, any existing cache will be ignored and recalculated. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<dt><strong>reload_cache</strong><span class="classifier">bool</span></dt><dd><p>If True, any existing cache will be ignored and recalculated. Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
-<dt>dump_cache_file<span class="classifier">str or None</span></dt><dd><p>If present, will write out the cache to a numpy file with this path with
+<dt><strong>dump_cache_file</strong><span class="classifier">str or None</span></dt><dd><p>If present, will write out the cache to a numpy file with this path with
 <code class="docutils literal notranslate"><span class="pre">.sqlcache.npy</span></code> appended to the file name.</p>
 </dd>
-<dt>load_cache_file<span class="classifier">str or None</span></dt><dd><p>If present, will first attempt to load and use a cache from a file with this
+<dt><strong>load_cache_file</strong><span class="classifier">str or None</span></dt><dd><p>If present, will first attempt to load and use a cache from a file with this
 path with <code class="docutils literal notranslate"><span class="pre">.sqlcache.npy</span></code> appended to the file name.</p>
 </dd>
-<dt>cache_file_primary<span class="classifier">bool</span></dt><dd><p>If both an in-memory cache and file cache are present, the file
+<dt><strong>cache_file_primary</strong><span class="classifier">bool</span></dt><dd><p>If both an in-memory cache and file cache are present, the file
 cache will be used for the cache if this is True, and the in-memory cache
 will be used otherwise. Defaults to False.</p>
 </dd>
-<dt>verbose<span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress. If False, will not.
+<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd><p>If True, will print out statements on computational progress. If False, will not.
 If None (default), will be True when <code class="docutils literal notranslate"><span class="pre">n</span></code> is greater than or equal to 1M.</p>
 </dd>
-<dt>cores<span class="classifier">int</span></dt><dd><p>If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
+<dt><strong>cores</strong><span class="classifier">int</span></dt><dd><p>If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing
 pool with that many cores / processes.</p>
 </dd>
-<dt>_multicore_tqdm_n<span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
+<dt><strong>_multicore_tqdm_n</strong><span class="classifier">int</span></dt><dd><p>The total number of samples to use for printing tqdm’s interface. This is meant to only
 be used internally by squigglepy to make the progress bar printing work well for
 multicore. This parameter can be safely ignored by the user.</p>
 </dd>
-<dt>_multicore_tqdm_cores<span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
+<dt><strong>_multicore_tqdm_cores</strong><span class="classifier">int</span></dt><dd><p>The total number of cores to use for printing tqdm’s interface. This is meant to only
 be used internally by squigglepy to make the progress bar printing work well for
 multicore. This parameter can be safely ignored by the user.</p>
 </dd>
 </dl>
-</section>
-<section id="id44">
-<h2>Returns<a class="headerlink" href="#id44" title="Link to this heading">#</a></h2>
-<p>Various, based on <code class="docutils literal notranslate"><span class="pre">dist</span></code>.</p>
-</section>
-<section id="id45">
-<h2>Examples<a class="headerlink" href="#id45" title="Link to this heading">#</a></h2>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Various, based on <code class="docutils literal notranslate"><span class="pre">dist</span></code>.</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="go">1.592627415218455</span>
@@ -937,7 +912,6 @@ multicore. This parameter can be safely ignored by the user.</p>
 <span class="go">array([6.10817361, 3.        , 3.        , 3.45828454, 3.        ])</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
@@ -961,104 +935,98 @@ via the t-distribution using the <code class="docutils literal notranslate"><spa
 90% CI by default unless you change <code class="docutils literal notranslate"><span class="pre">credibility.</span></code> Unlike the normal and
 lognormal samplers, this credible interval is an approximation and is
 not precisely defined.</p>
-<section id="id46">
-<h2>Parameters<a class="headerlink" href="#id46" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>low<span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>low</strong><span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
 </dd>
-<dt>high<span class="classifier">float or None</span></dt><dd><p>The high value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
+<dt><strong>high</strong><span class="classifier">float or None</span></dt><dd><p>The high value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
 </dd>
-<dt>t<span class="classifier">float</span></dt><dd><p>The number of degrees of freedom of the t-distribution. Defaults to 20.</p>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>The number of degrees of freedom of the t-distribution. Defaults to 20.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
-<dt>credibility<span class="classifier">float</span></dt><dd><p>The range of the credibility interval. Defaults to 90.</p>
+<dt><strong>credibility</strong><span class="classifier">float</span></dt><dd><p>The range of the credibility interval. Defaults to 90.</p>
 </dd>
 </dl>
-</section>
-<section id="id47">
-<h2>Returns<a class="headerlink" href="#id47" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a lognormal distribution defined by
 <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id48">
-<h2>Examples<a class="headerlink" href="#id48" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="go">2.7887113716855985</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.triangular_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">triangular_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#triangular_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.triangular_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a triangular distribution.</p>
-<section id="id49">
-<h2>Parameters<a class="headerlink" href="#id49" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>left<span class="classifier">float</span></dt><dd><p>The smallest value of the triangular distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>left</strong><span class="classifier">float</span></dt><dd><p>The smallest value of the triangular distribution.</p>
 </dd>
-<dt>mode<span class="classifier">float</span></dt><dd><p>The most common value of the triangular distribution.</p>
+<dt><strong>mode</strong><span class="classifier">float</span></dt><dd><p>The most common value of the triangular distribution.</p>
 </dd>
-<dt>right<span class="classifier">float</span></dt><dd><p>The largest value of the triangular distribution.</p>
+<dt><strong>right</strong><span class="classifier">float</span></dt><dd><p>The largest value of the triangular distribution.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id50">
-<h2>Returns<a class="headerlink" href="#id50" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a triangular distribution.</p>
 </dd>
 </dl>
-</section>
-<section id="id51">
-<h2>Examples<a class="headerlink" href="#id51" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">triangular_sample</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="go">2.327625176788963</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="squigglepy.samplers.uniform_sample">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.samplers.</span></span><span class="sig-name descname"><span class="pre">uniform_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">low</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/samplers.html#uniform_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.samplers.uniform_sample" title="Link to this definition">#</a></dt>
 <dd><p>Sample a random number according to a uniform distribution.</p>
-<section id="id52">
-<h2>Parameters<a class="headerlink" href="#id52" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>low<span class="classifier">float</span></dt><dd><p>The smallest value the uniform distribution will return.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>low</strong><span class="classifier">float</span></dt><dd><p>The smallest value the uniform distribution will return.</p>
 </dd>
-<dt>high<span class="classifier">float</span></dt><dd><p>The largest value the uniform distribution will return.</p>
+<dt><strong>high</strong><span class="classifier">float</span></dt><dd><p>The largest value the uniform distribution will return.</p>
 </dd>
-<dt>samples<span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
+<dt><strong>samples</strong><span class="classifier">int</span></dt><dd><p>The number of samples to return.</p>
 </dd>
 </dl>
-</section>
-<section id="id53">
-<h2>Returns<a class="headerlink" href="#id53" title="Link to this heading">#</a></h2>
-<dl class="simple">
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt>float</dt><dd><p>A random number sampled from a uniform distribution between
 <code class="docutils literal notranslate"><span class="pre">`low`</span></code> and <code class="docutils literal notranslate"><span class="pre">`high`</span></code>.</p>
 </dd>
 </dl>
-</section>
-<section id="id54">
-<h2>Examples<a class="headerlink" href="#id54" title="Link to this heading">#</a></h2>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">uniform_sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">0.7739560485559633</span>
 </pre></div>
 </div>
-</section>
 </dd></dl>
 
 </section>
