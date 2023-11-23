@@ -1,33 +1,7 @@
-Squigglepy: Implementation of Squiggle in Python
-================================================
+Examples
+========
 
-`Squiggle <https://www.squiggle-language.com/>`__ is a “simple
-programming language for intuitive probabilistic estimation”. It serves
-as its own standalone programming language with its own syntax, but it
-is implemented in JavaScript. I like the features of Squiggle and intend
-to use it frequently, but I also sometimes want to use similar
-functionalities in Python, especially alongside other Python statistical
-programming packages like Numpy, Pandas, and Matplotlib. The
-**squigglepy** package here implements many Squiggle-like
-functionalities in Python.
-
-Installation
-------------
-
-.. code:: shell
-
-   pip install squigglepy
-
-For plotting support, you can also use the ``plots`` extra:
-
-.. code:: shell
-
-   pip install squigglepy[plots]
-
-Usage
------
-
-Piano Tuners Example
+Piano tuners example
 ~~~~~~~~~~~~~~~~~~~~
 
 Here’s the Squigglepy implementation of `the example from Squiggle
@@ -161,7 +135,7 @@ Distributions
    # 60% chance of returning 0, 40% chance of sampling from `norm(1, 2)`.
    sq.zero_inflated(0.6, sq.norm(1, 2))
 
-Additional Features
+Additional features
 ~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
@@ -193,7 +167,7 @@ Additional Features
    # You can even pass your own correlation matrix!
    a, b = sq.correlate((a, b), [[1, 0.5], [0.5, 1]])
 
-Example: Rolling a Die
+Example: Rolling a die
 ^^^^^^^^^^^^^^^^^^^^^^
 
 An example of how to use distributions to build tools:
@@ -384,7 +358,7 @@ pretty limited. For more complex bayesian analysis, consider
 `bnlearn <https://github.com/erdogant/bnlearn>`__, or
 `pyMC <https://github.com/pymc-devs/pymc>`__.
 
-Example: A Demonstration of the Monty Hall Problem
+Example: A demonstration of the Monty Hall Problem
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: python
@@ -500,32 +474,3 @@ Use ``black .`` for formatting.
 
 Run
 ``ruff check . && pytest && pip3 install . && python3 tests/integration.py``
-
-Disclaimers
------------
-
-This package is unofficial and supported by myself and Rethink
-Priorities. It is not affiliated with or associated with the Quantified
-Uncertainty Research Institute, which maintains the Squiggle language
-(in JavaScript).
-
-This package is also new and not yet in a stable production version, so
-you may encounter bugs and other errors. Please report those so they can
-be fixed. It’s also possible that future versions of the package may
-introduce breaking changes.
-
-This package is available under an MIT License.
-
-Acknowledgements
-----------------
-
--  The primary author of this package is Peter Wildeford. Agustín
-   Covarrubias and Bernardo Baron contributed several key features and
-   developments.
--  Thanks to Ozzie Gooen and the Quantified Uncertainty Research
-   Institute for creating and maintaining the original Squiggle
-   language.
--  Thanks to Dawn Drescher for helping me implement math between
-   distributions.
--  Thanks to Dawn Drescher for coming up with the idea to use ``~`` as a
-   shorthand for ``sample``, as well as helping me implement it.

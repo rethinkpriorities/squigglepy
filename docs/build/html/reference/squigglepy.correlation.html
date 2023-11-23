@@ -450,26 +450,20 @@ the input variables.</p>
 <p>Suppose we want to correlate two variables with a correlation coefficient of 0.65:
 &gt;&gt;&gt; solar_radiation, temperature = sq.gamma(300, 100), sq.to(22, 28)
 &gt;&gt;&gt; solar_radiation, temperature = sq.correlate((solar_radiation, temperature), 0.7)
-&gt;&gt;&gt; print(np.corrcoef(solar_radiation &#64; 1000, temperature &#64; 1000)[0, 1])</p>
-<blockquote>
-<div><p>0.6975960649767123</p>
-</div></blockquote>
-<p>Or you could pass a correlation matrix:
-&gt;&gt;&gt; funding_gap, cost_per_delivery, effect_size = (</p>
-<blockquote>
-<div><blockquote>
-<div><p>sq.to(20_000, 80_000), sq.to(30, 80), sq.beta(2, 5)</p>
-</div></blockquote>
-<p>)</p>
-</div></blockquote>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">funding_gap</span><span class="p">,</span> <span class="n">cost_per_delivery</span><span class="p">,</span> <span class="n">effect_size</span> <span class="o">=</span> <span class="n">sq</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span>
+&gt;&gt;&gt; print(np.corrcoef(solar_radiation &#64; 1000, temperature &#64; 1000)[0, 1])
+0.6975960649767123</p>
+<p>Or you could pass a correlation matrix:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">funding_gap</span><span class="p">,</span> <span class="n">cost_per_delivery</span><span class="p">,</span> <span class="n">effect_size</span> <span class="o">=</span> <span class="p">(</span>
+<span class="go">        sq.to(20_000, 80_000), sq.to(30, 80), sq.beta(2, 5)</span>
+<span class="go">    )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">funding_gap</span><span class="p">,</span> <span class="n">cost_per_delivery</span><span class="p">,</span> <span class="n">effect_size</span> <span class="o">=</span> <span class="n">sq</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span>
 <span class="go">        (funding_gap, cost_per_delivery, effect_size),</span>
 <span class="go">        [[1, 0.6, -0.5], [0.6, 1, -0.2], [-0.5, -0.2, 1]]</span>
 <span class="go">    )</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">funding_gap</span> <span class="o">@</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">cost_per_delivery</span> <span class="o">@</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">effect_size</span> <span class="o">@</span> <span class="mi">1000</span><span class="p">))</span>
-<span class="go">    array([[ 1.      ,  0.580520  , -0.480149],</span>
-<span class="go">           [ 0.580962,  1.        , -0.187831],</span>
-<span class="go">           [-0.480149, -0.187831  ,  1.        ]])</span>
+<span class="go">array([[ 1.      ,  0.580520  , -0.480149],</span>
+<span class="go">       [ 0.580962,  1.        , -0.187831],</span>
+<span class="go">       [-0.480149, -0.187831  ,  1.        ]])</span>
 </pre></div>
 </div>
 </section>

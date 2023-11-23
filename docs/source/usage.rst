@@ -1,7 +1,7 @@
 Examples
 ========
 
-Piano Tuners Example
+Piano tuners example
 ~~~~~~~~~~~~~~~~~~~~
 
 Here’s the Squigglepy implementation of `the example from Squiggle
@@ -135,7 +135,7 @@ Distributions
    # 60% chance of returning 0, 40% chance of sampling from `norm(1, 2)`.
    sq.zero_inflated(0.6, sq.norm(1, 2))
 
-Additional Features
+Additional features
 ~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
@@ -167,7 +167,7 @@ Additional Features
    # You can even pass your own correlation matrix!
    a, b = sq.correlate((a, b), [[1, 0.5], [0.5, 1]])
 
-Example: Rolling a Die
+Example: Rolling a die
 ^^^^^^^^^^^^^^^^^^^^^^
 
 An example of how to use distributions to build tools:
@@ -358,7 +358,7 @@ pretty limited. For more complex bayesian analysis, consider
 `bnlearn <https://github.com/erdogant/bnlearn>`__, or
 `pyMC <https://github.com/pymc-devs/pymc>`__.
 
-Example: A Demonstration of the Monty Hall Problem
+Example: A demonstration of the Monty Hall Problem
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: python
@@ -466,3 +466,11 @@ More examples
 
 You can see more examples of squigglepy in action
 `here <https://github.com/peterhurford/public-botecs>`__.
+
+Run tests
+---------
+
+Use ``black .`` for formatting.
+
+Run
+``ruff check . && pytest && pip3 install . && python3 tests/integration.py``

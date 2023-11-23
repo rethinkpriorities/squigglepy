@@ -12,32 +12,12 @@ programming packages like Numpy, Pandas, and Matplotlib. The
 functionalities in Python.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents
 
+   Installation <installation>
+   Usage <usage>
    API Reference <reference/modules>
-   Examples <examples>
-
-Installation
-------------
-
-.. code:: shell
-
-   pip install squigglepy
-
-For plotting support, you can also use the ``plots`` extra:
-
-.. code:: shell
-
-   pip install squigglepy[plots]
-
-Run tests
----------
-
-Use ``black .`` for formatting.
-
-Run
-``ruff check . && pytest && pip3 install . && python3 tests/integration.py``
 
 Disclaimers
 -----------
