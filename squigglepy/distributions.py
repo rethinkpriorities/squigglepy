@@ -77,8 +77,7 @@ class BaseDistribution(ABC):
 
         `contribution_to_ev(x, normalized=False)` is defined as
 
-        .. math::
-          \\int_{-\infty}^x |t| f(t) dt
+        .. math:: \int_{-\infty}^x |t| f(t) dt
 
         where `f(t)` is the PDF of the normal distribution. Normalizing divides
         this result by `contribution_to_ev(inf, normalized=False)`.
@@ -86,8 +85,7 @@ class BaseDistribution(ABC):
         Note that this is different from the partial expected value, which is
         defined as
 
-        .. math::
-          \\int_{x}^\infty t f_X(t | X > x) dt
+        .. math:: \int_{x}^\infty t f_X(t | X > x) dt
 
         Parameters
         ----------
@@ -108,10 +106,10 @@ class BaseDistribution(ABC):
     def inv_contribution_to_ev(self, fraction: np.ndarray | float):
         """For a given fraction of expected value, find the number such that
         that fraction lies to the left of that number. The inverse of
-        `contribution_to_ev`.
+        :func:`contribution_to_ev`.
 
-        This function is analogous to `lognorm.ppf` except that
-        the integrand is `x * f(x) dx` instead of `f(x) dx`.
+        This function is analogous to scipy.stats.ppf except that
+        the integrand is :math:`|x| f(x) dx` instead of :math:`f(x) dx`.
         """
         ...
 

@@ -343,19 +343,29 @@ document.write(`
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.BernoulliDistribution">BernoulliDistribution (class in squigglepy.distributions)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.beta">beta() (in module squigglepy.distributions)</a>
 </li>
       <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.beta_sample">beta_sample() (in module squigglepy.samplers)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.BetaDistribution">BetaDistribution (class in squigglepy.distributions)</a>
 </li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.bin_density">bin_density() (squigglepy.pdh.ScaledBinHistogram method)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram.binary_op">binary_op() (squigglepy.pdh.ProbabilityMassHistogram method)</a>
+
+      <ul>
+        <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.binary_op">(squigglepy.pdh.ScaledBinHistogram method)</a>
+</li>
+      </ul></li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.binomial">binomial() (in module squigglepy.distributions)</a>
 </li>
       <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.binomial_sample">binomial_sample() (in module squigglepy.samplers)</a>
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.BinomialDistribution">BinomialDistribution (class in squigglepy.distributions)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.BinSizing">BinSizing (class in squigglepy.pdh)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -377,13 +387,25 @@ document.write(`
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.CompositeDistribution">CompositeDistribution (class in squigglepy.distributions)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.const">const() (in module squigglepy.distributions)</a>
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.ConstantDistribution">ConstantDistribution (class in squigglepy.distributions)</a>
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.ContinuousDistribution">ContinuousDistribution (class in squigglepy.distributions)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.BaseDistribution.contribution_to_ev">contribution_to_ev() (squigglepy.distributions.BaseDistribution method)</a>
+
+      <ul>
+        <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution.contribution_to_ev">(squigglepy.distributions.LognormalDistribution method)</a>
+</li>
+        <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.NormalDistribution.contribution_to_ev">(squigglepy.distributions.NormalDistribution method)</a>
+</li>
+        <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.contribution_to_ev">(squigglepy.pdh.PDHBase method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/squigglepy.utils.html#squigglepy.utils.ConvergenceWarning">ConvergenceWarning</a>
 </li>
       <li><a href="reference/squigglepy.correlation.html#squigglepy.correlation.correlate">correlate() (in module squigglepy.correlation)</a>
 </li>
@@ -433,6 +455,8 @@ document.write(`
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.BinSizing.ev">ev (squigglepy.pdh.BinSizing attribute)</a>
+</li>
       <li><a href="reference/squigglepy.utils.html#squigglepy.utils.event">event() (in module squigglepy.utils)</a>
 </li>
       <li><a href="reference/squigglepy.utils.html#squigglepy.utils.event_happens">event_happens() (in module squigglepy.utils)</a>
@@ -457,6 +481,12 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.utils.html#squigglepy.utils.flip_coin">flip_coin() (in module squigglepy.utils)</a>
 </li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram.from_distribution">from_distribution() (squigglepy.pdh.ProbabilityMassHistogram class method)</a>
+
+      <ul>
+        <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.from_distribution">(squigglepy.pdh.ScaledBinHistogram class method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.utils.html#squigglepy.utils.full_kelly">full_kelly() (in module squigglepy.utils)</a>
@@ -479,11 +509,13 @@ document.write(`
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.geometric">geometric() (in module squigglepy.distributions)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.geometric_sample">geometric_sample() (in module squigglepy.samplers)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.GeometricDistribution">GeometricDistribution (class in squigglepy.distributions)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.get_bin_edges">get_bin_edges() (squigglepy.pdh.ScaledBinHistogram static method)</a>
 </li>
       <li><a href="reference/squigglepy.utils.html#squigglepy.utils.get_log_percentiles">get_log_percentiles() (in module squigglepy.utils)</a>
 </li>
@@ -503,9 +535,13 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.utils.html#squigglepy.utils.half_kelly">half_kelly() (in module squigglepy.utils)</a>
 </li>
+      <li><a href="reference/squigglepy.correlation.html#squigglepy.correlation.CorrelationGroup.has_sufficient_sample_diversity">has_sufficient_sample_diversity() (squigglepy.correlation.CorrelationGroup method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/squigglepy.correlation.html#squigglepy.correlation.CorrelationGroup.has_sufficient_sample_diversity">has_sufficient_sample_diversity() (squigglepy.correlation.CorrelationGroup method)</a>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.histogram_mean">histogram_mean() (squigglepy.pdh.PDHBase method)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.histogram_sd">histogram_sd() (squigglepy.pdh.PDHBase method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -517,6 +553,16 @@ document.write(`
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.inf0">inf0() (in module squigglepy.distributions)</a>
 </li>
+      <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.BaseDistribution.inv_contribution_to_ev">inv_contribution_to_ev() (squigglepy.distributions.BaseDistribution method)</a>
+
+      <ul>
+        <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution.inv_contribution_to_ev">(squigglepy.distributions.LognormalDistribution method)</a>
+</li>
+        <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.NormalDistribution.inv_contribution_to_ev">(squigglepy.distributions.NormalDistribution method)</a>
+</li>
+        <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.inv_contribution_to_ev">(squigglepy.pdh.PDHBase method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/squigglepy.utils.html#squigglepy.utils.is_continuous_dist">is_continuous_dist() (in module squigglepy.utils)</a>
@@ -563,6 +609,10 @@ document.write(`
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.BinSizing.mass">mass (squigglepy.pdh.BinSizing attribute)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.mean">mean() (squigglepy.pdh.PDHBase method)</a>
+</li>
       <li><a href="reference/squigglepy.correlation.html#squigglepy.correlation.CorrelationGroup.min_unique_samples">min_unique_samples (squigglepy.correlation.CorrelationGroup attribute)</a>
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.mixture">mixture() (in module squigglepy.distributions)</a>
@@ -584,6 +634,8 @@ document.write(`
         <li><a href="reference/squigglepy.distributions.html#module-squigglepy.distributions">squigglepy.distributions</a>
 </li>
         <li><a href="reference/squigglepy.numbers.html#module-squigglepy.numbers">squigglepy.numbers</a>
+</li>
+        <li><a href="reference/squigglepy.pdh.html#module-squigglepy.pdh">squigglepy.pdh</a>
 </li>
         <li><a href="reference/squigglepy.rng.html#module-squigglepy.rng">squigglepy.rng</a>
 </li>
@@ -638,6 +690,8 @@ document.write(`
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.ParetoDistribution">ParetoDistribution (class in squigglepy.distributions)</a>
 </li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase">PDHBase (class in squigglepy.pdh)</a>
+</li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.pert">pert() (in module squigglepy.distributions)</a>
 </li>
   </ul></td>
@@ -653,6 +707,8 @@ document.write(`
       <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.poisson_sample">poisson_sample() (in module squigglepy.samplers)</a>
 </li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.PoissonDistribution">PoissonDistribution (class in squigglepy.distributions)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram">ProbabilityMassHistogram (class in squigglepy.pdh)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -683,6 +739,10 @@ document.write(`
       <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.sample">sample() (in module squigglepy.samplers)</a>
 </li>
       <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.sample_correlated_group">sample_correlated_group() (in module squigglepy.samplers)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram">ScaledBinHistogram (class in squigglepy.pdh)</a>
+</li>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.sd">sd() (squigglepy.pdh.PDHBase method)</a>
 </li>
       <li><a href="reference/squigglepy.rng.html#squigglepy.rng.set_seed">set_seed() (in module squigglepy.rng)</a>
 </li>
@@ -723,6 +783,13 @@ document.write(`
 
       <ul>
         <li><a href="reference/squigglepy.numbers.html#module-squigglepy.numbers">module</a>
+</li>
+      </ul></li>
+      <li>
+    squigglepy.pdh
+
+      <ul>
+        <li><a href="reference/squigglepy.pdh.html#module-squigglepy.pdh">module</a>
 </li>
       </ul></li>
       <li>
@@ -781,12 +848,14 @@ document.write(`
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.uniform">uniform() (in module squigglepy.distributions)</a>
+      <li><a href="reference/squigglepy.pdh.html#squigglepy.pdh.BinSizing.uniform">uniform (squigglepy.pdh.BinSizing attribute)</a>
 </li>
-      <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.uniform_sample">uniform_sample() (in module squigglepy.samplers)</a>
+      <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.uniform">uniform() (in module squigglepy.distributions)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/squigglepy.samplers.html#squigglepy.samplers.uniform_sample">uniform_sample() (in module squigglepy.samplers)</a>
+</li>
       <li><a href="reference/squigglepy.distributions.html#squigglepy.distributions.UniformDistribution">UniformDistribution (class in squigglepy.distributions)</a>
 </li>
       <li><a href="reference/squigglepy.bayes.html#squigglepy.bayes.update">update() (in module squigglepy.bayes)</a>

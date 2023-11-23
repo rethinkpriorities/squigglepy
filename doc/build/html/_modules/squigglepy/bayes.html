@@ -132,22 +132,22 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../reference/modules.html">
                         API Reference
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../../examples.html">
-                        Examples
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../../README.html">
-                        README
                       </a>
                     </li>
                 
@@ -229,22 +229,22 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../reference/modules.html">
                         API Reference
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../../examples.html">
-                        Examples
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../../README.html">
-                        README
                       </a>
                     </li>
                 
@@ -347,7 +347,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="simple_bayes">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.simple_bayes">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.bayes.html#squigglepy.bayes.simple_bayes">[docs]</a>
 <span class="k">def</span> <span class="nf">simple_bayes</span><span class="p">(</span><span class="n">likelihood_h</span><span class="p">,</span> <span class="n">likelihood_not_h</span><span class="p">,</span> <span class="n">prior</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate Bayes rule.</span>
@@ -385,7 +385,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="bayesnet">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.bayesnet">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.bayes.html#squigglepy.bayes.bayesnet">[docs]</a>
 <span class="k">def</span> <span class="nf">bayesnet</span><span class="p">(</span>
     <span class="n">event_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -638,7 +638,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="update">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.update">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.bayes.html#squigglepy.bayes.update">[docs]</a>
 <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">evidence_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Update a distribution.</span>
@@ -699,7 +699,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="average">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.average">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.bayes.html#squigglepy.bayes.average">[docs]</a>
 <span class="k">def</span> <span class="nf">average</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="n">relative_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Average two distributions.</span>

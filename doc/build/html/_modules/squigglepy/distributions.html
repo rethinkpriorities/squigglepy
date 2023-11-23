@@ -131,6 +131,26 @@
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
   </ul>
 </nav></div>
       
@@ -208,6 +228,26 @@ document.write(`
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
   </ul>
 </nav></div>
         
@@ -289,14 +329,23 @@ document.write(`
 <span class="sd">A collection of probability distributions and functions to operate on them.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">operator</span>
 <span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">exp</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sqrt</span>
 <span class="kn">import</span> <span class="nn">scipy.stats</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">erf</span><span class="p">,</span> <span class="n">erfinv</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_process_weights_values</span><span class="p">,</span> <span class="n">_is_numpy</span><span class="p">,</span> <span class="n">is_dist</span><span class="p">,</span> <span class="n">_round</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_process_weights_values</span><span class="p">,</span>
+    <span class="n">_is_numpy</span><span class="p">,</span>
+    <span class="n">is_dist</span><span class="p">,</span>
+    <span class="n">_round</span><span class="p">,</span>
+    <span class="n">ConvergenceWarning</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.version</span> <span class="kn">import</span> <span class="n">__version__</span>
 <span class="kn">from</span> <span class="nn">.correlation</span> <span class="kn">import</span> <span class="n">CorrelationGroup</span>
 
@@ -306,7 +355,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BaseDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BaseDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BaseDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BaseDistribution</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="kc">None</span>
@@ -348,18 +397,67 @@ document.write(`
             <span class="k">return</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; (version </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_version</span><span class="si">}</span><span class="s2">, corr_group </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">correlation_group</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; (version </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_version</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; (version </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_version</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+<div class="viewcode-block" id="BaseDistribution.contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BaseDistribution.contribution_to_ev">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">normalized</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the fraction of this distribution&#39;s expected value given by the</span>
+<span class="sd">        portion of the distribution that lies to the left of x.</span>
+
+<span class="sd">        `contribution_to_ev(x, normalized=False)` is defined as</span>
+
+<span class="sd">        .. math:: \int_{-\infty}^x |t| f(t) dt</span>
+
+<span class="sd">        where `f(t)` is the PDF of the normal distribution. Normalizing divides</span>
+<span class="sd">        this result by `contribution_to_ev(inf, normalized=False)`.</span>
+
+<span class="sd">        Note that this is different from the partial expected value, which is</span>
+<span class="sd">        defined as</span>
+
+<span class="sd">        .. math:: \int_{x}^\infty t f_X(t | X &gt; x) dt</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array-like</span>
+<span class="sd">            The value(s) to find the contribution to expected value for.</span>
+<span class="sd">        normalized : bool</span>
+<span class="sd">            If True, normalize the result such that the return value is a</span>
+<span class="sd">            fraction (between 0 and 1). If False, return the raw integral</span>
+<span class="sd">            value, such that `contribution_to_ev(infinity)` is the expected</span>
+<span class="sd">            value of the distribution. True by default.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: can compute this numerically for any scipy distribution using</span>
+        <span class="c1"># scipy_dist.expect(func=lambda x: abs(x), lb=0, ub=x)</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="BaseDistribution.inv_contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BaseDistribution.inv_contribution_to_ev">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">inv_contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;For a given fraction of expected value, find the number such that</span>
+<span class="sd">        that fraction lies to the left of that number. The inverse of</span>
+<span class="sd">        :func:`contribution_to_ev`.</span>
+
+<span class="sd">        This function is analogous to `ppf` except that</span>
+<span class="sd">        the integrand is :math:`|x| f(x) dx` instead of :math:`f(x) dx`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
 
 
 
 <div class="viewcode-block" id="OperableDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.OperableDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.OperableDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">OperableDistribution</span><span class="p">(</span><span class="n">BaseDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
 <div class="viewcode-block" id="OperableDistribution.plot">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.OperableDistribution.plot">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.OperableDistribution.plot">[docs]</a>
     <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot a histogram of the samples.</span>
@@ -477,21 +575,21 @@ document.write(`
 
 
 <div class="viewcode-block" id="DiscreteDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.DiscreteDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.DiscreteDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">DiscreteDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="o">...</span></div>
 
 
 
 <div class="viewcode-block" id="ContinuousDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ContinuousDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ContinuousDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ContinuousDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="o">...</span></div>
 
 
 
 <div class="viewcode-block" id="CompositeDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.CompositeDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.CompositeDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">CompositeDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -514,7 +612,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ComplexDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ComplexDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ComplexDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ComplexDistribution</span><span class="p">(</span><span class="n">CompositeDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">fn_str</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">infix</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -565,7 +663,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_fn">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_fn">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_fn">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_fn</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a distribution that has a custom function applied to the result.</span>
@@ -636,7 +734,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_max">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_max">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_max">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_max</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the calculation of the maximum value of two distributions.</span>
@@ -669,7 +767,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_min">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_min">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_min">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_min</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the calculation of the minimum value of two distributions.</span>
@@ -701,7 +799,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_round">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_round">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_round">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_round</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the rounding of the output of the distribution.</span>
@@ -733,7 +831,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_ceil">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_ceil">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_ceil">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_ceil</span><span class="p">(</span><span class="n">dist1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the ceiling rounding of the output of the distribution.</span>
@@ -760,7 +858,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_floor">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_floor">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_floor">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_floor</span><span class="p">(</span><span class="n">dist1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the floor rounding of the output of the distribution.</span>
@@ -787,7 +885,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_log">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_log">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_log">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_log</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">e</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the log of the output of the distribution.</span>
@@ -814,7 +912,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dist_exp">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.dist_exp">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.dist_exp">[docs]</a>
 <span class="k">def</span> <span class="nf">dist_exp</span><span class="p">(</span><span class="n">dist1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the exp of the output of the distribution.</span>
@@ -849,7 +947,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="lclip">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.lclip">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.lclip">[docs]</a>
 <span class="k">def</span> <span class="nf">lclip</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the clipping/bounding of the output of the distribution by the lower value.</span>
@@ -892,7 +990,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="rclip">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.rclip">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.rclip">[docs]</a>
 <span class="k">def</span> <span class="nf">rclip</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the clipping/bounding of the output of the distribution by the upper value.</span>
@@ -927,7 +1025,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="clip">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.clip">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.clip">[docs]</a>
 <span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the clipping/bounding of the output of the distribution.</span>
@@ -966,7 +1064,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ConstantDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ConstantDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ConstantDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ConstantDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -978,7 +1076,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="const">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.const">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.const">[docs]</a>
 <span class="k">def</span> <span class="nf">const</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a constant distribution.</span>
@@ -1004,7 +1102,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="UniformDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.UniformDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.UniformDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">UniformDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1018,7 +1116,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="uniform">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.uniform">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.uniform">[docs]</a>
 <span class="k">def</span> <span class="nf">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a uniform random distribution.</span>
@@ -1044,9 +1142,18 @@ document.write(`
 
 
 <div class="viewcode-block" id="NormalDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.NormalDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.NormalDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">NormalDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">mean</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">sd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+        <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
@@ -1079,12 +1186,117 @@ document.write(`
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rclip</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;, rclip=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rclip</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;)&quot;</span>
-        <span class="k">return</span> <span class="n">out</span></div>
+        <span class="k">return</span> <span class="n">out</span>
+
+<div class="viewcode-block" id="NormalDistribution.contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.NormalDistribution.contribution_to_ev">[docs]</a>
+    <span class="k">def</span> <span class="nf">contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span>
+        <span class="n">sigma_scalar</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span>
+
+        <span class="c1"># erf_term(x) + exp_term(x) is the antiderivative of x * PDF(x).</span>
+        <span class="c1"># Separated into two functions for readability.</span>
+        <span class="n">erf_term</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">erf</span><span class="p">((</span><span class="n">t</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
+        <span class="n">exp_term</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="o">-</span><span class="n">sigma_scalar</span> <span class="o">*</span> <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">t</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="c1"># = erf_term(-inf) + exp_term(-inf)</span>
+        <span class="n">neg_inf_term</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">mu</span>
+
+        <span class="c1"># The definite integral from the formula for EV, evaluated from -inf to</span>
+        <span class="c1"># x. Evaluating from -inf to +inf would give the EV. This number alone</span>
+        <span class="c1"># doesn&#39;t tell us the contribution to EV because it is negative for x &lt;</span>
+        <span class="c1"># 0.</span>
+        <span class="n">normal_integral</span> <span class="o">=</span> <span class="n">erf_term</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">exp_term</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">neg_inf_term</span>
+
+        <span class="c1"># The absolute value of the integral from -infinity to 0. When</span>
+        <span class="c1"># evaluating the formula for normal dist EV, all the values up to zero</span>
+        <span class="c1"># contribute negatively to EV, so we flip the sign on these.</span>
+        <span class="n">zero_term</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">erf_term</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">exp_term</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">neg_inf_term</span><span class="p">)</span>
+
+        <span class="c1"># When x &gt;= 0, add zero_term to get contribution_to_ev(0) up to 0. Then</span>
+        <span class="c1"># add zero_term again because that&#39;s how much of the contribution to EV</span>
+        <span class="c1"># we already integrated. When x &lt; 0, we don&#39;t need to adjust</span>
+        <span class="c1"># normal_integral for the negative left values, but normal_integral is</span>
+        <span class="c1"># negative so we flip the sign.</span>
+        <span class="n">contribution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">zero_term</span> <span class="o">+</span> <span class="n">normal_integral</span><span class="p">,</span> <span class="o">-</span><span class="n">normal_integral</span><span class="p">)</span>
+
+        <span class="c1"># Normalize by the total integral over abs(x) * PDF(x). Note: We cannot</span>
+        <span class="c1"># use scipy.stats.foldnorm because its scale parameter is not the same</span>
+        <span class="c1"># thing as sigma, and I don&#39;t know how to translate.</span>
+        <span class="n">abs_mean</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">zero_term</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">contribution</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">abs_mean</span> <span class="k">if</span> <span class="n">normalized</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_derivative_contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span>
+        <span class="n">deriv</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">mu</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">deriv</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NormalDistribution.inv_contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.NormalDistribution.inv_contribution_to_ev">[docs]</a>
+    <span class="k">def</span> <span class="nf">inv_contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">full_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">fraction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fraction</span><span class="p">])</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span>
+        <span class="n">tolerance</span> <span class="o">=</span> <span class="mf">1e-8</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">fraction</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">fraction</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fraction must be between 0 and 1&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Approximate using Newton&#39;s method. Sometimes this has trouble</span>
+        <span class="c1"># converging b/c it diverges or gets caught in a cycle, so use binary</span>
+        <span class="c1"># search as a fallback.</span>
+        <span class="n">guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+        <span class="n">max_iter</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">newton_iter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">binary_iter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">newton_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contribution_to_ev</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span> <span class="o">-</span> <span class="n">fraction</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">:</span>
+                <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+            <span class="n">deriv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_derivative_contribution_to_ev</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">deriv</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">guess</span> <span class="o">-=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">deriv</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+            <span class="c1"># Approximate using binary search (RIP)</span>
+            <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">))</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">1e-10</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">))</span>
+            <span class="n">guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+            <span class="n">max_iter</span> <span class="o">=</span> <span class="mi">50</span>
+            <span class="k">for</span> <span class="n">binary_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contribution_to_ev</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span>
+                <span class="n">diff</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">fraction</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">:</span>
+                    <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+                <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">diff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">lower</span><span class="p">)</span>
+                <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+                <span class="n">guess</span> <span class="o">=</span> <span class="p">(</span><span class="n">lower</span> <span class="o">+</span> <span class="n">upper</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">full_output</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">guess</span><span class="p">),</span> <span class="p">{</span>
+                <span class="s1">&#39;success&#39;</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
+                <span class="s1">&#39;newton_iterations&#39;</span><span class="p">:</span> <span class="n">newton_iter</span><span class="p">,</span>
+                <span class="s1">&#39;binary_search_iterations&#39;</span><span class="p">:</span> <span class="n">binary_iter</span><span class="p">,</span>
+                <span class="s1">&#39;used_binary_search&#39;</span><span class="p">:</span> <span class="n">binary_iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span></div>
+</div>
 
 
 
 <div class="viewcode-block" id="norm">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.norm">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.norm">[docs]</a>
 <span class="k">def</span> <span class="nf">norm</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NormalDistribution</span><span class="p">:</span>
@@ -1124,13 +1336,19 @@ document.write(`
 <span class="sd">    &lt;Distribution&gt; norm(mean=1, sd=2)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">NormalDistribution</span><span class="p">(</span>
-        <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="n">credibility</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">sd</span><span class="o">=</span><span class="n">sd</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="n">lclip</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="n">rclip</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+        <span class="n">credibility</span><span class="o">=</span><span class="n">credibility</span><span class="p">,</span>
+        <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span>
+        <span class="n">sd</span><span class="o">=</span><span class="n">sd</span><span class="p">,</span>
+        <span class="n">lclip</span><span class="o">=</span><span class="n">lclip</span><span class="p">,</span>
+        <span class="n">rclip</span><span class="o">=</span><span class="n">rclip</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="LognormalDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.LognormalDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">LognormalDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1182,21 +1400,21 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span> <span class="o">=</span> <span class="mi">1</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">=</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
             <span class="n">cdf_value</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">credibility</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
             <span class="n">normed_sigma</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">cdf_value</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">normed_sigma</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span> <span class="o">=</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">normed_sigma</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_sd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_sd</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
             <span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lognorm_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span> <span class="o">=</span> <span class="n">log</span><span class="p">(</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lognorm_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;&lt;Distribution&gt; lognorm(lognorm_mean=</span><span class="si">{}</span><span class="s2">, lognorm_sd=</span><span class="si">{}</span><span class="s2">, norm_mean=</span><span class="si">{}</span><span class="s2">, norm_sd=</span><span class="si">{}</span><span class="s2">&quot;</span>
@@ -1211,12 +1429,50 @@ document.write(`
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rclip</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;, rclip=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rclip</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;)&quot;</span>
-        <span class="k">return</span> <span class="n">out</span></div>
+        <span class="k">return</span> <span class="n">out</span>
+
+<div class="viewcode-block" id="LognormalDistribution.contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution.contribution_to_ev">[docs]</a>
+    <span class="k">def</span> <span class="nf">contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">left_bound</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># at x=0 / u=-infinity</span>
+        <span class="n">right_bound</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">erf</span><span class="p">((</span><span class="o">-</span><span class="n">u</span> <span class="o">+</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">right_bound</span> <span class="o">-</span> <span class="n">left_bound</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span> <span class="k">if</span> <span class="n">normalized</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LognormalDistribution.inv_contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution.inv_contribution_to_ev">[docs]</a>
+    <span class="k">def</span> <span class="nf">inv_contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;For a given fraction of expected value, find the number such that</span>
+<span class="sd">        that fraction lies to the left of that number. The inverse of</span>
+<span class="sd">        `contribution_to_ev`.</span>
+
+<span class="sd">        This function is analogous to `lognorm.ppf` except that</span>
+<span class="sd">        the integrand is `x * f(x) dx` instead of `f(x) dx`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">fraction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fraction</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">fraction</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">fraction</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fraction must be between 0 and 1&quot;</span><span class="p">)</span>
+
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_mean</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_sd</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">fraction</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lognorm_mean</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span>
+            <span class="n">exp</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">erfinv</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">mu</span> <span class="o">-</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">y</span><span class="p">))</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
 <div class="viewcode-block" id="lognorm">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.lognorm">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.lognorm">[docs]</a>
 <span class="k">def</span> <span class="nf">lognorm</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1286,7 +1542,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="to">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.to">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.to">[docs]</a>
 <span class="k">def</span> <span class="nf">to</span><span class="p">(</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">LognormalDistribution</span><span class="p">,</span> <span class="n">NormalDistribution</span><span class="p">]:</span>
@@ -1331,7 +1587,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BinomialDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BinomialDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BinomialDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BinomialDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1346,7 +1602,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="binomial">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.binomial">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.binomial">[docs]</a>
 <span class="k">def</span> <span class="nf">binomial</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a binomial distribution.</span>
@@ -1372,7 +1628,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BetaDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BetaDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BetaDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BetaDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1385,7 +1641,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="beta">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.beta">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.beta">[docs]</a>
 <span class="k">def</span> <span class="nf">beta</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a beta distribution.</span>
@@ -1413,7 +1669,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="BernoulliDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.BernoulliDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.BernoulliDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">BernoulliDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1429,7 +1685,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="bernoulli">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.bernoulli">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.bernoulli">[docs]</a>
 <span class="k">def</span> <span class="nf">bernoulli</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a Bernoulli distribution.</span>
@@ -1453,7 +1709,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="CategoricalDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.CategoricalDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.CategoricalDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">CategoricalDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1468,7 +1724,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="discrete">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.discrete">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.discrete">[docs]</a>
 <span class="k">def</span> <span class="nf">discrete</span><span class="p">(</span><span class="n">items</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a discrete distribution (aka categorical distribution).</span>
@@ -1499,7 +1755,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="TDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.TDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.TDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">TDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1536,7 +1792,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="tdist">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.tdist">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.tdist">[docs]</a>
 <span class="k">def</span> <span class="nf">tdist</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a t-distribution.</span>
@@ -1579,7 +1835,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="LogTDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.LogTDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.LogTDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">LogTDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1618,7 +1874,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="log_tdist">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.log_tdist">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.log_tdist">[docs]</a>
 <span class="k">def</span> <span class="nf">log_tdist</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">credibility</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a log t-distribution, which is a t-distribution in log-space.</span>
@@ -1662,7 +1918,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="TriangularDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.TriangularDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.TriangularDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">TriangularDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1682,7 +1938,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="triangular">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.triangular">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.triangular">[docs]</a>
 <span class="k">def</span> <span class="nf">triangular</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a triangular distribution.</span>
@@ -1710,7 +1966,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="PERTDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.PERTDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.PERTDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">PERTDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1744,7 +2000,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="pert">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.pert">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.pert">[docs]</a>
 <span class="k">def</span> <span class="nf">pert</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a PERT distribution.</span>
@@ -1778,7 +2034,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="PoissonDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.PoissonDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.PoissonDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">PoissonDistribution</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1798,7 +2054,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="poisson">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.poisson">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.poisson">[docs]</a>
 <span class="k">def</span> <span class="nf">poisson</span><span class="p">(</span><span class="n">lam</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a poisson distribution.</span>
@@ -1826,7 +2082,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ChiSquareDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ChiSquareDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ChiSquareDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ChiSquareDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1840,7 +2096,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="chisquare">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.chisquare">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.chisquare">[docs]</a>
 <span class="k">def</span> <span class="nf">chisquare</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a chi-square distribution.</span>
@@ -1864,7 +2120,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ExponentialDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ExponentialDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ExponentialDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ExponentialDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1887,7 +2143,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="exponential">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.exponential">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.exponential">[docs]</a>
 <span class="k">def</span> <span class="nf">exponential</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize an exponential distribution.</span>
@@ -1915,7 +2171,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="GammaDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.GammaDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.GammaDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">GammaDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1936,7 +2192,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="gamma">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.gamma">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.gamma">[docs]</a>
 <span class="k">def</span> <span class="nf">gamma</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a gamma distribution.</span>
@@ -1966,7 +2222,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="ParetoDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.ParetoDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.ParetoDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">ParetoDistribution</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -1978,7 +2234,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="pareto">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.pareto">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.pareto">[docs]</a>
 <span class="k">def</span> <span class="nf">pareto</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a pareto distribution.</span>
@@ -2002,9 +2258,16 @@ document.write(`
 
 
 <div class="viewcode-block" id="MixtureDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.MixtureDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.MixtureDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">MixtureDistribution</span><span class="p">(</span><span class="n">CompositeDistribution</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dists</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">relative_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dists</span><span class="p">,</span>
+        <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">relative_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="n">weights</span><span class="p">,</span> <span class="n">dists</span> <span class="o">=</span> <span class="n">_process_weights_values</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">relative_weights</span><span class="p">,</span> <span class="n">dists</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dists</span> <span class="o">=</span> <span class="n">dists</span>
@@ -2022,7 +2285,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="mixture">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.mixture">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.mixture">[docs]</a>
 <span class="k">def</span> <span class="nf">mixture</span><span class="p">(</span><span class="n">dists</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">relative_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lclip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rclip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a mixture distribution, which is a combination of different distributions.</span>
@@ -2072,7 +2335,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="zero_inflated">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.zero_inflated">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.zero_inflated">[docs]</a>
 <span class="k">def</span> <span class="nf">zero_inflated</span><span class="p">(</span><span class="n">p_zero</span><span class="p">,</span> <span class="n">dist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize an arbitrary zero-inflated distribution.</span>
@@ -2102,7 +2365,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="inf0">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.inf0">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.inf0">[docs]</a>
 <span class="k">def</span> <span class="nf">inf0</span><span class="p">(</span><span class="n">p_zero</span><span class="p">,</span> <span class="n">dist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize an arbitrary zero-inflated distribution.</span>
@@ -2132,7 +2395,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="GeometricDistribution">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.GeometricDistribution">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.GeometricDistribution">[docs]</a>
 <span class="k">class</span> <span class="nc">GeometricDistribution</span><span class="p">(</span><span class="n">OperableDistribution</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -2146,7 +2409,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="geometric">
-<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.distributions.geometric">[docs]</a>
+<a class="viewcode-back" href="../../reference/squigglepy.distributions.html#squigglepy.distributions.geometric">[docs]</a>
 <span class="k">def</span> <span class="nf">geometric</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a geometric distribution.</span>

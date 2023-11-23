@@ -289,6 +289,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.correlation.html">squigglepy.correlation module</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">squigglepy.distributions module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.numbers.html">squigglepy.numbers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.pdh.html">squigglepy.pdh module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.rng.html">squigglepy.rng module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.samplers.html">squigglepy.samplers module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html">squigglepy.utils module</a></li>
@@ -362,6 +363,44 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.distributions.BaseDistribution">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">BaseDistribution</span></span><a class="reference internal" href="../_modules/squigglepy/distributions.html#BaseDistribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.BaseDistribution" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="squigglepy.distributions.BaseDistribution.contribution_to_ev">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">contribution_to_ev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#BaseDistribution.contribution_to_ev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.BaseDistribution.contribution_to_ev" title="Link to this definition">#</a></dt>
+<dd><p>Find the fraction of this distribution’s expected value given by the
+portion of the distribution that lies to the left of x.</p>
+<p><cite>contribution_to_ev(x, normalized=False)</cite> is defined as</p>
+<div class="math">
+<p><img src="../_images/math/1337fa06772352b6ad21bcbffec66b08ae1c4fca.png" alt="\int_{-\infty}^x |t| f(t) dt"/></p>
+</div><p>where <cite>f(t)</cite> is the PDF of the normal distribution. Normalizing divides
+this result by <cite>contribution_to_ev(inf, normalized=False)</cite>.</p>
+<p>Note that this is different from the partial expected value, which is
+defined as</p>
+<div class="math">
+<p><img src="../_images/math/6f3ff82e287e9ffc5290d51773a06973d95fe533.png" alt="\int_{x}^\infty t f_X(t | X &gt; x) dt"/></p>
+</div><section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>x<span class="classifier">array-like</span></dt><dd><p>The value(s) to find the contribution to expected value for.</p>
+</dd>
+<dt>normalized<span class="classifier">bool</span></dt><dd><p>If True, normalize the result such that the return value is a
+fraction (between 0 and 1). If False, return the raw integral
+value, such that <cite>contribution_to_ev(infinity)</cite> is the expected
+value of the distribution. True by default.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squigglepy.distributions.BaseDistribution.inv_contribution_to_ev">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inv_contribution_to_ev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#BaseDistribution.inv_contribution_to_ev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.BaseDistribution.inv_contribution_to_ev" title="Link to this definition">#</a></dt>
+<dd><p>For a given fraction of expected value, find the number such that
+that fraction lies to the left of that number. The inverse of
+<a class="reference internal" href="#squigglepy.distributions.BaseDistribution.contribution_to_ev" title="squigglepy.distributions.BaseDistribution.contribution_to_ev"><code class="xref py py-func docutils literal notranslate"><span class="pre">contribution_to_ev()</span></code></a>.</p>
+<p>This function is analogous to <cite>ppf</cite> except that
+the integrand is <img class="math" src="../_images/math/da81dcac036ddbc4013126447c99d825b893e143.png" alt="|x| f(x) dx"/> instead of <img class="math" src="../_images/math/5fb475309bc4e123ea2b182827b5765ce2e18e0b.png" alt="f(x) dx"/>.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -452,6 +491,44 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.distributions.LognormalDistribution">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">LognormalDistribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lognorm_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lognorm_sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">credibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#LognormalDistribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.LognormalDistribution" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#squigglepy.distributions.ContinuousDistribution" title="squigglepy.distributions.ContinuousDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContinuousDistribution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="squigglepy.distributions.LognormalDistribution.contribution_to_ev">
+<span class="sig-name descname"><span class="pre">contribution_to_ev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#LognormalDistribution.contribution_to_ev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.LognormalDistribution.contribution_to_ev" title="Link to this definition">#</a></dt>
+<dd><p>Find the fraction of this distribution’s expected value given by the
+portion of the distribution that lies to the left of x.</p>
+<p><cite>contribution_to_ev(x, normalized=False)</cite> is defined as</p>
+<div class="math">
+<p><img src="../_images/math/1337fa06772352b6ad21bcbffec66b08ae1c4fca.png" alt="\int_{-\infty}^x |t| f(t) dt"/></p>
+</div><p>where <cite>f(t)</cite> is the PDF of the normal distribution. Normalizing divides
+this result by <cite>contribution_to_ev(inf, normalized=False)</cite>.</p>
+<p>Note that this is different from the partial expected value, which is
+defined as</p>
+<div class="math">
+<p><img src="../_images/math/6f3ff82e287e9ffc5290d51773a06973d95fe533.png" alt="\int_{x}^\infty t f_X(t | X &gt; x) dt"/></p>
+</div><section id="id1">
+<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>x<span class="classifier">array-like</span></dt><dd><p>The value(s) to find the contribution to expected value for.</p>
+</dd>
+<dt>normalized<span class="classifier">bool</span></dt><dd><p>If True, normalize the result such that the return value is a
+fraction (between 0 and 1). If False, return the raw integral
+value, such that <cite>contribution_to_ev(infinity)</cite> is the expected
+value of the distribution. True by default.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squigglepy.distributions.LognormalDistribution.inv_contribution_to_ev">
+<span class="sig-name descname"><span class="pre">inv_contribution_to_ev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#LognormalDistribution.inv_contribution_to_ev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.LognormalDistribution.inv_contribution_to_ev" title="Link to this definition">#</a></dt>
+<dd><p>For a given fraction of expected value, find the number such that
+that fraction lies to the left of that number. The inverse of
+<cite>contribution_to_ev</cite>.</p>
+<p>This function is analogous to <cite>lognorm.ppf</cite> except that
+the integrand is <cite>x * f(x) dx</cite> instead of <cite>f(x) dx</cite>.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -464,6 +541,44 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.distributions.NormalDistribution">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">NormalDistribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">credibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#NormalDistribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.NormalDistribution" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#squigglepy.distributions.ContinuousDistribution" title="squigglepy.distributions.ContinuousDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContinuousDistribution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="squigglepy.distributions.NormalDistribution.contribution_to_ev">
+<span class="sig-name descname"><span class="pre">contribution_to_ev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#NormalDistribution.contribution_to_ev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.NormalDistribution.contribution_to_ev" title="Link to this definition">#</a></dt>
+<dd><p>Find the fraction of this distribution’s expected value given by the
+portion of the distribution that lies to the left of x.</p>
+<p><cite>contribution_to_ev(x, normalized=False)</cite> is defined as</p>
+<div class="math">
+<p><img src="../_images/math/1337fa06772352b6ad21bcbffec66b08ae1c4fca.png" alt="\int_{-\infty}^x |t| f(t) dt"/></p>
+</div><p>where <cite>f(t)</cite> is the PDF of the normal distribution. Normalizing divides
+this result by <cite>contribution_to_ev(inf, normalized=False)</cite>.</p>
+<p>Note that this is different from the partial expected value, which is
+defined as</p>
+<div class="math">
+<p><img src="../_images/math/6f3ff82e287e9ffc5290d51773a06973d95fe533.png" alt="\int_{x}^\infty t f_X(t | X &gt; x) dt"/></p>
+</div><section id="id2">
+<h2>Parameters<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>x<span class="classifier">array-like</span></dt><dd><p>The value(s) to find the contribution to expected value for.</p>
+</dd>
+<dt>normalized<span class="classifier">bool</span></dt><dd><p>If True, normalize the result such that the return value is a
+fraction (between 0 and 1). If False, return the raw integral
+value, such that <cite>contribution_to_ev(infinity)</cite> is the expected
+value of the distribution. True by default.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squigglepy.distributions.NormalDistribution.inv_contribution_to_ev">
+<span class="sig-name descname"><span class="pre">inv_contribution_to_ev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#NormalDistribution.inv_contribution_to_ev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.NormalDistribution.inv_contribution_to_ev" title="Link to this definition">#</a></dt>
+<dd><p>For a given fraction of expected value, find the number such that
+that fraction lies to the left of that number. The inverse of
+<a class="reference internal" href="#squigglepy.distributions.NormalDistribution.contribution_to_ev" title="squigglepy.distributions.NormalDistribution.contribution_to_ev"><code class="xref py py-func docutils literal notranslate"><span class="pre">contribution_to_ev()</span></code></a>.</p>
+<p>This function is analogous to <cite>ppf</cite> except that
+the integrand is <img class="math" src="../_images/math/da81dcac036ddbc4013126447c99d825b893e143.png" alt="|x| f(x) dx"/> instead of <img class="math" src="../_images/math/5fb475309bc4e123ea2b182827b5765ce2e18e0b.png" alt="f(x) dx"/>.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -474,8 +589,8 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.distributions.OperableDistribution.plot">
 <span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#OperableDistribution.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.OperableDistribution.plot" title="Link to this definition">#</a></dt>
 <dd><p>Plot a histogram of the samples.</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>Parameters<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>num_samples<span class="classifier">int</span></dt><dd><p>The number of samples to draw for plotting. Defaults to 1000 if not set.</p>
 </dd>
@@ -533,8 +648,8 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.distributions.bernoulli">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">bernoulli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#bernoulli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.bernoulli" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a Bernoulli distribution.</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>p<span class="classifier">float</span></dt><dd><p>The probability of the binary event. Must be between 0 and 1.</p>
 </dd>
@@ -544,8 +659,8 @@ document.write(`
 <h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
 <p>BernoulliDistribution</p>
 </section>
-<section id="id2">
-<h2>Examples<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>Examples<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bernoulli</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; bernoulli(p=0.1)</span>
 </pre></div>
@@ -557,8 +672,8 @@ document.write(`
 <dt class="sig sig-object py" id="squigglepy.distributions.beta">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">beta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.beta" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a beta distribution.</p>
-<section id="id3">
-<h2>Parameters<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>Parameters<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>a<span class="classifier">float</span></dt><dd><p>The alpha shape value of the distribution. Typically takes the value of the
 number of trials that resulted in a success.</p>
@@ -568,12 +683,12 @@ number of trials that resulted in a failure.</p>
 </dd>
 </dl>
 </section>
-<section id="id4">
-<h2>Returns<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>Returns<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <p>BetaDistribution</p>
 </section>
-<section id="id5">
-<h2>Examples<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>Examples<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">beta</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; beta(1, 2)</span>
 </pre></div>
@@ -585,8 +700,8 @@ number of trials that resulted in a failure.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.binomial">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">binomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#binomial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.binomial" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a binomial distribution.</p>
-<section id="id6">
-<h2>Parameters<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>Parameters<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>n<span class="classifier">int</span></dt><dd><p>The number of trials.</p>
 </dd>
@@ -594,12 +709,12 @@ number of trials that resulted in a failure.</p>
 </dd>
 </dl>
 </section>
-<section id="id7">
-<h2>Returns<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h2>Returns<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <p>BinomialDistribution</p>
 </section>
-<section id="id8">
-<h2>Examples<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<section id="id11">
+<h2>Examples<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; binomial(1, 0.1)</span>
 </pre></div>
@@ -611,19 +726,19 @@ number of trials that resulted in a failure.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.chisquare">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">chisquare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#chisquare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.chisquare" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a chi-square distribution.</p>
-<section id="id9">
-<h2>Parameters<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<section id="id12">
+<h2>Parameters<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>df<span class="classifier">float</span></dt><dd><p>The degrees of freedom. Must be positive.</p>
 </dd>
 </dl>
 </section>
-<section id="id10">
-<h2>Returns<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+<section id="id13">
+<h2>Returns<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
 <p>ChiSquareDistribution</p>
 </section>
-<section id="id11">
-<h2>Examples<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
+<section id="id14">
+<h2>Examples<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">chisquare</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; chiaquare(2)</span>
 </pre></div>
@@ -636,8 +751,8 @@ number of trials that resulted in a failure.</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.clip" title="Link to this definition">#</a></dt>
 <dd><p>Initialize the clipping/bounding of the output of the distribution.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id12">
-<h2>Parameters<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+<section id="id15">
+<h2>Parameters<a class="headerlink" href="#id15" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dist1<span class="classifier">Distribution or function</span></dt><dd><p>The distribution to clip. If this is a funciton, it will return a partial that will
 be suitable for use in piping.</p>
@@ -648,15 +763,15 @@ be suitable for use in piping.</p>
 </dd>
 </dl>
 </section>
-<section id="id13">
-<h2>Returns<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
+<section id="id16">
+<h2>Returns<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
 </dd>
 </dl>
 </section>
-<section id="id14">
-<h2>Examples<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
+<section id="id17">
+<h2>Examples<a class="headerlink" href="#id17" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">clip</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)</span>
 </pre></div>
@@ -669,19 +784,19 @@ be suitable for use in piping.</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">const</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#const"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.const" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a constant distribution.</p>
 <p>Constant distributions always return the same value no matter what.</p>
-<section id="id15">
-<h2>Parameters<a class="headerlink" href="#id15" title="Link to this heading">#</a></h2>
+<section id="id18">
+<h2>Parameters<a class="headerlink" href="#id18" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x<span class="classifier">anything</span></dt><dd><p>The value the constant distribution should always return.</p>
 </dd>
 </dl>
 </section>
-<section id="id16">
-<h2>Returns<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
+<section id="id19">
+<h2>Returns<a class="headerlink" href="#id19" title="Link to this heading">#</a></h2>
 <p>ConstantDistribution</p>
 </section>
-<section id="id17">
-<h2>Examples<a class="headerlink" href="#id17" title="Link to this heading">#</a></h2>
+<section id="id20">
+<h2>Examples<a class="headerlink" href="#id20" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">const</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; const(1)</span>
 </pre></div>
@@ -693,20 +808,20 @@ be suitable for use in piping.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.discrete">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">discrete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#discrete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.discrete" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a discrete distribution (aka categorical distribution).</p>
-<section id="id18">
-<h2>Parameters<a class="headerlink" href="#id18" title="Link to this heading">#</a></h2>
+<section id="id21">
+<h2>Parameters<a class="headerlink" href="#id21" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>items<span class="classifier">list or dict</span></dt><dd><p>The values that the discrete distribution will return and their associated
 weights (or likelihoods of being returned when sampled).</p>
 </dd>
 </dl>
 </section>
-<section id="id19">
-<h2>Returns<a class="headerlink" href="#id19" title="Link to this heading">#</a></h2>
+<section id="id22">
+<h2>Returns<a class="headerlink" href="#id22" title="Link to this heading">#</a></h2>
 <p>CategoricalDistribution</p>
 </section>
-<section id="id20">
-<h2>Examples<a class="headerlink" href="#id20" title="Link to this heading">#</a></h2>
+<section id="id23">
+<h2>Examples<a class="headerlink" href="#id23" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">discrete</span><span class="p">({</span><span class="mi">0</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">})</span>  <span class="c1"># 10% chance of returning 0, 90% chance of returning 1</span>
 <span class="go">&lt;Distribution&gt; categorical({0: 0.1, 1: 0.9})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">discrete</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>  <span class="c1"># Different notation for the same thing.</span>
@@ -725,38 +840,10 @@ weights (or likelihoods of being returned when sampled).</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_ceil</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_ceil"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_ceil" title="Link to this definition">#</a></dt>
 <dd><p>Initialize the ceiling rounding of the output of the distribution.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id21">
-<h2>Parameters<a class="headerlink" href="#id21" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then ceiling round.</p>
-</dd>
-</dl>
-</section>
-<section id="id22">
-<h2>Returns<a class="headerlink" href="#id22" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
-</dd>
-</dl>
-</section>
-<section id="id23">
-<h2>Examples<a class="headerlink" href="#id23" title="Link to this heading">#</a></h2>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_ceil</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-<span class="go">&lt;Distribution&gt; ceil(norm(mean=0.5, sd=0.3))</span>
-</pre></div>
-</div>
-</section>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="squigglepy.distributions.dist_exp">
-<span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_exp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_exp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_exp" title="Link to this definition">#</a></dt>
-<dd><p>Initialize the exp of the output of the distribution.</p>
-<p>The function won’t be applied until the distribution is sampled.</p>
 <section id="id24">
 <h2>Parameters<a class="headerlink" href="#id24" title="Link to this heading">#</a></h2>
 <dl class="simple">
-<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then take the exp of.</p>
+<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then ceiling round.</p>
 </dd>
 </dl>
 </section>
@@ -769,22 +856,22 @@ weights (or likelihoods of being returned when sampled).</p>
 </section>
 <section id="id26">
 <h2>Examples<a class="headerlink" href="#id26" title="Link to this heading">#</a></h2>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_exp</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-<span class="go">&lt;Distribution&gt; exp(norm(mean=0.5, sd=0.3))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_ceil</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="go">&lt;Distribution&gt; ceil(norm(mean=0.5, sd=0.3))</span>
 </pre></div>
 </div>
 </section>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="squigglepy.distributions.dist_floor">
-<span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_floor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_floor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_floor" title="Link to this definition">#</a></dt>
-<dd><p>Initialize the floor rounding of the output of the distribution.</p>
+<dt class="sig sig-object py" id="squigglepy.distributions.dist_exp">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_exp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_exp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_exp" title="Link to this definition">#</a></dt>
+<dd><p>Initialize the exp of the output of the distribution.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
 <section id="id27">
 <h2>Parameters<a class="headerlink" href="#id27" title="Link to this heading">#</a></h2>
 <dl class="simple">
-<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then floor round.</p>
+<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then take the exp of.</p>
 </dd>
 </dl>
 </section>
@@ -797,6 +884,34 @@ weights (or likelihoods of being returned when sampled).</p>
 </section>
 <section id="id29">
 <h2>Examples<a class="headerlink" href="#id29" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_exp</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="go">&lt;Distribution&gt; exp(norm(mean=0.5, sd=0.3))</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.distributions.dist_floor">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_floor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_floor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_floor" title="Link to this definition">#</a></dt>
+<dd><p>Initialize the floor rounding of the output of the distribution.</p>
+<p>The function won’t be applied until the distribution is sampled.</p>
+<section id="id30">
+<h2>Parameters<a class="headerlink" href="#id30" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then floor round.</p>
+</dd>
+</dl>
+</section>
+<section id="id31">
+<h2>Returns<a class="headerlink" href="#id31" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
+</dd>
+</dl>
+</section>
+<section id="id32">
+<h2>Examples<a class="headerlink" href="#id32" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_floor</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 <span class="go">&lt;Distribution&gt; floor(norm(mean=0.5, sd=0.3))</span>
 </pre></div>
@@ -809,8 +924,8 @@ weights (or likelihoods of being returned when sampled).</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_fn" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a distribution that has a custom function applied to the result.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id30">
-<h2>Parameters<a class="headerlink" href="#id30" title="Link to this heading">#</a></h2>
+<section id="id33">
+<h2>Parameters<a class="headerlink" href="#id33" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dist1<span class="classifier">Distribution or function or list</span></dt><dd><p>Typically, the distribution to apply the function to. Could also be a function
 or list of functions if <code class="docutils literal notranslate"><span class="pre">dist_fn</span></code> is being used in a pipe.</p>
@@ -826,16 +941,16 @@ a custom name.</p>
 </dd>
 </dl>
 </section>
-<section id="id31">
-<h2>Returns<a class="headerlink" href="#id31" title="Link to this heading">#</a></h2>
+<section id="id34">
+<h2>Returns<a class="headerlink" href="#id34" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated
 when it is sampled.</p>
 </dd>
 </dl>
 </section>
-<section id="id32">
-<h2>Examples<a class="headerlink" href="#id32" title="Link to this heading">#</a></h2>
+<section id="id35">
+<h2>Examples<a class="headerlink" href="#id35" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">double</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dist_fn</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">double</span><span class="p">)</span>
@@ -852,22 +967,22 @@ when it is sampled.</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.718281828459045</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_log" title="Link to this definition">#</a></dt>
 <dd><p>Initialize the log of the output of the distribution.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id33">
-<h2>Parameters<a class="headerlink" href="#id33" title="Link to this heading">#</a></h2>
+<section id="id36">
+<h2>Parameters<a class="headerlink" href="#id36" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then take the log of.</p>
 </dd>
 </dl>
 </section>
-<section id="id34">
-<h2>Returns<a class="headerlink" href="#id34" title="Link to this heading">#</a></h2>
+<section id="id37">
+<h2>Returns<a class="headerlink" href="#id37" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
 </dd>
 </dl>
 </section>
-<section id="id35">
-<h2>Examples<a class="headerlink" href="#id35" title="Link to this heading">#</a></h2>
+<section id="id38">
+<h2>Examples<a class="headerlink" href="#id38" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_log</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; log(norm(mean=0.5, sd=0.3), const(10))</span>
 </pre></div>
@@ -880,8 +995,8 @@ when it is sampled.</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_max"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_max" title="Link to this definition">#</a></dt>
 <dd><p>Initialize the calculation of the maximum value of two distributions.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id36">
-<h2>Parameters<a class="headerlink" href="#id36" title="Link to this heading">#</a></h2>
+<section id="id39">
+<h2>Parameters<a class="headerlink" href="#id39" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and determine the max of.</p>
 </dd>
@@ -889,16 +1004,16 @@ when it is sampled.</p>
 </dd>
 </dl>
 </section>
-<section id="id37">
-<h2>Returns<a class="headerlink" href="#id37" title="Link to this heading">#</a></h2>
+<section id="id40">
+<h2>Returns<a class="headerlink" href="#id40" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated
 when it is sampled.</p>
 </dd>
 </dl>
 </section>
-<section id="id38">
-<h2>Examples<a class="headerlink" href="#id38" title="Link to this heading">#</a></h2>
+<section id="id41">
+<h2>Examples<a class="headerlink" href="#id41" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_max</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="go">&lt;Distribution&gt; max(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))</span>
 </pre></div>
@@ -911,42 +1026,12 @@ when it is sampled.</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_min</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_min"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_min" title="Link to this definition">#</a></dt>
 <dd><p>Initialize the calculation of the minimum value of two distributions.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id39">
-<h2>Parameters<a class="headerlink" href="#id39" title="Link to this heading">#</a></h2>
+<section id="id42">
+<h2>Parameters<a class="headerlink" href="#id42" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and determine the min of.</p>
 </dd>
 <dt>dist2<span class="classifier">Distribution</span></dt><dd><p>The second distribution to sample and determine the min of.</p>
-</dd>
-</dl>
-</section>
-<section id="id40">
-<h2>Returns<a class="headerlink" href="#id40" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
-</dd>
-</dl>
-</section>
-<section id="id41">
-<h2>Examples<a class="headerlink" href="#id41" title="Link to this heading">#</a></h2>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_min</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-<span class="go">&lt;Distribution&gt; min(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))</span>
-</pre></div>
-</div>
-</section>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="squigglepy.distributions.dist_round">
-<span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_round"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_round" title="Link to this definition">#</a></dt>
-<dd><p>Initialize the rounding of the output of the distribution.</p>
-<p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id42">
-<h2>Parameters<a class="headerlink" href="#id42" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then round.</p>
-</dd>
-<dt>digits<span class="classifier">int</span></dt><dd><p>The number of digits to round to.</p>
 </dd>
 </dl>
 </section>
@@ -959,6 +1044,36 @@ when it is sampled.</p>
 </section>
 <section id="id44">
 <h2>Examples<a class="headerlink" href="#id44" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_min</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="go">&lt;Distribution&gt; min(norm(mean=0.5, sd=0.3), norm(mean=1.5, sd=0.3))</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squigglepy.distributions.dist_round">
+<span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">dist_round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#dist_round"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.dist_round" title="Link to this definition">#</a></dt>
+<dd><p>Initialize the rounding of the output of the distribution.</p>
+<p>The function won’t be applied until the distribution is sampled.</p>
+<section id="id45">
+<h2>Parameters<a class="headerlink" href="#id45" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>dist1<span class="classifier">Distribution</span></dt><dd><p>The distribution to sample and then round.</p>
+</dd>
+<dt>digits<span class="classifier">int</span></dt><dd><p>The number of digits to round to.</p>
+</dd>
+</dl>
+</section>
+<section id="id46">
+<h2>Returns<a class="headerlink" href="#id46" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
+</dd>
+</dl>
+</section>
+<section id="id47">
+<h2>Examples<a class="headerlink" href="#id47" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dist_round</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 <span class="go">&lt;Distribution&gt; round(norm(mean=0.5, sd=0.3), 0)</span>
 </pre></div>
@@ -970,8 +1085,8 @@ when it is sampled.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.exponential">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">exponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#exponential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.exponential" title="Link to this definition">#</a></dt>
 <dd><p>Initialize an exponential distribution.</p>
-<section id="id45">
-<h2>Parameters<a class="headerlink" href="#id45" title="Link to this heading">#</a></h2>
+<section id="id48">
+<h2>Parameters<a class="headerlink" href="#id48" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>scale<span class="classifier">float</span></dt><dd><p>The scale value of the exponential distribution (&gt; 0)</p>
 </dd>
@@ -981,12 +1096,12 @@ when it is sampled.</p>
 </dd>
 </dl>
 </section>
-<section id="id46">
-<h2>Returns<a class="headerlink" href="#id46" title="Link to this heading">#</a></h2>
+<section id="id49">
+<h2>Returns<a class="headerlink" href="#id49" title="Link to this heading">#</a></h2>
 <p>ExponentialDistribution</p>
 </section>
-<section id="id47">
-<h2>Examples<a class="headerlink" href="#id47" title="Link to this heading">#</a></h2>
+<section id="id50">
+<h2>Examples<a class="headerlink" href="#id50" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">exponential</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; exponential(1)</span>
 </pre></div>
@@ -998,8 +1113,8 @@ when it is sampled.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.gamma">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">gamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.gamma" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a gamma distribution.</p>
-<section id="id48">
-<h2>Parameters<a class="headerlink" href="#id48" title="Link to this heading">#</a></h2>
+<section id="id51">
+<h2>Parameters<a class="headerlink" href="#id51" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>shape<span class="classifier">float</span></dt><dd><p>The shape value of the gamma distribution.</p>
 </dd>
@@ -1011,12 +1126,12 @@ when it is sampled.</p>
 </dd>
 </dl>
 </section>
-<section id="id49">
-<h2>Returns<a class="headerlink" href="#id49" title="Link to this heading">#</a></h2>
+<section id="id52">
+<h2>Returns<a class="headerlink" href="#id52" title="Link to this heading">#</a></h2>
 <p>GammaDistribution</p>
 </section>
-<section id="id50">
-<h2>Examples<a class="headerlink" href="#id50" title="Link to this heading">#</a></h2>
+<section id="id53">
+<h2>Examples<a class="headerlink" href="#id53" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gamma</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; gamma(shape=10, scale=1)</span>
 </pre></div>
@@ -1028,19 +1143,19 @@ when it is sampled.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.geometric">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">geometric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#geometric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.geometric" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a geometric distribution.</p>
-<section id="id51">
-<h2>Parameters<a class="headerlink" href="#id51" title="Link to this heading">#</a></h2>
+<section id="id54">
+<h2>Parameters<a class="headerlink" href="#id54" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>p<span class="classifier">float</span></dt><dd><p>The probability of success of an individual trial. Must be between 0 and 1.</p>
 </dd>
 </dl>
 </section>
-<section id="id52">
-<h2>Returns<a class="headerlink" href="#id52" title="Link to this heading">#</a></h2>
+<section id="id55">
+<h2>Returns<a class="headerlink" href="#id55" title="Link to this heading">#</a></h2>
 <p>GeometricDistribution</p>
 </section>
-<section id="id53">
-<h2>Examples<a class="headerlink" href="#id53" title="Link to this heading">#</a></h2>
+<section id="id56">
+<h2>Examples<a class="headerlink" href="#id56" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">geometric</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; geometric(0.1)</span>
 </pre></div>
@@ -1053,8 +1168,8 @@ when it is sampled.</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">inf0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_zero</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#inf0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.inf0" title="Link to this definition">#</a></dt>
 <dd><p>Initialize an arbitrary zero-inflated distribution.</p>
 <p>Alias for <code class="docutils literal notranslate"><span class="pre">zero_inflated</span></code>.</p>
-<section id="id54">
-<h2>Parameters<a class="headerlink" href="#id54" title="Link to this heading">#</a></h2>
+<section id="id57">
+<h2>Parameters<a class="headerlink" href="#id57" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>p_zero<span class="classifier">float</span></dt><dd><p>The chance of the distribution returning zero</p>
 </dd>
@@ -1062,12 +1177,12 @@ when it is sampled.</p>
 </dd>
 </dl>
 </section>
-<section id="id55">
-<h2>Returns<a class="headerlink" href="#id55" title="Link to this heading">#</a></h2>
+<section id="id58">
+<h2>Returns<a class="headerlink" href="#id58" title="Link to this heading">#</a></h2>
 <p>MixtureDistribution</p>
 </section>
-<section id="id56">
-<h2>Examples<a class="headerlink" href="#id56" title="Link to this heading">#</a></h2>
+<section id="id59">
+<h2>Examples<a class="headerlink" href="#id59" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">inf0</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="go">&lt;Distribution&gt; mixture</span>
 <span class="go"> - 0</span>
@@ -1082,8 +1197,8 @@ when it is sampled.</p>
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">lclip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#lclip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.lclip" title="Link to this definition">#</a></dt>
 <dd><p>Initialize the clipping/bounding of the output of the distribution by the lower value.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id57">
-<h2>Parameters<a class="headerlink" href="#id57" title="Link to this heading">#</a></h2>
+<section id="id60">
+<h2>Parameters<a class="headerlink" href="#id60" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dist1<span class="classifier">Distribution or function</span></dt><dd><p>The distribution to clip. If this is a funciton, it will return a partial that will
 be suitable for use in piping.</p>
@@ -1092,15 +1207,15 @@ be suitable for use in piping.</p>
 </dd>
 </dl>
 </section>
-<section id="id58">
-<h2>Returns<a class="headerlink" href="#id58" title="Link to this heading">#</a></h2>
+<section id="id61">
+<h2>Returns<a class="headerlink" href="#id61" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
 </dd>
 </dl>
 </section>
-<section id="id59">
-<h2>Examples<a class="headerlink" href="#id59" title="Link to this heading">#</a></h2>
+<section id="id62">
+<h2>Examples<a class="headerlink" href="#id62" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lclip</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; lclip(norm(mean=0.5, sd=0.3), 0.5)</span>
 </pre></div>
@@ -1117,8 +1232,8 @@ it will default to being a 90% CI). Unlike the normal and lognormal distribution
 credible interval is an approximation and is not precisely defined.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code> are not defined, can just return a classic t-distribution defined via
 <code class="docutils literal notranslate"><span class="pre">t</span></code> as the number of degrees of freedom, but in log-space.</p>
-<section id="id60">
-<h2>Parameters<a class="headerlink" href="#id60" title="Link to this heading">#</a></h2>
+<section id="id63">
+<h2>Parameters<a class="headerlink" href="#id63" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x<span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Must be greater than 0.
 Defaults to a 90% CI.</p>
@@ -1135,12 +1250,12 @@ Defaults to a 90% CI.</p>
 </dd>
 </dl>
 </section>
-<section id="id61">
-<h2>Returns<a class="headerlink" href="#id61" title="Link to this heading">#</a></h2>
+<section id="id64">
+<h2>Returns<a class="headerlink" href="#id64" title="Link to this heading">#</a></h2>
 <p>LogTDistribution</p>
 </section>
-<section id="id62">
-<h2>Examples<a class="headerlink" href="#id62" title="Link to this heading">#</a></h2>
+<section id="id65">
+<h2>Examples<a class="headerlink" href="#id65" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">log_tdist</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; log_tdist(x=0, y=1, t=2)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">log_tdist</span><span class="p">()</span>
@@ -1156,8 +1271,8 @@ Defaults to a 90% CI.</p>
 <dd><p>Initialize a lognormal distribution.</p>
 <p>Can be defined either via a credible interval from <code class="docutils literal notranslate"><span class="pre">x</span></code> to <code class="docutils literal notranslate"><span class="pre">y</span></code> (use <code class="docutils literal notranslate"><span class="pre">credibility</span></code> or
 it will default to being a 90% CI) or defined via <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
-<section id="id63">
-<h2>Parameters<a class="headerlink" href="#id63" title="Link to this heading">#</a></h2>
+<section id="id66">
+<h2>Parameters<a class="headerlink" href="#id66" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x<span class="classifier">float</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.
 Must be a value greater than 0.</p>
@@ -1182,12 +1297,12 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 </dd>
 </dl>
 </section>
-<section id="id64">
-<h2>Returns<a class="headerlink" href="#id64" title="Link to this heading">#</a></h2>
+<section id="id67">
+<h2>Returns<a class="headerlink" href="#id67" title="Link to this heading">#</a></h2>
 <p>LognormalDistribution</p>
 </section>
-<section id="id65">
-<h2>Examples<a class="headerlink" href="#id65" title="Link to this heading">#</a></h2>
+<section id="id68">
+<h2>Examples<a class="headerlink" href="#id68" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lognorm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; lognorm(lognorm_mean=4.04, lognorm_sd=3.21, norm_mean=1.15, norm_sd=0.7)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lognorm</span><span class="p">(</span><span class="n">norm_mean</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">norm_sd</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -1203,8 +1318,8 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 <dt class="sig sig-object py" id="squigglepy.distributions.mixture">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">mixture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#mixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.mixture" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a mixture distribution, which is a combination of different distributions.</p>
-<section id="id66">
-<h2>Parameters<a class="headerlink" href="#id66" title="Link to this heading">#</a></h2>
+<section id="id69">
+<h2>Parameters<a class="headerlink" href="#id69" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dists<span class="classifier">list or dict</span></dt><dd><p>The distributions to mix. Can also be defined as a list of weights and distributions.</p>
 </dd>
@@ -1219,12 +1334,12 @@ to sum to 1.</p>
 </dd>
 </dl>
 </section>
-<section id="id67">
-<h2>Returns<a class="headerlink" href="#id67" title="Link to this heading">#</a></h2>
+<section id="id70">
+<h2>Returns<a class="headerlink" href="#id70" title="Link to this heading">#</a></h2>
 <p>MixtureDistribution</p>
 </section>
-<section id="id68">
-<h2>Examples<a class="headerlink" href="#id68" title="Link to this heading">#</a></h2>
+<section id="id71">
+<h2>Examples<a class="headerlink" href="#id71" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mixture</span><span class="p">([</span><span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">norm</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
 <span class="go">&lt;Distribution&gt; mixture</span>
 <span class="go"> - &lt;Distribution&gt; norm(mean=1.5, sd=0.3)</span>
@@ -1249,8 +1364,8 @@ to sum to 1.</p>
 <dd><p>Initialize a normal distribution.</p>
 <p>Can be defined either via a credible interval from <code class="docutils literal notranslate"><span class="pre">x</span></code> to <code class="docutils literal notranslate"><span class="pre">y</span></code> (use <code class="docutils literal notranslate"><span class="pre">credibility</span></code> or
 it will default to being a 90% CI) or defined via <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">sd</span></code>.</p>
-<section id="id69">
-<h2>Parameters<a class="headerlink" href="#id69" title="Link to this heading">#</a></h2>
+<section id="id72">
+<h2>Parameters<a class="headerlink" href="#id72" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x<span class="classifier">float</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
 </dd>
@@ -1269,12 +1384,12 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 </dd>
 </dl>
 </section>
-<section id="id70">
-<h2>Returns<a class="headerlink" href="#id70" title="Link to this heading">#</a></h2>
+<section id="id73">
+<h2>Returns<a class="headerlink" href="#id73" title="Link to this heading">#</a></h2>
 <p>NormalDistribution</p>
 </section>
-<section id="id71">
-<h2>Examples<a class="headerlink" href="#id71" title="Link to this heading">#</a></h2>
+<section id="id74">
+<h2>Examples<a class="headerlink" href="#id74" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; norm(mean=0.5, sd=0.3)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">norm</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sd</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -1288,19 +1403,19 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 <dt class="sig sig-object py" id="squigglepy.distributions.pareto">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">pareto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#pareto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.pareto" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a pareto distribution.</p>
-<section id="id72">
-<h2>Parameters<a class="headerlink" href="#id72" title="Link to this heading">#</a></h2>
+<section id="id75">
+<h2>Parameters<a class="headerlink" href="#id75" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>shape<span class="classifier">float</span></dt><dd><p>The shape value of the pareto distribution.</p>
 </dd>
 </dl>
 </section>
-<section id="id73">
-<h2>Returns<a class="headerlink" href="#id73" title="Link to this heading">#</a></h2>
+<section id="id76">
+<h2>Returns<a class="headerlink" href="#id76" title="Link to this heading">#</a></h2>
 <p>ParetoDistribution</p>
 </section>
-<section id="id74">
-<h2>Examples<a class="headerlink" href="#id74" title="Link to this heading">#</a></h2>
+<section id="id77">
+<h2>Examples<a class="headerlink" href="#id77" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pareto</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; pareto(1)</span>
 </pre></div>
@@ -1312,8 +1427,8 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 <dt class="sig sig-object py" id="squigglepy.distributions.pert">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">pert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#pert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.pert" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a PERT distribution.</p>
-<section id="id75">
-<h2>Parameters<a class="headerlink" href="#id75" title="Link to this heading">#</a></h2>
+<section id="id78">
+<h2>Parameters<a class="headerlink" href="#id78" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>left<span class="classifier">float</span></dt><dd><p>The smallest value of the PERT distribution.</p>
 </dd>
@@ -1329,12 +1444,12 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 </dd>
 </dl>
 </section>
-<section id="id76">
-<h2>Returns<a class="headerlink" href="#id76" title="Link to this heading">#</a></h2>
+<section id="id79">
+<h2>Returns<a class="headerlink" href="#id79" title="Link to this heading">#</a></h2>
 <p>PERTDistribution</p>
 </section>
-<section id="id77">
-<h2>Examples<a class="headerlink" href="#id77" title="Link to this heading">#</a></h2>
+<section id="id80">
+<h2>Examples<a class="headerlink" href="#id80" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; PERT(1, 2, 3)</span>
 </pre></div>
@@ -1346,8 +1461,8 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 <dt class="sig sig-object py" id="squigglepy.distributions.poisson">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">poisson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#poisson"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.poisson" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a poisson distribution.</p>
-<section id="id78">
-<h2>Parameters<a class="headerlink" href="#id78" title="Link to this heading">#</a></h2>
+<section id="id81">
+<h2>Parameters<a class="headerlink" href="#id81" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>lam<span class="classifier">float</span></dt><dd><p>The lambda value of the poisson distribution.</p>
 </dd>
@@ -1357,12 +1472,12 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 </dd>
 </dl>
 </section>
-<section id="id79">
-<h2>Returns<a class="headerlink" href="#id79" title="Link to this heading">#</a></h2>
+<section id="id82">
+<h2>Returns<a class="headerlink" href="#id82" title="Link to this heading">#</a></h2>
 <p>PoissonDistribution</p>
 </section>
-<section id="id80">
-<h2>Examples<a class="headerlink" href="#id80" title="Link to this heading">#</a></h2>
+<section id="id83">
+<h2>Examples<a class="headerlink" href="#id83" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">poisson</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; poisson(1)</span>
 </pre></div>
@@ -1375,8 +1490,8 @@ defined instead by <code class="docutils literal notranslate"><span class="pre">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">rclip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#rclip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.rclip" title="Link to this definition">#</a></dt>
 <dd><p>Initialize the clipping/bounding of the output of the distribution by the upper value.</p>
 <p>The function won’t be applied until the distribution is sampled.</p>
-<section id="id81">
-<h2>Parameters<a class="headerlink" href="#id81" title="Link to this heading">#</a></h2>
+<section id="id84">
+<h2>Parameters<a class="headerlink" href="#id84" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>dist1<span class="classifier">Distribution or function</span></dt><dd><p>The distribution to clip. If this is a funciton, it will return a partial that will
 be suitable for use in piping.</p>
@@ -1385,15 +1500,15 @@ be suitable for use in piping.</p>
 </dd>
 </dl>
 </section>
-<section id="id82">
-<h2>Returns<a class="headerlink" href="#id82" title="Link to this heading">#</a></h2>
+<section id="id85">
+<h2>Returns<a class="headerlink" href="#id85" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>ComplexDistribution or function</dt><dd><p>This will be a lazy evaluation of the desired function that will then be calculated</p>
 </dd>
 </dl>
 </section>
-<section id="id83">
-<h2>Examples<a class="headerlink" href="#id83" title="Link to this heading">#</a></h2>
+<section id="id86">
+<h2>Examples<a class="headerlink" href="#id86" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rclip</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; rclip(norm(mean=0.5, sd=0.3), 0.5)</span>
 </pre></div>
@@ -1410,8 +1525,8 @@ it will default to being a 90% CI). Unlike the normal and lognormal distribution
 credible interval is an approximation and is not precisely defined.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code> are not defined, can just return a classic t-distribution defined via
 <code class="docutils literal notranslate"><span class="pre">t</span></code> as the number of degrees of freedom.</p>
-<section id="id84">
-<h2>Parameters<a class="headerlink" href="#id84" title="Link to this heading">#</a></h2>
+<section id="id87">
+<h2>Parameters<a class="headerlink" href="#id87" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x<span class="classifier">float or None</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
 </dd>
@@ -1427,12 +1542,12 @@ credible interval is an approximation and is not precisely defined.</p>
 </dd>
 </dl>
 </section>
-<section id="id85">
-<h2>Returns<a class="headerlink" href="#id85" title="Link to this heading">#</a></h2>
+<section id="id88">
+<h2>Returns<a class="headerlink" href="#id88" title="Link to this heading">#</a></h2>
 <p>TDistribution</p>
 </section>
-<section id="id86">
-<h2>Examples<a class="headerlink" href="#id86" title="Link to this heading">#</a></h2>
+<section id="id89">
+<h2>Examples<a class="headerlink" href="#id89" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tdist</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; tdist(x=0, y=1, t=2)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">tdist</span><span class="p">()</span>
@@ -1450,8 +1565,8 @@ credible interval is an approximation and is not precisely defined.</p>
 in which case it will become a normal distribution.</p>
 <p>The distribution will default to be a 90% credible interval between <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code> unless
 <code class="docutils literal notranslate"><span class="pre">credibility</span></code> is passed.</p>
-<section id="id87">
-<h2>Parameters<a class="headerlink" href="#id87" title="Link to this heading">#</a></h2>
+<section id="id90">
+<h2>Parameters<a class="headerlink" href="#id90" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x<span class="classifier">float</span></dt><dd><p>The low value of a credible interval defined by <code class="docutils literal notranslate"><span class="pre">credibility</span></code>. Defaults to a 90% CI.</p>
 </dd>
@@ -1465,12 +1580,12 @@ in which case it will become a normal distribution.</p>
 </dd>
 </dl>
 </section>
-<section id="id88">
-<h2>Returns<a class="headerlink" href="#id88" title="Link to this heading">#</a></h2>
+<section id="id91">
+<h2>Returns<a class="headerlink" href="#id91" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">LognormalDistribution</span></code> if <code class="docutils literal notranslate"><span class="pre">x</span></code> &gt; 0, otherwise a <code class="docutils literal notranslate"><span class="pre">NormalDistribution</span></code></p>
 </section>
-<section id="id89">
-<h2>Examples<a class="headerlink" href="#id89" title="Link to this heading">#</a></h2>
+<section id="id92">
+<h2>Examples<a class="headerlink" href="#id92" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">to</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; lognorm(mean=1.15, sd=0.7)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">to</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
@@ -1484,8 +1599,8 @@ in which case it will become a normal distribution.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.triangular">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">triangular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rclip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#triangular"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.triangular" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a triangular distribution.</p>
-<section id="id90">
-<h2>Parameters<a class="headerlink" href="#id90" title="Link to this heading">#</a></h2>
+<section id="id93">
+<h2>Parameters<a class="headerlink" href="#id93" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>left<span class="classifier">float</span></dt><dd><p>The smallest value of the triangular distribution.</p>
 </dd>
@@ -1495,12 +1610,12 @@ in which case it will become a normal distribution.</p>
 </dd>
 </dl>
 </section>
-<section id="id91">
-<h2>Returns<a class="headerlink" href="#id91" title="Link to this heading">#</a></h2>
+<section id="id94">
+<h2>Returns<a class="headerlink" href="#id94" title="Link to this heading">#</a></h2>
 <p>TriangularDistribution</p>
 </section>
-<section id="id92">
-<h2>Examples<a class="headerlink" href="#id92" title="Link to this heading">#</a></h2>
+<section id="id95">
+<h2>Examples<a class="headerlink" href="#id95" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">triangular</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; triangular(1, 2, 3)</span>
 </pre></div>
@@ -1512,8 +1627,8 @@ in which case it will become a normal distribution.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.uniform">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">uniform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#uniform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.uniform" title="Link to this definition">#</a></dt>
 <dd><p>Initialize a uniform random distribution.</p>
-<section id="id93">
-<h2>Parameters<a class="headerlink" href="#id93" title="Link to this heading">#</a></h2>
+<section id="id96">
+<h2>Parameters<a class="headerlink" href="#id96" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x<span class="classifier">float</span></dt><dd><p>The smallest value the uniform distribution will return.</p>
 </dd>
@@ -1521,12 +1636,12 @@ in which case it will become a normal distribution.</p>
 </dd>
 </dl>
 </section>
-<section id="id94">
-<h2>Returns<a class="headerlink" href="#id94" title="Link to this heading">#</a></h2>
+<section id="id97">
+<h2>Returns<a class="headerlink" href="#id97" title="Link to this heading">#</a></h2>
 <p>UniformDistribution</p>
 </section>
-<section id="id95">
-<h2>Examples<a class="headerlink" href="#id95" title="Link to this heading">#</a></h2>
+<section id="id98">
+<h2>Examples<a class="headerlink" href="#id98" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">&lt;Distribution&gt; uniform(0, 1)</span>
 </pre></div>
@@ -1538,8 +1653,8 @@ in which case it will become a normal distribution.</p>
 <dt class="sig sig-object py" id="squigglepy.distributions.zero_inflated">
 <span class="sig-prename descclassname"><span class="pre">squigglepy.distributions.</span></span><span class="sig-name descname"><span class="pre">zero_inflated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_zero</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/squigglepy/distributions.html#zero_inflated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squigglepy.distributions.zero_inflated" title="Link to this definition">#</a></dt>
 <dd><p>Initialize an arbitrary zero-inflated distribution.</p>
-<section id="id96">
-<h2>Parameters<a class="headerlink" href="#id96" title="Link to this heading">#</a></h2>
+<section id="id99">
+<h2>Parameters<a class="headerlink" href="#id99" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>p_zero<span class="classifier">float</span></dt><dd><p>The chance of the distribution returning zero</p>
 </dd>
@@ -1547,12 +1662,12 @@ in which case it will become a normal distribution.</p>
 </dd>
 </dl>
 </section>
-<section id="id97">
-<h2>Returns<a class="headerlink" href="#id97" title="Link to this heading">#</a></h2>
+<section id="id100">
+<h2>Returns<a class="headerlink" href="#id100" title="Link to this heading">#</a></h2>
 <p>MixtureDistribution</p>
 </section>
-<section id="id98">
-<h2>Examples<a class="headerlink" href="#id98" title="Link to this heading">#</a></h2>
+<section id="id101">
+<h2>Examples<a class="headerlink" href="#id101" title="Link to this heading">#</a></h2>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">zero_inflated</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="go">&lt;Distribution&gt; mixture</span>
 <span class="go"> - 0</span>
@@ -1607,7 +1722,11 @@ in which case it will become a normal distribution.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.BaseDistribution"><code class="docutils literal notranslate"><span class="pre">BaseDistribution</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.BaseDistribution"><code class="docutils literal notranslate"><span class="pre">BaseDistribution</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.BaseDistribution.contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">BaseDistribution.contribution_to_ev()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.BaseDistribution.inv_contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">BaseDistribution.inv_contribution_to_ev()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.BernoulliDistribution"><code class="docutils literal notranslate"><span class="pre">BernoulliDistribution</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.BetaDistribution"><code class="docutils literal notranslate"><span class="pre">BetaDistribution</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.BinomialDistribution"><code class="docutils literal notranslate"><span class="pre">BinomialDistribution</span></code></a></li>
@@ -1622,9 +1741,17 @@ in which case it will become a normal distribution.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.GammaDistribution"><code class="docutils literal notranslate"><span class="pre">GammaDistribution</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.GeometricDistribution"><code class="docutils literal notranslate"><span class="pre">GeometricDistribution</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.LogTDistribution"><code class="docutils literal notranslate"><span class="pre">LogTDistribution</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.LognormalDistribution"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.LognormalDistribution"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.LognormalDistribution.contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution.contribution_to_ev()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.LognormalDistribution.inv_contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution.inv_contribution_to_ev()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.MixtureDistribution"><code class="docutils literal notranslate"><span class="pre">MixtureDistribution</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.NormalDistribution"><code class="docutils literal notranslate"><span class="pre">NormalDistribution</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.NormalDistribution"><code class="docutils literal notranslate"><span class="pre">NormalDistribution</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.NormalDistribution.contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">NormalDistribution.contribution_to_ev()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.NormalDistribution.inv_contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">NormalDistribution.inv_contribution_to_ev()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.OperableDistribution"><code class="docutils literal notranslate"><span class="pre">OperableDistribution</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#squigglepy.distributions.OperableDistribution.plot"><code class="docutils literal notranslate"><span class="pre">OperableDistribution.plot()</span></code></a></li>
 </ul>

@@ -289,6 +289,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.correlation.html">squigglepy.correlation module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html">squigglepy.distributions module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.numbers.html">squigglepy.numbers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.pdh.html">squigglepy.pdh module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.rng.html">squigglepy.rng module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.samplers.html">squigglepy.samplers module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html">squigglepy.utils module</a></li>
@@ -379,7 +380,11 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="squigglepy.distributions.html">squigglepy.distributions module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BaseDistribution"><code class="docutils literal notranslate"><span class="pre">BaseDistribution</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BaseDistribution"><code class="docutils literal notranslate"><span class="pre">BaseDistribution</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BaseDistribution.contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">BaseDistribution.contribution_to_ev()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BaseDistribution.inv_contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">BaseDistribution.inv_contribution_to_ev()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BernoulliDistribution"><code class="docutils literal notranslate"><span class="pre">BernoulliDistribution</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BetaDistribution"><code class="docutils literal notranslate"><span class="pre">BetaDistribution</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.BinomialDistribution"><code class="docutils literal notranslate"><span class="pre">BinomialDistribution</span></code></a></li>
@@ -394,9 +399,17 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.GammaDistribution"><code class="docutils literal notranslate"><span class="pre">GammaDistribution</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.GeometricDistribution"><code class="docutils literal notranslate"><span class="pre">GeometricDistribution</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.LogTDistribution"><code class="docutils literal notranslate"><span class="pre">LogTDistribution</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution.contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution.contribution_to_ev()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.LognormalDistribution.inv_contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">LognormalDistribution.inv_contribution_to_ev()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.MixtureDistribution"><code class="docutils literal notranslate"><span class="pre">MixtureDistribution</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.NormalDistribution"><code class="docutils literal notranslate"><span class="pre">NormalDistribution</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.NormalDistribution"><code class="docutils literal notranslate"><span class="pre">NormalDistribution</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.NormalDistribution.contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">NormalDistribution.contribution_to_ev()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.NormalDistribution.inv_contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">NormalDistribution.inv_contribution_to_ev()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.OperableDistribution"><code class="docutils literal notranslate"><span class="pre">OperableDistribution</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="squigglepy.distributions.html#squigglepy.distributions.OperableDistribution.plot"><code class="docutils literal notranslate"><span class="pre">OperableDistribution.plot()</span></code></a></li>
 </ul>
@@ -443,6 +456,36 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="squigglepy.numbers.html">squigglepy.numbers module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="squigglepy.pdh.html">squigglepy.pdh module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.BinSizing"><code class="docutils literal notranslate"><span class="pre">BinSizing</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.BinSizing.ev"><code class="docutils literal notranslate"><span class="pre">BinSizing.ev</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.BinSizing.mass"><code class="docutils literal notranslate"><span class="pre">BinSizing.mass</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.BinSizing.uniform"><code class="docutils literal notranslate"><span class="pre">BinSizing.uniform</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.PDHBase"><code class="docutils literal notranslate"><span class="pre">PDHBase</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.PDHBase.contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">PDHBase.contribution_to_ev()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.PDHBase.histogram_mean"><code class="docutils literal notranslate"><span class="pre">PDHBase.histogram_mean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.PDHBase.histogram_sd"><code class="docutils literal notranslate"><span class="pre">PDHBase.histogram_sd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.PDHBase.inv_contribution_to_ev"><code class="docutils literal notranslate"><span class="pre">PDHBase.inv_contribution_to_ev()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.PDHBase.mean"><code class="docutils literal notranslate"><span class="pre">PDHBase.mean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.PDHBase.sd"><code class="docutils literal notranslate"><span class="pre">PDHBase.sd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram"><code class="docutils literal notranslate"><span class="pre">ProbabilityMassHistogram</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram.binary_op"><code class="docutils literal notranslate"><span class="pre">ProbabilityMassHistogram.binary_op()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram.from_distribution"><code class="docutils literal notranslate"><span class="pre">ProbabilityMassHistogram.from_distribution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram"><code class="docutils literal notranslate"><span class="pre">ScaledBinHistogram</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.bin_density"><code class="docutils literal notranslate"><span class="pre">ScaledBinHistogram.bin_density()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.binary_op"><code class="docutils literal notranslate"><span class="pre">ScaledBinHistogram.binary_op()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.from_distribution"><code class="docutils literal notranslate"><span class="pre">ScaledBinHistogram.from_distribution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.get_bin_edges"><code class="docutils literal notranslate"><span class="pre">ScaledBinHistogram.get_bin_edges()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="squigglepy.rng.html">squigglepy.rng module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.rng.html#squigglepy.rng.set_seed"><code class="docutils literal notranslate"><span class="pre">set_seed()</span></code></a></li>
 </ul>
@@ -471,6 +514,7 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="squigglepy.utils.html">squigglepy.utils module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html#squigglepy.utils.ConvergenceWarning"><code class="docutils literal notranslate"><span class="pre">ConvergenceWarning</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html#squigglepy.utils.doubling_time_to_growth_rate"><code class="docutils literal notranslate"><span class="pre">doubling_time_to_growth_rate()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html#squigglepy.utils.event"><code class="docutils literal notranslate"><span class="pre">event()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="squigglepy.utils.html#squigglepy.utils.event_happens"><code class="docutils literal notranslate"><span class="pre">event_happens()</span></code></a></li>

@@ -1,0 +1,833 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>squigglepy.pdh &#8212; Squigglepy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=362ab14a" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
+
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/squigglepy/pdh';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Squigglepy  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../usage.html">
+                        Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">squigglepy.pdh</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for squigglepy.pdh</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">optimize</span><span class="p">,</span> <span class="n">stats</span>
+<span class="kn">import</span> <span class="nn">sortednp</span> <span class="k">as</span> <span class="nn">snp</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">.distributions</span> <span class="kn">import</span> <span class="n">LognormalDistribution</span><span class="p">,</span> <span class="n">lognorm</span>
+<span class="kn">from</span> <span class="nn">.samplers</span> <span class="kn">import</span> <span class="n">sample</span>
+
+
+<div class="viewcode-block" id="BinSizing">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.BinSizing">[docs]</a>
+<span class="k">class</span> <span class="nc">BinSizing</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">ev</span> <span class="o">=</span> <span class="s2">&quot;ev&quot;</span>
+    <span class="n">mass</span> <span class="o">=</span> <span class="s2">&quot;mass&quot;</span>
+    <span class="n">uniform</span> <span class="o">=</span> <span class="s2">&quot;uniform&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="PDHBase">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase">[docs]</a>
+<span class="k">class</span> <span class="nc">PDHBase</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_bins</span>
+
+<div class="viewcode-block" id="PDHBase.histogram_mean">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.histogram_mean">[docs]</a>
+    <span class="k">def</span> <span class="nf">histogram_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mean of the distribution, calculated using the histogram data (even</span>
+<span class="sd">        if the exact mean is known).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masses</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PDHBase.mean">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.mean">[docs]</a>
+    <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mean of the distribution. May be calculated using a stored exact</span>
+<span class="sd">        value or the histogram data.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exact_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exact_mean</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">histogram_mean</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="PDHBase.histogram_sd">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.histogram_sd">[docs]</a>
+    <span class="k">def</span> <span class="nf">histogram_sd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Standard deviation of the distribution, calculated using the</span>
+<span class="sd">        histogram data (even if the exact SD is known).&quot;&quot;&quot;</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masses</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="PDHBase.sd">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.sd">[docs]</a>
+    <span class="k">def</span> <span class="nf">sd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Standard deviation of the distribution. May be calculated using a</span>
+<span class="sd">        stored exact value or the histogram data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">histogram_sd</span><span class="p">()</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_contribution_to_ev</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">masses</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the approximate fraction of expected value that is less than</span>
+<span class="sd">        the given value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">cls</span><span class="o">.</span><span class="n">_contribution_to_ev</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">masses</span><span class="p">,</span> <span class="n">xi</span><span class="p">)</span> <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">masses</span> <span class="o">*</span> <span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">masses</span> <span class="o">*</span> <span class="n">values</span> <span class="o">*</span> <span class="p">(</span><span class="n">values</span> <span class="o">&lt;=</span> <span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">mean</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_inv_contribution_to_ev</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">masses</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">cls</span><span class="o">.</span><span class="n">inv_contribution_to_ev</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">masses</span><span class="p">,</span> <span class="n">xi</span><span class="p">)</span> <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">fraction</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">fraction</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fraction must be greater than 0&quot;</span><span class="p">)</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">masses</span> <span class="o">*</span> <span class="n">values</span><span class="p">)</span>
+        <span class="n">fractions_of_ev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">masses</span> <span class="o">*</span> <span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="n">mean</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-10</span>  <span class="c1"># to avoid floating point rounding issues</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">fractions_of_ev</span><span class="p">,</span> <span class="n">fraction</span> <span class="o">-</span> <span class="n">epsilon</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+<div class="viewcode-block" id="PDHBase.contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.contribution_to_ev">[docs]</a>
+    <span class="k">def</span> <span class="nf">contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the approximate fraction of expected value that is less than</span>
+<span class="sd">        the given value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">masses</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PDHBase.inv_contribution_to_ev">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.PDHBase.inv_contribution_to_ev">[docs]</a>
+    <span class="k">def</span> <span class="nf">inv_contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the value such that `fraction` of the contribution to</span>
+<span class="sd">        expected value lies to the left of that value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inv_contribution_to_ev</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">masses</span><span class="p">,</span> <span class="n">fraction</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">extended_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">binary_op</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">extended_values</span><span class="p">,</span> <span class="n">ev</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">+</span> <span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">exact_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">exact_mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">exact_mean</span> <span class="o">+</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_mean</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">exact_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">exact_sd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">exact_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_sd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">extended_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">binary_op</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">extended_values</span><span class="p">,</span> <span class="n">ev</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">is_mul</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">exact_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">exact_mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">exact_mean</span> <span class="o">*</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_mean</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">exact_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">exact_sd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">exact_sd</span> <span class="o">*</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_mean</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">exact_sd</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">exact_mean</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="o">+</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">exact_sd</span> <span class="o">*</span> <span class="n">y</span><span class="o">.</span><span class="n">exact_sd</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+
+<div class="viewcode-block" id="ScaledBinHistogram">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram">[docs]</a>
+<span class="k">class</span> <span class="nc">ScaledBinHistogram</span><span class="p">(</span><span class="n">PDHBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;PDH with exponentially growing bin widths.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">left_bound</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">right_bound</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">bin_scale_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">bin_densities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">exact_mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exact_sd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># TODO: currently only supports positive-everywhere distributions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left_bound</span> <span class="o">=</span> <span class="n">left_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right_bound</span> <span class="o">=</span> <span class="n">right_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin_scale_rate</span> <span class="o">=</span> <span class="n">bin_scale_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin_densities</span> <span class="o">=</span> <span class="n">bin_densities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exact_mean</span> <span class="o">=</span> <span class="n">exact_mean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exact_sd</span> <span class="o">=</span> <span class="n">exact_sd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_bins</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bin_densities</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">left_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_scale_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_bins</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin_widths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bin_edges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">masses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_densities</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_widths</span>
+
+<div class="viewcode-block" id="ScaledBinHistogram.get_bin_edges">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.get_bin_edges">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_bin_edges</span><span class="p">(</span><span class="n">left_bound</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">right_bound</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">num_scaled_bins</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_bins</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">num_fixed_bins</span> <span class="o">=</span> <span class="n">num_bins</span> <span class="o">-</span> <span class="n">num_scaled_bins</span>
+        <span class="n">min_width</span> <span class="o">=</span> <span class="p">(</span><span class="n">right_bound</span> <span class="o">-</span> <span class="n">left_bound</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="n">num_fixed_bins</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bin_scale_rate</span><span class="o">**</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_scaled_bins</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">bin_widths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="p">[</span><span class="n">min_width</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_fixed_bins</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">min_width</span> <span class="o">*</span> <span class="n">bin_scale_rate</span><span class="o">**</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_scaled_bins</span><span class="p">)],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="n">left_bound</span><span class="p">],</span> <span class="n">bin_widths</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="ScaledBinHistogram.bin_density">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.bin_density">[docs]</a>
+    <span class="k">def</span> <span class="nf">bin_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_densities</span><span class="p">[</span><span class="n">index</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ScaledBinHistogram.binary_op">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.binary_op">[docs]</a>
+    <span class="k">def</span> <span class="nf">binary_op</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">extended_values</span><span class="p">,</span> <span class="n">ev</span><span class="p">,</span> <span class="n">is_mul</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Note: This implementation is not nearly as well-optimized as</span>
+        <span class="c1"># ProbabilityMassHistogram.</span>
+        <span class="n">extended_masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">masses</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">masses</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="c1"># Sort the arrays so product values are in order</span>
+        <span class="n">sorted_indexes</span> <span class="o">=</span> <span class="n">extended_values</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="n">extended_values</span> <span class="o">=</span> <span class="n">extended_values</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">]</span>
+        <span class="n">extended_masses</span> <span class="o">=</span> <span class="n">extended_masses</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">]</span>
+
+        <span class="n">num_bins</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="n">outer_ev</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">num_bins</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="n">left_bound</span> <span class="o">=</span> <span class="n">PDHBase</span><span class="o">.</span><span class="n">_inv_contribution_to_ev</span><span class="p">(</span><span class="n">extended_values</span><span class="p">,</span> <span class="n">extended_masses</span><span class="p">,</span> <span class="n">outer_ev</span><span class="p">)</span>
+        <span class="n">right_bound</span> <span class="o">=</span> <span class="n">PDHBase</span><span class="o">.</span><span class="n">_inv_contribution_to_ev</span><span class="p">(</span><span class="n">extended_values</span><span class="p">,</span> <span class="n">extended_masses</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">outer_ev</span><span class="p">)</span>
+        <span class="n">bin_scale_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">bin_scale_rate</span> <span class="o">*</span> <span class="n">y</span><span class="o">.</span><span class="n">bin_scale_rate</span><span class="p">)</span>
+        <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">ScaledBinHistogram</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span>
+            <span class="n">left_bound</span><span class="p">,</span> <span class="n">right_bound</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">,</span> <span class="n">num_bins</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Split masses into bins with bin_edges as delimiters</span>
+        <span class="n">split_masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">extended_masses</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">extended_values</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">))[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">bin_densities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">elem_masses</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">split_masses</span><span class="p">):</span>
+            <span class="n">mass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">elem_masses</span><span class="p">)</span>
+            <span class="n">density</span> <span class="o">=</span> <span class="n">mass</span> <span class="o">/</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bin_edges</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">bin_densities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">density</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ScaledBinHistogram</span><span class="p">(</span><span class="n">left_bound</span><span class="p">,</span> <span class="n">right_bound</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bin_densities</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ScaledBinHistogram.from_distribution">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ScaledBinHistogram.from_distribution">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_distribution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">LognormalDistribution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Only LognormalDistributions are supported&quot;</span><span class="p">)</span>
+
+        <span class="n">left_bound</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">inv_contribution_to_ev</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">num_bins</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">right_bound</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">inv_contribution_to_ev</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">num_bins</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">compute_bin_densities</span><span class="p">(</span><span class="n">bin_scale_rate</span><span class="p">):</span>
+            <span class="n">bin_edges</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span><span class="n">left_bound</span><span class="p">,</span> <span class="n">right_bound</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">)</span>
+            <span class="n">bin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">edge_densities</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">lognorm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span>
+                <span class="n">bin_edges</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">norm_sd</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">norm_mean</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">center_densities</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">lognorm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span>
+                <span class="n">bin_centers</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">norm_sd</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">norm_mean</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="c1"># Simpson&#39;s rule</span>
+            <span class="n">bin_densities</span> <span class="o">=</span> <span class="p">(</span><span class="n">edge_densities</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">center_densities</span> <span class="o">+</span> <span class="n">edge_densities</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">6</span>
+            <span class="k">return</span> <span class="n">bin_densities</span>
+
+        <span class="k">def</span> <span class="nf">loss</span><span class="p">(</span><span class="n">bin_scale_rate_arr</span><span class="p">):</span>
+            <span class="n">bin_scale_rate</span> <span class="o">=</span> <span class="n">bin_scale_rate_arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">bin_densities</span> <span class="o">=</span> <span class="n">compute_bin_densities</span><span class="p">(</span><span class="n">bin_scale_rate</span><span class="p">)</span>
+            <span class="n">hist</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">left_bound</span><span class="p">,</span> <span class="n">right_bound</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">,</span> <span class="n">bin_densities</span><span class="p">)</span>
+            <span class="n">mean_error</span> <span class="o">=</span> <span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">-</span> <span class="n">dist</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">sd_error</span> <span class="o">=</span> <span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">sd</span><span class="p">()</span> <span class="o">-</span> <span class="n">dist</span><span class="o">.</span><span class="n">lognorm_sd</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="k">return</span> <span class="n">mean_error</span>
+
+        <span class="k">if</span> <span class="n">bin_scale_rate</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">num_bins</span> <span class="o">==</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="n">bin_scale_rate</span> <span class="o">=</span> <span class="mf">1.04</span>
+        <span class="k">elif</span> <span class="n">bin_scale_rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bin_scale_rate</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)])</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;bin scale rate:&quot;</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">)</span>
+        <span class="n">bin_edges</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span><span class="n">left_bound</span><span class="p">,</span> <span class="n">right_bound</span><span class="p">,</span> <span class="n">bin_scale_rate</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">)</span>
+        <span class="n">bin_densities</span> <span class="o">=</span> <span class="n">compute_bin_densities</span><span class="p">(</span><span class="n">bin_scale_rate</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">left_bound</span><span class="p">,</span>
+            <span class="n">right_bound</span><span class="p">,</span>
+            <span class="n">bin_scale_rate</span><span class="p">,</span>
+            <span class="n">bin_densities</span><span class="p">,</span>
+            <span class="n">exact_mean</span><span class="o">=</span><span class="n">dist</span><span class="o">.</span><span class="n">lognorm_mean</span><span class="p">,</span>
+            <span class="n">exact_sd</span><span class="o">=</span><span class="n">dist</span><span class="o">.</span><span class="n">lognorm_sd</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProbabilityMassHistogram">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram">[docs]</a>
+<span class="k">class</span> <span class="nc">ProbabilityMassHistogram</span><span class="p">(</span><span class="n">PDHBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a probability distribution as an array of x values and their</span>
+<span class="sd">    probability masses. Like Monte Carlo samples except that values are</span>
+<span class="sd">    weighted by probability, so you can effectively represent many times more</span>
+<span class="sd">    samples than you actually have values.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">masses</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">bin_sizing</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ev&quot;</span><span class="p">,</span> <span class="s2">&quot;quantile&quot;</span><span class="p">,</span> <span class="s2">&quot;uniform&quot;</span><span class="p">],</span>
+        <span class="n">exact_mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exact_sd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">masses</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">masses</span> <span class="o">=</span> <span class="n">masses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_bins</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin_sizing</span> <span class="o">=</span> <span class="n">BinSizing</span><span class="p">(</span><span class="n">bin_sizing</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exact_mean</span> <span class="o">=</span> <span class="n">exact_mean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exact_sd</span> <span class="o">=</span> <span class="n">exact_sd</span>
+
+<div class="viewcode-block" id="ProbabilityMassHistogram.binary_op">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram.binary_op">[docs]</a>
+    <span class="k">def</span> <span class="nf">binary_op</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">extended_values</span><span class="p">,</span> <span class="n">ev</span><span class="p">,</span> <span class="n">is_mul</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">bin_sizing</span>
+        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Can only combine histograms that use the same bin sizing method (cannot combine </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">bin_sizing</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">bin_sizing</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">bin_sizing</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">bin_sizing</span>
+        <span class="n">extended_masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">masses</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">masses</span><span class="p">))</span>
+        <span class="n">num_bins</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="n">len_per_bin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">extended_values</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_bins</span><span class="p">)</span>
+        <span class="n">ev_per_bin</span> <span class="o">=</span> <span class="n">ev</span> <span class="o">/</span> <span class="n">num_bins</span>
+        <span class="n">extended_evs</span> <span class="o">=</span> <span class="n">extended_masses</span> <span class="o">*</span> <span class="n">extended_values</span>
+
+        <span class="c1"># Cut boundaries between bins such that each bin has equal contribution</span>
+        <span class="c1"># to expected value.</span>
+        <span class="k">if</span> <span class="n">is_mul</span> <span class="ow">or</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">BinSizing</span><span class="o">.</span><span class="n">uniform</span><span class="p">:</span>
+            <span class="c1"># When multiplying, the values of extended_evs are all equal. x and</span>
+            <span class="c1"># y both have the property that every bin contributes equally to</span>
+            <span class="c1"># EV, which means the outputs of their outer product must all be</span>
+            <span class="c1"># equal. We can use this fact to avoid a relatively slow call to</span>
+            <span class="c1"># `cumsum` (which can also introduce floating point rounding errors</span>
+            <span class="c1"># for extreme values).</span>
+            <span class="n">bin_boundaries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">)</span> <span class="o">*</span> <span class="n">len_per_bin</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">BinSizing</span><span class="o">.</span><span class="n">ev</span><span class="p">:</span>
+                <span class="n">cumulative_evs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">extended_evs</span><span class="p">)</span>
+                <span class="n">bin_boundaries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span>
+                    <span class="n">cumulative_evs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ev_per_bin</span><span class="p">,</span> <span class="n">ev</span><span class="p">,</span> <span class="n">ev_per_bin</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">BinSizing</span><span class="o">.</span><span class="n">mass</span><span class="p">:</span>
+                <span class="n">cumulative_masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">extended_masses</span><span class="p">)</span>
+                <span class="n">bin_boundaries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span>
+                    <span class="n">cumulative_masses</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_bins</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Partition the arrays so every value in a bin is smaller than every</span>
+        <span class="c1"># value in the next bin, but don&#39;t sort within bins. (Partitioning is</span>
+        <span class="c1"># about 10% faster than mergesort.)</span>
+        <span class="n">sorted_indexes</span> <span class="o">=</span> <span class="n">extended_values</span><span class="o">.</span><span class="n">argpartition</span><span class="p">(</span><span class="n">bin_boundaries</span><span class="p">)</span>
+        <span class="n">extended_values</span> <span class="o">=</span> <span class="n">extended_values</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">]</span>
+        <span class="n">extended_masses</span> <span class="o">=</span> <span class="n">extended_masses</span><span class="p">[</span><span class="n">sorted_indexes</span><span class="p">]</span>
+
+        <span class="n">bin_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bin_masses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">is_mul</span><span class="p">:</span>
+            <span class="c1"># Take advantage of the fact that all bins contain the same number</span>
+            <span class="c1"># of elements</span>
+            <span class="n">bin_masses</span> <span class="o">=</span> <span class="n">extended_masses</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_bins</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">BinSizing</span><span class="o">.</span><span class="n">ev</span><span class="p">:</span>
+                <span class="n">bin_values</span> <span class="o">=</span> <span class="n">ev_per_bin</span> <span class="o">/</span> <span class="n">bin_masses</span>
+            <span class="k">elif</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">BinSizing</span><span class="o">.</span><span class="n">mass</span><span class="p">:</span>
+                <span class="n">bin_values</span> <span class="o">=</span> <span class="n">extended_values</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_bins</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bin_boundaries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">bin_boundaries</span><span class="p">,</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">extended_evs</span><span class="p">)]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bin_boundaries</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">bin_boundaries</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">bin_boundaries</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">mass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">extended_masses</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">BinSizing</span><span class="o">.</span><span class="n">ev</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">extended_evs</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">/</span> <span class="n">mass</span>
+                <span class="k">elif</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="n">BinSizing</span><span class="o">.</span><span class="n">mass</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">extended_values</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">*</span> <span class="n">extended_masses</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">/</span> <span class="n">mass</span>
+                <span class="n">bin_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">bin_masses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mass</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ProbabilityMassHistogram</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bin_values</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bin_masses</span><span class="p">),</span> <span class="n">bin_sizing</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProbabilityMassHistogram.from_distribution">
+<a class="viewcode-back" href="../../reference/squigglepy.pdh.html#squigglepy.pdh.ProbabilityMassHistogram.from_distribution">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_distribution</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bin_sizing</span><span class="o">=</span><span class="s2">&quot;ev&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a probability mass histogram from the given distribution. The</span>
+<span class="sd">        histogram covers the full distribution except for the 1/num_bins/2</span>
+<span class="sd">        expectile on the left and right tails. The boundaries are based on the</span>
+<span class="sd">        expectile rather than the quantile to better capture the tails of</span>
+<span class="sd">        fat-tailed distributions, but this can cause computational problems for</span>
+<span class="sd">        very fat-tailed distributions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">LognormalDistribution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Only LognormalDistributions are supported&quot;</span><span class="p">)</span>
+
+        <span class="n">exact_mean</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">lognorm_mean</span>
+
+        <span class="n">get_edge_value</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;ev&quot;</span><span class="p">:</span> <span class="n">dist</span><span class="o">.</span><span class="n">inv_contribution_to_ev</span><span class="p">,</span>
+            <span class="s2">&quot;mass&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">lognorm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">norm_sd</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">norm_mean</span><span class="p">)),</span>
+        <span class="p">}[</span><span class="n">bin_sizing</span><span class="p">]</span>
+
+        <span class="k">assert</span> <span class="n">num_bins</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;num_bins must be a multiple of 100&quot;</span>
+        <span class="n">boundary</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">num_bins</span>
+        <span class="n">edge_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">get_edge_value</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">boundary</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">boundary</span><span class="p">,</span> <span class="n">num_bins</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)),</span>
+                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># How much each bin contributes to total EV.</span>
+        <span class="n">contribution_to_ev</span> <span class="o">=</span> <span class="n">exact_mean</span> <span class="o">/</span> <span class="n">num_bins</span>
+
+        <span class="c1"># We can compute the exact mass of each bin as the difference in</span>
+        <span class="c1"># CDF between the left and right edges.</span>
+        <span class="n">edge_cdfs</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">lognorm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">edge_values</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">norm_sd</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">norm_mean</span><span class="p">))</span>
+        <span class="n">masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">edge_cdfs</span><span class="p">)</span>
+
+        <span class="c1"># Assume the value exactly equals the bin&#39;s contribution to EV</span>
+        <span class="c1"># divided by its mass. This means the values will not be exactly</span>
+        <span class="c1"># centered, but it guarantees that the expected value of the</span>
+        <span class="c1"># histogram exactly equals the expected value of the distribution</span>
+        <span class="c1"># (modulo floating point rounding).</span>
+        <span class="k">if</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="s2">&quot;ev&quot;</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">contribution_to_ev</span> <span class="o">/</span> <span class="n">masses</span>
+        <span class="k">elif</span> <span class="n">bin_sizing</span> <span class="o">==</span> <span class="s2">&quot;mass&quot;</span><span class="p">:</span>
+            <span class="n">midpoints</span> <span class="o">=</span> <span class="p">(</span><span class="n">edge_cdfs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">edge_cdfs</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">raw_values</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">lognorm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">midpoints</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">norm_sd</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">norm_mean</span><span class="p">))</span>
+            <span class="n">estimated_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">raw_values</span> <span class="o">*</span> <span class="n">masses</span><span class="p">)</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">raw_values</span> <span class="o">*</span> <span class="n">exact_mean</span> <span class="o">/</span> <span class="n">estimated_mean</span>
+
+        <span class="c1"># For sufficiently large values, CDF rounds to 1 which makes the</span>
+        <span class="c1"># mass 0.</span>
+        <span class="c1">#</span>
+        <span class="c1"># Note: It would make logical sense to remove zero values, but it</span>
+        <span class="c1"># messes up the binning algorithm for products which expects the number</span>
+        <span class="c1"># of values to be a multiple of the number of bins.</span>
+        <span class="c1"># values = values[masses &gt; 0]</span>
+        <span class="c1"># masses = masses[masses &gt; 0]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">masses</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">masses</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">num_zeros</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">masses</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num_zeros</span><span class="si">}</span><span class="s2"> values greater than </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> had CDFs of 1.&quot;</span><span class="p">,</span> <span class="ne">RuntimeWarning</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">masses</span><span class="p">),</span>
+            <span class="n">bin_sizing</span><span class="o">=</span><span class="n">bin_sizing</span><span class="p">,</span>
+            <span class="n">exact_mean</span><span class="o">=</span><span class="n">exact_mean</span><span class="p">,</span>
+            <span class="n">exact_sd</span><span class="o">=</span><span class="n">dist</span><span class="o">.</span><span class="n">lognorm_sd</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2023, Peter Wildeford.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
