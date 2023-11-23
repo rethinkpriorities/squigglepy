@@ -1,0 +1,804 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>squigglepy.bayes &#8212; Squigglepy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=362ab14a" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
+
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/squigglepy/bayes';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Squigglepy  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../README.html">
+                        README
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../reference/modules.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../README.html">
+                        README
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">squigglepy.bayes</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for squigglepy.bayes</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This modules includes functions for Bayesian inference.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">msgspec</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pathos.multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span> <span class="nn">.distributions</span> <span class="kn">import</span> <span class="n">BetaDistribution</span><span class="p">,</span> <span class="n">NormalDistribution</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">mixture</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_core_cuts</span><span class="p">,</span> <span class="n">_init_tqdm</span><span class="p">,</span> <span class="n">_tick_tqdm</span><span class="p">,</span> <span class="n">_flush_tqdm</span>
+
+
+<span class="n">_squigglepy_internal_bayesnet_caches</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<div class="viewcode-block" id="simple_bayes">
+<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.simple_bayes">[docs]</a>
+<span class="k">def</span> <span class="nf">simple_bayes</span><span class="p">(</span><span class="n">likelihood_h</span><span class="p">,</span> <span class="n">likelihood_not_h</span><span class="p">,</span> <span class="n">prior</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Bayes rule.</span>
+
+<span class="sd">    p(h|e) = (p(e|h)*p(h)) / (p(e|h)*p(h) + p(e|~h)*(1-p(h)))</span>
+<span class="sd">    p(h|e) is called posterior</span>
+<span class="sd">    p(e|h) is called likelihood</span>
+<span class="sd">    p(h) is called prior</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    likelihood_h : float</span>
+<span class="sd">        The likelihood (given that the hypothesis is true), aka p(e|h)</span>
+<span class="sd">    likelihood_not_h : float</span>
+<span class="sd">        The likelihood given the hypothesis is not true, aka p(e|~h)</span>
+<span class="sd">    prior : float</span>
+<span class="sd">        The prior probability, aka p(h)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        The result of Bayes rule, aka p(h|e)</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    # Cancer example: prior of having cancer is 1%, the likelihood of a positive</span>
+<span class="sd">    # mammography given cancer is 80% (true positive rate), and the likelihood of</span>
+<span class="sd">    # a positive mammography given no cancer is 9.6% (false positive rate).</span>
+<span class="sd">    # Given this, what is the probability of cancer given a positive mammography?</span>
+<span class="sd">    &gt;&gt;&gt; simple_bayes(prior=0.01, likelihood_h=0.8, likelihood_not_h=0.096)</span>
+<span class="sd">    0.07763975155279504</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">likelihood_h</span> <span class="o">*</span> <span class="n">prior</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">likelihood_h</span> <span class="o">*</span> <span class="n">prior</span> <span class="o">+</span> <span class="n">likelihood_not_h</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prior</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="bayesnet">
+<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.bayesnet">[docs]</a>
+<span class="k">def</span> <span class="nf">bayesnet</span><span class="p">(</span>
+    <span class="n">event_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">find</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">conditional_on</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">reduce_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">memcache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">memcache_load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">memcache_save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">reload_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dump_cache_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">load_cache_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cache_file_primary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">cores</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate a Bayesian network.</span>
+
+<span class="sd">    Allows you to find conditional probabilities of custom events based on</span>
+<span class="sd">    rejection sampling.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    event_fn : function</span>
+<span class="sd">        A function that defines the bayesian network</span>
+<span class="sd">    n : int</span>
+<span class="sd">        The number of samples to generate</span>
+<span class="sd">    find : a function or None</span>
+<span class="sd">        What do we want to know the probability of?</span>
+<span class="sd">    conditional_on : a function or None</span>
+<span class="sd">        When finding the probability, what do we want to condition on?</span>
+<span class="sd">    reduce_fn : a function or None</span>
+<span class="sd">        When taking all the results of the simulations, how do we aggregate them</span>
+<span class="sd">        into a final answer? Defaults to ``np.mean``.</span>
+<span class="sd">    raw : bool</span>
+<span class="sd">        If True, just return the results of each simulation without aggregating.</span>
+<span class="sd">    memcache : bool</span>
+<span class="sd">        If True, cache the results in-memory for future calculations. Each cache</span>
+<span class="sd">        will be matched based on the ``event_fn``. Default ``True``.</span>
+<span class="sd">    memcache_load : bool</span>
+<span class="sd">        If True, load cache from the in-memory. This will be true if ``memcache``</span>
+<span class="sd">        is True. Cache will be matched based on the ``event_fn``. Default ``True``.</span>
+<span class="sd">    memcache_save : bool</span>
+<span class="sd">        If True, save results to an in-memory cache. This will be true if ``memcache``</span>
+<span class="sd">        is True. Cache will be matched based on the ``event_fn``. Default ``True``.</span>
+<span class="sd">    reload_cache : bool</span>
+<span class="sd">        If True, any existing cache will be ignored and recalculated. Default ``False``.</span>
+<span class="sd">    dump_cache_file : str or None</span>
+<span class="sd">        If present, will write out the cache to a binary file with this path with</span>
+<span class="sd">        ``.sqlcache`` appended to the file name.</span>
+<span class="sd">    load_cache_file : str or None</span>
+<span class="sd">        If present, will first attempt to load and use a cache from a file with this</span>
+<span class="sd">        path with ``.sqlcache`` appended to the file name.</span>
+<span class="sd">    cache_file_primary : bool</span>
+<span class="sd">        If both an in-memory cache and file cache are present, the file</span>
+<span class="sd">        cache will be used for the cache if this is True, and the in-memory cache</span>
+<span class="sd">        will be used otherwise. Defaults to False.</span>
+<span class="sd">    verbose : bool</span>
+<span class="sd">        If True, will print out statements on computational progress.</span>
+<span class="sd">    cores : int</span>
+<span class="sd">        If 1, runs on a single core / process. If greater than 1, will run on a multiprocessing</span>
+<span class="sd">        pool with that many cores / processes.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    various</span>
+<span class="sd">        The result of ``reduce_fn`` on ``n`` simulations of ``event_fn``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    # Cancer example: prior of having cancer is 1%, the likelihood of a positive</span>
+<span class="sd">    # mammography given cancer is 80% (true positive rate), and the likelihood of</span>
+<span class="sd">    # a positive mammography given no cancer is 9.6% (false positive rate).</span>
+<span class="sd">    # Given this, what is the probability of cancer given a positive mammography?</span>
+<span class="sd">    &gt;&gt; def mammography(has_cancer):</span>
+<span class="sd">    &gt;&gt;    p = 0.8 if has_cancer else 0.096</span>
+<span class="sd">    &gt;&gt;    return bool(sq.sample(sq.bernoulli(p)))</span>
+<span class="sd">    &gt;&gt;</span>
+<span class="sd">    &gt;&gt; def define_event():</span>
+<span class="sd">    &gt;&gt;    cancer = sq.sample(sq.bernoulli(0.01))</span>
+<span class="sd">    &gt;&gt;    return({&#39;mammography&#39;: mammography(cancer),</span>
+<span class="sd">    &gt;&gt;            &#39;cancer&#39;: cancer})</span>
+<span class="sd">    &gt;&gt;</span>
+<span class="sd">    &gt;&gt; bayes.bayesnet(define_event,</span>
+<span class="sd">    &gt;&gt;                find=lambda e: e[&#39;cancer&#39;],</span>
+<span class="sd">    &gt;&gt;                conditional_on=lambda e: e[&#39;mammography&#39;],</span>
+<span class="sd">    &gt;&gt;                n=1*M)</span>
+<span class="sd">    0.07723995880535531</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">memcache</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">memcache_load</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">memcache_save</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">memcache</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">memcache_load</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">memcache_save</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">has_in_mem_cache</span> <span class="o">=</span> <span class="n">event_fn</span> <span class="ow">in</span> <span class="n">_squigglepy_internal_bayesnet_caches</span>
+    <span class="n">cache_path</span> <span class="o">=</span> <span class="n">load_cache_file</span> <span class="o">+</span> <span class="s2">&quot;.sqcache&quot;</span> <span class="k">if</span> <span class="n">load_cache_file</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">has_file_cache</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">load_cache_file</span> <span class="k">else</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">load_cache_file</span> <span class="ow">or</span> <span class="n">dump_cache_file</span> <span class="ow">or</span> <span class="n">cores</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">msgspec</span><span class="o">.</span><span class="n">msgpack</span><span class="o">.</span><span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">msgspec</span><span class="o">.</span><span class="n">msgpack</span><span class="o">.</span><span class="n">Decoder</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">load_cache_file</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_file_cache</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: cache file `</span><span class="si">{}</span><span class="s2">.sqcache` not found.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_cache_file</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">reload_cache</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">load_cache_file</span> <span class="ow">and</span> <span class="n">has_file_cache</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_in_mem_cache</span> <span class="ow">or</span> <span class="n">cache_file_primary</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading from cache file (`</span><span class="si">{}</span><span class="s2">`)...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cache_path</span><span class="p">))</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">events</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+        <span class="k">elif</span> <span class="n">memcache_load</span> <span class="ow">and</span> <span class="n">has_in_mem_cache</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading from in-memory cache...&quot;</span><span class="p">)</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="n">_squigglepy_internal_bayesnet_caches</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event_fn</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">events</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">events</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s2">&quot;insufficient samples - </span><span class="si">{}</span><span class="s2"> results cached but &quot;</span> <span class="o">+</span> <span class="s2">&quot;requested </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">events</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;n&quot;</span><span class="p">],</span> <span class="n">n</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">[</span><span class="s2">&quot;events&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Loaded&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reloading cache...&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">events</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">event_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">def</span> <span class="nf">run_event_fn</span><span class="p">(</span><span class="n">pbar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">total_cores</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">_tick_tqdm</span><span class="p">(</span><span class="n">pbar</span><span class="p">,</span> <span class="n">total_cores</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">event_fn</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">cores</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating Bayes net...&quot;</span><span class="p">)</span>
+            <span class="n">r_</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">pbar</span> <span class="o">=</span> <span class="n">_init_tqdm</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">run_event_fn</span><span class="p">(</span><span class="n">pbar</span><span class="o">=</span><span class="n">pbar</span><span class="p">,</span> <span class="n">total_cores</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">r_</span><span class="p">]</span>
+            <span class="n">_flush_tqdm</span><span class="p">(</span><span class="n">pbar</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating Bayes net with </span><span class="si">{}</span><span class="s2"> cores...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cores</span><span class="p">))</span>
+            <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">ProcessingPool</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+                <span class="n">cuts</span> <span class="o">=</span> <span class="n">_core_cuts</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">cores</span><span class="p">)</span>
+
+                <span class="k">def</span> <span class="nf">multicore_event_fn</span><span class="p">(</span><span class="n">core</span><span class="p">,</span> <span class="n">total_cores</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                    <span class="n">r_</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">cuts</span><span class="p">[</span><span class="n">core</span><span class="p">])</span>
+                    <span class="n">pbar</span> <span class="o">=</span> <span class="n">_init_tqdm</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+                    <span class="n">batch</span> <span class="o">=</span> <span class="p">[</span><span class="n">run_event_fn</span><span class="p">(</span><span class="n">pbar</span><span class="o">=</span><span class="n">pbar</span><span class="p">,</span> <span class="n">total_cores</span><span class="o">=</span><span class="n">total_cores</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">r_</span><span class="p">]</span>
+                    <span class="n">_flush_tqdm</span><span class="p">(</span><span class="n">pbar</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shuffling data...&quot;</span><span class="p">)</span>
+
+                    <span class="k">while</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;test-core-</span><span class="si">{}</span><span class="s2">.sqcache&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">core</span><span class="p">)):</span>
+                        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;test-core-</span><span class="si">{}</span><span class="s2">.sqcache&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">core</span><span class="p">),</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outfile</span><span class="p">:</span>
+                            <span class="n">encoder</span> <span class="o">=</span> <span class="n">msgspec</span><span class="o">.</span><span class="n">msgpack</span><span class="o">.</span><span class="n">Encoder</span><span class="p">()</span>
+                            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Writing data...&quot;</span><span class="p">)</span>
+                            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="n">pool_results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">amap</span><span class="p">(</span><span class="n">multicore_event_fn</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">cores</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+                <span class="n">multicore_event_fn</span><span class="p">(</span><span class="n">cores</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">total_cores</span><span class="o">=</span><span class="n">cores</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waiting for other cores...&quot;</span><span class="p">)</span>
+                <span class="k">while</span> <span class="ow">not</span> <span class="n">pool_results</span><span class="o">.</span><span class="n">ready</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cores</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Collecting data...&quot;</span><span class="p">)</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">pbar</span> <span class="o">=</span> <span class="n">_init_tqdm</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">cores</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cores</span><span class="p">):</span>
+                <span class="n">_tick_tqdm</span><span class="p">(</span><span class="n">pbar</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;test-core-</span><span class="si">{}</span><span class="s2">.sqcache&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">infile</span><span class="p">:</span>
+                    <span class="n">events</span> <span class="o">+=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">infile</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;test-core-</span><span class="si">{}</span><span class="s2">.sqcache&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+            <span class="n">_flush_tqdm</span><span class="p">(</span><span class="n">pbar</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Collected!&quot;</span><span class="p">)</span>
+
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">&quot;last_generated&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()}</span>
+    <span class="n">cache_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;events&quot;</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">metadata</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">memcache_save</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_in_mem_cache</span> <span class="ow">or</span> <span class="n">reload_cache</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Caching in-memory...&quot;</span><span class="p">)</span>
+        <span class="n">_squigglepy_internal_bayesnet_caches</span><span class="p">[</span><span class="n">event_fn</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache_data</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Cached!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dump_cache_file</span><span class="p">:</span>
+        <span class="n">cache_path</span> <span class="o">=</span> <span class="n">dump_cache_file</span> <span class="o">+</span> <span class="s2">&quot;.sqcache&quot;</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Writing cache to file `</span><span class="si">{}</span><span class="s2">`...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cache_path</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">cache_data</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Cached!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">conditional_on</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Filtering conditional...&quot;</span><span class="p">)</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">events</span> <span class="k">if</span> <span class="n">conditional_on</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;insufficient samples for condition&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">conditional_on</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Filtered!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">find</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Reducing&quot;</span><span class="p">)</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">events</span> <span class="k">if</span> <span class="n">reduce_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">reduce_fn</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Reduced!&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Finding&quot;</span><span class="p">)</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">find</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">events</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Found!&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Reducing&quot;</span><span class="p">)</span>
+            <span class="n">reduce_fn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span> <span class="k">if</span> <span class="n">reduce_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">reduce_fn</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="n">reduce_fn</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...Reduced!&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...All done!&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">events</span></div>
+
+
+
+<div class="viewcode-block" id="update">
+<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.update">[docs]</a>
+<span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">evidence_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update a distribution.</span>
+
+<span class="sd">    Starting with a prior distribution, use Bayesian inference to perform an update,</span>
+<span class="sd">    producing a posterior distribution from the evidence distribution.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prior : Distribution</span>
+<span class="sd">        The prior distribution. Currently must either be normal or beta type. Other</span>
+<span class="sd">        types are not yet supported.</span>
+<span class="sd">    evidence : Distribution</span>
+<span class="sd">        The distribution used to update the prior. Currently must either be normal</span>
+<span class="sd">        or beta type. Other types are not yet supported.</span>
+<span class="sd">    evidence_weight : float</span>
+<span class="sd">        How much weight to put on the evidence distribution? Currently this only matters</span>
+<span class="sd">        for normal distributions, where this should be equivalent to the sample weight.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Distribution</span>
+<span class="sd">        The posterior distribution</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt; prior = sq.norm(1,5)</span>
+<span class="sd">    &gt;&gt; evidence = sq.norm(2,3)</span>
+<span class="sd">    &gt;&gt; bayes.update(prior, evidence)</span>
+<span class="sd">    &lt;Distribution&gt; norm(mean=2.53, sd=0.29)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="n">NormalDistribution</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evidence</span><span class="p">,</span> <span class="n">NormalDistribution</span><span class="p">):</span>
+        <span class="n">prior_mean</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">prior_var</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">sd</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">evidence_mean</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">evidence_var</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">sd</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">return</span> <span class="n">norm</span><span class="p">(</span>
+            <span class="n">mean</span><span class="o">=</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">evidence_var</span> <span class="o">*</span> <span class="n">prior_mean</span> <span class="o">+</span> <span class="n">evidence_weight</span> <span class="o">*</span> <span class="p">(</span><span class="n">prior_var</span> <span class="o">*</span> <span class="n">evidence_mean</span><span class="p">))</span>
+                <span class="o">/</span> <span class="p">(</span><span class="n">evidence_weight</span> <span class="o">*</span> <span class="n">prior_var</span> <span class="o">+</span> <span class="n">evidence_var</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">sd</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">evidence_var</span> <span class="o">*</span> <span class="n">prior_var</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">evidence_weight</span> <span class="o">*</span> <span class="n">prior_var</span> <span class="o">+</span> <span class="n">evidence_var</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="n">BetaDistribution</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evidence</span><span class="p">,</span> <span class="n">BetaDistribution</span><span class="p">):</span>
+        <span class="n">prior_a</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">a</span>
+        <span class="n">prior_b</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">b</span>
+        <span class="n">evidence_a</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">a</span>
+        <span class="n">evidence_b</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">b</span>
+        <span class="k">return</span> <span class="n">beta</span><span class="p">(</span><span class="n">prior_a</span> <span class="o">+</span> <span class="n">evidence_a</span><span class="p">,</span> <span class="n">prior_b</span> <span class="o">+</span> <span class="n">evidence_b</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="n">evidence</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">prior</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">evidence</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;can only update distributions of the same type.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;type `</span><span class="si">{}</span><span class="s2">` not supported.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="average">
+<a class="viewcode-back" href="../../reference/squigglepy.html#squigglepy.bayes.average">[docs]</a>
+<span class="k">def</span> <span class="nf">average</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="n">relative_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Average two distributions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prior : Distribution</span>
+<span class="sd">        The prior distribution.</span>
+<span class="sd">    evidence : Distribution</span>
+<span class="sd">        The distribution used to average with the prior.</span>
+<span class="sd">    weights : list or np.array or float</span>
+<span class="sd">        How much weight to put on ``prior`` versus ``evidence`` when averaging? If</span>
+<span class="sd">        only one weight is passed, the other weight will be inferred to make the</span>
+<span class="sd">        total weights sum to 1. Defaults to 50-50 weights.</span>
+<span class="sd">    relative_weights : list or None</span>
+<span class="sd">        Relative weights, which if given will be weights that are normalized</span>
+<span class="sd">        to sum to 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Distribution</span>
+<span class="sd">        A mixture distribution that accords weights to ``prior`` and ``evidence``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt; prior = sq.norm(1,5)</span>
+<span class="sd">    &gt;&gt; evidence = sq.norm(2,3)</span>
+<span class="sd">    &gt;&gt; bayes.average(prior, evidence)</span>
+<span class="sd">    &lt;Distribution&gt; mixture</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">mixture</span><span class="p">(</span><span class="n">dists</span><span class="o">=</span><span class="p">[</span><span class="n">prior</span><span class="p">,</span> <span class="n">evidence</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">relative_weights</span><span class="o">=</span><span class="n">relative_weights</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2023, Peter Wildeford.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

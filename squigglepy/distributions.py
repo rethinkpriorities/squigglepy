@@ -1,3 +1,7 @@
+"""
+A collection of probability distributions and functions to operate on them.
+"""
+
 import math
 import operator
 import warnings
