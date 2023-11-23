@@ -42,6 +42,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
+    "numpydoc",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -176,3 +177,5 @@ epub_exclude_files = ["search.html"]
 
 
 # -- Extension configuration -------------------------------------------------
+
+numpydoc_class_members_toctree = False
