@@ -10,8 +10,12 @@ from ..squigglepy.pdh import ProbabilityMassHistogram
 from ..squigglepy import samplers
 
 
+def relative_error(x, y):
+    return max(x / y, y / x) - 1
+
+
 def print_accuracy_ratio(x, y, extra_message=None):
-    ratio = max(x / y, y / x) - 1
+    ratio = relative_error(x, y)
     if extra_message is not None:
         extra_message += " "
     else:
@@ -99,23 +103,59 @@ def _test_lognorm_sd(norm_mean, norm_sd):
     assert hist.histogram_sd() == approx(dist.lognorm_sd)
 
 
-def relative_error(observed, expected):
-    return np.exp(abs(np.log(observed / expected))) - 1
-
-
-@given(bin_sizing=st.sampled_from(["ev", "mass"]))
-def test_lognorm_mean_error_propagation(bin_sizing):
-    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing=bin_sizing)
-    hist_base = ProbabilityMassHistogram.from_distribution(dist, bin_sizing=bin_sizing)
-    abs_error = []
-    rel_error = []
+@given(
+    norm_mean=st.floats(min_value=np.log(1e-9), max_value=np.log(1e9)),
+    norm_sd=st.floats(min_value=0.001, max_value=3),
+    num_bins=st.sampled_from([10, 25, 100]),
+    bin_sizing=st.sampled_from(["ev", "mass"]),
+)
+def test_lognorm_mean_error_propagation(norm_mean, norm_sd, num_bins, bin_sizing):
+    dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
+    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins, bin_sizing=bin_sizing)
+    hist_base = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins, bin_sizing=bin_sizing)
 
     for i in range(1, 17):
-        true_mean = stats.lognorm.mean(np.sqrt(i))
-        abs_error.append(abs(hist.histogram_mean() - true_mean))
-        rel_error.append(relative_error(hist.histogram_mean(), true_mean))
-        assert hist.histogram_mean() == approx(true_mean)
+        true_mean = stats.lognorm.mean(np.sqrt(i) * norm_sd, scale=np.exp(i * norm_mean))
+        assert hist.histogram_mean() == approx(true_mean), f"On iteration {i}"
+        hist = hist * hist_base
+
+
+def test_noncentral_norm_product():
+    dist_pairs = [
+        # (NormalDistribution(mean=0, sd=1), NormalDistribution(mean=0, sd=1)),
+        (NormalDistribution(mean=2, sd=1), NormalDistribution(mean=-1, sd=2)),
+    ]
+
+    for dist1, dist2 in dist_pairs:
+        hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=25)
+        hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=25)
+        hist_prod = hist1 * hist2
+        assert hist_prod.histogram_mean() == approx(dist1.mean * dist2.mean)
+        assert hist_prod.histogram_sd() == approx(np.sqrt((dist1.sd**2 + dist1.mean**2) * (dist2.sd**2 + dist2.mean**2) - dist1.mean**2 * dist2.mean**2), rel=0.25)
+
+
+@given(
+    mean=st.floats(min_value=-10, max_value=10),
+    sd=st.floats(min_value=0.001, max_value=100),
+    num_bins=st.sampled_from([25, 100]),
+    # "mass" sizing is just really bad given how it's currently implemented. it
+    # does weird stuff like with mean=-20, sd=13, after only a few
+    # multiplications, most bin values are 0
+    bin_sizing=st.sampled_from(["ev"]),
+)
+@settings(max_examples=100)
+def test_norm_mean_error_propagation(mean, sd, num_bins, bin_sizing):
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins, bin_sizing=bin_sizing)
+    hist_base = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins, bin_sizing=bin_sizing)
+    tolerance = 1e-12
+
+    for i in range(1, 17):
+        true_mean = mean**i
+        true_sd = np.sqrt((dist.sd**2 + dist.mean**2)**i - dist.mean**(2*i))
+        if true_sd > 1e15:
+            break
+        assert hist.histogram_mean() == approx(true_mean, abs=tolerance**(1/i), rel=tolerance**(1/i)), f"On iteration {i}"
         hist = hist * hist_base
 
 
@@ -149,6 +189,11 @@ def test_lognorm_sd_error_propagation(bin_sizing):
 
     for i in range(len(expected_error_pcts)):
         assert rel_error[i] < expected_error_pcts[i] / 100
+
+
+# @given(bin_sizing=st.sampled_from(["ev", "mass"]))
+# def test_norm_mean_error_propagation(bin_sizing):
+    # dist = NormalDist
 
 
 def test_sd_accuracy_vs_monte_carlo():
