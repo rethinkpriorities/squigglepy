@@ -329,35 +329,6 @@ def test_scaled_bin():
         print_accuracy_ratio(hist_prod.histogram_sd(), dist_prod.lognorm_sd, "SD  ")
 
 
-def test_accuracy_scaled_vs_flexible():
-    for repetitions in [1, 4, 8, 16]:
-        norm_means = np.repeat([0], repetitions)
-        norm_sds = np.repeat([1], repetitions)
-        dists = [
-            LognormalDistribution(norm_mean=norm_means[i], norm_sd=norm_sds[i])
-            for i in range(len(norm_means))
-        ]
-        dist_prod = LognormalDistribution(
-            norm_mean=np.sum(norm_means), norm_sd=np.sqrt(np.sum(norm_sds**2))
-        )
-        import ipdb; ipdb.set_trace()
-        scaled_hists = [ScaledBinHistogram.from_distribution(dist) for dist in dists]
-        scaled_hist_prod = reduce(lambda acc, hist: acc * hist, scaled_hists)
-        flexible_hists = [ProbabilityMassHistogram.from_distribution(dist) for dist in dists]
-        flexible_hist_prod = reduce(lambda acc, hist: acc * hist, flexible_hists)
-        scaled_mean_error = abs(scaled_hist_prod.histogram_mean() - dist_prod.lognorm_mean)
-        flexible_mean_error = abs(flexible_hist_prod.histogram_mean() - dist_prod.lognorm_mean)
-        scaled_sd_error = abs(scaled_hist_prod.histogram_sd() - dist_prod.lognorm_sd)
-        flexible_sd_error = abs(flexible_hist_prod.histogram_sd() - dist_prod.lognorm_sd)
-        assert scaled_mean_error > flexible_mean_error
-        assert scaled_sd_error > flexible_sd_error
-        print("")
-        print(
-            f"Mean error: scaled = {scaled_mean_error:.3f}, flexible = {flexible_mean_error:.3f}"
-        )
-        print(f"SD   error: scaled = {scaled_sd_error:.3f}, flexible = {flexible_sd_error:.3f}")
-
-
 def test_performance():
     return None  # so we don't accidentally run this while running all tests
     import cProfile
