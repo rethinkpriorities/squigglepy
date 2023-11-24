@@ -1,3 +1,8 @@
+"""
+A numerical representation of a probability distribution as a histogram.
+"""
+
+
 from abc import ABC, abstractmethod
 from enum import Enum
 import numpy as np
@@ -99,6 +104,7 @@ class BinSizing(Enum):
     to cross zero, but this would require handling it as a special case.
 
     """
+
     ev = "ev"
     mass = "mass"
     uniform = "uniform"
@@ -108,13 +114,31 @@ class PDHBase(ABC):
     def __len__(self):
         return self.num_bins
 
+    def is_one_sided(self):
+        """Return True if the histogram contains only positive or negative values."""
+        # TODO: this actually just checks if histogram is positive because
+        # binary ops are simpler if we can assume one-sided dists are positive
+
+        # return self.zero_bin_index == 0 or self.zero_bin_index == self.num_bins
+        return self.zero_bin_index == 0
+
     def is_two_sided(self):
         """Return True if the histogram contains both positive and negative values."""
-        return self.zero_bin_index != 0 and self.zero_bin_index != self.num_bins
+        # TODO: this actually just checks if histogram is positive because
+        # binary ops are simpler if we can assume one-sided dists are positive
+
+        # return self.zero_bin_index != 0 and self.zero_bin_index != self.num_bins
+        return self.zero_bin_index != 0
 
     def num_neg_bins(self):
         """Return the number of bins containing negative values."""
         return self.zero_bin_index
+
+    def _check_bin_sizing(x, y):
+        if x.bin_sizing != y.bin_sizing:
+            raise ValueError(
+                f"Can only multiply histograms that use the same bin sizing method (cannot multiply {x.bin_sizing} and {y.bin_sizing})"
+            )
 
     def histogram_mean(self):
         """Mean of the distribution, calculated using the histogram data (even
@@ -180,16 +204,97 @@ class PDHBase(ABC):
         return self._contribution_to_ev(self.values, self.masses, x)
 
     def inv_contribution_to_ev(self, fraction: np.ndarray | float):
-        """Return the value such that `fraction` of the contribution to
+        """Return the value such that ``fraction`` of the contribution to
         expected value lies to the left of that value.
         """
         return self._inv_contribution_to_ev(self.values, self.masses, fraction)
 
     def __add__(x, y):
-        # TODO: might be faster to do a convolution, not an outer product
-        raise NotImplementedError
+        cls = x
+        x._check_bin_sizing(y)
+        # TODO: in some cases for two-sided distributions (eg x and y are iid),
+        # a bunch of sum values will be zero. maybe it will handle that case ok
+        # by default?
         extended_values = np.add.outer(x.values, y.values).flatten()
-        res = x.binary_op(y, extended_values, ev=x.mean() + y.mean())
+        extended_masses = np.outer(x.masses, y.masses).flatten()
+
+        if x.is_one_sided() and y.is_one_sided():
+            num_bins = max(len(x), len(y))
+            ev = x.pos_ev_contribution + y.pos_ev_contribution
+            values, masses = cls.resize_bins(
+                extended_values,
+                extended_masses,
+                num_bins,
+                ev=ev,
+                bin_sizing=x.bin_sizing,
+                can_reshape_bins=False,
+            )
+            res = ProbabilityMassHistogram(
+                values=values,
+                masses=masses,
+                zero_bin_index=0,
+                bin_sizing=x.bin_sizing,
+                neg_ev_contribution=0,
+                pos_ev_contribution=ev,
+            )
+        else:
+            # Sort using timsort (called 'mergesort') because it's fastest for an
+            # array that contains many sorted runs
+            sorted_indexes = extended_values.argsort(kind="mergesort")
+            extended_values = extended_values[sorted_indexes]
+            extended_masses = extended_masses[sorted_indexes]
+
+            neg_ev_contribution = (
+                -np.sum(extended_values[:zero_index] * extended_masses[:zero_index]),
+            )
+            pos_ev_contribution = (x.mean() + y.mean()) + neg_ev_contribution
+            num_neg_bins = int(
+                np.round(
+                    num_bins * neg_ev_contribution / (neg_ev_contribution + pos_ev_contribution)
+                )
+            )
+            num_pos_bins = num_bins - num_neg_bins
+            if neg_ev_contribution > 0:
+                num_neg_bins = max(1, num_neg_bins)
+                num_pos_bins = num_bins - num_neg_bins
+            if pos_ev_contribution > 0:
+                num_pos_bins = max(1, num_pos_bins)
+                num_neg_bins = num_bins - num_pos_bins
+
+            zero_index = np.searchsorted(extended_values, 0)
+            neg_values, neg_masses = cls.resize_bins(
+                extended_values=np.flip(-extended_values[:zero_index]),
+                extended_masses=np.flip(extended_masses[:zero_index]),
+                num_bins=num_neg_bins,
+                ev=neg_ev_contribution,
+                bin_sizing=x.bin_sizing,
+                can_reshape_bins=False,
+                pre_sorted=True,
+            )
+            neg_values = np.flip(-neg_values)
+            neg_masses = np.flip(neg_masses)
+
+            pos_values, pos_masses = cls.resize_bins(
+                extended_values=extended_values[zero_index:],
+                extended_masses=extended_masses[zero_index:],
+                num_bins=num_pos_bins,
+                ev=pos_ev_contribution,
+                bin_sizing=x.bin_sizing,
+                can_reshape_bins=(len(extended_values) - zero_index) % num_pos_bins == 0,
+                pre_sorted=True,
+            )
+
+            values = np.concatenate((neg_values, pos_values))
+            masses = np.concatenate((neg_masses, pos_masses))
+            res = ProbabilityMassHistogram(
+                values=values,
+                masses=masses,
+                zero_bin_index=zero_index,
+                bin_sizing=x.bin_sizing,
+                neg_ev_contribution=neg_ev_contribution,
+                pos_ev_contribution=pos_ev_contribution,
+            )
+
         if x.exact_mean is not None and y.exact_mean is not None:
             res.exact_mean = x.exact_mean + y.exact_mean
         if x.exact_sd is not None and y.exact_sd is not None:
@@ -197,13 +302,31 @@ class PDHBase(ABC):
         return res
 
     def __mul__(x, y):
-        assert (
-            x.bin_sizing == y.bin_sizing
-        ), f"Can only combine histograms that use the same bin sizing method (cannot combine {x.bin_sizing} and {y.bin_sizing})"
+        cls = x
+        x._check_bin_sizing(y)
         bin_sizing = x.bin_sizing
         num_bins = max(len(x), len(y))
 
-        if x.is_two_sided() or y.is_two_sided():
+        if x.is_one_sided() and y.is_one_sided():
+            extended_values = np.outer(x.values, y.values).flatten()
+            extended_masses = np.ravel(np.outer(x.masses, y.masses))  # flatten
+            values, masses = cls.resize_bins(
+                extended_values,
+                extended_masses,
+                num_bins=num_bins,
+                ev=x.mean() * y.mean(),
+                bin_sizing=bin_sizing,
+                can_reshape_bins=True,
+            )
+            res = ProbabilityMassHistogram(
+                values,
+                masses,
+                x.zero_bin_index,
+                bin_sizing,
+                neg_ev_contribution=0,
+                pos_ev_contribution=x.pos_ev_contribution * y.pos_ev_contribution,
+            )
+        else:
             # If x+ is the positive part of x and x- is the negative part, then
             # result+ = (x+ * y+) + (x- * y-) and result- = (x+ * y-) + (x- *
             # y+). Multiply two-sided distributions by performing these steps:
@@ -268,11 +391,15 @@ class PDHBase(ABC):
                 num_pos_bins = max(1, num_pos_bins)
                 num_neg_bins = num_bins - num_pos_bins
 
-            can_reshape_neg_bins = len(extended_neg_values) % num_neg_bins == 0
-            can_reshape_pos_bins = len(extended_pos_values) % num_pos_bins == 0
+            can_reshape_neg_bins = (
+                num_neg_bins > 0 and len(extended_neg_values) % num_neg_bins == 0
+            )
+            can_reshape_pos_bins = (
+                num_pos_bins > 0 and len(extended_pos_values) % num_pos_bins == 0
+            )
 
-            # binary_op expects positive values, so negate them
-            neg_values, neg_masses = x.binary_op(
+            # resize_bins expects positive values, so negate them
+            neg_values, neg_masses = cls.resize_bins(
                 -extended_neg_values,
                 extended_neg_masses,
                 num_neg_bins,
@@ -285,7 +412,7 @@ class PDHBase(ABC):
             neg_values = np.flip(-neg_values)
             neg_masses = np.flip(neg_masses)
 
-            pos_values, pos_masses = x.binary_op(
+            pos_values, pos_masses = cls.resize_bins(
                 extended_pos_values,
                 extended_pos_masses,
                 num_pos_bins,
@@ -303,20 +430,6 @@ class PDHBase(ABC):
                 bin_sizing,
                 neg_ev_contribution=neg_ev_contribution,
                 pos_ev_contribution=pos_ev_contribution,
-            )
-        else:
-            extended_values = np.outer(x.values, y.values).flatten()
-            extended_masses = np.ravel(np.outer(x.masses, y.masses))  # flatten
-            new_values, new_masses = x.binary_op(
-                extended_values, extended_masses, num_bins=num_bins, ev=x.mean() * y.mean(), bin_sizing=bin_sizing, can_reshape_bins=True
-            )
-            res = ProbabilityMassHistogram(
-                new_values,
-                new_masses,
-                x.zero_bin_index,
-                bin_sizing,
-                neg_ev_contribution=0,
-                pos_ev_contribution=x.pos_ev_contribution * y.pos_ev_contribution,
             )
 
         if x.exact_mean is not None and y.exact_mean is not None:
@@ -382,97 +495,147 @@ class ProbabilityMassHistogram(PDHBase):
         self.exact_sd = exact_sd
 
     @classmethod
-    def binary_op(
-        cls, extended_values, extended_masses, num_bins, ev, bin_sizing, can_reshape_bins=False
+    def resize_bins(
+        cls,
+        extended_values,
+        extended_masses,
+        num_bins,
+        ev,
+        bin_sizing,
+        can_reshape_bins=False,
+        pre_sorted=False,
     ):
+        """Given two arrays of values and masses representing the result of a
+        binary operation on two positive-everywhere distributions, compress the
+        arrays down to ``num_bins`` bins and return the new values and masses of
+        the bins.
+
+        Parameters
+        ----------
+        extended_values : np.ndarray
+            The values of the distribution. The values must all be non-negative.
+        extended_masses : np.ndarray
+            The probability masses of the values.
+        num_bins : int
+            The number of bins to compress the distribution into.
+        ev : float
+            The expected value of the distribution.
+        bin_sizing : Literal["ev", "mass", "uniform"]
+            The method used to size the bins.
+        can_reshape_bins : bool
+            If True, this function is allowed to reshape ``extended_values`` and
+            ``extended_masses`` into a 2D array of shape (num_bins, -1) and then
+            reshape the result back into a 1D array. This is faster than the
+            alternative, but it is only possible if ``extended_values`` and
+            ``extended_masses`` have the same number of elements in each bin.
+            This function may choose not to reshape the arrays even if
+            ``can_reshape_bins`` is True, but if ``can_reshape_bins`` is False, it
+            will never reshape the arrays.
+        pre_sorted : bool
+            If True, assume that ``extended_values`` and ``extended_masses`` are
+            already sorted in ascending order. This provides a significant
+            performance improvement (roughly 3x).
+
+        Returns
+        -------
+        values : np.ndarray
+            The values of the bins.
+        masses : np.ndarray
+            The probability masses of the bins.
+
+        """
+        if num_bins == 0:
+            return (np.array([]), np.array([]))
         len_per_bin = int(len(extended_values) / num_bins)
         ev_per_bin = ev / num_bins
-        extended_evs = None
-        cumulative_evs = None
-        cumulative_masses = None
 
-        if not can_reshape_bins:
-            extended_evs = extended_masses * extended_values
+        if can_reshape_bins and bin_sizing == BinSizing.ev:
+            # If extended bins are the result of a multiplication, the values
+            # of extended_evs are all equal. x and y both have the property
+            # that every bin contributes equally to EV, which means the outputs
+            # of their outer product must all be equal. We can use this fact to
+            # avoid a relatively slow call to ``cumsum`` (which can also
+            # introduce floating point rounding errors for extreme values).
+            # This also lets us partition instead of sort because we don't need
+            # to know the sorted values to generate the boundary bins, and
+            # partition is about 10% faster.
+            if not pre_sorted:
+                boundary_bins = np.arange(0, num_bins + 1) * len_per_bin
+                sorted_indexes = extended_values.argpartition(boundary_bins[1:-1])
+                extended_values = extended_values[sorted_indexes]
+                extended_masses = extended_masses[sorted_indexes]
+
+            # Take advantage of the fact that all bins contain the same number
+            # of elements.
+            masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
+            values = ev_per_bin / masses
+            return (values, masses)
+
+        if bin_sizing == BinSizing.ev:
+            if not pre_sorted:
+                # Sort values. Use timsort (called 'mergesort') because it is
+                # fastest for an array with many pre-sorted runs.
+                sorted_indexes = extended_values.argsort(kind="mergesort")
+                extended_values = extended_values[sorted_indexes]
+                extended_masses = extended_masses[sorted_indexes]
+
+            # Calculate cumulative sums, which we will use to (1) break up
+            # values into bins of equal EV contribution and (2) calculate the
+            # mass of each bin.
+            extended_evs = extended_values * extended_masses
             cumulative_evs = np.cumsum(extended_evs)
             cumulative_masses = np.cumsum(extended_masses)
 
-        # Cut boundaries between bins such that each bin has equal contribution
-        # to expected value.
-        if can_reshape_bins:
-            # When multiplying, the values of extended_evs are all equal. x and
-            # y both have the property that every bin contributes equally to
-            # EV, which means the outputs of their outer product must all be
-            # equal. We can use this fact to avoid a relatively slow call to
-            # `cumsum` (which can also introduce floating point rounding errors
-            # for extreme values).
-            boundary_bins = np.arange(0, num_bins + 1) * len_per_bin
-        elif bin_sizing == BinSizing.ev:
+            # Cut boundaries between bins such that each bin has equal contribution
+            # to expected value.
             boundary_values = np.linspace(0, ev, num_bins + 1)
             boundary_bins = np.searchsorted(cumulative_evs, boundary_values)
-        elif bin_sizing == BinSizing.mass:
-            # TODO: test this
-            upper_bound = cumulative_masses[-1]
-            boundary_bins = np.concatenate((
-                np.searchsorted(cumulative_masses, np.arange(0, 1) * upper_bound),
-                [len(cumulative_masses)]
-            ))
-        else:
-            raise ValueError(f"Unsupported bin sizing: {bin_sizing}")
 
-        # Partition the arrays so every value in a bin is smaller than every
-        # value in the next bin, but don't sort within bins. (Partition is
-        # about 10% faster than mergesort.)
-        sorted_indexes = extended_values.argpartition(boundary_bins[1:-1])
-
-        extended_values = extended_values[sorted_indexes]
-        extended_masses = extended_masses[sorted_indexes]
-
-        bin_values = np.zeros(num_bins)
-        bin_masses = np.zeros(num_bins)
-        if can_reshape_bins:
-            # Take advantage of the fact that all bins contain the same number
-            # of elements
-            bin_masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
-
-            if bin_sizing == BinSizing.ev:
-                bin_values = ev_per_bin / bin_masses
-            elif bin_sizing == BinSizing.mass:
-                bin_values = extended_values.reshape((num_bins, -1)).mean(axis=1)
-        else:
-            # fix off-by-one error when calculating sums of ranges
+            # fix off-by-one error when calculating sums of ranges.
             cumulative_evs = np.concatenate(([0], cumulative_evs))
             cumulative_masses = np.concatenate(([0], cumulative_masses))
 
-            for i in range(len(boundary_bins) - 1):
-                start = boundary_bins[i]
-                end = boundary_bins[i + 1]
-                # TODO: which version is faster?
-                # mass = np.sum(extended_masses[start:end])
-                mass = cumulative_masses[end] - cumulative_masses[start]
+            set_values_by_mass = False
+            if set_values_by_mass:
+                # TODO: if a boundary rounds a certain way, it can make
+                # mass[i+1] > mass[i] and therefore value[i+1] < value[i]
+                masses = (
+                    cumulative_masses[boundary_bins[1:]] - cumulative_masses[boundary_bins[:-1]]
+                )
+                values = ev_per_bin / masses
+            else:
+                # TODO: trying something new. set values to the average value
+                # in each bin and set masses based on that. this means masses
+                # might not sum to 1 but values will be more accurate
+                # cumulative_values = np.concatenate(([0], np.cumsum(extended_values)))
+                # values = (cumulative_values[boundary_bins[1:]] - cumulative_values[boundary_bins[:-1]]) / len_per_bin
+                # values = (extended_values[boundary_bins[:-1]] + extended_values[boundary_bins[1:]]) / 2
+                values = np.zeros(num_bins)
+                masses = np.zeros(num_bins)
+                for i in range(len(boundary_bins) - 1):
+                    start = boundary_bins[i]
+                    end = boundary_bins[i + 1]
+                    denom = np.sum(extended_masses[start:end])
 
-                if bin_sizing == BinSizing.ev:
-                    # TODO: method 1 exactly preserves total EV and closely
-                    # preserves bin value, but it is no longer the case that
-                    # all bins have the same contribution to EV. method 2 keeps
-                    # contribution to EV equal across all bins, but loses some
-                    # accuracy in values. I'm not sure which is better.
+                    # TODO: I don't want to have to do this
+                    # TODO: this screws up the EV because now one bin has 0 EV
+                    # contribution
+                    value = 0
+                    mass = 0
+                    if denom != 0:
+                        value = np.sum(
+                            extended_values[start:end] * extended_masses[start:end]
+                        ) / denom
+                        mass = ev_per_bin / value
+                    values[i] = value
+                    masses[i] = mass
 
-                    # method 1
-                    # TODO: which version is faster?
-                    # value = np.sum(extended_evs[start:end]) / mass
-                    value = (cumulative_evs[end] - cumulative_evs[start]) / mass
+            return (values, masses)
 
-                    # method 2
-                    value = ev_per_bin / mass
-                elif bin_sizing == BinSizing.mass:
-                    value = np.sum(extended_evs[start:end]) / mass
-                bin_values[i] = value
-                bin_masses[i] = mass
-
-        return (bin_values, bin_masses)
+        raise ValueError(f"Unsupported bin sizing: {bin_sizing}")
 
     @classmethod
-    def _construct_bins(
+    def construct_bins(
         cls, num_bins, total_contribution_to_ev, support, dist, cdf, ppf, bin_sizing
     ):
         """Construct a list of bin masses and values. Helper function for
@@ -487,7 +650,6 @@ class ProbabilityMassHistogram(PDHBase):
         else:
             raise ValueError(f"Unsupported bin sizing: {bin_sizing}")
 
-
         # Don't call get_edge_value on the left and right edges because it's
         # undefined for 0 and 1
         left_prop = dist.contribution_to_ev(support[0])
@@ -496,9 +658,7 @@ class ProbabilityMassHistogram(PDHBase):
             (
                 [support[0]],
                 np.atleast_1d(
-                    get_edge_value(
-                        np.linspace(left_prop, right_prop, num_bins + 1)[1:-1]
-                    )
+                    get_edge_value(np.linspace(left_prop, right_prop, num_bins + 1)[1:-1])
                 )
                 if num_bins > 1
                 else [],
@@ -583,10 +743,10 @@ class ProbabilityMassHistogram(PDHBase):
 
         # All negative bins have exactly equal contribution to EV, and all
         # positive bins have exactly equal contribution to EV.
-        neg_masses, neg_values = cls._construct_bins(
+        neg_masses, neg_values = cls.construct_bins(
             num_neg_bins, -neg_contribution, (support[0], 0), dist, cdf, ppf, BinSizing(bin_sizing)
         )
-        pos_masses, pos_values = cls._construct_bins(
+        pos_masses, pos_values = cls.construct_bins(
             num_pos_bins, pos_contribution, (0, support[1]), dist, cdf, ppf, BinSizing(bin_sizing)
         )
         masses = np.concatenate((neg_masses, pos_masses))
