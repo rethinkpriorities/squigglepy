@@ -11,6 +11,94 @@ from .samplers import sample
 
 
 class BinSizing(Enum):
+    """An enum for the different methods of sizing histogram bins.
+
+    Attributes
+    ----------
+    ev : str
+        This method divides the distribution into bins such that each bin has
+        equal contribution to expected value (see
+        :func:`squigglepy.distributions.BaseDistribution.contribution_to_ev`).
+        It works by first computing the bin edge values that equally divide up
+        contribution to expected value, then computing the probability mass of
+        each bin, then setting the value of each bin such that value * mass =
+        contribution to expected value (rather than, say, setting value to the
+        average value of the two edges).
+    mass : str
+        This method divides the distribution into bins such that each bin has
+        equal probability mass.
+    uniform : str
+        This method divides the support of the distribution into bins of equal
+        width.
+
+    Pros and cons of bin sizing methods
+    -----------------------------------
+    The "ev" method is the most accurate for most purposes, and it has the
+    important property that the histogram's expected value always exactly
+    equals the true expected value of the distribution (modulo floating point
+    rounding errors).
+
+    The "ev" method differs from a standard trapezoid-method histogram in how
+    it sizes bins and how it assigns values to bins. A trapezoid histogram
+    divides the support of the distribution into bins of equal width, then
+    assigns the value of each bin to the average of the two edges of the bin.
+    The "ev" method of setting values naturally makes the histogram's expected
+    value more accurate (the values are set specifically to make E[X] correct),
+    but it also makes higher moments more accurate.
+
+    Compared to a trapezoid histogram, an "ev" histogram must make the absolute
+    value of the value in each bin larger: larger values within a bin get more
+    weight in the expected value, so choosing the center value (or the average
+    of the two edges) systematically underestimates E[X].
+
+    It is possible to define the variance of a random variable X as
+
+    .. math::
+       E[X^2] - E[X]^2
+
+    Similarly to how the trapezoid method underestimates E[X], the "ev" method
+    necessarily underestimates E[X^2] (and therefore underestimates the
+    variance/standard deviation) because E[X^2] places even more weight on
+    larger values. But an alternative method that accurately estimated variance
+    would necessarily *over*estimate E[X]. And however much the "ev" method
+    underestimates E[X^2], the trapezoid method must underestimate it to a
+    greater extent.
+
+    The tradeoff is that the trapezoid method more accurately measures the
+    probability mass in the vicinity of a particular value, whereas the "ev"
+    method overestimates it. However, this is usually not as important as
+    accurately measuring the expected value and variance.
+
+    Implementation for two-sided distributions
+    ------------------------------------------
+    The interpretation of "ev" bin-sizing is slightly non-obvious for two-sided
+    distributions because we must decide how to interpret bins with negative EV.
+
+    bin_sizing="ev" arranges values into bins such that:
+        * The negative side has the correct negative contribution to EV and the
+            positive side has the correct positive contribution to EV.
+        * Every negative bin has equal contribution to EV and every positive bin
+            has equal contribution to EV.
+        * The number of negative and positive bins are chosen such that the
+            absolute contribution to EV for negative bins is as close as possible
+            to the absolute contribution to EV for positive bins.
+
+    This binning method means that the distribution EV is exactly preserved
+    and there is no bin that contains the value zero. However, the positive
+    and negative bins do not necessarily have equal contribution to EV, and
+    the magnitude of the error can be at most 1 / num_bins / 2. There are
+    alternative binning implementations that exactly preserve both the EV
+    and the contribution to EV per bin, but they are more complicated[1], and
+    I considered this error rate acceptable. For example, if num_bins=100,
+    the error after 16 multiplications is at most 8.3%. For
+    one-sided distributions, the error is zero.
+
+    [1] For example, we could exactly preserve EV contribution per bin in
+    exchange for some inaccuracy in the total EV, and maintain a scalar error
+    term that we multiply by whenever computing the EV. Or we could allow bins
+    to cross zero, but this would require handling it as a special case.
+
+    """
     ev = "ev"
     mass = "mass"
     uniform = "uniform"
@@ -49,7 +137,7 @@ class PDHBase(ABC):
     def sd(self):
         """Standard deviation of the distribution. May be calculated using a
         stored exact value or the histogram data."""
-        return self.histogram_sd()
+        return self.exact_sd
 
     @classmethod
     def _contribution_to_ev(
@@ -116,6 +204,17 @@ class PDHBase(ABC):
         num_bins = max(len(x), len(y))
 
         if x.is_two_sided() or y.is_two_sided():
+            # If x+ is the positive part of x and x- is the negative part, then
+            # result+ = (x+ * y+) + (x- * y-) and result- = (x+ * y-) + (x- *
+            # y+). Multiply two-sided distributions by performing these steps:
+            #
+            # 1. Perform the four multiplications of one-sided distributions,
+            #    producing n^2 bins.
+            # 2. Add the two positive results and the two negative results into
+            #    an array of positive values and an array of negative values.
+            # 3. Run the binning algorithm on both arrays to compress them into
+            #    a total of n bins.
+            # 4. Join the two arrays into a new histogram.
             xneg_values = x.values[: x.zero_bin_index]
             xneg_masses = x.masses[: x.zero_bin_index]
             xpos_values = x.values[x.zero_bin_index :]
@@ -171,6 +270,8 @@ class PDHBase(ABC):
 
             can_reshape_neg_bins = len(extended_neg_values) % num_neg_bins == 0
             can_reshape_pos_bins = len(extended_pos_values) % num_pos_bins == 0
+
+            # binary_op expects positive values, so negate them
             neg_values, neg_masses = x.binary_op(
                 -extended_neg_values,
                 extended_neg_masses,
@@ -179,7 +280,11 @@ class PDHBase(ABC):
                 bin_sizing=bin_sizing,
                 can_reshape_bins=can_reshape_neg_bins,
             )
-            neg_values = -neg_values
+            # the result will be positive and sorted ascending, so negate and
+            # flip it
+            neg_values = np.flip(-neg_values)
+            neg_masses = np.flip(neg_masses)
+
             pos_values, pos_masses = x.binary_op(
                 extended_pos_values,
                 extended_pos_masses,
@@ -435,31 +540,13 @@ class ProbabilityMassHistogram(PDHBase):
     def from_distribution(cls, dist, num_bins=100, bin_sizing="ev"):
         """Create a probability mass histogram from the given distribution.
 
-        Create a probability mass histogram from the given distribution. The
-        histogram covers the full distribution except for the 1/num_bins/2
-        expectile on the left and right tails. The boundaries are based on the
-        expectile rather than the quantile to better capture the tails of
-        fat-tailed distributions, but this can cause computational problems for
-        very fat-tailed distributions.
+        Parameters
+        ----------
+        dist : BaseDistribution
+        num_bins : int
+        bin_sizing : str (default "ev")
+            See :ref:`BinSizing` for a list of valid options and a description of their tradeoffs.
 
-        bin_sizing="ev" arranges values into bins such that:
-            * The negative side has the correct negative contribution to EV and the
-              positive side has the correct positive contribution to EV.
-            * Every negative bin has equal contribution to EV and every positive bin
-              has equal contribution to EV.
-            * The number of negative and positive bins are chosen such that the
-              absolute contribution to EV for negative bins is as close as possible
-              to the absolute contribution to EV for positive bins.
-
-        This binning method means that the distribution EV is exactly preserved
-        and there is no bin that contains the value zero. However, the positive
-        and negative bins do not necessarily have equal contribution to EV, and
-        the magnitude of the error can be at most 1 / num_bins / 2. There are
-        alternative binning implementations that exactly preserve both the EV
-        and the contribution to EV per bin, but they are more complicated, and
-        I considered this error rate acceptable. For example, if num_bins=100,
-        the error after 16 multiplications is at most 8.3%. For
-        one-sided distributions, the error is zero.
         """
         if isinstance(dist, LognormalDistribution):
             ppf = lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean))
