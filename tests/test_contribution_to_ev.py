@@ -64,7 +64,7 @@ def test_norm_contribution_to_ev(mu, sigma):
 def test_norm_inv_contribution_to_ev(mu, sigma):
     dist = NormalDistribution(mean=mu, sd=sigma)
 
-    assert dist.inv_contribution_to_ev(1 - 1e-9) > mu + 3 * sigma
+    assert dist.inv_contribution_to_ev(1 - 1e-9) > mu + 3 * siga
     assert dist.inv_contribution_to_ev(1e-9) < mu - 3 * sigma
 
     # midpoint represents less than half the EV if mu > 0 b/c the larger

@@ -852,24 +852,24 @@ class NormalDistribution(ContinuousDistribution):
         converged = False
         for newton_iter in range(max_iter):
             root = self.contribution_to_ev(guess) - fraction
-            if abs(root) < tolerance:
+            if all(abs(root) < tolerance):
                 converged = True
                 break
             deriv = self._derivative_contribution_to_ev(guess)
-            if deriv == 0:
+            if all(deriv == 0):
                 break
-            guess -= root / deriv
+            guess = np.where(deriv == 0, guess, guess - root / deriv)
 
         if not converged:
             # Approximate using binary search (RIP)
             lower = np.full_like(fraction, scipy.stats.norm.ppf(1e-10, mu, scale=sigma))
             upper = np.full_like(fraction, scipy.stats.norm.ppf(1 - 1e-10, mu, scale=sigma))
-            guess = np.full_like(fraction, mu)
+            guess = scipy.stats.norm.ppf(fraction, mu, scale=sigma)
             max_iter = 50
             for binary_iter in range(max_iter):
                 y = self.contribution_to_ev(guess)
                 diff = y - fraction
-                if abs(diff) < tolerance:
+                if all(abs(diff) < tolerance):
                     converged = True
                     break
                 lower = np.where(diff < 0, guess, lower)

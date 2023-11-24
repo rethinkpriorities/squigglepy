@@ -6,7 +6,7 @@ import sortednp as snp
 from typing import Literal, Optional
 import warnings
 
-from .distributions import LognormalDistribution, lognorm
+from .distributions import NormalDistribution, LognormalDistribution
 from .samplers import sample
 
 
@@ -44,21 +44,33 @@ class PDHBase(ABC):
         return self.histogram_sd()
 
     @classmethod
-    def _contribution_to_ev(cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float):
+    def _contribution_to_ev(
+        cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float, normalized=True
+    ):
         """Return the approximate fraction of expected value that is less than
         the given value.
         """
-        if isinstance(x, np.ndarray):
-            return np.array([cls._contribution_to_ev(values, masses, xi) for xi in x])
-        mean = np.sum(masses * values)
-        return np.sum(masses * values * (values <= x)) / mean
+        if isinstance(x, np.ndarray) and x.ndim == 0:
+            x = x.item()
+        elif isinstance(x, np.ndarray):
+            return np.array(
+                [cls._contribution_to_ev(values, masses, xi, normalized) for xi in x]
+            )
+
+        contributions = np.squeeze(np.sum(masses * values * (values <= x)))
+        if normalized:
+            mean = np.sum(masses * values)
+            return contributions / mean
+        return contributions
 
     @classmethod
     def _inv_contribution_to_ev(
         cls, values: np.ndarray, masses: np.ndarray, fraction: np.ndarray | float
     ):
         if isinstance(fraction, np.ndarray):
-            return np.array([cls.inv_contribution_to_ev(values, masses, xi) for xi in fraction])
+            return np.array(
+                [cls._inv_contribution_to_ev(values, masses, xi) for xi in list(fraction)]
+            )
         if fraction <= 0:
             raise ValueError("fraction must be greater than 0")
         mean = np.sum(masses * values)
@@ -161,7 +173,9 @@ class ScaledBinHistogram(PDHBase):
         outer_ev = 1 / num_bins / 2
 
         left_bound = PDHBase._inv_contribution_to_ev(extended_values, extended_masses, outer_ev)
-        right_bound = PDHBase._inv_contribution_to_ev(extended_values, extended_masses, 1 - outer_ev)
+        right_bound = PDHBase._inv_contribution_to_ev(
+            extended_values, extended_masses, 1 - outer_ev
+        )
         bin_scale_rate = np.sqrt(x.bin_scale_rate * y.bin_scale_rate)
         bin_edges = ScaledBinHistogram.get_bin_edges(
             left_bound, right_bound, bin_scale_rate, num_bins
@@ -281,7 +295,7 @@ class ProbabilityMassHistogram(PDHBase):
                 )
 
         # Partition the arrays so every value in a bin is smaller than every
-        # value in the next bin, but don't sort within bins. (Partitioning is
+        # value in the next bin, but don't sort within bins. (Partition is
         # about 10% faster than mergesort.)
         sorted_indexes = extended_values.argpartition(bin_boundaries)
         extended_values = extended_values[sorted_indexes]
@@ -314,6 +328,104 @@ class ProbabilityMassHistogram(PDHBase):
         return ProbabilityMassHistogram(np.array(bin_values), np.array(bin_masses), bin_sizing)
 
     @classmethod
+    def _edge_values_to_bins(
+        cls, num_bins, total_contribution_to_ev, support, dist, cdf, ppf, bin_sizing
+    ):
+        """Convert a list of edge values to a list of bin values."""
+        if bin_sizing == BinSizing.ev:
+            get_edge_value = dist.inv_contribution_to_ev
+        elif bin_sizing == BinSizing.mass:
+            get_edge_value = ppf
+        else:
+            raise ValueError(f"Unsupported bin sizing: {bin_sizing}")
+
+        boundary = 1 / num_bins
+        left_prop = dist.contribution_to_ev(support[0])
+        right_prop = dist.contribution_to_ev(support[1])
+        edge_values = np.concatenate(
+            (
+                [support[0]],
+                get_edge_value(
+                    np.linspace(left_prop + boundary, right_prop - boundary, num_bins - 1)
+                ),
+                [support[1]],
+            )
+        )
+        edge_cdfs = cdf(edge_values)
+        masses = np.diff(edge_cdfs)
+
+        # Assume the value exactly equals the bin's contribution to EV
+        # divided by its mass. This means the values will not be exactly
+        # centered, but it guarantees that the expected value of the
+        # histogram exactly equals the expected value of the distribution
+        # (modulo floating point rounding).
+        if bin_sizing == BinSizing.ev:
+            ev_contribution_per_bin = total_contribution_to_ev / num_bins
+            values = ev_contribution_per_bin / masses
+        elif bin_sizing == BinSizing.mass:
+            # TODO: this might not work for negative values
+            midpoints = (edge_cdfs[:-1] + edge_cdfs[1:]) / 2
+            raw_values = ppf(midpoints)
+            estimated_mean = np.sum(raw_values * masses)
+            values = raw_values * total_contribution_to_ev / estimated_mean
+        else:
+            raise ValueError(f"Unsupported bin sizing: {bin_sizing}")
+
+        # For sufficiently large values, CDF rounds to 1 which makes the
+        # mass 0.
+        if any(masses == 0):
+            values = np.where(masses == 0, 0, values)
+            num_zeros = np.sum(masses == 0)
+            warnings.warn(
+                f"{num_zeros} values greater than {values[-1]} had CDFs of 1.", RuntimeWarning
+            )
+
+        return (masses, values)
+
+    @classmethod
+    def from_two_sided_distribution(cls, dist, num_bins, bin_sizing):
+        # TODO: I think this code actually works as-is for one-sided
+        # distributions
+        if isinstance(dist, NormalDistribution):
+            ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
+            cdf = lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd)
+            exact_mean = dist.mean
+            exact_sd = dist.sd
+            support = (-np.inf, np.inf)
+        else:
+            raise ValueError(f"Unsupported distribution type: {type(dist)}")
+
+        get_edge_value = {
+            "ev": dist.inv_contribution_to_ev,
+            "mass": ppf,
+        }[bin_sizing]
+
+        assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
+
+        total_contribution_to_ev = dist.contribution_to_ev(np.inf, normalized=False)
+        neg_contribution = dist.contribution_to_ev(0, normalized=False)
+        pos_contribution = total_contribution_to_ev - neg_contribution
+        num_neg_bins = int(num_bins * neg_contribution)
+        num_pos_bins = num_bins - num_neg_bins
+
+        neg_masses, neg_values = cls._edge_values_to_bins(
+            num_neg_bins, -neg_contribution, (support[0], 0), dist, cdf, ppf, bin_sizing
+        )
+        pos_masses, pos_values = cls._edge_values_to_bins(
+            num_pos_bins, pos_contribution, (0, support[1]), dist, cdf, ppf, bin_sizing
+        )
+        masses = np.concatenate((neg_masses, pos_masses))
+        values = np.concatenate((neg_values, pos_values))
+
+        return cls(
+            np.array(values),
+            np.array(masses),
+            bin_sizing=bin_sizing,
+            exact_mean=exact_mean,
+            exact_sd=exact_sd,
+        )
+
+    @classmethod
     def from_distribution(cls, dist, num_bins=100, bin_sizing="ev"):
         """Create a probability mass histogram from the given distribution. The
         histogram covers the full distribution except for the 1/num_bins/2
@@ -322,67 +434,27 @@ class ProbabilityMassHistogram(PDHBase):
         fat-tailed distributions, but this can cause computational problems for
         very fat-tailed distributions.
         """
-        if not isinstance(dist, LognormalDistribution):
-            raise ValueError("Only LognormalDistributions are supported")
-
-        exact_mean = dist.lognorm_mean
-
-        get_edge_value = {
-            "ev": dist.inv_contribution_to_ev,
-            "mass": lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean)),
-        }[bin_sizing]
+        if isinstance(dist, LognormalDistribution):
+            ppf = lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean))
+            cdf = lambda x: stats.lognorm.cdf(x, dist.norm_sd, scale=np.exp(dist.norm_mean))
+            exact_mean = dist.lognorm_mean
+            exact_sd = dist.lognorm_sd
+            support = (0, np.inf)
+        elif isinstance(dist, NormalDistribution):
+            return cls.from_two_sided_distribution(dist, num_bins, bin_sizing)
+        else:
+            raise ValueError(f"Unsupported distribution type: {type(dist)}")
 
         assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
-        boundary = 1 / num_bins
-        edge_values = np.concatenate(
-            (
-                [0],
-                get_edge_value(np.linspace(boundary, 1 - boundary, num_bins - 1)),
-                [np.inf],
-            )
+
+        masses, values = cls._edge_values_to_bins(
+            num_bins, exact_mean, support, dist, cdf, ppf, BinSizing(bin_sizing)
         )
-
-        # How much each bin contributes to total EV.
-        contribution_to_ev = exact_mean / num_bins
-
-        # We can compute the exact mass of each bin as the difference in
-        # CDF between the left and right edges.
-        edge_cdfs = stats.lognorm.cdf(edge_values, dist.norm_sd, scale=np.exp(dist.norm_mean))
-        masses = np.diff(edge_cdfs)
-
-        # Assume the value exactly equals the bin's contribution to EV
-        # divided by its mass. This means the values will not be exactly
-        # centered, but it guarantees that the expected value of the
-        # histogram exactly equals the expected value of the distribution
-        # (modulo floating point rounding).
-        if bin_sizing == "ev":
-            values = contribution_to_ev / masses
-        elif bin_sizing == "mass":
-            midpoints = (edge_cdfs[:-1] + edge_cdfs[1:]) / 2
-            raw_values = stats.lognorm.ppf(midpoints, dist.norm_sd, scale=np.exp(dist.norm_mean))
-            estimated_mean = np.sum(raw_values * masses)
-            values = raw_values * exact_mean / estimated_mean
-
-        # For sufficiently large values, CDF rounds to 1 which makes the
-        # mass 0.
-        #
-        # Note: It would make logical sense to remove zero values, but it
-        # messes up the binning algorithm for products which expects the number
-        # of values to be a multiple of the number of bins.
-        # values = values[masses > 0]
-        # masses = masses[masses > 0]
-        values = np.where(masses == 0, 0, values)
-
-        if any(masses == 0):
-            num_zeros = np.sum(masses == 0)
-            warnings.warn(
-                f"{num_zeros} values greater than {values[-1]} had CDFs of 1.", RuntimeWarning
-            )
 
         return cls(
             np.array(values),
             np.array(masses),
             bin_sizing=bin_sizing,
             exact_mean=exact_mean,
-            exact_sd=dist.lognorm_sd,
+            exact_sd=exact_sd,
         )
