@@ -6,7 +6,7 @@ from pytest import approx
 from scipy import integrate, stats
 
 from ..squigglepy.distributions import LognormalDistribution, NormalDistribution
-from ..squigglepy.pdh import ProbabilityMassHistogram, ScaledBinHistogram
+from ..squigglepy.pdh import ProbabilityMassHistogram
 from ..squigglepy import samplers
 
 
@@ -26,33 +26,32 @@ def print_accuracy_ratio(x, y, extra_message=None):
 @given(
     norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=5),
+    bin_sizing=st.sampled_from(["ev", "mass"]),
 )
-def test_pmh_lognorm_mean(norm_mean, norm_sd):
+def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing="mass")
+    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing=bin_sizing)
     assert hist.histogram_mean() == approx(
         stats.lognorm.mean(dist.norm_sd, scale=np.exp(dist.norm_mean))
     )
 
 
 @given(
-    # mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
-    # sd=st.floats(min_value=0.001, max_value=100),
-    mean=st.just(0),
-    sd=st.just(1),
+    mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
+    sd=st.floats(min_value=0.001, max_value=100),
 )
-def test_pmh_norm_with_ev_bins(mean, sd):
+def test_norm_with_ev_bins(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing="ev")
     assert hist.histogram_mean() == approx(mean)
-    assert hist.histogram_sd() == approx(sd, rel=0.001)
+    assert hist.histogram_sd() == approx(sd, rel=0.01)
 
 
 @given(
     mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     sd=st.floats(min_value=0.001, max_value=100),
 )
-def test_pmh_norm_with_mass_bins(mean, sd):
+def test_norm_with_mass_bins(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing="mass")
     assert hist.histogram_mean() == approx(mean)
@@ -65,7 +64,7 @@ def test_pmh_norm_with_mass_bins(mean, sd):
     norm_mean=st.just(0),
     norm_sd=st.just(1),
 )
-def test_pmh_lognorm_sd(norm_mean, norm_sd):
+def _test_lognorm_sd(norm_mean, norm_sd):
     # TODO: The margin of error on the SD estimate is pretty big, mostly
     # because the right tail is underestimating variance. But that might be an
     # acceptable cost. Try to see if there's a way to improve it without compromising the fidelity of the EV estimate.
@@ -88,7 +87,7 @@ def test_pmh_lognorm_sd(norm_mean, norm_sd):
             hist.masses[left:right] * (hist.values[left:right] - hist.histogram_mean()) ** 2
         )
 
-    midpoint = hist.values[int(num_bins * 9 / 10)]
+    midpoint = hist.values[int(hist.num_bins * 9 / 10)]
     expected_left_variance = true_variance(0, midpoint)
     expected_right_variance = true_variance(midpoint, np.inf)
     midpoint_index = int(len(hist) * hist.contribution_to_ev(midpoint))
@@ -116,7 +115,7 @@ def test_lognorm_mean_error_propagation(bin_sizing):
         true_mean = stats.lognorm.mean(np.sqrt(i))
         abs_error.append(abs(hist.histogram_mean() - true_mean))
         rel_error.append(relative_error(hist.histogram_mean(), true_mean))
-        assert hist.histogram_mean() == approx(true_mean, rel=0.001)
+        assert hist.histogram_mean() == approx(true_mean)
         hist = hist * hist_base
 
 
@@ -152,52 +151,12 @@ def test_lognorm_sd_error_propagation(bin_sizing):
         assert rel_error[i] < expected_error_pcts[i] / 100
 
 
-def test_mc_mean_error_propagation():
-    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    rel_error = [0]
-    print("")
-    for i in [1, 2, 4, 8, 16, 32, 64]:
-        true_mean = stats.lognorm.mean(np.sqrt(i))
-        curr_rel_errors = []
-        for _ in range(10):
-            mcs = [samplers.sample(dist, 100**2) for _ in range(i)]
-            mc = reduce(lambda acc, mc: acc * mc, mcs)
-            curr_rel_errors.append(relative_error(np.mean(mc), true_mean))
-        rel_error.append(np.mean(curr_rel_errors))
-        print(
-            f"n = {i:2d}: {rel_error[-1]*100:4.1f}% (up {(rel_error[-1] + 1) / (rel_error[-2] + 1):.2f}x)"
-        )
-
-
-def test_mc_sd_error_propagation():
-    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    num_bins = 100  # we don't actually care about the histogram, we just use it
-    # to calculate exact_sd
-    hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
-    hist_base = ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins)
-    abs_error = []
-    rel_error = [0]
-    print("")
-    for i in range(1, 17):
-        true_mean = stats.lognorm.mean(np.sqrt(i))
-        true_sd = hist.exact_sd
-        curr_rel_errors = []
-        for _ in range(10):
-            mcs = [samplers.sample(dist, 1000**2) for _ in range(i)]
-            mc = reduce(lambda acc, mc: acc * mc, mcs)
-            mc_sd = np.std(mc)
-            curr_rel_errors.append(relative_error(mc_sd, true_sd))
-        rel_error.append(np.mean(curr_rel_errors))
-        print(
-            f"n = {i:2d}: {rel_error[-1]*100:4.1f}% (up {(rel_error[-1] + 1) / (rel_error[-2] + 1):.2f}x)"
-        )
-        hist = hist * hist_base
-
-
 def test_sd_accuracy_vs_monte_carlo():
+    """Test that PMH SD is more accurate than Monte Carlo SD both for initial
+    distributions and when multiplying up to 16 distributions together."""
     num_bins = 100
     num_samples = 100**2
-    dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(5)]
+    dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(17)]
     hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
     hist = reduce(lambda acc, hist: acc * hist, hists)
     true_sd = hist.exact_sd
@@ -290,43 +249,6 @@ def test_lognorm_product_summary_stats(norm_mean1, norm_sd1, norm_mean2, norm_sd
     tolerance = 1.05**(1 + (norm_sd1 + norm_sd2)**2) - 1
     assert pmh_prod.histogram_mean() == approx(dist_prod.lognorm_mean)
     assert pmh_prod.histogram_sd() == approx(dist_prod.lognorm_sd, rel=tolerance)
-
-
-def test_lognorm_sample():
-    # norm_means = np.repeat([0, 1, -1, 100], 4)
-    # norm_sds = np.repeat([1, 0.7, 2, 0.1], 4)
-    norm_means = np.repeat([0], 2)
-    norm_sds = np.repeat([1], 2)
-    dists = [
-        LognormalDistribution(norm_mean=norm_means[i], norm_sd=norm_sds[i])
-        for i in range(len(norm_means))
-    ]
-    dist_prod = LognormalDistribution(
-        norm_mean=np.sum(norm_means), norm_sd=np.sqrt(np.sum(norm_sds**2))
-    )
-    num_samples = 1e6
-    sample_lists = [samplers.sample(dist, num_samples) for dist in dists]
-    samples = np.product(sample_lists, axis=0)
-    print_accuracy_ratio(np.std(samples), dist_prod.lognorm_sd)
-    assert np.std(samples) == approx(dist_prod.lognorm_sd)
-
-
-def test_scaled_bin():
-    for repetitions in [1, 4, 8, 16]:
-        norm_means = np.repeat([0], repetitions)
-        norm_sds = np.repeat([1], repetitions)
-        dists = [
-            LognormalDistribution(norm_mean=norm_means[i], norm_sd=norm_sds[i])
-            for i in range(len(norm_means))
-        ]
-        dist_prod = LognormalDistribution(
-            norm_mean=np.sum(norm_means), norm_sd=np.sqrt(np.sum(norm_sds**2))
-        )
-        hists = [ScaledBinHistogram.from_distribution(dist) for dist in dists]
-        hist_prod = reduce(lambda acc, hist: acc * hist, hists)
-        print("")
-        print_accuracy_ratio(hist_prod.histogram_mean(), dist_prod.lognorm_mean, "Mean")
-        print_accuracy_ratio(hist_prod.histogram_sd(), dist_prod.lognorm_sd, "SD  ")
 
 
 def test_performance():

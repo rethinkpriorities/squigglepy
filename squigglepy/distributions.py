@@ -825,12 +825,11 @@ class NormalDistribution(ContinuousDistribution):
         abs_mean = mu + 2 * zero_term
         return np.squeeze(contribution) / (abs_mean if normalized else 1)
 
-    def _derivative_contribution_to_ev(self, x: np.ndarray | float):
-        x = np.asarray(x)
+    def _derivative_contribution_to_ev(self, x: np.ndarray):
         mu = self.mean
         sigma = self.sd
         deriv = x * exp(-((mu - abs(x)) ** 2) / (2 * sigma**2)) / (sigma * sqrt(2 * pi))
-        return np.squeeze(deriv)
+        return deriv
 
     def inv_contribution_to_ev(self, fraction: np.ndarray | float, full_output: bool = False):
         if isinstance(fraction, float):
@@ -840,7 +839,7 @@ class NormalDistribution(ContinuousDistribution):
         tolerance = 1e-8
 
         if any(fraction <= 0) or any(fraction >= 1):
-            raise ValueError("fraction must be between 0 and 1")
+            raise ValueError(f"fraction must be between 0 and 1, not {fraction}")
 
         # Approximate using Newton's method. Sometimes this has trouble
         # converging b/c it diverges or gets caught in a cycle, so use binary

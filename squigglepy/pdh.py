@@ -203,10 +203,14 @@ class ProbabilityMassHistogram(PDHBase):
         return ProbabilityMassHistogram(np.array(bin_values), np.array(bin_masses), bin_sizing)
 
     @classmethod
-    def _edge_values_to_bins(
+    def _construct_bins(
         cls, num_bins, total_contribution_to_ev, support, dist, cdf, ppf, bin_sizing
     ):
-        """Convert a list of edge values to a list of bin values."""
+        """Construct a list of bin masses and values. Helper function for
+        :func:`from_distribution`, do not call this directly."""
+        if num_bins == 0:
+            return (np.array([]), np.array([]))
+
         if bin_sizing == BinSizing.ev:
             get_edge_value = dist.inv_contribution_to_ev
         elif bin_sizing == BinSizing.mass:
@@ -214,15 +218,18 @@ class ProbabilityMassHistogram(PDHBase):
         else:
             raise ValueError(f"Unsupported bin sizing: {bin_sizing}")
 
-        boundary = 1 / num_bins
         left_prop = dist.contribution_to_ev(support[0])
         right_prop = dist.contribution_to_ev(support[1])
+        width = (right_prop - left_prop) / num_bins
+
+        # Don't call get_edge_value on the left and right edges because it's
+        # undefined for 0 and 1
         edge_values = np.concatenate(
             (
                 [support[0]],
-                get_edge_value(
-                    np.linspace(left_prop + boundary, right_prop - boundary, num_bins - 1)
-                ),
+                np.atleast_1d(get_edge_value(
+                    np.linspace(left_prop + width, right_prop - width, num_bins - 1)
+                )) if num_bins > 1 else [],
                 [support[1]],
             )
         )
@@ -258,56 +265,34 @@ class ProbabilityMassHistogram(PDHBase):
         return (masses, values)
 
     @classmethod
-    def from_two_sided_distribution(cls, dist, num_bins, bin_sizing):
-        # TODO: I think this code actually works as-is for one-sided
-        # distributions
-        if isinstance(dist, NormalDistribution):
-            ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
-            cdf = lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd)
-            exact_mean = dist.mean
-            exact_sd = dist.sd
-            support = (-np.inf, np.inf)
-        else:
-            raise ValueError(f"Unsupported distribution type: {type(dist)}")
-
-        get_edge_value = {
-            "ev": dist.inv_contribution_to_ev,
-            "mass": ppf,
-        }[bin_sizing]
-
-        assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
-
-        total_contribution_to_ev = dist.contribution_to_ev(np.inf, normalized=False)
-        neg_contribution = dist.contribution_to_ev(0, normalized=False)
-        pos_contribution = total_contribution_to_ev - neg_contribution
-        num_neg_bins = int(num_bins * neg_contribution)
-        num_pos_bins = num_bins - num_neg_bins
-
-        neg_masses, neg_values = cls._edge_values_to_bins(
-            num_neg_bins, -neg_contribution, (support[0], 0), dist, cdf, ppf, bin_sizing
-        )
-        pos_masses, pos_values = cls._edge_values_to_bins(
-            num_pos_bins, pos_contribution, (0, support[1]), dist, cdf, ppf, bin_sizing
-        )
-        masses = np.concatenate((neg_masses, pos_masses))
-        values = np.concatenate((neg_values, pos_values))
-
-        return cls(
-            np.array(values),
-            np.array(masses),
-            bin_sizing=bin_sizing,
-            exact_mean=exact_mean,
-            exact_sd=exact_sd,
-        )
-
-    @classmethod
     def from_distribution(cls, dist, num_bins=100, bin_sizing="ev"):
-        """Create a probability mass histogram from the given distribution. The
+        """Create a probability mass histogram from the given distribution.
+
+        Create a probability mass histogram from the given distribution. The
         histogram covers the full distribution except for the 1/num_bins/2
         expectile on the left and right tails. The boundaries are based on the
         expectile rather than the quantile to better capture the tails of
         fat-tailed distributions, but this can cause computational problems for
         very fat-tailed distributions.
+
+        bin_sizing="ev" arranges values into bins such that:
+            * The negative side has the correct negative contribution to EV and the
+              positive side has the correct positive contribution to EV.
+            * Every negative bin has equal contribution to EV and every positive bin
+              has equal contribution to EV.
+            * The number of negative and positive bins are chosen such that the
+              absolute contribution to EV for negative bins is as close as possible
+              to the absolute contribution to EV for positive bins.
+
+        This binning method means that the distribution EV is exactly preserved
+        and there is no bin that contains the value zero. However, the positive
+        and negative bins do not necessarily have equal contribution to EV, and
+        the magnitude of the error can be at most 1 / num_bins / 2. There are
+        alternative binning implementations that exactly preserve both the EV
+        and the contribution to EV per bin, but they are more complicated, and
+        I considered this error rate acceptable. For example, if num_bins=100,
+        the error after 16 multiplications is at most 8.3%. For
+        one-sided distributions, the error is zero.
         """
         if isinstance(dist, LognormalDistribution):
             ppf = lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean))
@@ -316,15 +301,44 @@ class ProbabilityMassHistogram(PDHBase):
             exact_sd = dist.lognorm_sd
             support = (0, np.inf)
         elif isinstance(dist, NormalDistribution):
-            return cls.from_two_sided_distribution(dist, num_bins, bin_sizing)
+            ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
+            cdf = lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd)
+            exact_mean = dist.mean
+            exact_sd = dist.sd
+            support = (-np.inf, np.inf)
         else:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
 
         assert num_bins % 100 == 0, "num_bins must be a multiple of 100"
 
-        masses, values = cls._edge_values_to_bins(
-            num_bins, exact_mean, support, dist, cdf, ppf, BinSizing(bin_sizing)
+        total_contribution_to_ev = dist.contribution_to_ev(np.inf, normalized=False)
+        neg_contribution = dist.contribution_to_ev(0, normalized=False)
+        pos_contribution = total_contribution_to_ev - neg_contribution
+
+        # Divide up bins such that each bin has as close as possible to equal
+        # contribution to EV.
+        num_neg_bins = int(np.round(num_bins * neg_contribution / total_contribution_to_ev))
+        num_pos_bins = num_bins - num_neg_bins
+
+        # If one side is very small but nonzero, we must ensure that it gets at
+        # least one bin.
+        if neg_contribution > 0:
+            num_neg_bins = max(1, num_neg_bins)
+            num_pos_bins = num_bins - num_neg_bins
+        if pos_contribution > 0:
+            num_pos_bins = max(1, num_pos_bins)
+            num_neg_bins = num_bins - num_pos_bins
+
+        # All negative bins have exactly equal contribution to EV, and all
+        # positive bins have exactly equal contribution to EV.
+        neg_masses, neg_values = cls._construct_bins(
+            num_neg_bins, -neg_contribution, (support[0], 0), dist, cdf, ppf, BinSizing(bin_sizing)
         )
+        pos_masses, pos_values = cls._construct_bins(
+            num_pos_bins, pos_contribution, (0, support[1]), dist, cdf, ppf, BinSizing(bin_sizing)
+        )
+        masses = np.concatenate((neg_masses, pos_masses))
+        values = np.concatenate((neg_values, pos_values))
 
         return cls(
             np.array(values),
