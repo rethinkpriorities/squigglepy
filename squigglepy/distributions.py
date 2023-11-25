@@ -3,12 +3,12 @@ A collection of probability distributions and functions to operate on them.
 """
 
 import math
-import operator
-import warnings
 import numpy as np
 from numpy import exp, log, pi, sqrt
+import operator
 import scipy.stats
 from scipy.special import erf, erfinv
+import warnings
 
 from typing import Optional, Union
 
@@ -849,15 +849,19 @@ class NormalDistribution(ContinuousDistribution):
         newton_iter = 0
         binary_iter = 0
         converged = False
-        for newton_iter in range(max_iter):
-            root = self.contribution_to_ev(guess) - fraction
-            if all(abs(root) < tolerance):
-                converged = True
-                break
-            deriv = self._derivative_contribution_to_ev(guess)
-            if all(deriv == 0):
-                break
-            guess = np.where(deriv == 0, guess, guess - root / deriv)
+
+        # Catch warnings because Newton's method often causes divisions by
+        # zero. If that does happen, we will just fall back to binary search.
+        with warnings.catch_warnings():
+            for newton_iter in range(max_iter):
+                root = self.contribution_to_ev(guess) - fraction
+                if all(abs(root) < tolerance):
+                    converged = True
+                    break
+                deriv = self._derivative_contribution_to_ev(guess)
+                if all(deriv == 0):
+                    break
+                guess = np.where(abs(deriv) == 0, guess, guess - root / deriv)
 
         if not converged:
             # Approximate using binary search (RIP)
