@@ -381,18 +381,12 @@ def test_lognorm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_
 
 
 @given(
-    # norm_mean1=st.floats(-1e6, 1e6),
-    # norm_mean2=st.floats(min_value=-1e6, max_value=1e6),
-    # norm_sd1=st.floats(min_value=0.1, max_value=100),
-    # norm_sd2=st.floats(min_value=0.001, max_value=100),
-    # num_bins1=st.sampled_from([25, 100]),
-    # num_bins2=st.sampled_from([25, 100]),
-    norm_mean1=st.just(0),
-    norm_mean2=st.just(-218),
-    norm_sd1=st.just(1),
-    norm_sd2=st.just(1),
-    num_bins1=st.just(25),
-    num_bins2=st.just(25),
+    norm_mean1=st.floats(-1e4, 1e4),
+    norm_mean2=st.floats(min_value=-1e4, max_value=1e4),
+    norm_sd1=st.floats(min_value=0.1, max_value=100),
+    norm_sd2=st.floats(min_value=0.001, max_value=100),
+    num_bins1=st.sampled_from([25, 100]),
+    num_bins2=st.sampled_from([25, 100]),
 )
 def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bins2):
     dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
@@ -406,18 +400,12 @@ def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bin
 
 
 @given(
-    # mean1=st.floats(min_value=-100, max_value=100),
-    # mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
-    # sd1=st.floats(min_value=0.001, max_value=100),
-    # sd2=st.floats(min_value=0.001, max_value=3),
-    # num_bins1=st.sampled_from([25, 100]),
-    # num_bins2=st.sampled_from([25, 100]),
-    mean1=st.just(1.5),
-    mean2=st.just(7),
-    sd1=st.just(100),
-    sd2=st.just(1),
-    num_bins1=st.just(100),
-    num_bins2=st.just(100),
+    mean1=st.floats(min_value=-100, max_value=100),
+    mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
+    sd1=st.floats(min_value=0.001, max_value=100),
+    sd2=st.floats(min_value=0.001, max_value=3),
+    num_bins1=st.sampled_from([25, 100]),
+    num_bins2=st.sampled_from([25, 100]),
 )
 def test_norm_lognorm_sum(mean1, mean2, sd1, sd2, num_bins1, num_bins2):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
@@ -459,20 +447,22 @@ def test_pmh_inv_contribution_to_ev(norm_mean, norm_sd, bin_num):
 
 
 def test_performance():
-    return None  # so we don't accidentally run this while running all tests
+    return None
     import cProfile
     import pstats
     import io
 
-    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    dist1 = NormalDistribution(mean=0, sd=1)
+    dist2 = NormalDistribution(mean=0, sd=1)
 
     pr = cProfile.Profile()
     pr.enable()
 
     for i in range(100):
-        hist = ProbabilityMassHistogram.from_distribution(dist, num_bins=1000)
+        hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=1000)
+        hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=1000)
         for _ in range(4):
-            hist = hist * hist
+            hist1 = hist1 + hist2
 
     pr.disable()
     s = io.StringIO()

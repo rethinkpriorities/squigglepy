@@ -77,7 +77,7 @@ class BaseDistribution(ABC):
 
         `contribution_to_ev(x, normalized=False)` is defined as
 
-        .. math:: \int_{-\infty}^x |t| f(t) dt
+        .. math:: \\int_{-\\infty}^x |t| f(t) dt
 
         where `f(t)` is the PDF of the normal distribution. Normalizing divides
         this result by `contribution_to_ev(inf, normalized=False)`.
@@ -85,7 +85,7 @@ class BaseDistribution(ABC):
         Note that this is different from the partial expected value, which is
         defined as
 
-        .. math:: \int_{x}^\infty t f_X(t | X > x) dt
+        .. math:: \\int_{x}^\\infty t f_X(t | X > x) dt
 
         Parameters
         ----------
@@ -853,6 +853,7 @@ class NormalDistribution(ContinuousDistribution):
         # Catch warnings because Newton's method often causes divisions by
         # zero. If that does happen, we will just fall back to binary search.
         with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             for newton_iter in range(max_iter):
                 root = self.contribution_to_ev(guess) - fraction
                 if all(abs(root) < tolerance):
