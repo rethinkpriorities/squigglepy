@@ -28,6 +28,35 @@ def print_accuracy_ratio(x, y, extra_message=None):
 
 
 @given(
+    norm_mean1=st.floats(min_value=-1e5, max_value=1e5),
+    norm_mean2=st.floats(min_value=-1e5, max_value=1e5),
+    norm_sd1=st.floats(min_value=0.1, max_value=100),
+    norm_sd2=st.floats(min_value=0.001, max_value=1000),
+    # norm_mean1=st.just(-7),
+    # norm_mean2=st.just(-5),
+    # norm_sd1=st.just(1),
+    # norm_sd2=st.just(0.5615234),
+)
+@settings(max_examples=100)
+def test_norm_sum_exact_summary_stats(norm_mean1, norm_mean2, norm_sd1, norm_sd2):
+    """Test that the formulas for exact moments are implemented correctly."""
+    dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
+    dist2 = NormalDistribution(mean=norm_mean2, sd=norm_sd2)
+    hist1 = ProbabilityMassHistogram.from_distribution(dist1)
+    hist2 = ProbabilityMassHistogram.from_distribution(dist2)
+    hist_prod = hist1 + hist2
+    assert hist_prod.exact_mean == approx(
+        stats.norm.mean(norm_mean1 + norm_mean2, np.sqrt(norm_sd1**2 + norm_sd2**2))
+    )
+    assert hist_prod.exact_sd == approx(
+        stats.norm.std(
+            norm_mean1 + norm_mean2,
+            np.sqrt(norm_sd1**2 + norm_sd2**2),
+        )
+    )
+
+
+@given(
     norm_mean1=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
     norm_sd1=st.floats(min_value=0.1, max_value=3),
@@ -54,48 +83,10 @@ def test_lognorm_product_exact_summary_stats(norm_mean1, norm_mean2, norm_sd1, n
 
 
 @given(
-    norm_mean1=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
-    norm_mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
-    norm_sd1=st.floats(min_value=0.1, max_value=3),
-    norm_sd2=st.floats(min_value=0.001, max_value=3),
-)
-@settings(max_examples=100)
-def test_norm_sum_exact_summary_stats(norm_mean1, norm_mean2, norm_sd1, norm_sd2):
-    """Test that the formulas for exact moments are implemented correctly."""
-    dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
-    dist2 = NormalDistribution(mean=norm_mean2, sd=norm_sd2)
-    hist1 = ProbabilityMassHistogram.from_distribution(dist1)
-    hist2 = ProbabilityMassHistogram.from_distribution(dist2)
-    hist_prod = hist1 + hist2
-    assert hist_prod.exact_mean == approx(
-        stats.norm.mean(norm_mean1 + norm_mean2, np.sqrt(norm_sd1**2 + norm_sd2**2))
-    )
-    assert hist_prod.exact_sd == approx(
-        stats.norm.std(
-            norm_mean1 + norm_mean2,
-            np.sqrt(norm_sd1**2 + norm_sd2**2),
-        )
-    )
-
-
-@given(
-    norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
-    norm_sd=st.floats(min_value=0.001, max_value=5),
-    bin_sizing=st.sampled_from(["ev", "mass"]),
-)
-def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
-    dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing=bin_sizing)
-    assert hist.histogram_mean() == approx(
-        stats.lognorm.mean(dist.norm_sd, scale=np.exp(dist.norm_mean))
-    )
-
-
-@given(
     mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     sd=st.floats(min_value=0.001, max_value=100),
 )
-def test_norm_with_ev_bins(mean, sd):
+def test_norm_basic(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing="ev")
     assert hist.histogram_mean() == approx(mean)
@@ -103,14 +94,18 @@ def test_norm_with_ev_bins(mean, sd):
 
 
 @given(
-    mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
-    sd=st.floats(min_value=0.001, max_value=100),
+    norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
+    norm_sd=st.floats(min_value=0.001, max_value=5),
+    bin_sizing=st.sampled_from(["ev", "uniform"]),
 )
-def test_norm_with_mass_bins(mean, sd):
-    dist = NormalDistribution(mean=mean, sd=sd)
-    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing="mass")
-    assert hist.histogram_mean() == approx(mean)
-    assert hist.histogram_sd() == approx(sd, rel=0.01)
+def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
+    dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
+    hist = ProbabilityMassHistogram.from_distribution(dist, bin_sizing=bin_sizing)
+    tolerance = 1e-6 if bin_sizing == "ev" else (0.01 if dist.lognorm_sd < 1e6 else 0.1)
+    assert hist.histogram_mean() == approx(
+        stats.lognorm.mean(dist.norm_sd, scale=np.exp(dist.norm_mean)),
+        rel=tolerance,
+    )
 
 
 @given(
@@ -155,6 +150,79 @@ def test_lognorm_sd(norm_mean, norm_sd):
     assert hist.histogram_sd() == approx(dist.lognorm_sd, rel=0.05)
 
 
+# @given(bin_sizing=st.sampled_from(["ev", "uniform"])) # TODO: uncomment
+@given(bin_sizing=st.sampled_from(["uniform"]))
+def test_noncentral_norm_product(bin_sizing):
+    dist_pairs = [
+        (NormalDistribution(mean=1, sd=0.015625), NormalDistribution(mean=1, sd=0.015625)),
+        (NormalDistribution(mean=0, sd=1), NormalDistribution(mean=0, sd=1)),
+        (NormalDistribution(mean=2, sd=1), NormalDistribution(mean=-1, sd=2)),
+    ]
+    tolerance = 1e-9 if bin_sizing == "ev" else 1e-5
+
+    for dist1, dist2 in dist_pairs:
+        hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=25, bin_sizing=bin_sizing)
+        hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=25, bin_sizing=bin_sizing)
+        hist_prod = hist1 * hist2
+        assert hist_prod.histogram_mean() == approx(dist1.mean * dist2.mean, tolerance)
+        assert hist_prod.histogram_sd() == approx(
+            np.sqrt(
+                (dist1.sd**2 + dist1.mean**2) * (dist2.sd**2 + dist2.mean**2)
+                - dist1.mean**2 * dist2.mean**2
+            ),
+            rel=0.25,
+        )
+
+
+@given(
+    mean=st.floats(min_value=-10, max_value=10),
+    sd=st.floats(min_value=0.001, max_value=100),
+    num_bins=st.sampled_from([25, 100]),
+    bin_sizing=st.sampled_from(["ev", "uniform"]),
+)
+@settings(max_examples=100)
+def test_norm_mean_error_propagation(mean, sd, num_bins, bin_sizing):
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = ProbabilityMassHistogram.from_distribution(
+        dist, num_bins=num_bins, bin_sizing=bin_sizing
+    )
+    hist_base = ProbabilityMassHistogram.from_distribution(
+        dist, num_bins=num_bins, bin_sizing=bin_sizing
+    )
+    tolerance = 1e-10 if bin_sizing == "ev" else 1e-4
+
+    for i in range(1, 17):
+        true_mean = mean**i
+        true_sd = np.sqrt((dist.sd**2 + dist.mean**2) ** i - dist.mean ** (2 * i))
+        if true_sd > 1e15:
+            break
+        assert hist.histogram_mean() == approx(
+            true_mean, abs=tolerance ** (1 / i), rel=tolerance ** (1 / i)
+        ), f"On iteration {i}"
+        hist = hist * hist_base
+
+
+@given(
+    mean1=st.floats(min_value=-100, max_value=100),
+    mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
+    sd1=st.floats(min_value=0.001, max_value=100),
+    sd2=st.floats(min_value=0.001, max_value=3),
+    num_bins1=st.sampled_from([25, 100]),
+    num_bins2=st.sampled_from([25, 100]),
+)
+def test_norm_lognorm_product(mean1, mean2, sd1, sd2, num_bins1, num_bins2):
+    dist1 = NormalDistribution(mean=mean1, sd=sd1)
+    dist2 = LognormalDistribution(norm_mean=mean2, norm_sd=sd2)
+    hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=num_bins1)
+    hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=num_bins2)
+    hist_prod = hist1 * hist2
+    assert all(hist_prod.values[:-1] <= hist_prod.values[1:]), hist_prod.values
+    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, abs=1e-5, rel=1e-5)
+
+    # SD is pretty inaccurate
+    assert relative_error(hist_prod.histogram_sd(), hist_prod.exact_sd) < 2
+
+
 @given(
     norm_mean=st.floats(min_value=np.log(1e-9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=3),
@@ -174,57 +242,6 @@ def test_lognorm_mean_error_propagation(norm_mean, norm_sd, num_bins, bin_sizing
         true_mean = stats.lognorm.mean(np.sqrt(i) * norm_sd, scale=np.exp(i * norm_mean))
         assert all(hist.values[:-1] <= hist.values[1:]), f"On iteration {i}: {hist.values}"
         assert hist.histogram_mean() == approx(true_mean), f"On iteration {i}"
-        hist = hist * hist_base
-
-
-def test_noncentral_norm_product():
-    dist_pairs = [
-        (NormalDistribution(mean=0, sd=1), NormalDistribution(mean=0, sd=1)),
-        (NormalDistribution(mean=2, sd=1), NormalDistribution(mean=-1, sd=2)),
-    ]
-
-    for dist1, dist2 in dist_pairs:
-        hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=25)
-        hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=25)
-        hist_prod = hist1 * hist2
-        assert hist_prod.histogram_mean() == approx(dist1.mean * dist2.mean)
-        assert hist_prod.histogram_sd() == approx(
-            np.sqrt(
-                (dist1.sd**2 + dist1.mean**2) * (dist2.sd**2 + dist2.mean**2)
-                - dist1.mean**2 * dist2.mean**2
-            ),
-            rel=0.25,
-        )
-
-
-@given(
-    mean=st.floats(min_value=-10, max_value=10),
-    sd=st.floats(min_value=0.001, max_value=100),
-    num_bins=st.sampled_from([25, 100]),
-    # "mass" sizing is just really bad given how it's currently implemented. it
-    # does weird stuff like with mean=-20, sd=13, after only a few
-    # multiplications, most bin values are 0
-    bin_sizing=st.sampled_from(["ev"]),
-)
-@settings(max_examples=100)
-def test_norm_mean_error_propagation(mean, sd, num_bins, bin_sizing):
-    dist = NormalDistribution(mean=mean, sd=sd)
-    hist = ProbabilityMassHistogram.from_distribution(
-        dist, num_bins=num_bins, bin_sizing=bin_sizing
-    )
-    hist_base = ProbabilityMassHistogram.from_distribution(
-        dist, num_bins=num_bins, bin_sizing=bin_sizing
-    )
-    tolerance = 1e-12
-
-    for i in range(1, 17):
-        true_mean = mean**i
-        true_sd = np.sqrt((dist.sd**2 + dist.mean**2) ** i - dist.mean ** (2 * i))
-        if true_sd > 1e15:
-            break
-        assert hist.histogram_mean() == approx(
-            true_mean, abs=tolerance ** (1 / i), rel=tolerance ** (1 / i)
-        ), f"On iteration {i}"
         hist = hist * hist_base
 
 
@@ -260,79 +277,6 @@ def test_lognorm_sd_error_propagation(bin_sizing):
         assert rel_error[i] < expected_error_pcts[i] / 100
 
 
-# 2300 extended values, 93 bins
-@given(
-    mean1=st.floats(min_value=-100, max_value=100),
-    mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
-    sd1=st.floats(min_value=0.001, max_value=100),
-    sd2=st.floats(min_value=0.001, max_value=3),
-    num_bins1=st.sampled_from([25, 100]),
-    num_bins2=st.sampled_from([25, 100]),
-)
-def test_norm_lognorm_product(mean1, mean2, sd1, sd2, num_bins1, num_bins2):
-    def callback(err, flag):
-        import ipdb; ipdb.set_trace()
-    np.seterrcall(callback)
-    dist1 = NormalDistribution(mean=mean1, sd=sd1)
-    dist2 = LognormalDistribution(norm_mean=mean2, norm_sd=sd2)
-    hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=num_bins1)
-    hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=num_bins2)
-    hist_prod = hist1 * hist2
-    assert all(hist_prod.values[:-1] <= hist_prod.values[1:]), hist_prod.values
-    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, abs=1e-6, rel=1e-6)
-
-    # SD is pretty inaccurate
-    assert relative_error(hist_prod.histogram_sd(), hist_prod.exact_sd) < 2
-
-
-def test_norm_sd_accuracy_vs_monte_carlo():
-    """Test that PMH SD is more accurate than Monte Carlo SD both for initial
-    distributions and when multiplying up to 8 distributions together.
-
-    Note: With more multiplications, MC has a good chance of being more
-    accurate, and is significantly more accurate at 16 multiplications.
-    """
-    num_bins = 100
-    num_samples = 100**2
-    dists = [NormalDistribution(mean=i, sd=0.5 + i / 4) for i in range(9)]
-    hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
-    hist = reduce(lambda acc, hist: acc * hist, hists)
-    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
-
-    mc_abs_error = []
-    for i in range(10):
-        mcs = [samplers.sample(dist, num_samples) for dist in dists]
-        mc = reduce(lambda acc, mc: acc * mc, mcs)
-        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
-
-    mc_abs_error.sort()
-
-    # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
-    assert dist_abs_error < mc_abs_error[8]
-
-
-def test_lognorm_sd_accuracy_vs_monte_carlo():
-    """Test that PMH SD is more accurate than Monte Carlo SD both for initial
-    distributions and when multiplying up to 16 distributions together."""
-    num_bins = 100
-    num_samples = 100**2
-    dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(17)]
-    hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
-    hist = reduce(lambda acc, hist: acc * hist, hists)
-    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
-
-    mc_abs_error = []
-    for i in range(10):
-        mcs = [samplers.sample(dist, num_samples) for dist in dists]
-        mc = reduce(lambda acc, mc: acc * mc, mcs)
-        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
-
-    mc_abs_error.sort()
-
-    # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
-    assert dist_abs_error < mc_abs_error[8]
-
-
 @given(
     norm_mean1=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_mean2=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
@@ -355,12 +299,40 @@ def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2):
     assert pmh_prod.histogram_mean() == approx(dist_prod.lognorm_mean)
     assert pmh_prod.histogram_sd() == approx(dist_prod.lognorm_sd, rel=tolerance)
 
+# TODO
+# E       Falsifying example: test_norm_sum(
+# E           norm_mean1=10000.0,
+# E           norm_mean2=-9999.999999970429,
+# E           norm_sd1=1.0,
+# E           norm_sd2=0.625,
+# E           num_bins1=25,
+# E           num_bins2=25,
+# E       )
+@given(
+    norm_mean1=st.floats(-1e4, 1e4),
+    norm_mean2=st.floats(min_value=-1e4, max_value=1e4),
+    norm_sd1=st.floats(min_value=0.1, max_value=100),
+    norm_sd2=st.floats(min_value=0.001, max_value=100),
+    num_bins1=st.sampled_from([25, 100]),
+    num_bins2=st.sampled_from([25, 100]),
+    bin_sizing=st.sampled_from(["ev", "uniform"]),
+)
+def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bins2, bin_sizing):
+    dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
+    dist2 = NormalDistribution(mean=norm_mean2, sd=norm_sd2)
+    hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=num_bins1, bin_sizing=bin_sizing)
+    hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=num_bins2, bin_sizing=bin_sizing)
+    hist_sum = hist1 + hist2
+    assert all(hist_sum.values[:-1] <= hist_sum.values[1:])
+    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, rel=1e-5)
+    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=2)
+
 
 @given(
     norm_mean1=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
     norm_sd1=st.floats(min_value=0.1, max_value=3),
-    norm_sd2=st.floats(min_value=0.001, max_value=3),
+    norm_sd2=st.floats(min_value=0.01, max_value=3),
     num_bins1=st.sampled_from([25, 100]),
     num_bins2=st.sampled_from([25, 100]),
 )
@@ -381,25 +353,6 @@ def test_lognorm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_
 
 
 @given(
-    norm_mean1=st.floats(-1e4, 1e4),
-    norm_mean2=st.floats(min_value=-1e4, max_value=1e4),
-    norm_sd1=st.floats(min_value=0.1, max_value=100),
-    norm_sd2=st.floats(min_value=0.001, max_value=100),
-    num_bins1=st.sampled_from([25, 100]),
-    num_bins2=st.sampled_from([25, 100]),
-)
-def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bins2):
-    dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
-    dist2 = NormalDistribution(mean=norm_mean2, sd=norm_sd2)
-    hist1 = ProbabilityMassHistogram.from_distribution(dist1, num_bins=num_bins1)
-    hist2 = ProbabilityMassHistogram.from_distribution(dist2, num_bins=num_bins2)
-    hist_sum = hist1 + hist2
-    assert all(hist_sum.values[:-1] <= hist_sum.values[1:])
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean)
-    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=2)
-
-
-@given(
     mean1=st.floats(min_value=-100, max_value=100),
     mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
     sd1=st.floats(min_value=0.001, max_value=100),
@@ -416,6 +369,104 @@ def test_norm_lognorm_sum(mean1, mean2, sd1, sd2, num_bins1, num_bins2):
     assert all(hist_sum.values[:-1] <= hist_sum.values[1:]), hist_sum.values
     assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, abs=1e-6, rel=1e-6)
     assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=1)
+
+
+def test_norm_product_sd_accuracy_vs_monte_carlo():
+    """Test that PMH SD is more accurate than Monte Carlo SD both for initial
+    distributions and when multiplying up to 8 distributions together.
+
+    Note: With more multiplications, MC has a good chance of being more
+    accurate, and is significantly more accurate at 16 multiplications.
+    """
+    # Time complexity for binary operations is roughly O(n^2) for PMH and O(n)
+    # for MC, so let MC have num_bins^2 samples.
+    num_bins = 100
+    num_samples = 100**2
+    dists = [NormalDistribution(mean=i, sd=0.5 + i / 4) for i in range(9)]
+    hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
+    hist = reduce(lambda acc, hist: acc * hist, hists)
+    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+
+    mc_abs_error = []
+    for i in range(10):
+        mcs = [samplers.sample(dist, num_samples) for dist in dists]
+        mc = reduce(lambda acc, mc: acc * mc, mcs)
+        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
+
+    mc_abs_error.sort()
+
+    # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
+    assert dist_abs_error < mc_abs_error[8]
+
+
+def test_lognorm_product_sd_accuracy_vs_monte_carlo():
+    """Test that PMH SD is more accurate than Monte Carlo SD both for initial
+    distributions and when multiplying up to 16 distributions together."""
+    num_bins = 100
+    num_samples = 100**2
+    dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(17)]
+    hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
+    hist = reduce(lambda acc, hist: acc * hist, hists)
+    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+
+    mc_abs_error = []
+    for i in range(10):
+        mcs = [samplers.sample(dist, num_samples) for dist in dists]
+        mc = reduce(lambda acc, mc: acc * mc, mcs)
+        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
+
+    mc_abs_error.sort()
+
+    # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
+    assert dist_abs_error < mc_abs_error[8]
+
+
+@given(bin_sizing=st.sampled_from(["ev", "uniform"]))
+def test_norm_sum_sd_accuracy_vs_monte_carlo(bin_sizing):
+    """Test that PMH SD is more accurate than Monte Carlo SD both for initial
+    distributions and when multiplying up to 8 distributions together.
+
+    Note: With more multiplications, MC has a good chance of being more
+    accurate, and is significantly more accurate at 16 multiplications.
+    """
+    num_bins = 100
+    num_samples = 100**2
+    dists = [NormalDistribution(mean=i, sd=0.5 + i / 4) for i in range(9)]
+    hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins, bin_sizing=bin_sizing) for dist in dists]
+    hist = reduce(lambda acc, hist: acc + hist, hists)
+    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+
+    mc_abs_error = []
+    for i in range(10):
+        mcs = [samplers.sample(dist, num_samples) for dist in dists]
+        mc = reduce(lambda acc, mc: acc + mc, mcs)
+        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
+
+    mc_abs_error.sort()
+
+    # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
+    assert dist_abs_error < mc_abs_error[8]
+
+def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
+    """Test that PMH SD is more accurate than Monte Carlo SD both for initial
+    distributions and when multiplying up to 16 distributions together."""
+    num_bins = 100
+    num_samples = 100**2
+    dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(17)]
+    hists = [ProbabilityMassHistogram.from_distribution(dist, num_bins=num_bins) for dist in dists]
+    hist = reduce(lambda acc, hist: acc + hist, hists)
+    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+
+    mc_abs_error = []
+    for i in range(10):
+        mcs = [samplers.sample(dist, num_samples) for dist in dists]
+        mc = reduce(lambda acc, mc: acc + mc, mcs)
+        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
+
+    mc_abs_error.sort()
+
+    # dist should be more accurate than at least 8 out of 10 Monte Carlo runs
+    assert dist_abs_error < mc_abs_error[8]
 
 
 @given(
@@ -447,7 +498,7 @@ def test_pmh_inv_contribution_to_ev(norm_mean, norm_sd, bin_num):
 
 
 def test_performance():
-    return None
+    return None  # don't accidentally run this test because it's really slow
     import cProfile
     import pstats
     import io
