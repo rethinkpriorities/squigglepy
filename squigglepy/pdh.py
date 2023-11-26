@@ -195,7 +195,7 @@ class PDHBase(ABC):
         """Return the approximate fraction of expected value that is less than
         the given value.
         """
-        return self._contribution_to_ev(self.values, self.masses)
+        return self._contribution_to_ev(self.values, self.masses, x)
 
     def inv_contribution_to_ev(self, fraction: np.ndarray | float):
         """Return the value such that ``fraction`` of the contribution to
@@ -203,21 +203,87 @@ class PDHBase(ABC):
         """
         return self._inv_contribution_to_ev(self.values, self.masses, fraction)
 
-    def plot(self, scale='linear'):
+    def plot(self, scale="linear"):
         import matplotlib
         from matplotlib import pyplot as plt
+
         # matplotlib.use('GTK3Agg')
         # matplotlib.use('Qt5Agg')
         values_for_widths = np.concatenate(([0], self.values))
         widths = values_for_widths[1:] - values_for_widths[:-1]
         densities = self.masses / widths
-        values, densities, widths = zip(*[(v, d, w) for v, d, w in zip(list(values_for_widths), list(densities), list(widths)) if d > 0.001])
-        if scale == 'log':
-            plt.xscale('log')
-        plt.bar(values, densities, width=widths, align='edge')
+        values, densities, widths = zip(
+            *[
+                (v, d, w)
+                for v, d, w in zip(list(values_for_widths), list(densities), list(widths))
+                if d > 0.001
+            ]
+        )
+        if scale == "log":
+            plt.xscale("log")
+        plt.bar(values, densities, width=widths, align="edge")
         plt.savefig("/tmp/plot.png")
         plt.show()
 
+    @classmethod
+    def _num_bins_per_side(cls, num_bins, neg_contribution, pos_contribution, allowance=0.5):
+        """Determine how many bins to allocate to the positive and negative
+        sides of the distribution.
+
+        The negative and positive sides will get a number of bins approximately
+        proportional to `neg_contribution` and `pos_contribution` respectively.
+
+        Ordinarily, a domain gets its own bin if it represents greater than `1
+        / num_bins / 2` of the total contribution. But if one side of the
+        distribution has less than that, it will still get one bin if it has
+        greater than `allowance * 1 / num_bins / 2` of the total contribution.
+        `allowance = 0` means both sides get a bin as long as they have any
+        contribution.
+
+        If one side has less than that but still nonzero contribution, that
+        side will be allocated zero bins and that side's contribution will be
+        dropped, which means `neg_contribution` and `pos_contribution` may need
+        to be adjusted.
+
+        Parameters
+        ----------
+        num_bins : int
+            Total number of bins across the distribution.
+        neg_contribution : float
+            The total contribution of value from the negative side, using
+            whatever measure of value determines bin sizing.
+        pos_contribution : float
+            The total contribution of value from the positive side.
+        allowance = 0.5 : float
+            The fraction
+
+        Return
+        ------
+        (num_neg_bins, num_pos_bins) : (int, int)
+            Number of bins assigned to the negative/positive side of the
+            distribution.
+
+        """
+        min_prop_cutoff = allowance * 1 / num_bins / 2
+        total_contribution = neg_contribution + pos_contribution
+        num_neg_bins = int(np.round(num_bins * neg_contribution / total_contribution))
+        num_pos_bins = num_bins - num_neg_bins
+
+        if neg_contribution / total_contribution > min_prop_cutoff:
+            num_neg_bins = max(1, num_neg_bins)
+            num_pos_bins = num_bins - num_neg_bins
+        else:
+            num_neg_bins = 0
+            num_pos_bins = num_bins
+
+        if pos_contribution / total_contribution > min_prop_cutoff:
+            num_pos_bins = max(1, num_pos_bins)
+            num_neg_bins = num_bins - num_pos_bins
+        else:
+            num_pos_bins = 0
+            num_neg_bins = num_bins
+
+        return (num_neg_bins, num_pos_bins)
 
     def __add__(x, y):
         cls = x
@@ -241,7 +307,7 @@ class PDHBase(ABC):
             # Use timsort (called 'mergesort' by the numpy API) because
             # ``extended_values`` contains many sorted runs. And then pass
             # `is_sorted` down to `resize_bins` so it knows not to sort again.
-            sorted_indexes = extended_values.argsort(kind='mergesort')
+            sorted_indexes = extended_values.argsort(kind="mergesort")
             extended_values = extended_values[sorted_indexes]
             extended_masses = extended_masses[sorted_indexes]
             zero_index = np.searchsorted(extended_values, 0)
@@ -249,17 +315,20 @@ class PDHBase(ABC):
 
         # Find how much of the EV contribution is on the negative side vs. the
         # positive side.
-        neg_ev_contribution = (
-            -np.sum(extended_values[:zero_index] * extended_masses[:zero_index])
-        )
-        pos_ev_contribution = (x.mean() + y.mean()) + neg_ev_contribution
+        neg_ev_contribution = -np.sum(extended_values[:zero_index] * extended_masses[:zero_index])
+        sum_mean = x.mean() + y.mean()
+        pos_ev_contribution = sum_mean + neg_ev_contribution
 
         # Set the number of bins per side to be approximately proportional to
         # the EV contribution, but make sure that if a side has nonzero EV
         # contribution, it gets at least one bin.
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-            num_bins, neg_ev_contribution, pos_ev_contribution
-        )
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(num_bins, zero_index, len(extended_masses) - zero_index)
+        if num_neg_bins == 0:
+            neg_ev_contribution = 0
+            pos_ev_contribution = sum_mean
+        if num_pos_bins == 0:
+            neg_ev_contribution = -sum_mean
+            pos_ev_contribution = 0
 
         # Collect extended_values and extended_masses into the correct number
         # of bins. Make ``extended_values`` positive because ``resize_bins``
@@ -270,7 +339,6 @@ class PDHBase(ABC):
             extended_masses=np.flip(extended_masses[:zero_index]),
             num_bins=num_neg_bins,
             ev=neg_ev_contribution,
-            bin_sizing=x.bin_sizing,
             is_sorted=is_sorted,
         )
 
@@ -285,7 +353,6 @@ class PDHBase(ABC):
             extended_masses=extended_masses[zero_index:],
             num_bins=num_pos_bins,
             ev=pos_ev_contribution,
-            bin_sizing=x.bin_sizing,
             is_sorted=is_sorted,
         )
 
@@ -307,63 +374,8 @@ class PDHBase(ABC):
             res.exact_sd = np.sqrt(x.exact_sd**2 + y.exact_sd**2)
         return res
 
-    @classmethod
-    def _num_bins_per_side(cls, num_bins, neg_contribution, pos_contribution):
-        """Determine how many bins to allocate to the positive and negative
-        sides of the distribution.
-
-        The negative and positive sides will get a number of bins approximately
-        proportional to `neg_contribution` and `pos_contribution` respectively.
-        If one side has too little value to warrant a full bin but still at
-        least 1/4 as much value as an average bin, that side will be allocated
-        a single bin. The idea is to preserve the knowledge that a distribution
-        had both positive and negative values, even if one side of the
-        distribution was small.
-
-        Parameters
-        ----------
-        num_bins : int
-            Total number of bins across the distribution.
-        neg_contribution : float
-            The total contribution of value from the negative side, using
-            whatever measure of value determines bin sizing.
-        pos_contribution : float
-            The total contribution of value from the positive side.
-
-        Return
-        ------
-        (num_neg_bins, num_pos_bins): (int, int)
-            The number of bins assigned to the negative and positive sides
-            of the distribution, respectively.
-
-        """
-        total_ev_contribution = neg_contribution + pos_contribution
-        num_neg_bins = int(
-            num_bins * neg_contribution / total_ev_contribution
-        )
-        num_pos_bins = num_bins - num_neg_bins
-        if neg_contribution / total_ev_contribution >= 1 / num_bins / 4:
-            num_neg_bins = max(1, num_neg_bins)
-            num_pos_bins = num_bins - num_neg_bins
-        else:
-            # num_neg_bins might not be 0 due to floating point rounding issues
-            num_neg_bins = 0
-            num_pos_bins = num_bins
-            pos_contribution = total_ev_contribution
-
-        if pos_contribution / total_ev_contribution >= 1 / num_bins / 4:
-            num_pos_bins = max(1, num_pos_bins)
-            num_neg_bins = num_bins - num_pos_bins
-        else:
-            num_pos_bins = 0
-            num_neg_bins = num_bins
-            neg_contribution = total_ev_contribution
-
-        return (num_neg_bins, num_pos_bins)
-
     def __mul__(x, y):
         cls = x
-        bin_sizing = x.bin_sizing
         num_bins = max(len(x), len(y))
 
         # If xpos is the positive part of x and xneg is the negative part, then
@@ -424,9 +436,14 @@ class PDHBase(ABC):
             x.neg_ev_contribution * y.neg_ev_contribution
             + x.pos_ev_contribution * y.pos_ev_contribution
         )
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-            num_bins, neg_ev_contribution, pos_ev_contribution
-        )
+        product_mean = x.mean() * y.mean()
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(num_bins, len(extended_neg_masses), len(extended_pos_masses))
+        if num_neg_bins == 0:
+            neg_ev_contribution = 0
+            pos_ev_contribution = product_mean
+        if num_pos_bins == 0:
+            neg_ev_contribution = -product_mean
+            pos_ev_contribution = 0
 
         # Collect extended_values and extended_masses into the correct number
         # of bins. Make ``extended_values`` positive because ``resize_bins``
@@ -437,7 +454,6 @@ class PDHBase(ABC):
             extended_neg_masses,
             num_neg_bins,
             ev=neg_ev_contribution,
-            bin_sizing=bin_sizing,
         )
 
         # ``resize_bins`` returns positive values, so negate and reverse them.
@@ -451,7 +467,6 @@ class PDHBase(ABC):
             extended_pos_masses,
             num_pos_bins,
             ev=pos_ev_contribution,
-            bin_sizing=bin_sizing,
         )
 
         # Construct the resulting ``ProbabiltyMassHistogram`` object.
@@ -459,10 +474,10 @@ class PDHBase(ABC):
         masses = np.concatenate((neg_masses, pos_masses))
         zero_bin_index = len(neg_values)
         res = ProbabilityMassHistogram(
-            values,
-            masses,
-            zero_bin_index,
-            bin_sizing,
+            values=values,
+            masses=masses,
+            zero_bin_index=zero_bin_index,
+            bin_sizing=x.bin_sizing,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
         )
@@ -536,7 +551,6 @@ class ProbabilityMassHistogram(PDHBase):
         extended_masses,
         num_bins,
         ev,
-        bin_sizing,
         is_sorted=False,
     ):
         """Given two arrays of values and masses representing the result of a
@@ -554,8 +568,6 @@ class ProbabilityMassHistogram(PDHBase):
             The number of bins to compress the distribution into.
         ev : float
             The expected value of the distribution.
-        bin_sizing : Literal["ev", "mass", "uniform"]
-            The method used to size the bins.
         is_sorted : bool
             If True, assume that ``extended_values`` and ``extended_masses`` are
             already sorted in ascending order. This provides a significant
@@ -582,8 +594,8 @@ class ProbabilityMassHistogram(PDHBase):
             # Fill any empty space with zeros
             extra_zeros = np.zeros(num_bins * items_per_bin - len(extended_masses))
 
-            extended_values = np.concatenate((extended_values, extra_zeros))
-            extended_masses = np.concatenate((extended_masses, extra_zeros))
+            extended_values = np.concatenate((extra_zeros, extended_values))
+            extended_masses = np.concatenate((extra_zeros, extended_masses))
             ev_per_bin = ev / num_bins
 
         if not is_sorted:
@@ -600,16 +612,16 @@ class ProbabilityMassHistogram(PDHBase):
         # of elements.
         extended_evs = extended_values * extended_masses
         masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
+        bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
 
-        # only works if all bins have equal contribution to EV
-        # values = ev_per_bin / masses
-        values = extended_evs.reshape((num_bins, -1)).sum(axis=1) / masses
+        # Adjust the numbers such that values * masses sums to EV.
+        bin_evs *= ev / bin_evs.sum()
+        values = bin_evs / masses
+
         return (values, masses)
 
     @classmethod
-    def construct_bins(
-        cls, num_bins, total_ev_contribution, support, dist, cdf, ppf, bin_sizing
-    ):
+    def construct_bins(cls, num_bins, total_ev_contribution, support, dist, cdf, ppf, bin_sizing):
         """Construct a list of bin masses and values. Helper function for
         :func:`from_distribution`, do not call this directly."""
         if num_bins <= 0:
@@ -664,14 +676,16 @@ class ProbabilityMassHistogram(PDHBase):
             values = np.where(masses == 0, 0, values)
             num_zeros = np.sum(masses == 0)
             warnings.warn(
-                f"When constructing PMH histogram, {num_zeros} values greater than {values[-num_zeros - 1]} had CDFs of 1.", RuntimeWarning
+                f"When constructing PMH histogram, {num_zeros} values greater than {values[-num_zeros - 1]} had CDFs of 1.",
+                RuntimeWarning,
             )
 
         return (masses, values)
 
-
     @classmethod
-    def from_distribution(cls, dist: BaseDistribution, num_bins: int = 100, bin_sizing: Optional[str] = None):
+    def from_distribution(
+        cls, dist: BaseDistribution, num_bins: int = 100, bin_sizing: Optional[str] = None
+    ):
         """Create a probability mass histogram from the given distribution.
 
         Parameters
@@ -742,27 +756,27 @@ class ProbabilityMassHistogram(PDHBase):
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
         # Divide up bins such that each bin has as close as possible to equal
-        # contribution.
-        num_neg_bins = int(np.round(num_bins * neg_prop))
-        num_pos_bins = num_bins - num_neg_bins
-
-        # If one side is very small but nonzero, we must ensure that it gets at
-        # least one bin.
-        if neg_prop > 0:
-            num_neg_bins = max(1, num_neg_bins)
-            num_pos_bins = num_bins - num_neg_bins
-        if pos_prop > 0:
-            num_pos_bins = max(1, num_pos_bins)
-            num_neg_bins = num_bins - num_pos_bins
-
-        # All negative bins have exactly equal contribution, and all
-        # positive bins have exactly equal contribution.
+        # contribution. If one side has very small but nonzero contribution,
+        # still give it one bin.
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(num_bins, neg_prop, pos_prop, allowance=0)
         neg_masses, neg_values = cls.construct_bins(
-            num_neg_bins, neg_ev_contribution, (support[0], min(0, support[1])), dist, cdf, ppf, bin_sizing
+            num_neg_bins,
+            neg_ev_contribution,
+            (support[0], min(0, support[1])),
+            dist,
+            cdf,
+            ppf,
+            bin_sizing,
         )
         neg_values = -neg_values
         pos_masses, pos_values = cls.construct_bins(
-            num_pos_bins, pos_ev_contribution, (max(0, support[0]), support[1]), dist, cdf, ppf, bin_sizing
+            num_pos_bins,
+            pos_ev_contribution,
+            (max(0, support[0]), support[1]),
+            dist,
+            cdf,
+            ppf,
+            bin_sizing,
         )
         masses = np.concatenate((neg_masses, pos_masses))
         values = np.concatenate((neg_values, pos_values))
