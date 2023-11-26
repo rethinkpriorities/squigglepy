@@ -195,13 +195,29 @@ class PDHBase(ABC):
         """Return the approximate fraction of expected value that is less than
         the given value.
         """
-        return self._contribution_to_ev(self.values, self.masses, x)
+        return self._contribution_to_ev(self.values, self.masses)
 
     def inv_contribution_to_ev(self, fraction: np.ndarray | float):
         """Return the value such that ``fraction`` of the contribution to
         expected value lies to the left of that value.
         """
         return self._inv_contribution_to_ev(self.values, self.masses, fraction)
+
+    def plot(self, scale='linear'):
+        import matplotlib
+        from matplotlib import pyplot as plt
+        # matplotlib.use('GTK3Agg')
+        # matplotlib.use('Qt5Agg')
+        values_for_widths = np.concatenate(([0], self.values))
+        widths = values_for_widths[1:] - values_for_widths[:-1]
+        densities = self.masses / widths
+        values, densities, widths = zip(*[(v, d, w) for v, d, w in zip(list(values_for_widths), list(densities), list(widths)) if d > 0.001])
+        if scale == 'log':
+            plt.xscale('log')
+        plt.bar(values, densities, width=widths, align='edge')
+        plt.savefig("/tmp/plot.png")
+        plt.show()
+
 
     def __add__(x, y):
         cls = x
@@ -241,16 +257,9 @@ class PDHBase(ABC):
         # Set the number of bins per side to be approximately proportional to
         # the EV contribution, but make sure that if a side has nonzero EV
         # contribution, it gets at least one bin.
-        num_neg_bins = int(
-                num_bins * neg_ev_contribution / (neg_ev_contribution + pos_ev_contribution)
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
+            num_bins, neg_ev_contribution, pos_ev_contribution
         )
-        num_pos_bins = num_bins - num_neg_bins
-        if zero_index > 0:
-            num_neg_bins = max(1, num_neg_bins)
-            num_pos_bins = num_bins - num_neg_bins
-        if zero_index < len(extended_values):
-            num_pos_bins = max(1, num_pos_bins)
-            num_neg_bins = num_bins - num_pos_bins
 
         # Collect extended_values and extended_masses into the correct number
         # of bins. Make ``extended_values`` positive because ``resize_bins``
@@ -297,6 +306,60 @@ class PDHBase(ABC):
         if x.exact_sd is not None and y.exact_sd is not None:
             res.exact_sd = np.sqrt(x.exact_sd**2 + y.exact_sd**2)
         return res
+
+    @classmethod
+    def _num_bins_per_side(cls, num_bins, neg_contribution, pos_contribution):
+        """Determine how many bins to allocate to the positive and negative
+        sides of the distribution.
+
+        The negative and positive sides will get a number of bins approximately
+        proportional to `neg_contribution` and `pos_contribution` respectively.
+        If one side has too little value to warrant a full bin but still at
+        least 1/4 as much value as an average bin, that side will be allocated
+        a single bin. The idea is to preserve the knowledge that a distribution
+        had both positive and negative values, even if one side of the
+        distribution was small.
+
+        Parameters
+        ----------
+        num_bins : int
+            Total number of bins across the distribution.
+        neg_contribution : float
+            The total contribution of value from the negative side, using
+            whatever measure of value determines bin sizing.
+        pos_contribution : float
+            The total contribution of value from the positive side.
+
+        Return
+        ------
+        (num_neg_bins, num_pos_bins): (int, int)
+            The number of bins assigned to the negative and positive sides
+            of the distribution, respectively.
+
+        """
+        total_ev_contribution = neg_contribution + pos_contribution
+        num_neg_bins = int(
+            num_bins * neg_contribution / total_ev_contribution
+        )
+        num_pos_bins = num_bins - num_neg_bins
+        if neg_contribution / total_ev_contribution >= 1 / num_bins / 4:
+            num_neg_bins = max(1, num_neg_bins)
+            num_pos_bins = num_bins - num_neg_bins
+        else:
+            # num_neg_bins might not be 0 due to floating point rounding issues
+            num_neg_bins = 0
+            num_pos_bins = num_bins
+            pos_contribution = total_ev_contribution
+
+        if pos_contribution / total_ev_contribution >= 1 / num_bins / 4:
+            num_pos_bins = max(1, num_pos_bins)
+            num_neg_bins = num_bins - num_pos_bins
+        else:
+            num_pos_bins = 0
+            num_neg_bins = num_bins
+            neg_contribution = total_ev_contribution
+
+        return (num_neg_bins, num_pos_bins)
 
     def __mul__(x, y):
         cls = x
@@ -361,28 +424,9 @@ class PDHBase(ABC):
             x.neg_ev_contribution * y.neg_ev_contribution
             + x.pos_ev_contribution * y.pos_ev_contribution
         )
-        total_ev_contribution = neg_ev_contribution + pos_ev_contribution
-        num_neg_bins = int(
-            num_bins * neg_ev_contribution / total_ev_contribution
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
+            num_bins, neg_ev_contribution, pos_ev_contribution
         )
-        num_pos_bins = num_bins - num_neg_bins
-        # TODO: also fix __add__ and the other place where I do this pattern
-        if neg_ev_contribution / total_ev_contribution >= 1 / num_bins / 4:
-            num_neg_bins = max(1, num_neg_bins)
-            num_pos_bins = num_bins - num_neg_bins
-        else:
-            # num_neg_bins might not be 0 due to floating point rounding issues
-            num_neg_bins = 0
-            num_pos_bins = num_bins
-            pos_ev_contribution = total_ev_contribution
-
-        if pos_ev_contribution / total_ev_contribution >= 1 / num_bins / 4:
-            num_pos_bins = max(1, num_pos_bins)
-            num_neg_bins = num_bins - num_pos_bins
-        else:
-            num_pos_bins = 0
-            num_neg_bins = num_bins
-            neg_ev_contribution = total_ev_contribution
 
         # Collect extended_values and extended_masses into the correct number
         # of bins. Make ``extended_values`` positive because ``resize_bins``
