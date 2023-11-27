@@ -29,12 +29,25 @@ class BinSizing(Enum):
         each bin, then setting the value of each bin such that value * mass =
         contribution to expected value (rather than, say, setting value to the
         average value of the two edges).
-    mass : str
-        This method divides the distribution into bins such that each bin has
-        equal probability mass.
     uniform : str
         This method divides the support of the distribution into bins of equal
         width.
+
+    On setting values within bins
+    -----------------------------
+    Whenever possible, PMH assigns the value of each bin as the average value
+    between the two edges (weighted by mass). You can think of this as the
+    result you'd get if you generated infinitely many Monte Carlo samples and
+    grouped them into bins, setting the value of each bin as the average of the
+    samples.
+
+    This method guarantees that the histogram's expected value exactly equals
+    the expected value of the true distribution (modulo floating point rounding
+    errors).
+
+    TODO write this better
+
+    - EV is almost always lower than the midpoint of the bin
 
     Pros and cons of bin sizing methods
     -----------------------------------
@@ -294,30 +307,26 @@ class PDHBase(ABC):
         extended_values = np.add.outer(x.values, y.values).reshape(-1)
         extended_masses = np.outer(x.masses, y.masses).reshape(-1)
 
-        is_sorted = False
-        if (x.negative_everywhere() and y.negative_everywhere()) or (
-            x.positive_everywhere() and y.positive_everywhere()
-        ):
-            # If both distributions are negative/positive everywhere, we don't
-            # have to sort the extended values. This provides a ~10%
-            # performance improvement.
-            zero_index = 0 if x.positive_everywhere() else len(extended_values)
-        else:
-            # Sort so we can split the values into positive and negative sides.
-            # Use timsort (called 'mergesort' by the numpy API) because
-            # ``extended_values`` contains many sorted runs. And then pass
-            # `is_sorted` down to `resize_bins` so it knows not to sort again.
-            sorted_indexes = extended_values.argsort(kind="mergesort")
-            extended_values = extended_values[sorted_indexes]
-            extended_masses = extended_masses[sorted_indexes]
-            zero_index = np.searchsorted(extended_values, 0)
-            is_sorted = True
+        # Sort so we can split the values into positive and negative sides.
+        # Use timsort (called 'mergesort' by the numpy API) because
+        # ``extended_values`` contains many sorted runs. And then pass
+        # `is_sorted` down to `resize_bins` so it knows not to sort again.
+        sorted_indexes = extended_values.argsort(kind="mergesort")
+        extended_values = extended_values[sorted_indexes]
+        extended_masses = extended_masses[sorted_indexes]
+        zero_index = np.searchsorted(extended_values, 0)
+        is_sorted = True
 
         # Find how much of the EV contribution is on the negative side vs. the
         # positive side.
         neg_ev_contribution = -np.sum(extended_values[:zero_index] * extended_masses[:zero_index])
         sum_mean = x.mean() + y.mean()
-        pos_ev_contribution = sum_mean + neg_ev_contribution
+        # TODO: this `max` is a hack to deal with a problem where, when mean is
+        # negative and almost all contribution is on the negative side,
+        # neg_ev_contribution can sometimes be slightly less than abs(mean),
+        # apparently due to rounding issues, which makes pos_ev_contribution
+        # negative.
+        pos_ev_contribution = max(0, sum_mean + neg_ev_contribution)
 
         # Set the number of bins per side to be approximately proportional to
         # the EV contribution, but make sure that if a side has nonzero EV
@@ -621,7 +630,7 @@ class ProbabilityMassHistogram(PDHBase):
         return (values, masses)
 
     @classmethod
-    def construct_bins(cls, num_bins, total_ev_contribution, support, dist, cdf, ppf, bin_sizing):
+    def construct_bins(cls, num_bins, total_ev_contribution, support, dist, cdf, ppf, bin_sizing, value_setting='ev'):
         """Construct a list of bin masses and values. Helper function for
         :func:`from_distribution`, do not call this directly."""
         if num_bins <= 0:
@@ -654,21 +663,14 @@ class ProbabilityMassHistogram(PDHBase):
         edge_cdfs = cdf(edge_values)
         masses = np.diff(edge_cdfs)
 
-        if bin_sizing == BinSizing.ev:
-            # Assume the value exactly equals the bin's contribution to EV
-            # divided by its mass. This means the values will not be exactly
-            # centered, but it guarantees that the expected value of the
-            # histogram exactly equals the expected value of the distribution
-            # (modulo floating point rounding).
-            ev_contribution_per_bin = total_ev_contribution / num_bins
-            values = ev_contribution_per_bin / masses
-        elif bin_sizing == BinSizing.uniform:
-            edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
-            bin_ev_contributions = edge_ev_contributions[1:] - edge_ev_contributions[:-1]
-
-            # Set values such that each bin's contribution to EV is exactly
-            # correct. Do this regardless of bin sizing method.
-            values = bin_ev_contributions / masses
+        # Set the value for each bin equal to its average value. This is
+        # equivalent to generating infinitely many Monte Carlo samples and
+        # grouping them into bins, and it has the nice property that the
+        # expected value of the histogram will exactly equal the expected value
+        # of the distribution.
+        edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
+        bin_ev_contributions = edge_ev_contributions[1:] - edge_ev_contributions[:-1]
+        values = bin_ev_contributions / masses
 
         # For sufficiently large values, CDF rounds to 1 which makes the
         # mass 0.
@@ -704,9 +706,9 @@ class ProbabilityMassHistogram(PDHBase):
             support = (0, np.inf)
             bin_sizing = BinSizing(bin_sizing or BinSizing.ev)
 
-            # Uniform bin sizing is not gonna be very accurate for a lognormal
-            # distribution no matter how you set the bounds.
             if bin_sizing == BinSizing.uniform:
+                # Uniform bin sizing is not gonna be very accurate for a lognormal
+                # distribution no matter how you set the bounds.
                 left_edge = 0
                 right_edge = np.exp(dist.norm_mean + 7 * dist.norm_sd)
                 support = (left_edge, right_edge)
@@ -750,8 +752,8 @@ class ProbabilityMassHistogram(PDHBase):
                 pos_prop = 0
             else:
                 width = support[1] - support[0]
-                neg_prop = -left_edge / width
-                pos_prop = right_edge / width
+                neg_prop = -support[0] / width
+                pos_prop = support[1] / width
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
