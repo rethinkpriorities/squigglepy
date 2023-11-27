@@ -796,7 +796,13 @@ class NumericDistribution:
         return not (x == y)
 
     def __neg__(self):
-        raise NotImplementedError
+        return NumericDistribution(
+            values=np.flip(-self.values),
+            masses=np.flip(self.masses),
+            zero_bin_index=len(self.values) - self.zero_bin_index,
+            neg_ev_contribution=self.pos_ev_contribution,
+            pos_ev_contribution=self.neg_ev_contribution,
+        )
 
     def __radd__(y, x):
         return x + y

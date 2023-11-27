@@ -499,6 +499,34 @@ def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
 
 
 @given(
+    norm_mean=st.floats(min_value=-1e6, max_value=1e6),
+    norm_sd=st.floats(min_value=0.001, max_value=3),
+    num_bins=st.sampled_from([25, 100]),
+    bin_sizing=st.sampled_from(["ev", "uniform"]),
+)
+def test_norm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
+    dist = NormalDistribution(mean=0, sd=1)
+    hist = NumericDistribution.from_distribution(dist)
+    neg_hist = -hist
+    assert neg_hist.histogram_mean() == approx(-hist.histogram_mean())
+    assert neg_hist.histogram_sd() == approx(hist.histogram_sd())
+
+
+@given(
+    norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
+    norm_sd=st.floats(min_value=0.001, max_value=3),
+    num_bins=st.sampled_from([25, 100]),
+    bin_sizing=st.sampled_from(["ev", "uniform"]),
+)
+def test_lognorm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    hist = NumericDistribution.from_distribution(dist)
+    neg_hist = -hist
+    assert neg_hist.histogram_mean() == approx(-hist.histogram_mean())
+    assert neg_hist.histogram_sd() == approx(hist.histogram_sd())
+
+
+@given(
     norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=4),
     bin_num=st.integers(min_value=1, max_value=99),
