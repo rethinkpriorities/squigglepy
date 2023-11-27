@@ -70,6 +70,13 @@ class BaseDistribution(ABC):
             )
         return self.__str__() + f" (version {self._version})"
 
+
+class IntegrableEVDistribution(ABC):
+    """
+    A base class for distributions that can be integrated to find the
+    contribution to expected value.
+    """
+
     @abstractmethod
     def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
         """Find the fraction of this distribution's expected value given by the
@@ -742,7 +749,7 @@ def uniform(x, y):
     return UniformDistribution(x=x, y=y)
 
 
-class NormalDistribution(ContinuousDistribution):
+class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(
         self,
         x=None,
@@ -940,7 +947,7 @@ def norm(
     )
 
 
-class LognormalDistribution(ContinuousDistribution):
+class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(
         self,
         x=None,

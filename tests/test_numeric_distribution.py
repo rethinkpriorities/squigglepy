@@ -597,26 +597,36 @@ def test_plot():
 
 
 def test_performance():
-    return None  # don't accidentally run this test because it's really slow
-    import cProfile
-    import pstats
-    import io
-
+    # Note: I wrote some C++ code to approximate the behavior of this function.
+    # On my machine, the code below (with profile = False) runs in 15s, and
+    # the equivalent C++ code (with -O3) runs in 11s. The C++ code is not
+    # well-optimized, the most glaring issue being it uses std::sort instead of
+    # something like argpartition (the trouble is that Numpy's argpartition can
+    # partition on many values simultaneously, whereas C++'s std::partition can
+    # only partition on one value at a time, which is far slower).
+    return None
     dist1 = NormalDistribution(mean=0, sd=1)
     dist2 = NormalDistribution(mean=0, sd=1)
 
-    pr = cProfile.Profile()
-    pr.enable()
+    profile = True
+    if profile:
+        import cProfile
+        import pstats
+        import io
+
+        pr = cProfile.Profile()
+        pr.enable()
 
     for i in range(100):
         hist1 = NumericDistribution.from_distribution(dist1, num_bins=1000)
         hist2 = NumericDistribution.from_distribution(dist2, num_bins=1000)
         for _ in range(4):
-            hist1 = hist1 + hist2
+            hist1 = hist1 * hist2
 
-    pr.disable()
-    s = io.StringIO()
-    sortby = "cumulative"
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
+    if profile:
+        pr.disable()
+        s = io.StringIO()
+        sortby = "cumulative"
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())

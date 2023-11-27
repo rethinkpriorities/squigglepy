@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import numpy as np
 from scipy import optimize, stats
-import sortednp as snp
 from typing import Literal, Optional
 import warnings
 
