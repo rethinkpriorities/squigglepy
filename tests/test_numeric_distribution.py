@@ -6,7 +6,7 @@ from pytest import approx
 from scipy import integrate, stats
 
 from ..squigglepy.distributions import LognormalDistribution, NormalDistribution
-from ..squigglepy.pdh import NumericDistribution
+from ..squigglepy.numeric_distribution import NumericDistribution
 from ..squigglepy import samplers
 
 
@@ -31,6 +31,19 @@ def print_accuracy_ratio(x, y, extra_message=None):
         print(f"{extra_message}Ratio: {direction_off} by a factor of {ratio:.1f}")
     else:
         print(f"{extra_message}Ratio: {direction_off} by {100 * ratio:.3f}%")
+
+
+def get_mc_accuracy(exact_sd, num_samples, dists, operation):
+    # Run multiple trials because NumericDistribution should usually beat MC,
+    # but sometimes MC wins by luck
+    mc_abs_error = []
+    for i in range(20):
+        mcs = [samplers.sample(dist, num_samples) for dist in dists]
+        mc = reduce(operation, mcs)
+        mc_abs_error.append(abs(np.std(mc) - exact_sd))
+
+    mc_abs_error.sort()
+    return mc_abs_error[12]
 
 
 @given(
@@ -344,8 +357,8 @@ def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bin
 
 
 @given(
-    norm_mean1=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
-    norm_mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
+    norm_mean1=st.floats(min_value=-np.log(1e6), max_value=np.log(1e6)),
+    norm_mean2=st.floats(min_value=-np.log(1e6), max_value=np.log(1e6)),
     norm_sd1=st.floats(min_value=0.1, max_value=3),
     norm_sd2=st.floats(min_value=0.01, max_value=3),
     num_bins1=st.sampled_from([25, 100]),
@@ -410,18 +423,8 @@ def test_norm_product_sd_accuracy_vs_monte_carlo():
     hist = reduce(lambda acc, hist: acc * hist, hists)
     dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
 
-    mc_abs_error = []
-    for i in range(10):
-        mcs = [samplers.sample(dist, num_samples) for dist in dists]
-        mc = reduce(lambda acc, mc: acc * mc, mcs)
-        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
-
-    mc_abs_error.sort()
-
-    # dist should be more accurate than at least 7 out of 10 Monte Carlo runs.
-    # it's often more accurate than 10/10, but MC sometimes wins a few due to
-    # random variation
-    assert dist_abs_error < mc_abs_error[7]
+    mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc * mc)
+    assert dist_abs_error < mc_abs_error
 
 
 def test_lognorm_product_sd_accuracy_vs_monte_carlo():
@@ -434,16 +437,8 @@ def test_lognorm_product_sd_accuracy_vs_monte_carlo():
     hist = reduce(lambda acc, hist: acc * hist, hists)
     dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
 
-    mc_abs_error = []
-    for i in range(10):
-        mcs = [samplers.sample(dist, num_samples) for dist in dists]
-        mc = reduce(lambda acc, mc: acc * mc, mcs)
-        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
-
-    mc_abs_error.sort()
-
-    # dist should be more accurate than at least 7 out of 10 Monte Carlo runs
-    assert dist_abs_error < mc_abs_error[7]
+    mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc * mc)
+    assert dist_abs_error < mc_abs_error
 
 
 @given(bin_sizing=st.sampled_from(["ev", "uniform"]))
@@ -464,16 +459,8 @@ def test_norm_sum_sd_accuracy_vs_monte_carlo(bin_sizing):
     hist = reduce(lambda acc, hist: acc + hist, hists)
     dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
 
-    mc_abs_error = []
-    for i in range(10):
-        mcs = [samplers.sample(dist, num_samples) for dist in dists]
-        mc = reduce(lambda acc, mc: acc + mc, mcs)
-        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
-
-    mc_abs_error.sort()
-
-    # dist should be more accurate than at least 7 out of 10 Monte Carlo runs
-    assert dist_abs_error < mc_abs_error[7]
+    mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc + mc)
+    assert dist_abs_error < mc_abs_error
 
 
 def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
@@ -486,16 +473,8 @@ def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
     hist = reduce(lambda acc, hist: acc + hist, hists)
     dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
 
-    mc_abs_error = []
-    for i in range(10):
-        mcs = [samplers.sample(dist, num_samples) for dist in dists]
-        mc = reduce(lambda acc, mc: acc + mc, mcs)
-        mc_abs_error.append(abs(np.std(mc) - hist.exact_sd))
-
-    mc_abs_error.sort()
-
-    # dist should be more accurate than at least 7 out of 10 Monte Carlo runs
-    assert dist_abs_error < mc_abs_error[7]
+    mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc + mc)
+    assert dist_abs_error < mc_abs_error
 
 
 @given(
@@ -535,6 +514,16 @@ def test_lognorm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
     num_bins=st.sampled_from([30, 100]),
     bin_sizing=st.sampled_from(["ev", "uniform"])
 )
+# TODO
+@example(
+    dist2_type="lognorm",
+    mean1=119.0,
+    mean2=0.0,
+    sd1=1.0,
+    sd2=2.0,
+    num_bins=30,
+    bin_sizing="uniform",
+).via("discovered failure")
 def test_sub(dist2_type, mean1, mean2, sd1, sd2, num_bins, bin_sizing):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
 

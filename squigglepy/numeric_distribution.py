@@ -39,67 +39,61 @@ class BinSizing(Enum):
     average value between the two edges (weighted by mass). You can think of
     this as the result you'd get if you generated infinitely many Monte Carlo
     samples and grouped them into bins, setting the value of each bin as the
-    average of the samples.
+    average of the samples. You might call this the expected value (EV) method,
+    in contrast to two methods described below.
 
-    This method guarantees that the histogram's expected value exactly equals
+    The EV method guarantees that the histogram's expected value exactly equals
     the expected value of the true distribution (modulo floating point rounding
     errors).
 
-    TODO write this better
+    There are some other methods we could use, which are generally worse:
 
-    - EV is almost always lower than the midpoint of the bin
+    1. Set the value of each bin to the average of the two edges (the
+    "trapezoid rule"). The purpose of using the trapezoid rule is that we don't
+    know the probability mass within a bin (perhaps the CDF is too hard to
+    evaluate) so we have to estimate it. But whenever we *do* know the CDF, we
+    can calculate the probability mass exactly, so we don't need to use the
+    trapezoid rule.
 
-    Pros and cons of bin sizing methods
-    -----------------------------------
-    The "ev" method is the most accurate for most purposes, and it has the
-    important property that the histogram's expected value always exactly
-    equals the true expected value of the distribution (modulo floating point
-    rounding errors).
+    2. Set the value of each bin to the center of the probability mass (the
+    "mass method"). This is equivalent to generating infinitely many Monte
+    Carlo samples and grouping them into bins, setting the value of each bin as
+    the **median** of the samples. This approach does not particularly help us
+    because we don't care about the median of every bin. We might care about
+    the median of the distribution, but we can calculate that near-exactly
+    regardless of what value-setting method we use by looking at the value in
+    the bin where the probability mass crosses 0.5. And the mass method will
+    systematically underestimate (the absolute value of) EV because the
+    definition of expected value places larger weight on larger (absolute)
+    values, and the mass method does not.
 
-    The "ev" method differs from a standard trapezoid-method histogram in how
-    it sizes bins and how it assigns values to bins. A trapezoid histogram
-    divides the support of the distribution into bins of equal width, then
-    assigns the value of each bin to the average of the two edges of the bin.
-    The "ev" method of setting values naturally makes the histogram's expected
-    value more accurate (the values are set specifically to make E[X] correct),
-    but it also makes higher moments more accurate.
-
-    Compared to a trapezoid histogram, an "ev" histogram must make the absolute
-    value of the value in each bin larger: larger values within a bin get more
-    weight in the expected value, so choosing the center value (or the average
-    of the two edges) systematically underestimates E[X].
-
-    It is possible to define the variance of a random variable X as
+    Although the EV method perfectly measures the expected value of a
+    distribution, it systematically underestimates the variance. To see this,
+    consider that it is possible to define the variance of a random variable X
+    as
 
     .. math::
        E[X^2] - E[X]^2
 
-    Similarly to how the trapezoid method underestimates E[X], the "ev" method
-    necessarily underestimates E[X^2] (and therefore underestimates the
-    variance/standard deviation) because E[X^2] places even more weight on
-    larger values. But an alternative method that accurately estimated variance
-    would necessarily *over*estimate E[X]. And however much the "ev" method
-    underestimates E[X^2], the trapezoid method must underestimate it to a
-    greater extent.
-
-    The tradeoff is that the trapezoid method more accurately measures the
-    probability mass in the vicinity of a particular value, whereas the "ev"
-    method overestimates it. However, this is usually not as important as
-    accurately measuring the expected value and variance.
+    The EV method correctly estimates ``E[X]``, so it also correctly estimates
+    ``E[X]^2``. However, it systematically underestimates E[X^2] because E[X^2]
+    places more weight on larger values. But an alternative method that
+    accurately estimated variance would necessarily *over*estimate E[X].
 
     Implementation for two-sided distributions
     ------------------------------------------
-    The interpretation of "ev" bin-sizing is slightly non-obvious for two-sided
-    distributions because we must decide how to interpret bins with negative EV.
+    The interpretation of the EV value-setting method is slightly non-obvious
+    for two-sided distributions because we must decide how to interpret bins
+    with negative expected value.
 
-    bin_sizing="ev" arranges values into bins such that:
+    The EV method arranges values into bins such that:
         * The negative side has the correct negative contribution to EV and the
-            positive side has the correct positive contribution to EV.
+          positive side has the correct positive contribution to EV.
         * Every negative bin has equal contribution to EV and every positive bin
-            has equal contribution to EV.
+          has equal contribution to EV.
         * The number of negative and positive bins are chosen such that the
-            absolute contribution to EV for negative bins is as close as possible
-            to the absolute contribution to EV for positive bins.
+          absolute contribution to EV for negative bins is as close as possible
+          to the absolute contribution to EV for positive bins.
 
     This binning method means that the distribution EV is exactly preserved
     and there is no bin that contains the value zero. However, the positive
