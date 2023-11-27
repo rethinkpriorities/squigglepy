@@ -527,6 +527,48 @@ def test_lognorm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
 
 
 @given(
+    dist2_type=st.sampled_from(["norm", "lognorm"]),
+    mean1=st.floats(min_value=-1e6, max_value=1e6),
+    mean2=st.floats(min_value=-100, max_value=100),
+    sd1=st.floats(min_value=0.001, max_value=1000),
+    sd2=st.floats(min_value=0.1, max_value=5),
+    num_bins=st.sampled_from([30, 100]),
+    bin_sizing=st.sampled_from(["ev", "uniform"])
+)
+def test_sub(dist2_type, mean1, mean2, sd1, sd2, num_bins, bin_sizing):
+    dist1 = NormalDistribution(mean=mean1, sd=sd1)
+
+    if dist2_type == "norm":
+        dist2 = NormalDistribution(mean=mean2, sd=sd2)
+        neg_dist = NormalDistribution(mean=-mean2, sd=sd2)
+    elif dist2_type == "lognorm":
+        dist2 = LognormalDistribution(norm_mean=mean2, norm_sd=sd2)
+        # We can't negate a lognormal distribution by changing the params
+        neg_dist = None
+
+    hist1 = NumericDistribution.from_distribution(
+        dist1, num_bins=num_bins, bin_sizing=bin_sizing
+    )
+    hist2 = NumericDistribution.from_distribution(
+        dist2, num_bins=num_bins, bin_sizing=bin_sizing
+    )
+    hist_diff = hist1 - hist2
+    backward_diff = hist2 - hist1
+    assert not any(np.isnan(hist_diff.values))
+    assert all(hist_diff.values[:-1] <= hist_diff.values[1:])
+    assert hist_diff.histogram_mean() == approx(-backward_diff.histogram_mean(), rel=0.01)
+    assert hist_diff.histogram_sd() == approx(backward_diff.histogram_sd(), rel=0.01)
+
+    if neg_dist:
+        neg_hist = NumericDistribution.from_distribution(
+            neg_dist, num_bins=num_bins, bin_sizing=bin_sizing
+        )
+        hist_sum = hist1 + neg_hist
+        assert hist_diff.histogram_mean() == approx(hist_sum.histogram_mean(), rel=0.01)
+        assert hist_diff.histogram_sd() == approx(hist_sum.histogram_sd(), rel=0.01)
+
+
+@given(
     norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=4),
     bin_num=st.integers(min_value=1, max_value=99),
