@@ -11,7 +11,9 @@ import sortednp as snp
 from typing import Literal, Optional
 import warnings
 
-from .distributions import BaseDistribution, NormalDistribution, LognormalDistribution
+from .distributions import (
+    BaseDistribution, LognormalDistribution, NormalDistribution
+)
 from .samplers import sample
 
 
@@ -123,7 +125,219 @@ class BinSizing(Enum):
     uniform = "uniform"
 
 
-class PDHBase(ABC):
+class NumericDistribution:
+    """Represent a probability distribution as an array of x values and their
+    probability masses. Like Monte Carlo samples except that values are
+    weighted by probability, so you can effectively represent many times more
+    samples than you actually have values."""
+
+    def __init__(
+        self,
+        values: np.ndarray,
+        masses: np.ndarray,
+        zero_bin_index: int,
+        neg_ev_contribution: float,
+        pos_ev_contribution: float,
+        exact_mean: Optional[float] = None,
+        exact_sd: Optional[float] = None,
+    ):
+        """Create a probability mass histogram. You should usually not call
+        this constructor directly; instead use :func:`from_distribution`.
+
+        Parameters
+        ----------
+        values : np.ndarray
+            The values of the distribution.
+        masses : np.ndarray
+            The probability masses of the values.
+        zero_bin_index : int
+            The index of the smallest bin that contains positive values (0 if all bins are positive).
+        bin_sizing : Literal["ev", "quantile", "uniform"]
+            The method used to size the bins.
+        neg_ev_contribution : float
+            The (absolute value of) contribution to expected value from the negative portion of the distribution.
+        pos_ev_contribution : float
+            The contribution to expected value from the positive portion of the distribution.
+        exact_mean : Optional[float]
+            The exact mean of the distribution, if known.
+        exact_sd : Optional[float]
+            The exact standard deviation of the distribution, if known.
+
+        """
+        assert len(values) == len(masses)
+        self.values = values
+        self.masses = masses
+        self.num_bins = len(values)
+        self.zero_bin_index = zero_bin_index
+        self.neg_ev_contribution = neg_ev_contribution
+        self.pos_ev_contribution = pos_ev_contribution
+        self.exact_mean = exact_mean
+        self.exact_sd = exact_sd
+
+    @classmethod
+    def construct_bins(cls, num_bins, total_ev_contribution, support, dist, cdf, ppf, bin_sizing, value_setting='ev'):
+        """Construct a list of bin masses and values. Helper function for
+        :func:`from_distribution`, do not call this directly."""
+        if num_bins <= 0:
+            return (np.array([]), np.array([]))
+
+        if bin_sizing == BinSizing.ev:
+            get_edge_value = dist.inv_contribution_to_ev
+            # Don't call get_edge_value on the left and right edges because it's
+            # undefined for 0 and 1
+            left_prop = dist.contribution_to_ev(support[0])
+            right_prop = dist.contribution_to_ev(support[1])
+            edge_values = np.concatenate(
+                (
+                    [support[0]],
+                    np.atleast_1d(
+                        get_edge_value(np.linspace(left_prop, right_prop, num_bins + 1)[1:-1])
+                    )
+                    if num_bins > 1
+                    else [],
+                    [support[1]],
+                )
+            )
+
+        elif bin_sizing == BinSizing.uniform:
+            edge_values = np.linspace(support[0], support[1], num_bins + 1)
+
+        else:
+            raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
+
+        edge_cdfs = cdf(edge_values)
+        masses = np.diff(edge_cdfs)
+
+        # Set the value for each bin equal to its average value. This is
+        # equivalent to generating infinitely many Monte Carlo samples and
+        # grouping them into bins, and it has the nice property that the
+        # expected value of the histogram will exactly equal the expected value
+        # of the distribution.
+        edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
+        bin_ev_contributions = edge_ev_contributions[1:] - edge_ev_contributions[:-1]
+        values = bin_ev_contributions / masses
+
+        # For sufficiently large values, CDF rounds to 1 which makes the
+        # mass 0.
+        if any(masses == 0):
+            values = np.where(masses == 0, 0, values)
+            num_zeros = np.sum(masses == 0)
+            warnings.warn(
+                f"When constructing PMH histogram, {num_zeros} values greater than {values[-num_zeros - 1]} had CDFs of 1.",
+                RuntimeWarning,
+            )
+
+        return (masses, values)
+
+    @classmethod
+    def from_distribution(
+        cls, dist: BaseDistribution, num_bins: int = 100, bin_sizing: Optional[str] = None
+    ):
+        """Create a probability mass histogram from the given distribution.
+
+        Parameters
+        ----------
+        dist : BaseDistribution
+        num_bins : int
+        bin_sizing : str
+            See :ref:`squigglepy.pdh.BinSizing` for a list of valid options and a description of their behavior.
+
+        """
+        if isinstance(dist, LognormalDistribution):
+            ppf = lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean))
+            cdf = lambda x: stats.lognorm.cdf(x, dist.norm_sd, scale=np.exp(dist.norm_mean))
+            exact_mean = dist.lognorm_mean
+            exact_sd = dist.lognorm_sd
+            support = (0, np.inf)
+            bin_sizing = BinSizing(bin_sizing or BinSizing.ev)
+
+            if bin_sizing == BinSizing.uniform:
+                # Uniform bin sizing is not gonna be very accurate for a lognormal
+                # distribution no matter how you set the bounds.
+                left_edge = 0
+                right_edge = np.exp(dist.norm_mean + 7 * dist.norm_sd)
+                support = (left_edge, right_edge)
+        elif isinstance(dist, NormalDistribution):
+            ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
+            cdf = lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd)
+            exact_mean = dist.mean
+            exact_sd = dist.sd
+            support = (-np.inf, np.inf)
+            bin_sizing = BinSizing(bin_sizing or BinSizing.uniform)
+
+            # Wider domain increases error within each bin, and narrower domain
+            # increases error at the tails. Inter-bin error is proportional to
+            # width^3 / num_bins^2 and tail error is proportional to something
+            # like exp(-width^2). Setting width proportional to log(num_bins)
+            # balances these two sources of error. A scale coefficient of 1.5
+            # means that a histogram with 100 bins will cover 6.9 standard
+            # deviations in each direction which leaves off less than 1e-11 of
+            # the probability mass.
+            if bin_sizing == BinSizing.uniform:
+                width_scale = 1.5 * np.log(num_bins)
+                left_edge = dist.mean - dist.sd * width_scale
+                right_edge = dist.mean + dist.sd * width_scale
+                support = (left_edge, right_edge)
+        else:
+            raise ValueError(f"Unsupported distribution type: {type(dist)}")
+
+        total_ev_contribution = dist.contribution_to_ev(np.inf, normalized=False)
+        neg_ev_contribution = dist.contribution_to_ev(0, normalized=False)
+        pos_ev_contribution = total_ev_contribution - neg_ev_contribution
+
+        if bin_sizing == BinSizing.ev:
+            neg_prop = neg_ev_contribution / total_ev_contribution
+            pos_prop = pos_ev_contribution / total_ev_contribution
+        elif bin_sizing == BinSizing.uniform:
+            if support[0] > 0:
+                neg_prop = 0
+                pos_prop = 1
+            elif support[1] < 0:
+                neg_prop = 1
+                pos_prop = 0
+            else:
+                width = support[1] - support[0]
+                neg_prop = -support[0] / width
+                pos_prop = support[1] / width
+        else:
+            raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
+
+        # Divide up bins such that each bin has as close as possible to equal
+        # contribution. If one side has very small but nonzero contribution,
+        # still give it one bin.
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(num_bins, neg_prop, pos_prop, allowance=0)
+        neg_masses, neg_values = cls.construct_bins(
+            num_neg_bins,
+            neg_ev_contribution,
+            (support[0], min(0, support[1])),
+            dist,
+            cdf,
+            ppf,
+            bin_sizing,
+        )
+        neg_values = -neg_values
+        pos_masses, pos_values = cls.construct_bins(
+            num_pos_bins,
+            pos_ev_contribution,
+            (max(0, support[0]), support[1]),
+            dist,
+            cdf,
+            ppf,
+            bin_sizing,
+        )
+        masses = np.concatenate((neg_masses, pos_masses))
+        values = np.concatenate((neg_values, pos_values))
+
+        return cls(
+            np.array(values),
+            np.array(masses),
+            zero_bin_index=num_neg_bins,
+            neg_ev_contribution=neg_ev_contribution,
+            pos_ev_contribution=pos_ev_contribution,
+            exact_mean=exact_mean,
+            exact_sd=exact_sd,
+        )
+
     def __len__(self):
         return self.num_bins
 
@@ -298,6 +512,82 @@ class PDHBase(ABC):
 
         return (num_neg_bins, num_pos_bins)
 
+    @classmethod
+    def resize_bins(
+        cls,
+        extended_values,
+        extended_masses,
+        num_bins,
+        ev,
+        is_sorted=False,
+    ):
+        """Given two arrays of values and masses representing the result of a
+        binary operation on two positive-everywhere distributions, compress the
+        arrays down to ``num_bins`` bins and return the new values and masses of
+        the bins.
+
+        Parameters
+        ----------
+        extended_values : np.ndarray
+            The values of the distribution. The values must all be non-negative.
+        extended_masses : np.ndarray
+            The probability masses of the values.
+        num_bins : int
+            The number of bins to compress the distribution into.
+        ev : float
+            The expected value of the distribution.
+        is_sorted : bool
+            If True, assume that ``extended_values`` and ``extended_masses`` are
+            already sorted in ascending order. This provides a significant
+            performance improvement (~3x).
+
+        Returns
+        -------
+        values : np.ndarray
+            The values of the bins.
+        masses : np.ndarray
+            The probability masses of the bins.
+
+        """
+        if num_bins == 0:
+            return (np.array([]), np.array([]))
+        ev_per_bin = ev / num_bins
+        items_per_bin = len(extended_values) // num_bins
+
+        if len(extended_masses) % num_bins > 0:
+            # Increase the number of bins such that we can fit
+            # extended_masses into them at items_per_bin each
+            num_bins = int(np.ceil(len(extended_masses) / items_per_bin))
+
+            # Fill any empty space with zeros
+            extra_zeros = np.zeros(num_bins * items_per_bin - len(extended_masses))
+
+            extended_values = np.concatenate((extra_zeros, extended_values))
+            extended_masses = np.concatenate((extra_zeros, extended_masses))
+            ev_per_bin = ev / num_bins
+
+        if not is_sorted:
+            # Partition such that the values in one bin are all less than
+            # or equal to the values in the next bin. Values within bins
+            # don't need to be sorted, and partitioning is ~10% faster than
+            # timsort.
+            boundary_bins = np.arange(0, num_bins + 1) * items_per_bin
+            partitioned_indexes = extended_values.argpartition(boundary_bins[1:-1])
+            extended_values = extended_values[partitioned_indexes]
+            extended_masses = extended_masses[partitioned_indexes]
+
+        # Take advantage of the fact that all bins contain the same number
+        # of elements.
+        extended_evs = extended_values * extended_masses
+        masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
+        bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
+
+        # Adjust the numbers such that values * masses sums to EV.
+        bin_evs *= ev / bin_evs.sum()
+        values = bin_evs / masses
+
+        return (values, masses)
+
     def __add__(x, y):
         cls = x
         num_bins = max(len(x), len(y))
@@ -368,11 +658,10 @@ class PDHBase(ABC):
         # Construct the resulting ``ProbabiltyMassHistogram`` object.
         values = np.concatenate((neg_values, pos_values))
         masses = np.concatenate((neg_masses, pos_masses))
-        res = ProbabilityMassHistogram(
+        res = NumericDistribution(
             values=values,
             masses=masses,
             zero_bin_index=zero_index,
-            bin_sizing=x.bin_sizing,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
         )
@@ -482,11 +771,10 @@ class PDHBase(ABC):
         values = np.concatenate((neg_values, pos_values))
         masses = np.concatenate((neg_masses, pos_masses))
         zero_bin_index = len(neg_values)
-        res = ProbabilityMassHistogram(
+        res = NumericDistribution(
             values=values,
             masses=masses,
             zero_bin_index=zero_bin_index,
-            bin_sizing=x.bin_sizing,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
         )
@@ -501,295 +789,38 @@ class PDHBase(ABC):
             )
         return res
 
+    def __eq__(x, y):
+        return x.values == y.values and x.masses == y.masses
 
-class ProbabilityMassHistogram(PDHBase):
-    """Represent a probability distribution as an array of x values and their
-    probability masses. Like Monte Carlo samples except that values are
-    weighted by probability, so you can effectively represent many times more
-    samples than you actually have values."""
+    def __ne__(x, y):
+        return not (x == y)
 
-    def __init__(
-        self,
-        values: np.ndarray,
-        masses: np.ndarray,
-        zero_bin_index: int,
-        bin_sizing: Literal["ev", "mass", "uniform"],
-        neg_ev_contribution: float,
-        pos_ev_contribution: float,
-        exact_mean: Optional[float] = None,
-        exact_sd: Optional[float] = None,
-    ):
-        """Create a probability mass histogram. You should usually not call
-        this constructor directly; instead use :func:`from_distribution`.
+    def __neg__(self):
+        raise NotImplementedError
 
-        Parameters
-        ----------
-        values : np.ndarray
-            The values of the distribution.
-        masses : np.ndarray
-            The probability masses of the values.
-        zero_bin_index : int
-            The index of the smallest bin that contains positive values (0 if all bins are positive).
-        bin_sizing : Literal["ev", "quantile", "uniform"]
-            The method used to size the bins.
-        neg_ev_contribution : float
-            The (absolute value of) contribution to expected value from the negative portion of the distribution.
-        pos_ev_contribution : float
-            The contribution to expected value from the positive portion of the distribution.
-        exact_mean : Optional[float]
-            The exact mean of the distribution, if known.
-        exact_sd : Optional[float]
-            The exact standard deviation of the distribution, if known.
+    def __radd__(y, x):
+        return x + y
 
-        """
-        assert len(values) == len(masses)
-        self.values = values
-        self.masses = masses
-        self.num_bins = len(values)
-        self.zero_bin_index = zero_bin_index
-        self.bin_sizing = BinSizing(bin_sizing)
-        self.neg_ev_contribution = neg_ev_contribution
-        self.pos_ev_contribution = pos_ev_contribution
-        self.exact_mean = exact_mean
-        self.exact_sd = exact_sd
+    def __sub__(x, y):
+        raise NotImplementedError
 
-    @classmethod
-    def resize_bins(
-        cls,
-        extended_values,
-        extended_masses,
-        num_bins,
-        ev,
-        is_sorted=False,
-    ):
-        """Given two arrays of values and masses representing the result of a
-        binary operation on two positive-everywhere distributions, compress the
-        arrays down to ``num_bins`` bins and return the new values and masses of
-        the bins.
+    def __rsub__(y, x):
+        return -x + y
 
-        Parameters
-        ----------
-        extended_values : np.ndarray
-            The values of the distribution. The values must all be non-negative.
-        extended_masses : np.ndarray
-            The probability masses of the values.
-        num_bins : int
-            The number of bins to compress the distribution into.
-        ev : float
-            The expected value of the distribution.
-        is_sorted : bool
-            If True, assume that ``extended_values`` and ``extended_masses`` are
-            already sorted in ascending order. This provides a significant
-            performance improvement (~3x).
+    def __rmul__(y, x):
+        return x * y
 
-        Returns
-        -------
-        values : np.ndarray
-            The values of the bins.
-        masses : np.ndarray
-            The probability masses of the bins.
+    def __truediv__(x, y):
+        raise NotImplementedError
 
-        """
-        if num_bins == 0:
-            return (np.array([]), np.array([]))
-        ev_per_bin = ev / num_bins
-        items_per_bin = len(extended_values) // num_bins
+    def __rtruediv__(x, y):
+        raise NotImplementedError
 
-        if len(extended_masses) % num_bins > 0:
-            # Increase the number of bins such that we can fit
-            # extended_masses into them at items_per_bin each
-            num_bins = int(np.ceil(len(extended_masses) / items_per_bin))
+    def __floordiv__(x, y):
+        raise NotImplementedError
 
-            # Fill any empty space with zeros
-            extra_zeros = np.zeros(num_bins * items_per_bin - len(extended_masses))
+    def __rfloordiv__(x, y):
+        raise NotImplementedError
 
-            extended_values = np.concatenate((extra_zeros, extended_values))
-            extended_masses = np.concatenate((extra_zeros, extended_masses))
-            ev_per_bin = ev / num_bins
-
-        if not is_sorted:
-            # Partition such that the values in one bin are all less than
-            # or equal to the values in the next bin. Values within bins
-            # don't need to be sorted, and partitioning is ~10% faster than
-            # timsort.
-            boundary_bins = np.arange(0, num_bins + 1) * items_per_bin
-            partitioned_indexes = extended_values.argpartition(boundary_bins[1:-1])
-            extended_values = extended_values[partitioned_indexes]
-            extended_masses = extended_masses[partitioned_indexes]
-
-        # Take advantage of the fact that all bins contain the same number
-        # of elements.
-        extended_evs = extended_values * extended_masses
-        masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
-        bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
-
-        # Adjust the numbers such that values * masses sums to EV.
-        bin_evs *= ev / bin_evs.sum()
-        values = bin_evs / masses
-
-        return (values, masses)
-
-    @classmethod
-    def construct_bins(cls, num_bins, total_ev_contribution, support, dist, cdf, ppf, bin_sizing, value_setting='ev'):
-        """Construct a list of bin masses and values. Helper function for
-        :func:`from_distribution`, do not call this directly."""
-        if num_bins <= 0:
-            return (np.array([]), np.array([]))
-
-        if bin_sizing == BinSizing.ev:
-            get_edge_value = dist.inv_contribution_to_ev
-            # Don't call get_edge_value on the left and right edges because it's
-            # undefined for 0 and 1
-            left_prop = dist.contribution_to_ev(support[0])
-            right_prop = dist.contribution_to_ev(support[1])
-            edge_values = np.concatenate(
-                (
-                    [support[0]],
-                    np.atleast_1d(
-                        get_edge_value(np.linspace(left_prop, right_prop, num_bins + 1)[1:-1])
-                    )
-                    if num_bins > 1
-                    else [],
-                    [support[1]],
-                )
-            )
-
-        elif bin_sizing == BinSizing.uniform:
-            edge_values = np.linspace(support[0], support[1], num_bins + 1)
-
-        else:
-            raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
-
-        edge_cdfs = cdf(edge_values)
-        masses = np.diff(edge_cdfs)
-
-        # Set the value for each bin equal to its average value. This is
-        # equivalent to generating infinitely many Monte Carlo samples and
-        # grouping them into bins, and it has the nice property that the
-        # expected value of the histogram will exactly equal the expected value
-        # of the distribution.
-        edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
-        bin_ev_contributions = edge_ev_contributions[1:] - edge_ev_contributions[:-1]
-        values = bin_ev_contributions / masses
-
-        # For sufficiently large values, CDF rounds to 1 which makes the
-        # mass 0.
-        if any(masses == 0):
-            values = np.where(masses == 0, 0, values)
-            num_zeros = np.sum(masses == 0)
-            warnings.warn(
-                f"When constructing PMH histogram, {num_zeros} values greater than {values[-num_zeros - 1]} had CDFs of 1.",
-                RuntimeWarning,
-            )
-
-        return (masses, values)
-
-    @classmethod
-    def from_distribution(
-        cls, dist: BaseDistribution, num_bins: int = 100, bin_sizing: Optional[str] = None
-    ):
-        """Create a probability mass histogram from the given distribution.
-
-        Parameters
-        ----------
-        dist : BaseDistribution
-        num_bins : int
-        bin_sizing : str
-            See :ref:`squigglepy.pdh.BinSizing` for a list of valid options and a description of their behavior.
-
-        """
-        if isinstance(dist, LognormalDistribution):
-            ppf = lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean))
-            cdf = lambda x: stats.lognorm.cdf(x, dist.norm_sd, scale=np.exp(dist.norm_mean))
-            exact_mean = dist.lognorm_mean
-            exact_sd = dist.lognorm_sd
-            support = (0, np.inf)
-            bin_sizing = BinSizing(bin_sizing or BinSizing.ev)
-
-            if bin_sizing == BinSizing.uniform:
-                # Uniform bin sizing is not gonna be very accurate for a lognormal
-                # distribution no matter how you set the bounds.
-                left_edge = 0
-                right_edge = np.exp(dist.norm_mean + 7 * dist.norm_sd)
-                support = (left_edge, right_edge)
-        elif isinstance(dist, NormalDistribution):
-            ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
-            cdf = lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd)
-            exact_mean = dist.mean
-            exact_sd = dist.sd
-            support = (-np.inf, np.inf)
-            bin_sizing = BinSizing(bin_sizing or BinSizing.uniform)
-
-            # Wider domain increases error within each bin, and narrower domain
-            # increases error at the tails. Inter-bin error is proportional to
-            # width^3 / num_bins^2 and tail error is proportional to something
-            # like exp(-width^2). Setting width proportional to log(num_bins)
-            # balances these two sources of error. A scale coefficient of 1.5
-            # means that a histogram with 100 bins will cover 6.9 standard
-            # deviations in each direction which leaves off less than 1e-11 of
-            # the probability mass.
-            if bin_sizing == BinSizing.uniform:
-                width_scale = 1.5 * np.log(num_bins)
-                left_edge = dist.mean - dist.sd * width_scale
-                right_edge = dist.mean + dist.sd * width_scale
-                support = (left_edge, right_edge)
-        else:
-            raise ValueError(f"Unsupported distribution type: {type(dist)}")
-
-        total_ev_contribution = dist.contribution_to_ev(np.inf, normalized=False)
-        neg_ev_contribution = dist.contribution_to_ev(0, normalized=False)
-        pos_ev_contribution = total_ev_contribution - neg_ev_contribution
-
-        if bin_sizing == BinSizing.ev:
-            neg_prop = neg_ev_contribution / total_ev_contribution
-            pos_prop = pos_ev_contribution / total_ev_contribution
-        elif bin_sizing == BinSizing.uniform:
-            if support[0] > 0:
-                neg_prop = 0
-                pos_prop = 1
-            elif support[1] < 0:
-                neg_prop = 1
-                pos_prop = 0
-            else:
-                width = support[1] - support[0]
-                neg_prop = -support[0] / width
-                pos_prop = support[1] / width
-        else:
-            raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
-
-        # Divide up bins such that each bin has as close as possible to equal
-        # contribution. If one side has very small but nonzero contribution,
-        # still give it one bin.
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(num_bins, neg_prop, pos_prop, allowance=0)
-        neg_masses, neg_values = cls.construct_bins(
-            num_neg_bins,
-            neg_ev_contribution,
-            (support[0], min(0, support[1])),
-            dist,
-            cdf,
-            ppf,
-            bin_sizing,
-        )
-        neg_values = -neg_values
-        pos_masses, pos_values = cls.construct_bins(
-            num_pos_bins,
-            pos_ev_contribution,
-            (max(0, support[0]), support[1]),
-            dist,
-            cdf,
-            ppf,
-            bin_sizing,
-        )
-        masses = np.concatenate((neg_masses, pos_masses))
-        values = np.concatenate((neg_values, pos_values))
-
-        return cls(
-            np.array(values),
-            np.array(masses),
-            zero_bin_index=num_neg_bins,
-            bin_sizing=bin_sizing,
-            neg_ev_contribution=neg_ev_contribution,
-            pos_ev_contribution=pos_ev_contribution,
-            exact_mean=exact_mean,
-            exact_sd=exact_sd,
-        )
+    def __hash__(self):
+        return hash(repr(self.values) + "," + repr(self.masses))
