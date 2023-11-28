@@ -6,7 +6,7 @@ from scipy import stats
 import warnings
 from hypothesis import assume, given, settings
 
-from ..squigglepy.distributions import LognormalDistribution, NormalDistribution
+from ..squigglepy.distributions import LognormalDistribution, NormalDistribution, UniformDistribution
 from ..squigglepy.utils import ConvergenceWarning
 
 
@@ -64,7 +64,7 @@ def test_norm_contribution_to_ev(mu, sigma):
 def test_norm_inv_contribution_to_ev(mu, sigma):
     dist = NormalDistribution(mean=mu, sd=sigma)
 
-    assert dist.inv_contribution_to_ev(1 - 1e-9) > mu + 3 * siga
+    assert dist.inv_contribution_to_ev(1 - 1e-9) > mu + 3 * sigma
     assert dist.inv_contribution_to_ev(1e-9) < mu - 3 * sigma
 
     # midpoint represents less than half the EV if mu > 0 b/c the larger
@@ -91,3 +91,68 @@ def test_norm_inv_contribution_to_ev(mu, sigma):
 def test_norm_inv_contribution_to_ev_inverts_contribution_to_ev(mu, sigma, ev_fraction):
     dist = NormalDistribution(mean=mu, sd=sigma)
     assert dist.contribution_to_ev(dist.inv_contribution_to_ev(ev_fraction)) == approx(ev_fraction, abs=1e-8)
+
+
+def test_uniform_contribution_to_ev_basic():
+    dist = UniformDistribution(-1, 1)
+    assert dist.contribution_to_ev(-1) == approx(0)
+    assert dist.contribution_to_ev(1) == approx(1)
+    assert dist.contribution_to_ev(0) == approx(0.5)
+
+
+@given(prop=st.floats(min_value=0, max_value=1))
+def test_standard_uniform_contribution_to_ev(prop):
+    dist = UniformDistribution(0, 1)
+    assert dist.contribution_to_ev(prop) == approx(prop)
+
+
+@given(
+    a=st.floats(min_value=-10, max_value=10),
+    b=st.floats(min_value=-10, max_value=10),
+)
+def test_uniform_contribution_to_ev(a, b):
+    if a > b:
+        a, b = b, a
+    if abs(a - b) < 1e-20:
+        return None
+    dist = UniformDistribution(x=a, y=b)
+    assert dist.contribution_to_ev(a) == approx(0)
+    assert dist.contribution_to_ev(b) == approx(1)
+    assert dist.contribution_to_ev(a - 1) == approx(0)
+    assert dist.contribution_to_ev(b + 1) == approx(1)
+
+    assert dist.contribution_to_ev(a, normalized=False) == approx(0)
+    if not (a < 0 and b > 0):
+        assert dist.contribution_to_ev(b, normalized=False) == approx(abs(a + b) / 2)
+    else:
+        total_contribution = (a**2 + b**2) / 2 / (b - a)
+        assert dist.contribution_to_ev(b, normalized=False) == approx(total_contribution)
+
+
+@given(
+    a=st.floats(min_value=-10, max_value=10),
+    b=st.floats(min_value=-10, max_value=10),
+)
+def test_uniform_inv_contribution_to_ev(a, b):
+    if a > b:
+        a, b = b, a
+    if abs(a - b) < 1e-20:
+        return None
+    dist = UniformDistribution(x=a, y=b)
+    assert dist.inv_contribution_to_ev(0) == approx(a)
+    assert dist.inv_contribution_to_ev(1) == approx(b)
+    assert dist.inv_contribution_to_ev(0.25) == approx((a + b) / 2)
+
+
+@given(
+    a=st.floats(min_value=-10, max_value=10),
+    b=st.floats(min_value=-10, max_value=10),
+    prop=st.floats(min_value=0, max_value=1),
+)
+def test_uniform_inv_contribution_to_ev_inverts_contribution_to_ev(a, b, prop):
+    if a > b:
+        a, b = b, a
+    if abs(a - b) < 1e-20:
+        return None
+    dist = UniformDistribution(x=a, y=b)
+    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(prop)) == approx(prop)

@@ -79,15 +79,17 @@ class IntegrableEVDistribution(ABC):
 
     @abstractmethod
     def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
-        """Find the fraction of this distribution's expected value given by the
-        portion of the distribution that lies to the left of x.
+        """Find the fraction of this distribution's absolute expected value
+        given by the portion of the distribution that lies to the left of x.
+        For a distribution with support on [a, b], ``contribution_to_ev(a) =
+        0`` and ``contribution_to_ev(b) = 1``.
 
-        `contribution_to_ev(x, normalized=False)` is defined as
+        ``contribution_to_ev(x, normalized=False)`` is defined as
 
-        .. math:: \\int_{-\\infty}^x |t| f(t) dt
+        .. math:: \\int_a^x |t| f(t) dt
 
-        where `f(t)` is the PDF of the normal distribution. Normalizing divides
-        this result by `contribution_to_ev(inf, normalized=False)`.
+        where `f(t)` is the PDF of the normal distribution. ``normalized=True``
+        divides this result by ``contribution_to_ev(b, normalized=False)``.
 
         Note that this is different from the partial expected value, which is
         defined as
@@ -98,14 +100,14 @@ class IntegrableEVDistribution(ABC):
         ----------
         x : array-like
             The value(s) to find the contribution to expected value for.
-        normalized : bool
+        normalized : bool (default=True)
             If True, normalize the result such that the return value is a
             fraction (between 0 and 1). If False, return the raw integral
-            value, such that `contribution_to_ev(infinity)` is the expected
-            value of the distribution. True by default.
+            value.
 
         """
         # TODO: can compute this numerically for any scipy distribution using
+        # something like
         # scipy_dist.expect(func=lambda x: abs(x), lb=0, ub=x)
         ...
 
@@ -715,7 +717,7 @@ def const(x):
     return ConstantDistribution(x)
 
 
-class UniformDistribution(ContinuousDistribution):
+class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, x, y):
         super().__init__()
         self.x = x
@@ -725,6 +727,55 @@ class UniformDistribution(ContinuousDistribution):
     def __str__(self):
         return "<Distribution> uniform({}, {})".format(self.x, self.y)
 
+    def contribution_to_ev_old(self, x: np.ndarray | float, normalized=True):
+        x = np.asarray(x)
+        a = self.x
+        b = self.y
+
+        # Shift the distribution over so that the left edge is at zero. This
+        # preserves the result but makes the math easier when the support
+        # crosses zero.
+        pseudo_mean = (b - a) / 2
+
+        fraction = np.squeeze((x - a)**2 / (b - a)**2)
+        fraction = np.where(x < a, 0, fraction)
+        fraction = np.where(x > b, 1, fraction)
+        if normalized:
+            return fraction
+        else:
+            return fraction * (b - a) / 2
+
+    def contribution_to_ev(self, x: np.ndarray | float, normalized=True):
+        x = np.asarray(x)
+        a = self.x
+        b = self.y
+
+        x = np.where(x < a, a, x)
+        x = np.where(x > b, b, x)
+
+        fraction = np.squeeze((x**2 * np.sign(x) - a**2 * np.sign(a)) / (2 * (b - a)))
+        if not normalized:
+            return fraction
+        normalizer = self.contribution_to_ev(b, normalized=False)
+        return fraction / normalizer
+
+    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+        # TODO: rewrite this
+        raise NotImplementedError
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError(f"fraction must be between 0 and 1 inclusive, not {fraction}")
+
+        a = self.x
+        b = self.y
+
+        pos_sol = 1 / np.sqrt(fraction) * np.sqrt(b**2 * np.sign(b) - (1 - fraction) * a**2 * np.sign(a))
+        neg_sol = -pos_sol
+
+        # TODO: There are two solutions to the polynomial, but idk how to tell
+        # which one is correct when a < 0 and b > 0
 
 def uniform(x, y):
     """
@@ -839,14 +890,14 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         return deriv
 
     def inv_contribution_to_ev(self, fraction: np.ndarray | float, full_output: bool = False):
-        if isinstance(fraction, float):
+        if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
         mu = self.mean
         sigma = self.sd
         tolerance = 1e-8
 
         if any(fraction <= 0) or any(fraction >= 1):
-            raise ValueError(f"fraction must be between 0 and 1, not {fraction}")
+            raise ValueError(f"fraction must be between 0 and 1 exclusive, not {fraction}")
 
         # Approximate using Newton's method. Sometimes this has trouble
         # converging b/c it diverges or gets caught in a cycle, so use binary

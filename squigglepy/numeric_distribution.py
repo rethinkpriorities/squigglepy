@@ -10,7 +10,12 @@ from scipy import optimize, stats
 from typing import Literal, Optional
 import warnings
 
-from .distributions import BaseDistribution, LognormalDistribution, NormalDistribution
+from .distributions import (
+    BaseDistribution,
+    LognormalDistribution,
+    NormalDistribution,
+    UniformDistribution,
+)
 from .samplers import sample
 
 
@@ -218,19 +223,40 @@ class NumericDistribution:
         bin_ev_contributions = edge_ev_contributions[1:] - edge_ev_contributions[:-1]
 
         # For sufficiently large edge values, CDF rounds to 1 which makes the
-        # mass 0. Remove any 0s.
-        if any(masses == 0):
-            nonzero_indexes = [i for i in range(len(masses)) if masses[i] != 0]
-            num_zeros = len(masses) - len(nonzero_indexes)
+        # mass 0. Values can also be 0 due to floating point rounding if
+        # support is very small. Remove any 0s.
+        if any(masses == 0) or any(bin_ev_contributions == 0):
+            mass_zeros = len([x for x in masses if x == 0])
+            ev_zeros = len([x for x in bin_ev_contributions if x == 0])
+            nonzero_indexes = [
+                i for i in range(len(masses)) if masses[i] != 0 and bin_ev_contributions[i] != 0
+            ]
             bin_ev_contributions = bin_ev_contributions[nonzero_indexes]
             masses = masses[nonzero_indexes]
-            values = bin_ev_contributions / masses
+            if mass_zeros == 1:
+                mass_zeros_message = f"1 value >= {edge_values[-1]} had a CDF of 1"
+            else:
+                mass_zeros_message = (
+                    f"{mass_zeros} values >= {edge_values[-mass_zeros]} had CDFs of 1"
+                )
+            if ev_zeros == 1:
+                ev_zeros_message = (
+                    f"1 bin had zero expected value, most likely because it was too small"
+                )
+            else:
+                ev_zeros_message = f"{ev_zeros} bins had zero expected value, most likely because they were too small"
+            if mass_zeros > 0 and ev_zeros > 0:
+                joint_message = f"{mass_zeros_message}; and {ev_zeros_message}"
+            elif mass_zeros > 0:
+                joint_message = mass_zeros_message
+            else:
+                joint_message = ev_zeros_message
             warnings.warn(
-                f"When constructing NumericDistribution, {num_zeros} values greater than {values[-1]} had CDFs of 1.",
+                f"When constructing NumericDistribution, {joint_message}.",
                 RuntimeWarning,
             )
-        values = bin_ev_contributions / masses
 
+        values = bin_ev_contributions / masses
         return (masses, values)
 
     @classmethod
@@ -247,6 +273,7 @@ class NumericDistribution:
             See :ref:`squigglepy.pdh.BinSizing` for a list of valid options and a description of their behavior.
 
         """
+        supported = False  # not to be confused with ``support``
         if isinstance(dist, LognormalDistribution):
             ppf = lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean))
             cdf = lambda x: stats.lognorm.cdf(x, dist.norm_sd, scale=np.exp(dist.norm_mean))
@@ -261,6 +288,9 @@ class NumericDistribution:
                 left_edge = 0
                 right_edge = np.exp(dist.norm_mean + 7 * dist.norm_sd)
                 support = (left_edge, right_edge)
+                supported = True
+            if bin_sizing == BinSizing.ev:
+                supported = True
         elif isinstance(dist, NormalDistribution):
             ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
             cdf = lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd)
@@ -282,8 +312,28 @@ class NumericDistribution:
                 left_edge = dist.mean - dist.sd * width_scale
                 right_edge = dist.mean + dist.sd * width_scale
                 support = (left_edge, right_edge)
+                supported = True
+            if bin_sizing == BinSizing.ev:
+                supported = True
+        elif isinstance(dist, UniformDistribution):
+            loc = dist.x
+            scale = dist.y - dist.x
+            ppf = lambda p: stats.uniform.ppf(p, loc=loc, scale=scale)
+            cdf = lambda x: stats.uniform.cdf(x, loc=loc, scale=scale)
+            exact_mean = (dist.x + dist.y) / 2
+            exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
+            support = (dist.x, dist.y)
+            bin_sizing = BinSizing(bin_sizing or BinSizing.uniform)
+
+            if bin_sizing == BinSizing.uniform:
+                left_edge = dist.x
+                right_edge = dist.y
+                supported = True
         else:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
+
+        if not supported:
+            raise ValueError(f"Unsupported bin sizing method {bin_sizing} for {type(dist)}.")
 
         total_ev_contribution = dist.contribution_to_ev(np.inf, normalized=False)
         neg_ev_contribution = dist.contribution_to_ev(0, normalized=False)
