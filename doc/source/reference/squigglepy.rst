@@ -16,7 +16,7 @@ Submodules
    squigglepy.correlation
    squigglepy.distributions
    squigglepy.numbers
-   squigglepy.pdh
+   squigglepy.numeric_distribution
    squigglepy.rng
    squigglepy.samplers
    squigglepy.utils

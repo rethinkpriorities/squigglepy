@@ -1,53 +1,3 @@
-"""
-A numerical representation of a probability distribution as a histogram.
-
-On setting values within bins
------------------------------
-Whenever possible, NumericDistribution assigns the value of each bin as the
-average value between the two edges (weighted by mass). You can think of
-this as the result you'd get if you generated infinitely many Monte Carlo
-samples and grouped them into bins, setting the value of each bin as the
-average of the samples. You might call this the expected value (EV) method,
-in contrast to two methods described below.
-
-The EV method guarantees that the histogram's expected value exactly equals
-the expected value of the true distribution (modulo floating point rounding
-errors).
-
-There are some other methods we could use, which are generally worse:
-
-1. Set the value of each bin to the average of the two edges (the
-"trapezoid rule"). The purpose of using the trapezoid rule is that we don't
-know the probability mass within a bin (perhaps the CDF is too hard to
-evaluate) so we have to estimate it. But whenever we *do* know the CDF, we
-can calculate the probability mass exactly, so we don't need to use the
-trapezoid rule.
-
-2. Set the value of each bin to the center of the probability mass (the
-"mass method"). This is equivalent to generating infinitely many Monte
-Carlo samples and grouping them into bins, setting the value of each bin as
-the **median** of the samples. This approach does not particularly help us
-because we don't care about the median of every bin. We might care about
-the median of the distribution, but we can calculate that near-exactly
-regardless of what value-setting method we use by looking at the value in
-the bin where the probability mass crosses 0.5. And the mass method will
-systematically underestimate (the absolute value of) EV because the
-definition of expected value places larger weight on larger (absolute)
-values, and the mass method does not.
-
-Although the EV method perfectly measures the expected value of a
-distribution, it systematically underestimates the variance. To see this,
-consider that it is possible to define the variance of a random variable X
-as
-
-.. math::
-    E[X^2] - E[X]^2
-
-The EV method correctly estimates ``E[X]``, so it also correctly estimates
-``E[X]^2``. However, it systematically underestimates E[X^2] because E[X^2]
-places more weight on larger values. But an alternative method that
-accurately estimated variance would necessarily *over*estimate E[X].
-"""
 
 
 from abc import ABC, abstractmethod
@@ -67,7 +17,10 @@ from .samplers import sample
 
 
 class BinSizing(Enum):
-    """An enum for the different methods of sizing histogram bins.
+    """An enum for the different methods of sizing histogram bins. A histogram
+    with finitely many bins can only contain so much information about the
+    shape of a distribution; the choice of bin sizing changes what information
+    NumericDistribution prioritizes.
 
     Attributes
     ----------
@@ -96,7 +49,7 @@ class BinSizing(Enum):
         quantiles; for example, with 100 bins, it ensures that every bin value
         falls between two percentiles. This method is generally not recommended
         because it puts too much probability mass near the center of the
-        distribution, where precision is the least valuable.
+        distribution, where precision is the least useful.
 
     Interpretation for two-sided distributions
     ------------------------------------------
@@ -130,10 +83,76 @@ class BinSizing(Enum):
 
 
 class NumericDistribution:
-    """Represent a probability distribution as an array of x values and their
-    probability masses. Like Monte Carlo samples except that values are
-    weighted by probability, so you can effectively represent many times more
-    samples than you actually have values."""
+    """NumericDistribution
+
+    A numerical representation of a probability distribution as a histogram of
+    values along with the probability mass near each value.
+
+    A ``NumericDistribution`` is functionally equivalent to a Monte Carlo
+    simulation where you generate infinitely many samples and then group the
+    samples into finitely many bins, keeping track of the proportion of samples
+    in each bin (a.k.a. the probability mass) and the average value for each
+    bin.
+
+    Compared to a Monte Carlo simulation, ``NumericDistribution`` can represent
+    information much more densely by grouping together nearby values (although
+    some information is lost in the grouping). The benefit of this is most
+    obvious in fat-tailed distributions. In a Monte Carlo simulation, perhaps 1
+    in 1000 samples account for 10% of the expected value, but a
+    ``NumericDistribution`` (with the right bin sizing method, see
+    :ref:``BinSizing``) can easily track the probability mass of large values.
+
+    Implementation Details
+    ======================
+
+    On setting values within bins
+    -----------------------------
+    Whenever possible, NumericDistribution assigns the value of each bin as the
+    average value between the two edges (weighted by mass). You can think of
+    this as the result you'd get if you generated infinitely many Monte Carlo
+    samples and grouped them into bins, setting the value of each bin as the
+    average of the samples. You might call this the expected value (EV) method,
+    in contrast to two methods described below.
+
+    The EV method guarantees that the histogram's expected value exactly equals
+    the expected value of the true distribution (modulo floating point rounding
+    errors).
+
+    There are some other methods we could use, which are generally worse:
+
+    1. Set the value of each bin to the average of the two edges (the
+    "trapezoid rule"). The purpose of using the trapezoid rule is that we don't
+    know the probability mass within a bin (perhaps the CDF is too hard to
+    evaluate) so we have to estimate it. But whenever we *do* know the CDF, we
+    can calculate the probability mass exactly, so we don't need to use the
+    trapezoid rule.
+
+    2. Set the value of each bin to the center of the probability mass (the
+    "mass method"). This is equivalent to generating infinitely many Monte
+    Carlo samples and grouping them into bins, setting the value of each bin as
+    the **median** of the samples. This approach does not particularly help us
+    because we don't care about the median of every bin. We might care about
+    the median of the distribution, but we can calculate that near-exactly
+    regardless of what value-setting method we use by looking at the value in
+    the bin where the probability mass crosses 0.5. And the mass method will
+    systematically underestimate (the absolute value of) EV because the
+    definition of expected value places larger weight on larger (absolute)
+    values, and the mass method does not.
+
+    Although the EV method perfectly measures the expected value of a
+    distribution, it systematically underestimates the variance. To see this,
+    consider that it is possible to define the variance of a random variable X
+    as
+
+    .. math::
+        E[X^2] - E[X]^2
+
+    The EV method correctly estimates ``E[X]``, so it also correctly estimates
+    ``E[X]^2``. However, it systematically underestimates E[X^2] because E[X^2]
+    places more weight on larger values. But an alternative method that
+    accurately estimated variance would necessarily *over*estimate E[X].
+
+    """
 
     def __init__(
         self,
@@ -229,8 +248,10 @@ class NumericDistribution:
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
+        # Avoid re-calculating CDFs if we can because it's really slow
         if bin_sizing != BinSizing.mass:
             edge_cdfs = cdf(edge_values)
+
         masses = np.diff(edge_cdfs)
 
         # Set the value for each bin equal to its average value. This is
@@ -239,7 +260,7 @@ class NumericDistribution:
         # expected value of the histogram will exactly equal the expected value
         # of the distribution.
         edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
-        bin_ev_contributions = edge_ev_contributions[1:] - edge_ev_contributions[:-1]
+        bin_ev_contributions = np.diff(edge_ev_contributions)
 
         # For sufficiently large edge values, CDF rounds to 1 which makes the
         # mass 0. Values can also be 0 due to floating point rounding if
@@ -299,7 +320,7 @@ class NumericDistribution:
             chosen based on the distribution type of ``dist``. It is
             recommended to use the default bin sizing method most of the time.
 
-            See :ref:`squigglepy.pdh.BinSizing` for a list of valid options and
+            See :ref:`squigglepy.numeric_distribution.BinSizing` for a list of valid options and
             explanations of their behavior.
 
         """
@@ -592,7 +613,7 @@ class NumericDistribution:
         # matplotlib.use('GTK3Agg')
         # matplotlib.use('Qt5Agg')
         values_for_widths = np.concatenate(([0], self.values))
-        widths = values_for_widths[1:] - values_for_widths[:-1]
+        widths = np.diff(values_for_widths[1:])
         densities = self.masses / widths
         values, densities, widths = zip(
             *[
