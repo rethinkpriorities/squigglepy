@@ -263,11 +263,9 @@ def test_norm_sd_bin_sizing_accuracy():
 )
 def test_norm_one_sided_clip(mean, sd, clip_zscore):
     tolerance = 1e-3 if abs(clip_zscore) > 3 else 1e-5
-    lclip = mean + clip_zscore * sd
-    dist = NormalDistribution(mean=mean, sd=sd)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        hist = NumericDistribution.from_distribution(dist, lclip=lclip)
+    clip = mean + clip_zscore * sd
+    dist = NormalDistribution(mean=mean, sd=sd, lclip=clip)
+    hist = NumericDistribution.from_distribution(dist, warn=False)
     assert hist.histogram_mean() == approx(
         stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=tolerance, abs=tolerance
     )
@@ -278,10 +276,8 @@ def test_norm_one_sided_clip(mean, sd, clip_zscore):
         stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=1e-6, abs=1e-10
     )
 
-    rclip = mean + clip_zscore * sd
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        hist = NumericDistribution.from_distribution(dist, rclip=rclip)
+    dist = NormalDistribution(mean=mean, sd=sd, rclip=clip)
+    hist = NumericDistribution.from_distribution(dist, warn=False)
     assert hist.histogram_mean() == approx(
         stats.truncnorm.mean(-np.inf, clip_zscore, loc=mean, scale=sd),
         rel=tolerance,
@@ -305,10 +301,8 @@ def test_norm_clip(mean, sd, lclip_zscore, rclip_zscore):
     assume(abs(rclip_zscore - lclip_zscore) > 0.01)
     lclip = mean + lclip_zscore * sd
     rclip = mean + rclip_zscore * sd
-    dist = NormalDistribution(mean=mean, sd=sd)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        hist = NumericDistribution.from_distribution(dist, lclip=lclip, rclip=rclip)
+    dist = NormalDistribution(mean=mean, sd=sd, lclip=lclip, rclip=rclip)
+    hist = NumericDistribution.from_distribution(dist, warn=False)
 
     assert hist.histogram_mean() == approx(
         stats.truncnorm.mean(lclip_zscore, rclip_zscore, loc=mean, scale=sd), rel=tolerance
@@ -330,14 +324,38 @@ def test_norm_clip(mean, sd, lclip_zscore, rclip_zscore):
 )
 def test_uniform_clip(a, b, lclip, rclip):
     dist = UniformDistribution(a, b)
-    clipped_dist = UniformDistribution(max(a, lclip), min(b, rclip))
-    hist = NumericDistribution.from_distribution(dist, lclip=lclip, rclip=rclip)
-    narrow_hist = NumericDistribution.from_distribution(clipped_dist)
+    dist.lclip = lclip
+    dist.rclip = rclip
+    narrow_dist = UniformDistribution(max(a, lclip), min(b, rclip))
+    hist = NumericDistribution.from_distribution(dist)
+    narrow_hist = NumericDistribution.from_distribution(narrow_dist)
 
     assert hist.histogram_mean() == approx(narrow_hist.exact_mean)
     assert hist.histogram_mean() == approx(narrow_hist.histogram_mean())
     assert hist.values[0] == approx(narrow_hist.values[0])
     assert hist.values[-1] == approx(narrow_hist.values[-1])
+
+
+@given(
+    norm_mean=st.floats(min_value=0.1, max_value=10),
+    norm_sd=st.floats(min_value=0.5, max_value=3),
+    clip_zscore=st.floats(min_value=-2, max_value=2),
+)
+def test_lognorm_clip_and_sum(norm_mean, norm_sd, clip_zscore):
+    clip = np.exp(norm_mean + norm_sd * clip_zscore)
+    left_dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd, rclip=clip)
+    right_dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd, lclip=clip)
+    left_hist = NumericDistribution.from_distribution(left_dist, warn=False)
+    right_hist = NumericDistribution.from_distribution(right_dist, warn=False)
+    left_mass = stats.lognorm.cdf(clip, norm_sd, scale=np.exp(norm_mean))
+    right_mass = 1 - left_mass
+    true_mean = stats.lognorm.mean(norm_sd, scale=np.exp(norm_mean))
+    sum_exact_mean = left_mass * left_hist.exact_mean + right_mass * right_hist.exact_mean
+    sum_hist_mean = left_mass * left_hist.histogram_mean() + right_mass * right_hist.histogram_mean()
+
+    # TODO: the error margin is surprisingly large
+    assert sum_exact_mean == approx(true_mean, rel=1e-3, abs=1e-6)
+    assert sum_hist_mean == approx(true_mean, rel=1e-3, abs=1e-6)
 
 
 @given(

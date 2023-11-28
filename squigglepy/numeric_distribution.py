@@ -323,8 +323,6 @@ class NumericDistribution:
         dist: BaseDistribution,
         num_bins: int = 100,
         bin_sizing: Optional[str] = None,
-        lclip: Optional[float] = None,
-        rclip: Optional[float] = None,
         warn: bool = True,
     ):
         """Create a probability mass histogram from the given distribution.
@@ -346,10 +344,6 @@ class NumericDistribution:
             method most of the time. See
             :ref:`squigglepy.numeric_distribution.BinSizing` for a list of
             valid options and explanations of their behavior.
-        lclip : Optional[float]
-            If provided, clip the left edge of the distribution to this value.
-        rclip : Optional[float]
-            If provided, clip the right edge of the distribution to this value.
         warn : Optional[bool] (default = True)
             If True, raise warnings about bins with zero mass.
 
@@ -437,13 +431,13 @@ class NumericDistribution:
         # Adjust support based on clip
         # ----------------------------
 
-        support = _narrow_support(support, (lclip, rclip))
+        support = _narrow_support(support, (dist.lclip, dist.rclip))
 
         # ---------------------------
         # Set exact_mean and exact_sd
         # ---------------------------
 
-        if lclip is None and rclip is None:
+        if dist.lclip is None and dist.rclip is None:
             if isinstance(dist, LognormalDistribution):
                 exact_mean = dist.lognorm_mean
                 exact_sd = dist.lognorm_sd
@@ -454,7 +448,14 @@ class NumericDistribution:
                 exact_mean = (dist.x + dist.y) / 2
                 exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
         else:
-            if isinstance(dist, NormalDistribution):
+            if isinstance(dist, LognormalDistribution):
+                contribution_to_ev = dist.contribution_to_ev(support[1], normalized=False) - dist.contribution_to_ev(
+                    support[0], normalized=False
+                )
+                mass = cdf(support[1]) - cdf(support[0])
+                exact_mean = contribution_to_ev / mass
+                exact_sd = None  # unknown
+            elif isinstance(dist, NormalDistribution):
                 a = (support[0] - dist.mean) / dist.sd
                 b = (support[1] - dist.mean) / dist.sd
                 exact_mean = stats.truncnorm.mean(a, b, dist.mean, dist.sd)
@@ -462,9 +463,6 @@ class NumericDistribution:
             elif isinstance(dist, UniformDistribution):
                 exact_mean = (support[0] + support[1]) / 2
                 exact_sd = np.sqrt(1 / 12) * (support[1] - support[0])
-            else:
-                exact_mean = None
-                exact_sd = None
 
         # -----------------------------------------------------------------
         # Split dist into negative and positive sides and generate bins for
