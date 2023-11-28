@@ -71,31 +71,32 @@ class BinSizing(Enum):
 
     Attributes
     ----------
+    uniform : str
+        Divides the distribution into bins of equal width. For distributions
+        with infinite support (such as normal distributions), it chooses a
+        total width to roughly minimize total error, considering both intra-bin
+        error and error due to the excluded tails.
+    log-uniform : str
+        Divides the logarithm of the distribution into bins of equal width. For
+        example, if you generated a NumericDistribution from a log-normal
+        distribution with log-uniform bin sizing, and then took the log of each
+        bin, you'd get a normal distribution with uniform bin sizing.
     ev : str
-        This method divides the distribution into bins such that each bin has
-        equal contribution to expected value (see
+        Divides the distribution into bins such that each bin has equal
+        contribution to expected value (see
         :func:`squigglepy.distributions.IntegrableEVDistribution.contribution_to_ev`).
         It works by first computing the bin edge values that equally divide up
         contribution to expected value, then computing the probability mass of
         each bin, then setting the value of each bin such that value * mass =
         contribution to expected value (rather than, say, setting value to the
         average value of the two edges).
-    uniform : str
-        This method divides the support of the distribution into bins of equal
-        width. For distributions with infinite support (such as normal
-        distributions), it chooses a total width to roughly minimize total
-        error, considering both intra-bin error and error due to the excluded
-        tails.
-    log-uniform : str
-        This method divides the logarithm of the support of the distribution
-        into bins of equal width. For example, if you generated a
-        NumericDistribution from a log-normal distribution with log-uniform bin
-        sizing, and then took the log of each bin, you'd get a normal
-        distribution with uniform bin sizing.
-
-    Previously there was also a "mass" option that divided bins into equal
-    probability mass, but it performed worse than other bin-sizing methods, so
-    it was removed.
+    mass : str
+        Divides the distribution into bins such that each bin has equal
+        probability mass. This maximizes the accuracy of uniformly-distributed
+        quantiles; for example, with 100 bins, it ensures that every bin value
+        falls between two percentiles. This method is generally not recommended
+        because it puts too much probability mass near the center of the
+        distribution, where precision is the least valuable.
 
     Interpretation for two-sided distributions
     ------------------------------------------
@@ -122,9 +123,10 @@ class BinSizing(Enum):
 
     """
 
-    ev = "ev"
     uniform = "uniform"
     log_uniform = "log-uniform"
+    ev = "ev"
+    mass = "mass"
 
 
 class NumericDistribution:
@@ -186,14 +188,21 @@ class NumericDistribution:
         cdf,
         ppf,
         bin_sizing,
-        value_setting="ev",
     ):
         """Construct a list of bin masses and values. Helper function for
         :func:`from_distribution`, do not call this directly."""
         if num_bins <= 0:
             return (np.array([]), np.array([]))
 
-        if bin_sizing == BinSizing.ev:
+        if bin_sizing == BinSizing.uniform:
+            edge_values = np.linspace(support[0], support[1], num_bins + 1)
+
+        elif bin_sizing == BinSizing.log_uniform:
+            log_support = (np.log(support[0]), np.log(support[1]))
+            log_edge_values = np.linspace(log_support[0], log_support[1], num_bins + 1)
+            edge_values = np.exp(log_edge_values)
+
+        elif bin_sizing == BinSizing.ev:
             get_edge_value = dist.inv_contribution_to_ev
             # Don't call get_edge_value on the left and right edges because it's
             # undefined for 0 and 1
@@ -211,18 +220,17 @@ class NumericDistribution:
                 )
             )
 
-        elif bin_sizing == BinSizing.uniform:
-            edge_values = np.linspace(support[0], support[1], num_bins + 1)
-
-        elif bin_sizing == BinSizing.log_uniform:
-            log_support = (np.log(support[0]), np.log(support[1]))
-            log_edge_values = np.linspace(log_support[0], log_support[1], num_bins + 1)
-            edge_values = np.exp(log_edge_values)
+        elif bin_sizing == BinSizing.mass:
+            left_cdf = cdf(support[0])
+            right_cdf = cdf(support[1])
+            edge_cdfs = np.linspace(left_cdf, right_cdf, num_bins + 1)
+            edge_values = ppf(edge_cdfs)
 
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
-        edge_cdfs = cdf(edge_values)
+        if bin_sizing != BinSizing.mass:
+            edge_cdfs = cdf(edge_values)
         masses = np.diff(edge_cdfs)
 
         # Set the value for each bin equal to its average value. This is
@@ -304,7 +312,7 @@ class NumericDistribution:
             support = (0, np.inf)
             bin_sizing = BinSizing(bin_sizing or BinSizing.ev)
 
-            if bin_sizing == BinSizing.ev:
+            if bin_sizing == BinSizing.ev or bin_sizing == BinSizing.mass:
                 supported = True
             if bin_sizing == BinSizing.uniform:
                 # Uniform bin sizing is not gonna be very accurate for a lognormal
@@ -346,6 +354,8 @@ class NumericDistribution:
             if bin_sizing == BinSizing.ev:
                 # Not recommended.
                 supported = True
+            if bin_sizing == BinSizing.mass:
+                supported = True
         elif isinstance(dist, UniformDistribution):
             loc = dist.x
             scale = dist.y - dist.x
@@ -360,6 +370,8 @@ class NumericDistribution:
                 left_edge = dist.x
                 right_edge = dist.y
                 supported = True
+            if bin_sizing == BinSizing.mass:
+                supported = True
         else:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
 
@@ -373,6 +385,9 @@ class NumericDistribution:
         if bin_sizing == BinSizing.ev:
             neg_prop = neg_ev_contribution / total_ev_contribution
             pos_prop = pos_ev_contribution / total_ev_contribution
+        elif bin_sizing == BinSizing.mass:
+            neg_prop = cdf(0)
+            pos_prop = 1 - neg_prop
         elif bin_sizing == BinSizing.uniform:
             if support[0] > 0:
                 neg_prop = 0
@@ -473,6 +488,56 @@ class NumericDistribution:
         """Standard deviation of the distribution. May be calculated using a
         stored exact value or the histogram data."""
         return self.exact_sd
+
+    def cdf(self, x):
+        """Estimate the proportion of the distribution that lies below ``x``.
+        Uses linear interpolation between known values.
+        """
+        cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
+        return np.interp(x, self.values, cum_mass)
+
+    def quantile(self, q):
+        """Estimate the value of the distribution at quantile ``q`` using
+        linear interpolation between known values.
+
+        This function is not very accurate in certain cases:
+
+        1. Fat-tailed distributions put much of their probability mass in the
+        smallest bins because the difference between (say) the 10th percentile
+        and the 20th percentile is inconsequential for most purposes. For these
+        distributions, small quantiles will be very inaccurate, in exchange for
+        greater accuracy in quantiles close to 1.
+
+        2. For values with CDFs very close to 1, the values in bins may not be
+        strictly ordered, in which case ``quantile`` may return an incorrect
+        result. This will only happen if you request a quantile very close
+        to 1 (such as 0.9999999).
+
+        Parameters
+        ----------
+        q : number or array_like
+            The quantile or quantiles for which to determine the value(s).
+
+        Return
+        ------
+        quantiles: number or array-like
+            The estimated value at the given quantile(s).
+        """
+        # Subtracting 0.5 * masses because eg the first out of 100 values
+        # represents the 0.5th percentile, not the 1st percentile
+        cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
+        return np.interp(q, cum_mass, self.values)
+
+    def ppf(self, q):
+        """An alias for :ref:``quantile``."""
+        return self.quantile(q)
+
+
+    def percentile(self, p):
+        """Estimate the value of the distribution at percentile ``p``. See
+        :ref:``quantile`` for notes on this function's accuracy.
+        """
+        return self.quantile(p / 100)
 
     @classmethod
     def _contribution_to_ev(
