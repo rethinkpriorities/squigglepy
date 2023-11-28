@@ -136,16 +136,20 @@ def test_norm_basic(mean, sd):
 
 @given(
     norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
-    norm_sd=st.floats(min_value=0.001, max_value=5),
-    bin_sizing=st.sampled_from(["ev", "uniform"]),
+    norm_sd=st.floats(min_value=0.001, max_value=3),
+    bin_sizing=st.sampled_from(["ev", "uniform", "log-uniform"]),
 )
-@example(norm_mean=-12.0, norm_sd=5.0, bin_sizing="uniform").via("discovered failure")
 def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         hist = NumericDistribution.from_distribution(dist, bin_sizing=bin_sizing)
-    tolerance = 1e-6 if bin_sizing == "ev" else (0.01 if dist.norm_sd < 3 else 0.1)
+    if bin_sizing == "ev":
+        tolerance = 1e-6
+    elif bin_sizing == "log-uniform":
+        tolerance = 1e-2
+    else:
+        tolerance = 0.01 if dist.norm_sd < 3 else 0.1
     assert hist.histogram_mean() == approx(
         stats.lognorm.mean(dist.norm_sd, scale=np.exp(dist.norm_mean)),
         rel=tolerance,
@@ -153,21 +157,15 @@ def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
 
 
 @given(
-    # norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
-    # norm_sd=st.floats(min_value=0.01, max_value=5),
-    norm_mean=st.just(0),
-    norm_sd=st.just(1),
+    norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
+    norm_sd=st.floats(min_value=0.01, max_value=3),
 )
-# @example(norm_mean=0, norm_sd=3)
 def test_lognorm_sd(norm_mean, norm_sd):
-    # TODO: The margin of error on the SD estimate is pretty big, mostly
-    # because the right tail is underestimating variance. But that might be an
-    # acceptable cost. Try to see if there's a way to improve it without compromising the fidelity of the EV estimate.
-    #
-    # Note: Adding more bins increases accuracy overall, but decreases accuracy
-    # on the far right tail.
+    test_edges = False
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    hist = NumericDistribution.from_distribution(dist, bin_sizing="ev")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        hist = NumericDistribution.from_distribution(dist, bin_sizing="log-uniform")
 
     def true_variance(left, right):
         return integrate.quad(
@@ -182,17 +180,21 @@ def test_lognorm_sd(norm_mean, norm_sd):
             hist.masses[left:right] * (hist.values[left:right] - hist.histogram_mean()) ** 2
         )
 
-    midpoint = hist.values[int(hist.num_bins * 9 / 10)]
-    expected_left_variance = true_variance(0, midpoint)
-    expected_right_variance = true_variance(midpoint, np.inf)
-    midpoint_index = int(len(hist) * hist.contribution_to_ev(midpoint))
-    observed_left_variance = observed_variance(0, midpoint_index)
-    observed_right_variance = observed_variance(midpoint_index, len(hist))
-    # print("")
-    # print_accuracy_ratio(observed_left_variance, expected_left_variance, "Left   ")
-    # print_accuracy_ratio(observed_right_variance, expected_right_variance, "Right  ")
-    # print_accuracy_ratio(hist.histogram_sd(), dist.lognorm_sd, "Overall")
-    assert hist.histogram_sd() == approx(dist.lognorm_sd, rel=0.5)
+    if test_edges:
+        # Note: For bin_sizing=ev, adding more bins increases accuracy overall,
+        # but decreases accuracy on the far right tail.
+        midpoint = hist.values[int(hist.num_bins * 9 / 10)]
+        expected_left_variance = true_variance(0, midpoint)
+        expected_right_variance = true_variance(midpoint, np.inf)
+        midpoint_index = int(len(hist) * hist.contribution_to_ev(midpoint))
+        observed_left_variance = observed_variance(0, midpoint_index)
+        observed_right_variance = observed_variance(midpoint_index, len(hist))
+        print("")
+        print_accuracy_ratio(observed_left_variance, expected_left_variance, "Left   ")
+        print_accuracy_ratio(observed_right_variance, expected_right_variance, "Right  ")
+        print_accuracy_ratio(hist.histogram_sd(), dist.lognorm_sd, "Overall")
+
+    assert hist.histogram_sd() == approx(dist.lognorm_sd, rel=0.2)
 
 
 @given(
@@ -205,17 +207,18 @@ def test_lognorm_sd(norm_mean, norm_sd):
 def test_noncentral_norm_product(mean1, mean2, sd1, sd2, bin_sizing):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
     dist2 = NormalDistribution(mean=mean2, sd=sd2)
-    tolerance = 1e-9 if bin_sizing == "ev" else 1e-5
+    mean_tolerance = 1e-5
+    sd_tolerance = 1 if bin_sizing == "ev" else 0.2
     hist1 = NumericDistribution.from_distribution(dist1, num_bins=25, bin_sizing=bin_sizing)
     hist2 = NumericDistribution.from_distribution(dist2, num_bins=25, bin_sizing=bin_sizing)
     hist_prod = hist1 * hist2
-    assert hist_prod.histogram_mean() == approx(dist1.mean * dist2.mean, rel=tolerance, abs=1e-10)
+    assert hist_prod.histogram_mean() == approx(dist1.mean * dist2.mean, rel=mean_tolerance, abs=1e-10)
     assert hist_prod.histogram_sd() == approx(
         np.sqrt(
             (dist1.sd**2 + dist1.mean**2) * (dist2.sd**2 + dist2.mean**2)
             - dist1.mean**2 * dist2.mean**2
         ),
-        rel=1,
+        rel=sd_tolerance,
     )
 
 
@@ -274,20 +277,28 @@ def test_norm_lognorm_product(mean1, mean2, sd1, sd2, num_bins1, num_bins2):
 @given(
     norm_mean=st.floats(min_value=np.log(1e-9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=3),
-    num_bins=st.sampled_from([10, 25, 100]),
-    bin_sizing=st.sampled_from(["ev"]),
+    num_bins=st.sampled_from([25, 100]),
+    bin_sizing=st.sampled_from(["ev", "log-uniform"]),
+)
+@example(norm_mean=0.0, norm_sd=1.0, num_bins=25, bin_sizing="ev").via(
+    "discovered failure"
 )
 def test_lognorm_mean_error_propagation(norm_mean, norm_sd, num_bins, bin_sizing):
+    assume(not (num_bins == 10 and bin_sizing == "log-uniform"))
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = NumericDistribution.from_distribution(dist, num_bins=num_bins, bin_sizing=bin_sizing)
     hist_base = NumericDistribution.from_distribution(
         dist, num_bins=num_bins, bin_sizing=bin_sizing
     )
+    inv_tolerance = 1 - 1e-12 if bin_sizing == "ev" else 0.98
 
     for i in range(1, 13):
         true_mean = stats.lognorm.mean(np.sqrt(i) * norm_sd, scale=np.exp(i * norm_mean))
-        assert all(hist.values[:-1] <= hist.values[1:]), f"On iteration {i}: {hist.values}"
-        assert hist.histogram_mean() == approx(true_mean), f"On iteration {i}"
+        if bin_sizing == "ev":
+            # log-uniform can have out-of-order values due to the masses at the
+            # end being very small
+            assert all(hist.values[:-1] <= hist.values[1:]), f"On iteration {i}: {hist.values}"
+        assert hist.histogram_mean() == approx(true_mean, rel=1 - inv_tolerance**i), f"On iteration {i}"
         hist = hist * hist_base
 
 

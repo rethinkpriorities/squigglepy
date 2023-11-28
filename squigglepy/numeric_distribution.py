@@ -1,5 +1,52 @@
 """
 A numerical representation of a probability distribution as a histogram.
+
+On setting values within bins
+-----------------------------
+Whenever possible, NumericDistribution assigns the value of each bin as the
+average value between the two edges (weighted by mass). You can think of
+this as the result you'd get if you generated infinitely many Monte Carlo
+samples and grouped them into bins, setting the value of each bin as the
+average of the samples. You might call this the expected value (EV) method,
+in contrast to two methods described below.
+
+The EV method guarantees that the histogram's expected value exactly equals
+the expected value of the true distribution (modulo floating point rounding
+errors).
+
+There are some other methods we could use, which are generally worse:
+
+1. Set the value of each bin to the average of the two edges (the
+"trapezoid rule"). The purpose of using the trapezoid rule is that we don't
+know the probability mass within a bin (perhaps the CDF is too hard to
+evaluate) so we have to estimate it. But whenever we *do* know the CDF, we
+can calculate the probability mass exactly, so we don't need to use the
+trapezoid rule.
+
+2. Set the value of each bin to the center of the probability mass (the
+"mass method"). This is equivalent to generating infinitely many Monte
+Carlo samples and grouping them into bins, setting the value of each bin as
+the **median** of the samples. This approach does not particularly help us
+because we don't care about the median of every bin. We might care about
+the median of the distribution, but we can calculate that near-exactly
+regardless of what value-setting method we use by looking at the value in
+the bin where the probability mass crosses 0.5. And the mass method will
+systematically underestimate (the absolute value of) EV because the
+definition of expected value places larger weight on larger (absolute)
+values, and the mass method does not.
+
+Although the EV method perfectly measures the expected value of a
+distribution, it systematically underestimates the variance. To see this,
+consider that it is possible to define the variance of a random variable X
+as
+
+.. math::
+    E[X^2] - E[X]^2
+
+The EV method correctly estimates ``E[X]``, so it also correctly estimates
+``E[X]^2``. However, it systematically underestimates E[X^2] because E[X^2]
+places more weight on larger values. But an alternative method that
+accurately estimated variance would necessarily *over*estimate E[X].
 """
 
 
@@ -27,7 +74,7 @@ class BinSizing(Enum):
     ev : str
         This method divides the distribution into bins such that each bin has
         equal contribution to expected value (see
-        :func:`squigglepy.distributions.BaseDistribution.contribution_to_ev`).
+        :func:`squigglepy.distributions.IntegrableEVDistribution.contribution_to_ev`).
         It works by first computing the bin edge values that equally divide up
         contribution to expected value, then computing the probability mass of
         each bin, then setting the value of each bin such that value * mass =
@@ -35,58 +82,24 @@ class BinSizing(Enum):
         average value of the two edges).
     uniform : str
         This method divides the support of the distribution into bins of equal
-        width.
+        width. For distributions with infinite support (such as normal
+        distributions), it chooses a total width to roughly minimize total
+        error, considering both intra-bin error and error due to the excluded
+        tails.
+    log-uniform : str
+        This method divides the logarithm of the support of the distribution
+        into bins of equal width. For example, if you generated a
+        NumericDistribution from a log-normal distribution with log-uniform bin
+        sizing, and then took the log of each bin, you'd get a normal
+        distribution with uniform bin sizing.
 
-    On setting values within bins
-    -----------------------------
-    Whenever possible, NumericDistribution assigns the value of each bin as the
-    average value between the two edges (weighted by mass). You can think of
-    this as the result you'd get if you generated infinitely many Monte Carlo
-    samples and grouped them into bins, setting the value of each bin as the
-    average of the samples. You might call this the expected value (EV) method,
-    in contrast to two methods described below.
+    Previously there was also a "mass" option that divided bins into equal
+    probability mass, but it performed worse than other bin-sizing methods, so
+    it was removed.
 
-    The EV method guarantees that the histogram's expected value exactly equals
-    the expected value of the true distribution (modulo floating point rounding
-    errors).
-
-    There are some other methods we could use, which are generally worse:
-
-    1. Set the value of each bin to the average of the two edges (the
-    "trapezoid rule"). The purpose of using the trapezoid rule is that we don't
-    know the probability mass within a bin (perhaps the CDF is too hard to
-    evaluate) so we have to estimate it. But whenever we *do* know the CDF, we
-    can calculate the probability mass exactly, so we don't need to use the
-    trapezoid rule.
-
-    2. Set the value of each bin to the center of the probability mass (the
-    "mass method"). This is equivalent to generating infinitely many Monte
-    Carlo samples and grouping them into bins, setting the value of each bin as
-    the **median** of the samples. This approach does not particularly help us
-    because we don't care about the median of every bin. We might care about
-    the median of the distribution, but we can calculate that near-exactly
-    regardless of what value-setting method we use by looking at the value in
-    the bin where the probability mass crosses 0.5. And the mass method will
-    systematically underestimate (the absolute value of) EV because the
-    definition of expected value places larger weight on larger (absolute)
-    values, and the mass method does not.
-
-    Although the EV method perfectly measures the expected value of a
-    distribution, it systematically underestimates the variance. To see this,
-    consider that it is possible to define the variance of a random variable X
-    as
-
-    .. math::
-       E[X^2] - E[X]^2
-
-    The EV method correctly estimates ``E[X]``, so it also correctly estimates
-    ``E[X]^2``. However, it systematically underestimates E[X^2] because E[X^2]
-    places more weight on larger values. But an alternative method that
-    accurately estimated variance would necessarily *over*estimate E[X].
-
-    Implementation for two-sided distributions
+    Interpretation for two-sided distributions
     ------------------------------------------
-    The interpretation of the EV value-setting method is slightly non-obvious
+    The interpretation of the EV bin-sizing method is slightly non-obvious
     for two-sided distributions because we must decide how to interpret bins
     with negative expected value.
 
@@ -95,30 +108,23 @@ class BinSizing(Enum):
           positive side has the correct positive contribution to EV.
         * Every negative bin has equal contribution to EV and every positive bin
           has equal contribution to EV.
+        * If a side has nonzero probability mass, then it has at least one bin,
+          regardless of how small its probability mass.
         * The number of negative and positive bins are chosen such that the
           absolute contribution to EV for negative bins is as close as possible
-          to the absolute contribution to EV for positive bins.
+          to the absolute contribution to EV for positive bins given the above
+          constraints.
 
     This binning method means that the distribution EV is exactly preserved
     and there is no bin that contains the value zero. However, the positive
     and negative bins do not necessarily have equal contribution to EV, and
-    the magnitude of the error can be at most 1 / num_bins / 2. There are
-    alternative binning implementations that exactly preserve both the EV
-    and the contribution to EV per bin, but they are more complicated[1], and
-    I considered this error rate acceptable. For example, if num_bins=100,
-    the error after 16 multiplications is at most 8.3%. For
-    one-sided distributions, the error is zero.
-
-    [1] For example, we could exactly preserve EV contribution per bin in
-    exchange for some inaccuracy in the total EV, and maintain a scalar error
-    term that we multiply by whenever computing the EV. Or we could allow bins
-    to cross zero, but this would require handling it as a special case.
+    the magnitude of the error is at most 1 / num_bins / 2.
 
     """
 
     ev = "ev"
-    mass = "mass"
     uniform = "uniform"
+    log_uniform = "log-uniform"
 
 
 class NumericDistribution:
@@ -208,6 +214,11 @@ class NumericDistribution:
         elif bin_sizing == BinSizing.uniform:
             edge_values = np.linspace(support[0], support[1], num_bins + 1)
 
+        elif bin_sizing == BinSizing.log_uniform:
+            log_support = (np.log(support[0]), np.log(support[1]))
+            log_edge_values = np.linspace(log_support[0], log_support[1], num_bins + 1)
+            edge_values = np.exp(log_edge_values)
+
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
@@ -268,9 +279,20 @@ class NumericDistribution:
         Parameters
         ----------
         dist : BaseDistribution
-        num_bins : int
-        bin_sizing : str
-            See :ref:`squigglepy.pdh.BinSizing` for a list of valid options and a description of their behavior.
+            A distribution from which to generate numeric values.
+        num_bins : Optional[int] (default = 100)
+            The number of bins for the numeric distribution to use. The time to
+            construct a NumericDistribution is linear with ``num_bins``, and
+            the time to run a binary operation on two distributions with the
+            same number of bins is approximately quadratic with ``num_bins``.
+            100 bins provides a good balance between accuracy and speed.
+        bin_sizing : Optional[str]
+            The bin sizing method to use. If none is given, a default will be
+            chosen based on the distribution type of ``dist``. It is
+            recommended to use the default bin sizing method most of the time.
+
+            See :ref:`squigglepy.pdh.BinSizing` for a list of valid options and
+            explanations of their behavior.
 
         """
         supported = False  # not to be confused with ``support``
@@ -282,6 +304,8 @@ class NumericDistribution:
             support = (0, np.inf)
             bin_sizing = BinSizing(bin_sizing or BinSizing.ev)
 
+            if bin_sizing == BinSizing.ev:
+                supported = True
             if bin_sizing == BinSizing.uniform:
                 # Uniform bin sizing is not gonna be very accurate for a lognormal
                 # distribution no matter how you set the bounds.
@@ -289,7 +313,13 @@ class NumericDistribution:
                 right_edge = np.exp(dist.norm_mean + 7 * dist.norm_sd)
                 support = (left_edge, right_edge)
                 supported = True
-            if bin_sizing == BinSizing.ev:
+            if bin_sizing == BinSizing.log_uniform:
+                # Use the same method as NormalDistribution uses for
+                # BinSizing.uniform.
+                log_width_scale = 2 + np.log(num_bins)
+                log_left_edge = dist.norm_mean - dist.norm_sd * log_width_scale
+                log_right_edge = dist.norm_mean + dist.norm_sd * log_width_scale
+                support = (np.exp(log_left_edge), np.exp(log_right_edge))
                 supported = True
         elif isinstance(dist, NormalDistribution):
             ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
@@ -299,21 +329,22 @@ class NumericDistribution:
             support = (-np.inf, np.inf)
             bin_sizing = BinSizing(bin_sizing or BinSizing.uniform)
 
-            # Wider domain increases error within each bin, and narrower domain
-            # increases error at the tails. Inter-bin error is proportional to
-            # width^3 / num_bins^2 and tail error is proportional to something
-            # like exp(-width^2). Setting width proportional to log(num_bins)
-            # balances these two sources of error. A scale coefficient of 1.5
-            # means that a histogram with 100 bins will cover 6.9 standard
-            # deviations in each direction which leaves off less than 1e-11 of
-            # the probability mass.
             if bin_sizing == BinSizing.uniform:
-                width_scale = 1.5 * np.log(num_bins)
+                # Wider domain increases error within each bin, and narrower
+                # domain increases error at the tails. Inter-bin error is
+                # proportional to width^3 / num_bins^2 and tail error is
+                # proportional to something like exp(-width^2). Setting width
+                # proportional to log(num_bins) balances these two sources of
+                # error. These scale coefficients means that a histogram with
+                # 100 bins will cover 6.6 standard deviations in each direction
+                # which leaves off less than 1e-10 of the probability mass.
+                width_scale = 2 + np.log(num_bins)
                 left_edge = dist.mean - dist.sd * width_scale
                 right_edge = dist.mean + dist.sd * width_scale
                 support = (left_edge, right_edge)
                 supported = True
             if bin_sizing == BinSizing.ev:
+                # Not recommended.
                 supported = True
         elif isinstance(dist, UniformDistribution):
             loc = dist.x
@@ -353,6 +384,9 @@ class NumericDistribution:
                 width = support[1] - support[0]
                 neg_prop = -support[0] / width
                 pos_prop = support[1] / width
+        elif bin_sizing == BinSizing.log_uniform:
+            neg_prop = 0
+            pos_prop = 1
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
