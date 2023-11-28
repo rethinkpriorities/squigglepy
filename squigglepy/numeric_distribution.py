@@ -1,10 +1,8 @@
-
-
 from abc import ABC, abstractmethod
 from enum import Enum
 import numpy as np
 from scipy import optimize, stats
-from typing import Literal, Optional
+from typing import Literal, Optional, Tuple
 import warnings
 
 from .distributions import (
@@ -80,6 +78,24 @@ class BinSizing(Enum):
     log_uniform = "log-uniform"
     ev = "ev"
     mass = "mass"
+
+
+DEFAULT_BIN_SIZING = {
+    NormalDistribution: BinSizing.uniform,
+    LognormalDistribution: BinSizing.log_uniform,
+    UniformDistribution: BinSizing.uniform,
+}
+
+
+def _narrow_support(
+    support: Tuple[float, float], new_support: Tuple[Optional[float], Optional[float]]
+):
+    """Narrow the support to the intersection of ``support`` and ``new_support``."""
+    if new_support[0] is not None:
+        support = (max(support[0], new_support[0]), support[1])
+    if new_support[1] is not None:
+        support = (support[0], min(support[1], new_support[1]))
+    return support
 
 
 class NumericDistribution:
@@ -207,6 +223,7 @@ class NumericDistribution:
         cdf,
         ppf,
         bin_sizing,
+        warn,
     ):
         """Construct a list of bin masses and values. Helper function for
         :func:`from_distribution`, do not call this directly."""
@@ -291,17 +308,24 @@ class NumericDistribution:
                 joint_message = mass_zeros_message
             else:
                 joint_message = ev_zeros_message
-            warnings.warn(
-                f"When constructing NumericDistribution, {joint_message}.",
-                RuntimeWarning,
-            )
+            if warn:
+                warnings.warn(
+                    f"When constructing NumericDistribution, {joint_message}.",
+                    RuntimeWarning,
+                )
 
         values = bin_ev_contributions / masses
         return (masses, values)
 
     @classmethod
     def from_distribution(
-        cls, dist: BaseDistribution, num_bins: int = 100, bin_sizing: Optional[str] = None
+        cls,
+        dist: BaseDistribution,
+        num_bins: int = 100,
+        bin_sizing: Optional[str] = None,
+        lclip: Optional[float] = None,
+        rclip: Optional[float] = None,
+        warn: bool = True,
     ):
         """Create a probability mass histogram from the given distribution.
 
@@ -317,90 +341,142 @@ class NumericDistribution:
             100 bins provides a good balance between accuracy and speed.
         bin_sizing : Optional[str]
             The bin sizing method to use. If none is given, a default will be
-            chosen based on the distribution type of ``dist``. It is
-            recommended to use the default bin sizing method most of the time.
-
-            See :ref:`squigglepy.numeric_distribution.BinSizing` for a list of valid options and
-            explanations of their behavior.
+            chosen from :ref:``DEFAULT_BIN_SIZING`` based on the distribution
+            type of ``dist``. It is recommended to use the default bin sizing
+            method most of the time. See
+            :ref:`squigglepy.numeric_distribution.BinSizing` for a list of
+            valid options and explanations of their behavior.
+        lclip : Optional[float]
+            If provided, clip the left edge of the distribution to this value.
+        rclip : Optional[float]
+            If provided, clip the right edge of the distribution to this value.
+        warn : Optional[bool] (default = True)
+            If True, raise warnings about bins with zero mass.
 
         """
-        supported = False  # not to be confused with ``support``
-        if isinstance(dist, LognormalDistribution):
-            ppf = lambda p: stats.lognorm.ppf(p, dist.norm_sd, scale=np.exp(dist.norm_mean))
-            cdf = lambda x: stats.lognorm.cdf(x, dist.norm_sd, scale=np.exp(dist.norm_mean))
-            exact_mean = dist.lognorm_mean
-            exact_sd = dist.lognorm_sd
-            support = (0, np.inf)
-            bin_sizing = BinSizing(bin_sizing or BinSizing.ev)
+        if type(dist) not in DEFAULT_BIN_SIZING:
+            raise ValueError(f"Unsupported distribution type: {type(dist)}")
 
-            if bin_sizing == BinSizing.ev or bin_sizing == BinSizing.mass:
-                supported = True
-            if bin_sizing == BinSizing.uniform:
+        # -------------------------------------------------------------------
+        # Set up required parameters based on dist type and bin sizing method
+        # -------------------------------------------------------------------
+
+        bin_sizing = BinSizing(bin_sizing or DEFAULT_BIN_SIZING[type(dist)])
+        support = {
+            # These are the widest possible supports, but they maybe narrowed
+            # later by lclip/rclip or by some bin sizing methods
+            LognormalDistribution: (0, np.inf),
+            NormalDistribution: (-np.inf, np.inf),
+            UniformDistribution: (dist.x, dist.y),
+        }[type(dist)]
+        ppf = {
+            LognormalDistribution: lambda p: stats.lognorm.ppf(
+                p, dist.norm_sd, scale=np.exp(dist.norm_mean)
+            ),
+            NormalDistribution: lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd),
+            UniformDistribution: lambda p: stats.uniform.ppf(p, loc=dist.x, scale=dist.y - dist.x),
+        }[type(dist)]
+        cdf = {
+            LognormalDistribution: lambda x: stats.lognorm.cdf(
+                x, dist.norm_sd, scale=np.exp(dist.norm_mean)
+            ),
+            NormalDistribution: lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd),
+            UniformDistribution: lambda x: stats.uniform.cdf(x, loc=dist.x, scale=dist.y - dist.x),
+        }[type(dist)]
+
+        # -----------
+        # Set support
+        # -----------
+
+        dist_bin_sizing_supported = False
+        if bin_sizing == BinSizing.ev:
+            dist_bin_sizing_supported = True
+        elif bin_sizing == BinSizing.mass:
+            dist_bin_sizing_supported = True
+        elif bin_sizing == BinSizing.uniform:
+            if isinstance(dist, LognormalDistribution):
                 # Uniform bin sizing is not gonna be very accurate for a lognormal
                 # distribution no matter how you set the bounds.
-                left_edge = 0
-                right_edge = np.exp(dist.norm_mean + 7 * dist.norm_sd)
-                support = (left_edge, right_edge)
-                supported = True
-            if bin_sizing == BinSizing.log_uniform:
-                # Use the same method as NormalDistribution uses for
-                # BinSizing.uniform.
-                log_width_scale = 2 + np.log(num_bins)
-                log_left_edge = dist.norm_mean - dist.norm_sd * log_width_scale
-                log_right_edge = dist.norm_mean + dist.norm_sd * log_width_scale
-                support = (np.exp(log_left_edge), np.exp(log_right_edge))
-                supported = True
-        elif isinstance(dist, NormalDistribution):
-            ppf = lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd)
-            cdf = lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd)
-            exact_mean = dist.mean
-            exact_sd = dist.sd
-            support = (-np.inf, np.inf)
-            bin_sizing = BinSizing(bin_sizing or BinSizing.uniform)
-
-            if bin_sizing == BinSizing.uniform:
+                new_support = (0, np.exp(dist.norm_mean + 7 * dist.norm_sd))
+            elif isinstance(dist, NormalDistribution):
                 # Wider domain increases error within each bin, and narrower
                 # domain increases error at the tails. Inter-bin error is
                 # proportional to width^3 / num_bins^2 and tail error is
                 # proportional to something like exp(-width^2). Setting width
                 # proportional to log(num_bins) balances these two sources of
                 # error. These scale coefficients means that a histogram with
-                # 100 bins will cover 6.6 standard deviations in each direction
-                # which leaves off less than 1e-10 of the probability mass.
-                width_scale = 2 + np.log(num_bins)
-                left_edge = dist.mean - dist.sd * width_scale
-                right_edge = dist.mean + dist.sd * width_scale
-                support = (left_edge, right_edge)
-                supported = True
-            if bin_sizing == BinSizing.ev:
-                # Not recommended.
-                supported = True
-            if bin_sizing == BinSizing.mass:
-                supported = True
-        elif isinstance(dist, UniformDistribution):
-            loc = dist.x
-            scale = dist.y - dist.x
-            ppf = lambda p: stats.uniform.ppf(p, loc=loc, scale=scale)
-            cdf = lambda x: stats.uniform.cdf(x, loc=loc, scale=scale)
-            exact_mean = (dist.x + dist.y) / 2
-            exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
-            support = (dist.x, dist.y)
-            bin_sizing = BinSizing(bin_sizing or BinSizing.uniform)
+                # 100 bins will cover 7.1 standard deviations in each direction
+                # which leaves off less than 1e-12 of the probability mass.
+                scale = 2.5 + np.log(num_bins)
+                new_support = (
+                    dist.mean - dist.sd * scale,
+                    dist.mean + dist.sd * scale,
+                )
+            elif isinstance(dist, UniformDistribution):
+                new_support = support
 
-            if bin_sizing == BinSizing.uniform:
-                left_edge = dist.x
-                right_edge = dist.y
-                supported = True
-            if bin_sizing == BinSizing.mass:
-                supported = True
-        else:
-            raise ValueError(f"Unsupported distribution type: {type(dist)}")
+            if new_support is not None:
+                support = _narrow_support(support, new_support)
+                dist_bin_sizing_supported = True
 
-        if not supported:
+        elif bin_sizing == BinSizing.log_uniform:
+            if isinstance(dist, LognormalDistribution):
+                scale = 2 + np.log(num_bins)
+                new_support = (
+                    np.exp(dist.norm_mean - dist.norm_sd * scale),
+                    np.exp(dist.norm_mean + dist.norm_sd * scale),
+                )
+            if new_support is not None:
+                support = _narrow_support(support, new_support)
+                dist_bin_sizing_supported = True
+
+        if not dist_bin_sizing_supported:
             raise ValueError(f"Unsupported bin sizing method {bin_sizing} for {type(dist)}.")
 
-        total_ev_contribution = dist.contribution_to_ev(np.inf, normalized=False)
-        neg_ev_contribution = dist.contribution_to_ev(0, normalized=False)
+        # ----------------------------
+        # Adjust support based on clip
+        # ----------------------------
+
+        support = _narrow_support(support, (lclip, rclip))
+
+        # ---------------------------
+        # Set exact_mean and exact_sd
+        # ---------------------------
+
+        if lclip is None and rclip is None:
+            if isinstance(dist, LognormalDistribution):
+                exact_mean = dist.lognorm_mean
+                exact_sd = dist.lognorm_sd
+            elif isinstance(dist, NormalDistribution):
+                exact_mean = dist.mean
+                exact_sd = dist.sd
+            elif isinstance(dist, UniformDistribution):
+                exact_mean = (dist.x + dist.y) / 2
+                exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
+        else:
+            if isinstance(dist, NormalDistribution):
+                a = (support[0] - dist.mean) / dist.sd
+                b = (support[1] - dist.mean) / dist.sd
+                exact_mean = stats.truncnorm.mean(a, b, dist.mean, dist.sd)
+                exact_sd = stats.truncnorm.std(a, b, dist.mean, dist.sd)
+            elif isinstance(dist, UniformDistribution):
+                exact_mean = (support[0] + support[1]) / 2
+                exact_sd = np.sqrt(1 / 12) * (support[1] - support[0])
+            else:
+                exact_mean = None
+                exact_sd = None
+
+        # -----------------------------------------------------------------
+        # Split dist into negative and positive sides and generate bins for
+        # each side
+        # -----------------------------------------------------------------
+
+        total_ev_contribution = dist.contribution_to_ev(
+            support[1], normalized=False
+        ) - dist.contribution_to_ev(support[0], normalized=False)
+        neg_ev_contribution = dist.contribution_to_ev(
+            0, normalized=False
+        ) - dist.contribution_to_ev(support[0], normalized=False)
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
         if bin_sizing == BinSizing.ev:
@@ -440,6 +516,7 @@ class NumericDistribution:
             cdf,
             ppf,
             bin_sizing,
+            warn,
         )
         neg_values = -neg_values
         pos_masses, pos_values = cls._construct_bins(
@@ -450,9 +527,20 @@ class NumericDistribution:
             cdf,
             ppf,
             bin_sizing,
+            warn,
         )
+
+        # Resize in case some bins got removed due to having zero mass/EV
+        num_neg_bins = len(neg_values)
+        num_pos_bins = len(pos_values)
+
         masses = np.concatenate((neg_masses, pos_masses))
         values = np.concatenate((neg_values, pos_values))
+
+        # Normalize masses to sum to 1 in case the distribution is clipped, but
+        # don't do this until after setting values because values depend on the
+        # mass relative to the full distribution, not the clipped distribution.
+        masses /= np.sum(masses)
 
         return cls(
             np.array(values),
@@ -552,7 +640,6 @@ class NumericDistribution:
     def ppf(self, q):
         """An alias for :ref:``quantile``."""
         return self.quantile(q)
-
 
     def percentile(self, p):
         """Estimate the value of the distribution at percentile ``p``. See
