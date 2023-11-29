@@ -472,9 +472,9 @@ class NumericDistribution:
         total_ev_contribution = dist.contribution_to_ev(
             support[1], normalized=False
         ) - dist.contribution_to_ev(support[0], normalized=False)
-        neg_ev_contribution = dist.contribution_to_ev(
+        neg_ev_contribution = max(0, dist.contribution_to_ev(
             0, normalized=False
-        ) - dist.contribution_to_ev(support[0], normalized=False)
+        ) - dist.contribution_to_ev(support[0], normalized=False))
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
         if bin_sizing == BinSizing.ev:
@@ -529,8 +529,12 @@ class NumericDistribution:
         )
 
         # Resize in case some bins got removed due to having zero mass/EV
-        num_neg_bins = len(neg_values)
-        num_pos_bins = len(pos_values)
+        if len(neg_values) < num_neg_bins:
+            neg_ev_contribution = np.sum(neg_masses * neg_values)
+            num_neg_bins = len(neg_values)
+        if len(pos_values) < num_pos_bins:
+            pos_ev_contribution = np.sum(pos_masses * pos_values)
+            num_pos_bins = len(pos_values)
 
         masses = np.concatenate((neg_masses, pos_masses))
         values = np.concatenate((neg_values, pos_values))
@@ -938,7 +942,23 @@ class NumericDistribution:
             res.exact_sd = np.sqrt(x.exact_sd**2 + y.exact_sd**2)
         return res
 
+    def __neg__(self):
+        return NumericDistribution(
+            values=np.flip(-self.values),
+            masses=np.flip(self.masses),
+            zero_bin_index=len(self.values) - self.zero_bin_index,
+            neg_ev_contribution=self.pos_ev_contribution,
+            pos_ev_contribution=self.neg_ev_contribution,
+            exact_mean=-self.exact_mean,
+            exact_sd=self.exact_sd,
+        )
+
+    def __sub__(x, y):
+        return x + (-y)
+
     def __mul__(x, y):
+        if isinstance(y, int) or isinstance(y, float):
+            return x.scale_by(y)
         cls = x
         num_bins = max(len(x), len(y))
 
@@ -1057,19 +1077,19 @@ class NumericDistribution:
             )
         return res
 
-    def __neg__(self):
+    def scale_by(self, scalar):
+        """Scale the distribution by a constant factor."""
+        if scalar < 0:
+            return -self * -scalar
         return NumericDistribution(
-            values=np.flip(-self.values),
-            masses=np.flip(self.masses),
-            zero_bin_index=len(self.values) - self.zero_bin_index,
-            neg_ev_contribution=self.pos_ev_contribution,
-            pos_ev_contribution=self.neg_ev_contribution,
-            exact_mean=-self.exact_mean,
-            exact_sd=self.exact_sd,
+            values=self.values * scalar,
+            masses=self.masses,
+            zero_bin_index=self.zero_bin_index,
+            neg_ev_contribution=self.neg_ev_contribution * scalar,
+            pos_ev_contribution=self.pos_ev_contribution * scalar,
+            exact_mean=self.exact_mean * scalar if self.exact_mean is not None else None,
+            exact_sd=self.exact_sd * scalar if self.exact_sd is not None else None,
         )
-
-    def __sub__(x, y):
-        return x + (-y)
 
     def __radd__(x, y):
         return x + y
@@ -1080,11 +1100,45 @@ class NumericDistribution:
     def __rmul__(x, y):
         return x * y
 
+    def reciprocal(self):
+        """Return the reciprocal of the distribution.
+
+        Warning: The result can be very inaccurate for certain distributions
+        and bin sizing methods. Specifically, if the distribution is fat-tailed
+        and does not use log-uniform bin sizing, the reciprocal will be
+        inaccurate for small values. Most bin sizing methods on fat-tailed
+        distributions maximize information at the tails in exchange for less
+        accuracy on [0, 1], which means the reciprocal will contain very little
+        information about the tails. Log-uniform bin sizing is most accurate
+        because it is invariant with reciprocation.
+        """
+        values = 1 / self.values
+        sorted_indexes = values.argsort()
+        values = values[sorted_indexes]
+        masses = self.masses[sorted_indexes]
+
+        # Re-calculate EV contribution manually.
+        neg_ev_contribution = np.sum(values[:self.zero_bin_index] * masses[:self.zero_bin_index])
+        pos_ev_contribution = np.sum(values[self.zero_bin_index:] * masses[self.zero_bin_index:])
+
+        return NumericDistribution(
+            values=values,
+            masses=masses,
+            zero_bin_index=self.zero_bin_index,
+            neg_ev_contribution=neg_ev_contribution,
+            pos_ev_contribution=pos_ev_contribution,
+
+            # There is no general formula for the mean and SD of the
+            # reciprocal of a random variable.
+            exact_mean=None,
+            exact_sd=None,
+        )
+
     def __truediv__(x, y):
-        raise NotImplementedError
+        return x * y.reciprocal()
 
     def __rtruediv__(x, y):
-        raise NotImplementedError
+        return y * x.reciprocal()
 
     def __floordiv__(x, y):
         raise NotImplementedError
