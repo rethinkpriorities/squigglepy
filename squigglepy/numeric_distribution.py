@@ -449,9 +449,9 @@ class NumericDistribution:
                 exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
         else:
             if isinstance(dist, LognormalDistribution):
-                contribution_to_ev = dist.contribution_to_ev(support[1], normalized=False) - dist.contribution_to_ev(
-                    support[0], normalized=False
-                )
+                contribution_to_ev = dist.contribution_to_ev(
+                    support[1], normalized=False
+                ) - dist.contribution_to_ev(support[0], normalized=False)
                 mass = cdf(support[1]) - cdf(support[0])
                 exact_mean = contribution_to_ev / mass
                 exact_sd = None  # unknown
@@ -472,9 +472,11 @@ class NumericDistribution:
         total_ev_contribution = dist.contribution_to_ev(
             support[1], normalized=False
         ) - dist.contribution_to_ev(support[0], normalized=False)
-        neg_ev_contribution = max(0, dist.contribution_to_ev(
-            0, normalized=False
-        ) - dist.contribution_to_ev(support[0], normalized=False))
+        neg_ev_contribution = max(
+            0,
+            dist.contribution_to_ev(0, normalized=False)
+            - dist.contribution_to_ev(support[0], normalized=False),
+        )
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
         if bin_sizing == BinSizing.ev:
@@ -647,7 +649,7 @@ class NumericDistribution:
         """Estimate the value of the distribution at percentile ``p``. See
         :ref:``quantile`` for notes on this function's accuracy.
         """
-        return self.quantile(p / 100)
+        return np.squeeze(self.quantile(np.asarray(p) / 100))
 
     @classmethod
     def _contribution_to_ev(
@@ -1118,8 +1120,8 @@ class NumericDistribution:
         masses = self.masses[sorted_indexes]
 
         # Re-calculate EV contribution manually.
-        neg_ev_contribution = np.sum(values[:self.zero_bin_index] * masses[:self.zero_bin_index])
-        pos_ev_contribution = np.sum(values[self.zero_bin_index:] * masses[self.zero_bin_index:])
+        neg_ev_contribution = np.sum(values[: self.zero_bin_index] * masses[: self.zero_bin_index])
+        pos_ev_contribution = np.sum(values[self.zero_bin_index :] * masses[self.zero_bin_index :])
 
         return NumericDistribution(
             values=values,
@@ -1127,7 +1129,6 @@ class NumericDistribution:
             zero_bin_index=self.zero_bin_index,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
-
             # There is no general formula for the mean and SD of the
             # reciprocal of a random variable.
             exact_mean=None,

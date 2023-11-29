@@ -13,7 +13,7 @@ from ..squigglepy.distributions import (
     UniformDistribution,
 )
 from ..squigglepy.numeric_distribution import NumericDistribution
-from ..squigglepy import samplers
+from ..squigglepy import samplers, utils
 
 # There are a lot of functions testing various combinations of behaviors with
 # no obvious way to order them. These functions are ordered basically like this:
@@ -351,7 +351,9 @@ def test_lognorm_clip_and_sum(norm_mean, norm_sd, clip_zscore):
     right_mass = 1 - left_mass
     true_mean = stats.lognorm.mean(norm_sd, scale=np.exp(norm_mean))
     sum_exact_mean = left_mass * left_hist.exact_mean + right_mass * right_hist.exact_mean
-    sum_hist_mean = left_mass * left_hist.histogram_mean() + right_mass * right_hist.histogram_mean()
+    sum_hist_mean = (
+        left_mass * left_hist.histogram_mean() + right_mass * right_hist.histogram_mean()
+    )
 
     # TODO: the error margin is surprisingly large
     assert sum_exact_mean == approx(true_mean, rel=1e-3, abs=1e-6)
@@ -367,7 +369,7 @@ def test_lognorm_clip_and_sum(norm_mean, norm_sd, clip_zscore):
     sd3=st.floats(min_value=0.1, max_value=10),
     bin_sizing=st.sampled_from(["ev", "mass", "uniform"]),
 )
-@example(mean1=0, mean2=1000, mean3=617, sd1=1.5, sd2=1.5, sd3=1, bin_sizing='ev')
+@example(mean1=0, mean2=1000, mean3=617, sd1=1.5, sd2=1.5, sd3=1, bin_sizing="ev")
 def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
     dist2 = NormalDistribution(mean=mean2, sd=sd2)
@@ -792,8 +794,12 @@ def test_scale(mean, sd, scalar):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = NumericDistribution.from_distribution(dist)
     scaled_hist = scalar * hist
-    assert scaled_hist.histogram_mean() == approx(scalar * hist.histogram_mean(), abs=1e-6, rel=1e-6)
-    assert scaled_hist.histogram_sd() == approx(abs(scalar) * hist.histogram_sd(), abs=1e-6, rel=1e-6)
+    assert scaled_hist.histogram_mean() == approx(
+        scalar * hist.histogram_mean(), abs=1e-6, rel=1e-6
+    )
+    assert scaled_hist.histogram_sd() == approx(
+        abs(scalar) * hist.histogram_sd(), abs=1e-6, rel=1e-6
+    )
     assert scaled_hist.exact_mean == approx(scalar * hist.exact_mean)
     assert scaled_hist.exact_sd == approx(abs(scalar) * hist.exact_sd)
 
@@ -819,8 +825,13 @@ def test_lognorm_reciprocal(norm_mean, norm_sd):
     # that's probably not worth it.
     assert reciprocal_hist.histogram_mean() == approx(reciprocal_dist.lognorm_mean, rel=0.05)
     assert reciprocal_hist.histogram_sd() == approx(reciprocal_dist.lognorm_sd, rel=0.2)
-    assert reciprocal_hist.neg_ev_contribution == approx(true_reciprocal_hist.neg_ev_contribution, rel=0.01)
-    assert reciprocal_hist.pos_ev_contribution == approx(true_reciprocal_hist.pos_ev_contribution, rel=0.01)
+    assert reciprocal_hist.neg_ev_contribution == approx(
+        true_reciprocal_hist.neg_ev_contribution, rel=0.01
+    )
+    assert reciprocal_hist.pos_ev_contribution == approx(
+        true_reciprocal_hist.pos_ev_contribution, rel=0.01
+    )
+
 
 @given(
     norm_mean1=st.floats(min_value=-10, max_value=10),
@@ -844,8 +855,12 @@ def test_lognorm_quotient(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing
 
     assert quotient_hist.histogram_mean() == approx(true_quotient_hist.histogram_mean(), rel=0.05)
     assert quotient_hist.histogram_sd() == approx(true_quotient_hist.histogram_sd(), rel=0.2)
-    assert quotient_hist.neg_ev_contribution == approx(true_quotient_hist.neg_ev_contribution, rel=0.01)
-    assert quotient_hist.pos_ev_contribution == approx(true_quotient_hist.pos_ev_contribution, rel=0.01)
+    assert quotient_hist.neg_ev_contribution == approx(
+        true_quotient_hist.neg_ev_contribution, rel=0.01
+    )
+    assert quotient_hist.pos_ev_contribution == approx(
+        true_quotient_hist.pos_ev_contribution, rel=0.01
+    )
 
 
 @given(
@@ -996,6 +1011,7 @@ def test_quantile_uniform(mean, sd, percent):
     )
     assert hist.quantile(0) == hist.values[0]
     assert hist.quantile(1) == hist.values[-1]
+    assert hist.quantile(np.array([0, 1])).tolist() == [hist.values[0], hist.values[-1]]
     assert hist.percentile(percent) == approx(
         stats.norm.ppf(percent / 100, loc=mean, scale=sd), rel=0.25
     )
@@ -1099,6 +1115,14 @@ def test_quantile_mass_after_sum(mean1, mean2, sd1, sd2, percent):
     assert 100 * stats.norm.cdf(
         hist_sum.percentile(percent), hist_sum.exact_mean, hist_sum.exact_sd
     ) == approx(percent, abs=0.5)
+
+
+def test_utils_get_percentiles():
+    dist = NormalDistribution(mean=0, sd=1)
+    hist = NumericDistribution.from_distribution(dist, warn=False)
+    percentiles = utils.get_percentiles(hist, [0, 100])
+    assert percentiles[0] == hist.values[0]
+    assert percentiles[100] == hist.values[-1]
 
 
 def test_plot():

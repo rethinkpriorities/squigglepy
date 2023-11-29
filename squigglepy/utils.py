@@ -436,12 +436,16 @@ def get_percentiles(
     """
     percentiles = percentiles if isinstance(percentiles, list) else [percentiles]
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
-    percentiles = np.percentile(data, percentiles)
-    percentiles = [_round(p, digits) for p in percentiles]
-    if len(percentile_labels) == 1:
-        return percentiles[0]
+
+    if type(data).__name__ == "NumericDistribution":
+        values = data.percentile(percentiles)
     else:
-        return dict(list(zip(percentile_labels, percentiles)))
+        values = np.percentile(data, percentiles)
+    values = [_round(p, digits) for p in values]
+    if len(percentile_labels) == 1:
+        return values[0]
+    else:
+        return dict(list(zip(percentile_labels, values)))
 
 
 def get_log_percentiles(
