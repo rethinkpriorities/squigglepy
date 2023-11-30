@@ -96,6 +96,8 @@ class IntegrableEVDistribution(ABC):
 
         .. math:: \\int_{x}^\\infty t f_X(t | X > x) dt
 
+        This function does not respect lclip/rclip.
+
         Parameters
         ----------
         x : array-like
@@ -106,9 +108,13 @@ class IntegrableEVDistribution(ABC):
             value.
 
         """
-        # TODO: can compute this numerically for any scipy distribution using
-        # something like
-        # scipy_dist.expect(func=lambda x: abs(x), lb=0, ub=x)
+        # TODO: can compute this via numeric integration for any scipy
+        # distribution using something like
+        #
+        #     scipy_dist.expect(lambda x: abs(x), ub=x, loc=loc, scale=scale)
+        #
+        # This is equivalent to contribution_to_ev(x, normalized=False).
+        # I tested that this works correctly for normal and lognormal dists.
         ...
 
     @abstractmethod

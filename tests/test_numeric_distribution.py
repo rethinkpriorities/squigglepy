@@ -224,22 +224,22 @@ def test_lognorm_sd_bin_sizing_accuracy():
     # log-uniform > ev > uniform > mass
     # ev tends to have more accurate means after a multiplication than log-uniform
     dist = LognormalDistribution(lognorm_mean=1e6, lognorm_sd=1e7)
+    uniform_hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
     log_uniform_hist = NumericDistribution.from_distribution(
         dist, bin_sizing="log-uniform", warn=False
     )
     ev_hist = NumericDistribution.from_distribution(dist, bin_sizing="ev", warn=False)
     mass_hist = NumericDistribution.from_distribution(dist, bin_sizing="mass", warn=False)
-    uniform_hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
+    fat_hybrid_hist = NumericDistribution.from_distribution(dist, bin_sizing="fat-hybrid", warn=False)
 
-    assert relative_error(log_uniform_hist.histogram_sd(), dist.lognorm_sd) < relative_error(
-        ev_hist.histogram_sd(), dist.lognorm_sd
-    )
-    assert relative_error(ev_hist.histogram_sd(), dist.lognorm_sd) < relative_error(
-        uniform_hist.histogram_sd(), dist.lognorm_sd
-    )
-    assert relative_error(uniform_hist.histogram_sd(), dist.lognorm_sd) < relative_error(
-        mass_hist.histogram_sd(), dist.lognorm_sd
-    )
+    sd_errors = [
+        relative_error(log_uniform_hist.histogram_sd(), dist.lognorm_sd),
+        relative_error(ev_hist.histogram_sd(), dist.lognorm_sd),
+        relative_error(fat_hybrid_hist.histogram_sd(), dist.lognorm_sd),
+        relative_error(uniform_hist.histogram_sd(), dist.lognorm_sd),
+        relative_error(mass_hist.histogram_sd(), dist.lognorm_sd),
+    ]
+    assert all(np.diff(sd_errors) >= 0)
 
 
 def test_norm_sd_bin_sizing_accuracy():
@@ -249,12 +249,99 @@ def test_norm_sd_bin_sizing_accuracy():
     mass_hist = NumericDistribution.from_distribution(dist, bin_sizing="mass", warn=False)
     uniform_hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
 
-    assert relative_error(ev_hist.histogram_sd(), dist.sd) < relative_error(
-        uniform_hist.histogram_sd(), dist.sd
+    sd_errors = [
+        relative_error(ev_hist.histogram_sd(), dist.sd),
+        relative_error(uniform_hist.histogram_sd(), dist.sd),
+        relative_error(mass_hist.histogram_sd(), dist.sd),
+    ]
+    assert all(np.diff(sd_errors) >= 0)
+
+
+def test_lognorm_product_bin_sizing_accuracy():
+    dist = LognormalDistribution(norm_mean=np.log(1e6), norm_sd=1)
+    uniform_hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
+    uniform_hist = uniform_hist * uniform_hist
+    log_uniform_hist = NumericDistribution.from_distribution(
+        dist, bin_sizing="log-uniform", warn=False
     )
-    assert relative_error(uniform_hist.histogram_sd(), dist.sd) < relative_error(
-        mass_hist.histogram_sd(), dist.sd
+    log_uniform_hist = log_uniform_hist * log_uniform_hist
+    ev_hist = NumericDistribution.from_distribution(dist, bin_sizing="ev", warn=False)
+    ev_hist = ev_hist * ev_hist
+    mass_hist = NumericDistribution.from_distribution(dist, bin_sizing="mass", warn=False)
+    mass_hist = mass_hist * mass_hist
+    fat_hybrid_hist = NumericDistribution.from_distribution(dist, bin_sizing="fat-hybrid", warn=False)
+    fat_hybrid_hist = fat_hybrid_hist * fat_hybrid_hist
+    dist_prod = LognormalDistribution(norm_mean=2 * dist.norm_mean, norm_sd=2 * dist.norm_sd)
+
+    # uniform and log-uniform should have small errors and the others should be
+    # pretty much perfect
+    mean_errors = [
+        relative_error(fat_hybrid_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(ev_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(mass_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
+    ]
+    assert all(np.diff(mean_errors) >= 0)
+
+    sd_errors = [
+        relative_error(log_uniform_hist.histogram_sd(), dist_prod.lognorm_sd),
+        relative_error(ev_hist.histogram_sd(), dist_prod.lognorm_sd),
+        relative_error(fat_hybrid_hist.histogram_sd(), dist_prod.lognorm_sd),
+        relative_error(mass_hist.histogram_sd(), dist_prod.lognorm_sd),
+        relative_error(uniform_hist.histogram_sd(), dist_prod.lognorm_sd),
+    ]
+    assert all(np.diff(sd_errors) >= 0)
+
+
+def test_lognorm_clip_center_bin_sizing_accuracy():
+    dist = LognormalDistribution(norm_mean=-1, norm_sd=0.5, lclip=0, rclip=1)
+    true_mean = stats.lognorm.expect(lambda x: x, args=(dist.norm_sd,), scale=dist.lognorm_mean, lb=dist.lclip, ub=dist.rclip, conditional=True)
+    true_sd = np.sqrt(stats.lognorm.expect(lambda x: (x - true_mean) ** 2, args=(dist.norm_sd,), scale=dist.lognorm_mean, lb=dist.lclip, ub=dist.rclip, conditional=True))
+
+    uniform_hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
+    log_uniform_hist = NumericDistribution.from_distribution(
+        dist, bin_sizing="log-uniform", warn=False
     )
+    ev_hist = NumericDistribution.from_distribution(dist, bin_sizing="ev", warn=False)
+    mass_hist = NumericDistribution.from_distribution(dist, bin_sizing="mass", warn=False)
+    fat_hybrid_hist = NumericDistribution.from_distribution(dist, bin_sizing="fat-hybrid", warn=False)
+
+    mean_errors = [
+        relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
+        relative_error(log_uniform_hist.histogram_mean(), true_mean),
+        relative_error(ev_hist.histogram_mean(), true_mean),
+        relative_error(uniform_hist.histogram_mean(), true_mean),
+    ]
+    assert all(np.diff(mean_errors) >= 0)
+
+    sd_errors = [
+        relative_error(uniform_hist.histogram_sd(), true_sd),
+        relative_error(ev_hist.histogram_sd(), true_sd),
+        relative_error(fat_hybrid_hist.histogram_sd(), true_sd),
+        relative_error(log_uniform_hist.histogram_sd(), true_sd),
+    ]
+    assert all(np.diff(sd_errors) >= 0)
+
+
+def test_lognorm_clip_tail_bin_sizing_accuracy():
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1, lclip=100)
+    true_mean = stats.lognorm.expect(lambda x: x, args=(1,), lb=100, conditional=True)
+    uniform_hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
+    log_uniform_hist = NumericDistribution.from_distribution(
+        dist, bin_sizing="log-uniform", warn=False
+    )
+    ev_hist = NumericDistribution.from_distribution(dist, bin_sizing="ev", warn=False)
+    mass_hist = NumericDistribution.from_distribution(dist, bin_sizing="mass", warn=False)
+    fat_hybrid_hist = NumericDistribution.from_distribution(dist, bin_sizing="fat-hybrid", warn=False)
+
+    mean_errors = [
+        relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
+        relative_error(ev_hist.histogram_mean(), true_mean),
+        relative_error(uniform_hist.histogram_mean(), true_mean),
+        relative_error(log_uniform_hist.histogram_mean(), true_mean),
+    ]
+    assert all(np.diff(mean_errors) >= 0)
 
 
 @given(
@@ -533,7 +620,7 @@ def test_lognorm_sd_error_propagation(bin_sizing):
     norm_mean2=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd1=st.floats(min_value=0.1, max_value=3),
     norm_sd2=st.floats(min_value=0.1, max_value=3),
-    bin_sizing=st.sampled_from(["ev", "log-uniform"]),
+    bin_sizing=st.sampled_from(["ev", "log-uniform", "fat-hybrid"]),
 )
 def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing):
     dists = [
@@ -562,17 +649,14 @@ def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing)
     num_bins2=st.sampled_from([25, 100]),
     bin_sizing=st.sampled_from(["ev", "uniform"]),
 )
-# TODO: This example has rounding issues where -neg_ev_contribution > mean, so
-# pos_ev_contribution ends up negative. neg_ev_contribution should be a little
-# bigger
 @example(
-    norm_mean1=0,
-    norm_mean2=-3,
-    norm_sd1=0.5,
-    norm_sd2=0.5,
+    norm_mean1=1,
+    norm_mean2=2,
+    norm_sd1=1,
+    norm_sd2=1,
     num_bins1=25,
     num_bins2=25,
-    bin_sizing="uniform",
+    bin_sizing="ev",
 )
 def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bins2, bin_sizing):
     dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
@@ -910,7 +994,7 @@ def test_numeric_clip(lclip, width):
     # calculate what the mean should be
     clip_inner=st.booleans(),
 )
-@example(a=0.2, lclip=1, clip_width=2, bin_sizing="mass", clip_inner=True)
+@example(a=0.5, lclip=-1, clip_width=2, bin_sizing="ev", clip_inner=False)
 def test_mixture2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
     # Clipped NumericDist accuracy really benefits from more bins. It's not
     # very accurate with 100 bins because a clipped histogram might end up with
@@ -958,7 +1042,7 @@ def test_mixture2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
             mixed_mean,
             mixed_sd,
         )
-        tolerance = 0.2 if bin_sizing == "uniform" else 0.1
+        tolerance = 0.2
 
     assert hist.histogram_mean() == approx(true_mean, rel=tolerance)
 

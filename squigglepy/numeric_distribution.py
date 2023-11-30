@@ -79,6 +79,7 @@ class BinSizing(Enum):
     log_uniform = "log-uniform"
     ev = "ev"
     mass = "mass"
+    fat_hybrid = "fat-hybrid"
 
 
 DEFAULT_BIN_SIZING = {
@@ -240,7 +241,6 @@ class NumericDistribution:
             edge_values = np.exp(log_edge_values)
 
         elif bin_sizing == BinSizing.ev:
-            get_edge_value = dist.inv_contribution_to_ev
             # Don't call get_edge_value on the left and right edges because it's
             # undefined for 0 and 1
             left_prop = dist.contribution_to_ev(support[0])
@@ -249,7 +249,7 @@ class NumericDistribution:
                 (
                     [support[0]],
                     np.atleast_1d(
-                        get_edge_value(np.linspace(left_prop, right_prop, num_bins + 1)[1:-1])
+                        dist.inv_contribution_to_ev(np.linspace(left_prop, right_prop, num_bins + 1)[1:-1])
                     )
                     if num_bins > 1
                     else [],
@@ -262,6 +262,47 @@ class NumericDistribution:
             right_cdf = cdf(support[1])
             edge_cdfs = np.linspace(left_cdf, right_cdf, num_bins + 1)
             edge_values = ppf(edge_cdfs)
+
+        elif bin_sizing == BinSizing.fat_hybrid:
+            # Use log-uniform bin sizing for most of the contribution to
+            # EV, and then use ev bin sizing for the tail. log-uniform is
+            # generally the most accurate for small to medium values, but it
+            # gets weird in the tails (the values start getting very large, and
+            # they still don't capture the tails as well as ev bin sizing).
+
+            # Proportion of bins to assign to the log-uniform side
+            loguni_bin_prop = 0.75
+
+            # Proportion of the contribution to EV to assign to the
+            # log-uniform side
+            loguni_ev_contribution_prop = 0.75
+
+            loguni_bins = int(loguni_bin_prop * num_bins)
+            ev_bins = num_bins - loguni_bins
+
+            # Calculate the midpoint that separates the log-uniform and ev
+            # sides
+            support_ev_contribution = dist.contribution_to_ev(
+                support[1]
+            ) - dist.contribution_to_ev(support[0])
+            hybrid_midpoint = dist.inv_contribution_to_ev(loguni_ev_contribution_prop * support_ev_contribution)
+            loguni_log_support = (np.log(support[0]), np.log(hybrid_midpoint))
+            ev_support = (hybrid_midpoint, support[1])
+
+            # Create log-uniform bins
+            log_edge_values = np.linspace(loguni_log_support[0], loguni_log_support[1], loguni_bins + 1)
+            loguni_values = np.exp(log_edge_values)
+
+            # Create ev bins
+            ev_left_prop = dist.contribution_to_ev(ev_support[0])
+            ev_right_prop = dist.contribution_to_ev(ev_support[1])
+            ev_edge_values = np.atleast_1d(
+                dist.inv_contribution_to_ev(np.linspace(ev_left_prop, ev_right_prop, ev_bins + 1)[1:-1])
+            )
+            outer_edge = np.atleast_1d(support[1])
+
+            # Combine the bins
+            edge_values = np.concatenate((loguni_values, ev_edge_values, outer_edge))
 
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
@@ -356,8 +397,7 @@ class NumericDistribution:
             # the mixture lclip/rclip.
             sub_dists = [cls.from_distribution(d, num_bins, bin_sizing, warn) for d in dist.dists]
             mixture = reduce(
-                lambda acc, d: acc + d,
-                [w * d for w, d in zip(dist.weights, sub_dists)]
+                lambda acc, d: acc + d, [w * d for w, d in zip(dist.weights, sub_dists)]
             )
             return mixture.clip(dist.lclip, dist.rclip)
         if type(dist) not in DEFAULT_BIN_SIZING:
@@ -395,11 +435,8 @@ class NumericDistribution:
         # -----------
 
         dist_bin_sizing_supported = False
-        if bin_sizing == BinSizing.ev:
-            dist_bin_sizing_supported = True
-        elif bin_sizing == BinSizing.mass:
-            dist_bin_sizing_supported = True
-        elif bin_sizing == BinSizing.uniform:
+        new_support = None
+        if bin_sizing == BinSizing.uniform:
             if isinstance(dist, LognormalDistribution):
                 # Uniform bin sizing is not gonna be very accurate for a lognormal
                 # distribution no matter how you set the bounds.
@@ -421,10 +458,6 @@ class NumericDistribution:
             elif isinstance(dist, UniformDistribution):
                 new_support = support
 
-            if new_support is not None:
-                support = _narrow_support(support, new_support)
-                dist_bin_sizing_supported = True
-
         elif bin_sizing == BinSizing.log_uniform:
             if isinstance(dist, LognormalDistribution):
                 scale = 2 + np.log(num_bins)
@@ -432,9 +465,26 @@ class NumericDistribution:
                     np.exp(dist.norm_mean - dist.norm_sd * scale),
                     np.exp(dist.norm_mean + dist.norm_sd * scale),
                 )
-            if new_support is not None:
-                support = _narrow_support(support, new_support)
-                dist_bin_sizing_supported = True
+
+        elif bin_sizing == BinSizing.ev:
+            dist_bin_sizing_supported = True
+
+        elif bin_sizing == BinSizing.mass:
+            dist_bin_sizing_supported = True
+
+        elif bin_sizing == BinSizing.fat_hybrid:
+            if isinstance(dist, LognormalDistribution):
+                # Set a left bound but not a right bound because the right tail
+                # will use ev bin sizing
+                scale = 1 + np.log(num_bins)
+                new_support = (
+                    np.exp(dist.norm_mean - dist.norm_sd * scale),
+                    support[1],
+                )
+
+        if new_support is not None:
+            support = _narrow_support(support, new_support)
+            dist_bin_sizing_supported = True
 
         if not dist_bin_sizing_supported:
             raise ValueError(f"Unsupported bin sizing method {bin_sizing} for {type(dist)}.")
@@ -491,16 +541,7 @@ class NumericDistribution:
         )
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
-        if bin_sizing == BinSizing.ev:
-            neg_prop = neg_ev_contribution / total_ev_contribution
-            pos_prop = pos_ev_contribution / total_ev_contribution
-        elif bin_sizing == BinSizing.mass:
-            neg_mass = max(0, cdf(0) - cdf(support[0]))
-            pos_mass = max(0, cdf(support[1]) - cdf(0))
-            total_mass = neg_mass + pos_mass
-            neg_prop = neg_mass / total_mass
-            pos_prop = pos_mass / total_mass
-        elif bin_sizing == BinSizing.uniform:
+        if bin_sizing == BinSizing.uniform:
             if support[0] > 0:
                 neg_prop = 0
                 pos_prop = 1
@@ -512,6 +553,18 @@ class NumericDistribution:
                 neg_prop = -support[0] / width
                 pos_prop = support[1] / width
         elif bin_sizing == BinSizing.log_uniform:
+            neg_prop = 0
+            pos_prop = 1
+        elif bin_sizing == BinSizing.ev:
+            neg_prop = neg_ev_contribution / total_ev_contribution
+            pos_prop = pos_ev_contribution / total_ev_contribution
+        elif bin_sizing == BinSizing.mass:
+            neg_mass = max(0, cdf(0) - cdf(support[0]))
+            pos_mass = max(0, cdf(support[1]) - cdf(0))
+            total_mass = neg_mass + pos_mass
+            neg_prop = neg_mass / total_mass
+            pos_prop = pos_mass / total_mass
+        elif bin_sizing == BinSizing.fat_hybrid:
             neg_prop = 0
             pos_prop = 1
         else:
@@ -799,7 +852,7 @@ class NumericDistribution:
         plt.show()
 
     @classmethod
-    def _num_bins_per_side(cls, num_bins, neg_contribution, pos_contribution, allowance=0.5):
+    def _num_bins_per_side(cls, num_bins, neg_contribution, pos_contribution, allowance=0):
         """Determine how many bins to allocate to the positive and negative
         sides of the distribution.
 
