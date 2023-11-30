@@ -88,6 +88,8 @@ DEFAULT_BIN_SIZING = {
     UniformDistribution: BinSizing.uniform,
 }
 
+DEFAULT_NUM_BINS = 100
+
 
 def _narrow_support(
     support: Tuple[float, float], new_support: Tuple[Optional[float], Optional[float]]
@@ -264,45 +266,25 @@ class NumericDistribution:
             edge_values = ppf(edge_cdfs)
 
         elif bin_sizing == BinSizing.fat_hybrid:
-            # Use log-uniform bin sizing for most of the contribution to
-            # EV, and then use ev bin sizing for the tail. log-uniform is
-            # generally the most accurate for small to medium values, but it
-            # gets weird in the tails (the values start getting very large, and
-            # they still don't capture the tails as well as ev bin sizing).
-
-            # Proportion of bins to assign to the log-uniform side
-            loguni_bin_prop = 0.75
-
-            # Proportion of the contribution to EV to assign to the
-            # log-uniform side
-            loguni_ev_contribution_prop = 0.75
-
-            loguni_bins = int(loguni_bin_prop * num_bins)
-            ev_bins = num_bins - loguni_bins
-
-            # Calculate the midpoint that separates the log-uniform and ev
-            # sides
-            support_ev_contribution = dist.contribution_to_ev(
-                support[1]
-            ) - dist.contribution_to_ev(support[0])
-            hybrid_midpoint = dist.inv_contribution_to_ev(loguni_ev_contribution_prop * support_ev_contribution)
-            loguni_log_support = (np.log(support[0]), np.log(hybrid_midpoint))
-            ev_support = (hybrid_midpoint, support[1])
-
-            # Create log-uniform bins
-            log_edge_values = np.linspace(loguni_log_support[0], loguni_log_support[1], loguni_bins + 1)
-            loguni_values = np.exp(log_edge_values)
-
-            # Create ev bins
-            ev_left_prop = dist.contribution_to_ev(ev_support[0])
-            ev_right_prop = dist.contribution_to_ev(ev_support[1])
-            ev_edge_values = np.atleast_1d(
-                dist.inv_contribution_to_ev(np.linspace(ev_left_prop, ev_right_prop, ev_bins + 1)[1:-1])
+            # Use a combination of ev and log-uniform
+            scale = 1 + np.log(num_bins)
+            lu_support = _narrow_support((np.log(support[0]), np.log(support[1])), (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd))
+            lu_edge_values = np.linspace(lu_support[0], lu_support[1], num_bins + 1)[:-1]
+            lu_edge_values = np.exp(lu_edge_values)
+            ev_left_prop = dist.contribution_to_ev(support[0])
+            ev_right_prop = dist.contribution_to_ev(support[1])
+            ev_edge_values = np.concatenate(
+                (
+                    [support[0]],
+                    np.atleast_1d(
+                        dist.inv_contribution_to_ev(np.linspace(ev_left_prop, ev_right_prop, num_bins + 1)[1:-1])
+                    )
+                    if num_bins > 1
+                    else [],
+                )
             )
-            outer_edge = np.atleast_1d(support[1])
-
-            # Combine the bins
-            edge_values = np.concatenate((loguni_values, ev_edge_values, outer_edge))
+            edge_values = np.where(lu_edge_values > ev_edge_values, lu_edge_values, ev_edge_values)
+            edge_values = np.concatenate((edge_values, [support[1]]))
 
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
@@ -363,7 +345,7 @@ class NumericDistribution:
     def from_distribution(
         cls,
         dist: BaseDistribution,
-        num_bins: int = 100,
+        num_bins: Optional[int] = None,
         bin_sizing: Optional[str] = None,
         warn: bool = True,
     ):
@@ -390,6 +372,9 @@ class NumericDistribution:
             If True, raise warnings about bins with zero mass.
 
         """
+        if num_bins is None:
+            num_bins = DEFAULT_NUM_BINS
+
         if isinstance(dist, MixtureDistribution):
             # This replicates how MixtureDistribution handles lclip/rclip: it
             # clips the sub-distributions based on their own lclip/rclip, then
