@@ -9,10 +9,11 @@ import warnings
 
 from ..squigglepy.distributions import (
     LognormalDistribution,
+    MixtureDistribution,
     NormalDistribution,
     UniformDistribution,
 )
-from ..squigglepy.numeric_distribution import NumericDistribution
+from ..squigglepy.numeric_distribution import numeric, NumericDistribution
 from ..squigglepy import samplers, utils
 
 # There are a lot of functions testing various combinations of behaviors with
@@ -533,10 +534,11 @@ def test_lognorm_sd_error_propagation(bin_sizing):
     norm_sd1=st.floats(min_value=0.1, max_value=3),
     norm_sd2=st.floats(min_value=0.1, max_value=3),
 )
+@example(norm_mean1=0, norm_mean2=0, norm_sd1=1, norm_sd2=2)
 def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2):
     dists = [
-        LognormalDistribution(norm_mean=norm_mean1, norm_sd=norm_sd1),
         LognormalDistribution(norm_mean=norm_mean2, norm_sd=norm_sd2),
+        LognormalDistribution(norm_mean=norm_mean1, norm_sd=norm_sd1),
     ]
     dist_prod = LognormalDistribution(
         norm_mean=norm_mean1 + norm_mean2, norm_sd=np.sqrt(norm_sd1**2 + norm_sd2**2)
@@ -861,6 +863,166 @@ def test_lognorm_quotient(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing
     assert quotient_hist.pos_ev_contribution == approx(
         true_quotient_hist.pos_ev_contribution, rel=0.01
     )
+
+
+@given(
+    a=st.floats(min_value=1e-6, max_value=1),
+    b=st.floats(min_value=1e-6, max_value=1),
+)
+@example(a=1, b=1)
+def test_mixture(a, b):
+    if a + b > 1:
+        scale = a + b
+        a /= scale
+        b /= scale
+    c = max(0, 1 - a - b)  # do max to fix floating point rounding
+    dist1 = NormalDistribution(mean=0, sd=5)
+    dist2 = NormalDistribution(mean=5, sd=3)
+    dist3 = NormalDistribution(mean=-1, sd=1)
+    mixture = MixtureDistribution([dist1, dist2, dist3], [a, b, c])
+    hist = NumericDistribution.from_distribution(mixture, bin_sizing="uniform")
+    assert hist.histogram_mean() == approx(
+        a * dist1.mean + b * dist2.mean + c * dist3.mean, rel=1e-4
+    )
+
+
+@given(lclip=st.floats(-4, 4), width=st.floats(1, 4))
+def test_numeric_clip(lclip, width):
+    rclip = lclip + width
+    dist = NormalDistribution(mean=0, sd=1)
+    full_hist = NumericDistribution.from_distribution(dist, num_bins=200, warn=False)
+    hist = full_hist.clip(lclip, rclip)
+    assert hist.histogram_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.1)
+    hist_sum = hist + full_hist
+    assert hist_sum.histogram_mean() == approx(
+        stats.truncnorm.mean(lclip, rclip) + stats.norm.mean(), rel=0.1
+    )
+
+
+@given(
+    a=st.sampled_from([0.2, 0.3, 0.5, 0.7, 0.8]),
+    lclip=st.sampled_from([-1, 1, None]),
+    clip_width=st.sampled_from([2, 3, None]),
+    bin_sizing=st.sampled_from(["uniform", "ev", "mass"]),
+
+    # Only clip inner or outer dist b/c clipping both makes it hard to
+    # calculate what the mean should be
+    clip_inner=st.booleans(),
+)
+def test_mixture2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
+    # Clipped NumericDist accuracy really benefits from more bins. It's not
+    # very accurate with 100 bins because a clipped histogram might end up with
+    # only 10 bins or so.
+    num_bins = 500 if not clip_inner and bin_sizing == "uniform" else 100
+    b = max(0, 1 - a) # do max to fix floating point rounding
+    rclip = (
+        lclip + clip_width
+        if lclip is not None and clip_width is not None
+        else np.inf
+    )
+    if lclip is None:
+        lclip = -np.inf
+    dist1 = NormalDistribution(
+        mean=0,
+        sd=1,
+        lclip=lclip if clip_inner else None,
+        rclip=rclip if clip_inner else None,
+    )
+    dist2 = NormalDistribution(mean=1, sd=2)
+    mixture = MixtureDistribution(
+        [dist1, dist2],
+        [a, b],
+        lclip=lclip if not clip_inner else None,
+        rclip=rclip if not clip_inner else None,
+    )
+    hist = NumericDistribution.from_distribution(mixture, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
+    if clip_inner:
+        # Truncating then adding is more accurate than adding then truncating,
+        # which is good because truncate-then-add is the more typical use case
+        true_mean = (
+            a * stats.truncnorm.mean(lclip, rclip, 0, 1)
+            + b * dist2.mean
+        )
+        tolerance = 0.01
+    else:
+        mixed_mean = a * dist1.mean + b * dist2.mean
+        mixed_sd = np.sqrt(a**2 * dist1.sd**2 + b**2 * dist2.sd**2)
+        lclip_zscore = (lclip - mixed_mean) / mixed_sd
+        rclip_zscore = (rclip - mixed_mean) / mixed_sd
+
+        true_mean = stats.truncnorm.mean(
+            lclip_zscore,
+            rclip_zscore,
+            mixed_mean,
+            mixed_sd,
+        )
+        tolerance = 0.2 if bin_sizing == "uniform" else 0.1
+
+    assert hist.histogram_mean() == approx(true_mean, rel=tolerance)
+
+
+@given(
+    a=st.floats(min_value=1e-6, max_value=1),
+    b=st.floats(min_value=1e-6, max_value=1),
+    lclip=st.sampled_from([-1, 1, None]),
+    clip_width=st.sampled_from([1, 3, None]),
+    bin_sizing=st.sampled_from(["uniform", "ev", "mass"]),
+
+    # Only clip inner or outer dist b/c clipping both makes it hard to
+    # calculate what the mean should be
+    clip_inner=st.booleans(),
+)
+def test_mixture3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
+    # Clipped mixture accuracy really benefits from more bins. It's not very
+    # accurate with 100 bins
+    num_bins = 500 if not clip_inner else 100
+    if a + b > 1:
+        scale = a + b
+        a /= scale
+        b /= scale
+    c = max(0, 1 - a - b) # do max to fix floating point rounding
+    rclip = (
+        lclip + clip_width
+        if lclip is not None and clip_width is not None
+        else np.inf
+    )
+    if lclip is None:
+        lclip = -np.inf
+    dist1 = NormalDistribution(
+        mean=0,
+        sd=1,
+        lclip=lclip if clip_inner else None,
+        rclip=rclip if clip_inner else None,
+    )
+    dist2 = NormalDistribution(mean=1, sd=2)
+    dist3 = NormalDistribution(mean=-1, sd=0.75)
+    mixture = MixtureDistribution(
+        [dist1, dist2, dist3],
+        [a, b, c],
+        lclip=lclip if not clip_inner else None,
+        rclip=rclip if not clip_inner else None,
+    )
+    hist = NumericDistribution.from_distribution(mixture, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
+    if clip_inner:
+        true_mean = (
+            a * stats.truncnorm.mean(lclip, rclip, 0, 1)
+            + b * dist2.mean
+            + c * dist3.mean
+        )
+        tolerance = 0.01
+    else:
+        mixed_mean = a * dist1.mean + b * dist2.mean + c * dist3.mean
+        mixed_sd = np.sqrt(a**2 * dist1.sd**2 + b**2 * dist2.sd**2 + c**2 * dist3.sd**2)
+        lclip_zscore = (lclip - mixed_mean) / mixed_sd
+        rclip_zscore = (rclip - mixed_mean) / mixed_sd
+        true_mean = stats.truncnorm.mean(
+            lclip_zscore,
+            rclip_zscore,
+            mixed_mean,
+            mixed_sd,
+        )
+        tolerance = 0.1
+    assert hist.histogram_mean() == approx(true_mean, rel=tolerance)
 
 
 @given(

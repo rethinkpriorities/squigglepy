@@ -1196,6 +1196,5 @@ def extremize(p, e):
     else:
         return p**e
 
-
 class ConvergenceWarning(RuntimeWarning):
     ...

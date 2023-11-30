@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from functools import reduce
 import numpy as np
 from scipy import optimize, stats
 from typing import Literal, Optional, Tuple
@@ -8,10 +9,10 @@ import warnings
 from .distributions import (
     BaseDistribution,
     LognormalDistribution,
+    MixtureDistribution,
     NormalDistribution,
     UniformDistribution,
 )
-from .samplers import sample
 
 
 class BinSizing(Enum):
@@ -265,7 +266,7 @@ class NumericDistribution:
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
-        # Avoid re-calculating CDFs if we can because it's really slow
+        # Avoid re-calculating CDFs if we can because it's really slow.
         if bin_sizing != BinSizing.mass:
             edge_cdfs = cdf(edge_values)
 
@@ -278,6 +279,11 @@ class NumericDistribution:
         # of the distribution.
         edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
         bin_ev_contributions = np.diff(edge_ev_contributions)
+
+        # Adjust the sum of EV contributions so that the total EV is exactly
+        # correct. The EV can end up slightly off for binning methods that
+        # leave out a small amount of probability mass at the tails.
+        bin_ev_contributions *= total_ev_contribution / (edge_ev_contributions[-1] - edge_ev_contributions[0])
 
         # For sufficiently large edge values, CDF rounds to 1 which makes the
         # mass 0. Values can also be 0 due to floating point rounding if
@@ -348,6 +354,17 @@ class NumericDistribution:
             If True, raise warnings about bins with zero mass.
 
         """
+        if isinstance(dist, MixtureDistribution):
+            # This replicates how MixtureDistribution handles lclip/rclip: it
+            # clips the sub-distributions based on their own lclip/rclip, then
+            # takes the mixture sample, then clips the mixture sample based on
+            # the mixture lclip/rclip.
+            sub_dists = [cls.from_distribution(d, num_bins, bin_sizing, warn) for d in dist.dists]
+            mixture = reduce(
+                lambda acc, d: acc + d,
+                [w * d for w, d in zip(dist.weights, sub_dists)]
+            )
+            return mixture.clip(dist.lclip, dist.rclip)
         if type(dist) not in DEFAULT_BIN_SIZING:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
 
@@ -356,13 +373,14 @@ class NumericDistribution:
         # -------------------------------------------------------------------
 
         bin_sizing = BinSizing(bin_sizing or DEFAULT_BIN_SIZING[type(dist)])
-        support = {
+        max_support = {
             # These are the widest possible supports, but they maybe narrowed
             # later by lclip/rclip or by some bin sizing methods
             LognormalDistribution: (0, np.inf),
             NormalDistribution: (-np.inf, np.inf),
             UniformDistribution: (dist.x, dist.y),
         }[type(dist)]
+        support = max_support
         ppf = {
             LognormalDistribution: lambda p: stats.lognorm.ppf(
                 p, dist.norm_sd, scale=np.exp(dist.norm_mean)
@@ -464,6 +482,19 @@ class NumericDistribution:
                 exact_mean = (support[0] + support[1]) / 2
                 exact_sd = np.sqrt(1 / 12) * (support[1] - support[0])
 
+        # For bin sizings that limit the support, adjust the EV so that it is
+        # exactly correct instead of slightly off
+
+        ev_adjustment = 1
+        if bin_sizing in [BinSizing.uniform, BinSizing.log_uniform] and dist.lclip is None and dist.rclip is None:
+            domain_ev = dist.contribution_to_ev(
+                support[1], normalized=False
+            ) - dist.contribution_to_ev(support[0], normalized=False)
+            max_support_ev = dist.contribution_to_ev(
+                max_support[1], normalized=False
+            ) - dist.contribution_to_ev(max_support[0], normalized=False)
+            ev_adjustment = max_support_ev / domain_ev
+
         # -----------------------------------------------------------------
         # Split dist into negative and positive sides and generate bins for
         # each side
@@ -472,11 +503,12 @@ class NumericDistribution:
         total_ev_contribution = dist.contribution_to_ev(
             support[1], normalized=False
         ) - dist.contribution_to_ev(support[0], normalized=False)
+        total_ev_contribution *= ev_adjustment
         neg_ev_contribution = max(
             0,
             dist.contribution_to_ev(0, normalized=False)
             - dist.contribution_to_ev(support[0], normalized=False),
-        )
+        ) * ev_adjustment
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
         if bin_sizing == BinSizing.ev:
@@ -532,7 +564,7 @@ class NumericDistribution:
 
         # Resize in case some bins got removed due to having zero mass/EV
         if len(neg_values) < num_neg_bins:
-            neg_ev_contribution = np.sum(neg_masses * neg_values)
+            neg_ev_contribution = abs(np.sum(neg_masses * neg_values))
             num_neg_bins = len(neg_values)
         if len(pos_values) < num_pos_bins:
             pos_ev_contribution = np.sum(pos_masses * pos_values)
@@ -650,6 +682,68 @@ class NumericDistribution:
         :ref:``quantile`` for notes on this function's accuracy.
         """
         return np.squeeze(self.quantile(np.asarray(p) / 100))
+
+    def clip(self, lclip, rclip):
+        """Return a new distribution clipped to the given bounds.
+
+        Parameters
+        ----------
+        lclip : Optional[float]
+            The lower bound of the new distribution.
+        rclip : Optional[float]
+            The upper bound of the new distribution.
+
+        Return
+        ------
+        clipped : NumericDistribution
+            A new distribution clipped to the given bounds.
+        """
+        if lclip is None and rclip is None:
+            return NumericDistribution(
+                self.values,
+                self.masses,
+                self.zero_bin_index,
+                self.neg_ev_contribution,
+                self.pos_ev_contribution,
+                self.exact_mean,
+                self.exact_sd,
+            )
+
+        if lclip is None:
+            lclip = -np.inf
+        if rclip is None:
+            rclip = np.inf
+
+        if lclip >= rclip:
+            raise ValueError(f"lclip ({lclip}) must be less than rclip ({rclip})")
+
+        # bounds are inclusive
+        start_index = np.searchsorted(self.values, lclip, side="left")
+        end_index = np.searchsorted(self.values, rclip, side="right")
+
+        new_values = self.values[start_index:end_index]
+        new_masses = self.masses[start_index:end_index]
+        clipped_mass = np.sum(new_masses)
+        new_masses /= clipped_mass
+        zero_bin_index = max(0, self.zero_bin_index - start_index)
+        neg_ev_contribution = -np.sum(new_masses[:zero_bin_index] * new_values[:zero_bin_index])
+        pos_ev_contribution = np.sum(new_masses[zero_bin_index:] * new_values[zero_bin_index:])
+
+        return NumericDistribution(
+            values=new_values,
+            masses=new_masses,
+            zero_bin_index=zero_bin_index,
+            neg_ev_contribution=neg_ev_contribution,
+            pos_ev_contribution=pos_ev_contribution,
+            exact_mean=None,
+            exact_sd=None,
+        )
+
+    def sample(self, n):
+        """Generate ``n`` random samples from the distribution."""
+        # TODO: Do interpolation instead of returning the same values repeatedly.
+        # Could maybe simplify by calling self.quantile(np.random.uniform(size=n))
+        return np.random.choice(self.values, size=n, p=self.masses)
 
     @classmethod
     def _contribution_to_ev(
@@ -845,11 +939,7 @@ class NumericDistribution:
         extended_evs = extended_values * extended_masses
         masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
         bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
-
-        # Adjust the numbers such that values * masses sums to EV.
-        bin_evs *= ev / bin_evs.sum()
         values = bin_evs / masses
-
         return (values, masses)
 
     def __eq__(x, y):
@@ -881,7 +971,7 @@ class NumericDistribution:
         # positive side.
         neg_ev_contribution = -np.sum(extended_values[:zero_index] * extended_masses[:zero_index])
         sum_mean = x.mean() + y.mean()
-        # TODO: this `max` is a hack to deal with a problem where, when mean is
+        # This `max` is a hack to deal with a problem where, when mean is
         # negative and almost all contribution is on the negative side,
         # neg_ev_contribution can sometimes be slightly less than abs(mean),
         # apparently due to rounding issues, which makes pos_ev_contribution
@@ -933,7 +1023,7 @@ class NumericDistribution:
         res = NumericDistribution(
             values=values,
             masses=masses,
-            zero_bin_index=zero_index,
+            zero_bin_index=np.searchsorted(values, 0),
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
         )
@@ -987,26 +1077,26 @@ class NumericDistribution:
         # Calculate the four products.
         extended_neg_values = np.concatenate(
             (
-                np.outer(xneg_values, ypos_values).flatten(),
-                np.outer(xpos_values, yneg_values).flatten(),
+                np.outer(xneg_values, ypos_values).reshape(-1),
+                np.outer(xpos_values, yneg_values).reshape(-1),
             )
         )
         extended_neg_masses = np.concatenate(
             (
-                np.outer(xneg_masses, ypos_masses).flatten(),
-                np.outer(xpos_masses, yneg_masses).flatten(),
+                np.outer(xneg_masses, ypos_masses).reshape(-1),
+                np.outer(xpos_masses, yneg_masses).reshape(-1),
             )
         )
         extended_pos_values = np.concatenate(
             (
-                np.outer(xneg_values, yneg_values).flatten(),
-                np.outer(xpos_values, ypos_values).flatten(),
+                np.outer(xneg_values, yneg_values).reshape(-1),
+                np.outer(xpos_values, ypos_values).reshape(-1),
             )
         )
         extended_pos_masses = np.concatenate(
             (
-                np.outer(xneg_masses, yneg_masses).flatten(),
-                np.outer(xpos_masses, ypos_masses).flatten(),
+                np.outer(xneg_masses, yneg_masses).reshape(-1),
+                np.outer(xpos_masses, ypos_masses).reshape(-1),
             )
         )
 
@@ -1136,6 +1226,8 @@ class NumericDistribution:
         )
 
     def __truediv__(x, y):
+        if isinstance(y, int) or isinstance(y, float):
+            return x.scale_by(1 / y)
         return x * y.reciprocal()
 
     def __rtruediv__(x, y):
@@ -1149,3 +1241,9 @@ class NumericDistribution:
 
     def __hash__(self):
         return hash(repr(self.values) + "," + repr(self.masses))
+
+
+def numeric(dist, n=10000):
+    # ``n`` is not directly meaningful, this is written as a drop-in
+    # replacement for ``sq.sample``
+    return NumericDistribution.from_distribution(dist, num_bins=max(100, int(np.ceil(np.sqrt(n)))))

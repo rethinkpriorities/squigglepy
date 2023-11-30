@@ -47,6 +47,7 @@ from .distributions import (
     UniformDistribution,
     const,
 )
+from .numeric_distribution import NumericDistribution
 
 _squigglepy_internal_sample_caches = {}
 
@@ -1106,6 +1107,9 @@ def sample(
 
             if is_dist(samples) or callable(samples):
                 samples = sample(samples, n=n)
+
+        elif isinstance(dist, NumericDistribution):
+            samples = dist.sample(n=n)
 
         else:
             raise ValueError("{} sampler not found".format(type(dist)))
