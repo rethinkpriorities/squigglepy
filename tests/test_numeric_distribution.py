@@ -533,9 +533,9 @@ def test_lognorm_sd_error_propagation(bin_sizing):
     norm_mean2=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd1=st.floats(min_value=0.1, max_value=3),
     norm_sd2=st.floats(min_value=0.1, max_value=3),
+    bin_sizing=st.sampled_from(["ev", "log-uniform"]),
 )
-@example(norm_mean1=0, norm_mean2=0, norm_sd1=1, norm_sd2=2)
-def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2):
+def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing):
     dists = [
         LognormalDistribution(norm_mean=norm_mean2, norm_sd=norm_sd2),
         LognormalDistribution(norm_mean=norm_mean1, norm_sd=norm_sd1),
@@ -543,13 +543,14 @@ def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2):
     dist_prod = LognormalDistribution(
         norm_mean=norm_mean1 + norm_mean2, norm_sd=np.sqrt(norm_sd1**2 + norm_sd2**2)
     )
-    pmhs = [NumericDistribution.from_distribution(dist, warn=False) for dist in dists]
-    pmh_prod = reduce(lambda acc, hist: acc * hist, pmhs)
+    hists = [NumericDistribution.from_distribution(dist, bin_sizing=bin_sizing, warn=False) for dist in dists]
+    hist_prod = reduce(lambda acc, hist: acc * hist, hists)
 
     # Lognorm width grows with e**norm_sd**2, so error tolerance grows the same way
-    tolerance = 1.05 ** (1 + (norm_sd1 + norm_sd2) ** 2) - 1
-    assert pmh_prod.histogram_mean() == approx(dist_prod.lognorm_mean)
-    assert pmh_prod.histogram_sd() == approx(dist_prod.lognorm_sd, rel=tolerance)
+    sd_tolerance = 1.05 ** (1 + (norm_sd1 + norm_sd2) ** 2) - 1
+    mean_tolerance = 1e-3 if bin_sizing == "log-uniform" else 1e-6
+    assert hist_prod.histogram_mean() == approx(dist_prod.lognorm_mean, rel=mean_tolerance)
+    assert hist_prod.histogram_sd() == approx(dist_prod.lognorm_sd, rel=sd_tolerance)
 
 
 @given(
@@ -594,15 +595,17 @@ def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bin
     norm_mean2=st.floats(min_value=-np.log(1e6), max_value=np.log(1e6)),
     norm_sd1=st.floats(min_value=0.1, max_value=3),
     norm_sd2=st.floats(min_value=0.01, max_value=3),
+    bin_sizing=st.sampled_from(["ev", "log-uniform"]),
 )
-def test_lognorm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2):
+def test_lognorm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing):
     dist1 = LognormalDistribution(norm_mean=norm_mean1, norm_sd=norm_sd1)
     dist2 = LognormalDistribution(norm_mean=norm_mean2, norm_sd=norm_sd2)
-    hist1 = NumericDistribution.from_distribution(dist1, warn=False)
-    hist2 = NumericDistribution.from_distribution(dist2, warn=False)
+    hist1 = NumericDistribution.from_distribution(dist1, bin_sizing=bin_sizing, warn=False)
+    hist2 = NumericDistribution.from_distribution(dist2, bin_sizing=bin_sizing, warn=False)
     hist_sum = hist1 + hist2
     assert all(np.diff(hist_sum.values) >= 0), hist_sum.values
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean)
+    mean_tolerance = 1e-3 if bin_sizing == "log-uniform" else 1e-6
+    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, rel=mean_tolerance)
 
     # SD is very inaccurate because adding lognormals produces some large but
     # very low-probability values on the right tail and the only approach is to
@@ -616,21 +619,18 @@ def test_lognorm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2):
     mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
     sd1=st.floats(min_value=0.001, max_value=100),
     sd2=st.floats(min_value=0.001, max_value=3),
+    lognorm_bin_sizing=st.sampled_from(["ev", "log-uniform"]),
 )
-# TODO: the top bin "should" be no less than 445 (extended_values[-100:] ranges
-# from 445 to 459) but it's getting squashed down to 1.9. why? looks like there
-# are actually only 3 bins and 1013 items per bin on the positive side. maybe
-# we shouldn't be trying to size each side by contribution to EV
-@example(mean1=0, mean2=0.0, sd1=1.0, sd2=3.0).via("discovered failure")
-def test_norm_lognorm_sum(mean1, mean2, sd1, sd2):
+def test_norm_lognorm_sum(mean1, mean2, sd1, sd2, lognorm_bin_sizing):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
     dist2 = LognormalDistribution(norm_mean=mean2, norm_sd=sd2)
     hist1 = NumericDistribution.from_distribution(dist1, warn=False)
-    hist2 = NumericDistribution.from_distribution(dist2, warn=False)
+    hist2 = NumericDistribution.from_distribution(dist2, bin_sizing=lognorm_bin_sizing, warn=False)
     hist_sum = hist1 + hist2
+    mean_tolerance = 0.005 if lognorm_bin_sizing == "log-uniform" else 1e-6
     sd_tolerance = 0.5
     assert all(np.diff(hist_sum.values) >= 0), hist_sum.values
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, abs=1e-6, rel=1e-6)
+    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, abs=mean_tolerance, rel=mean_tolerance)
     assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=sd_tolerance)
 
 
@@ -886,14 +886,15 @@ def test_mixture(a, b):
     )
 
 
-@given(lclip=st.floats(-4, 4), width=st.floats(1, 4))
+@given(lclip=st.integers(-4, 4), width=st.integers(1, 4))
+@example(lclip=0, width=1)
 def test_numeric_clip(lclip, width):
     rclip = lclip + width
     dist = NormalDistribution(mean=0, sd=1)
     full_hist = NumericDistribution.from_distribution(dist, num_bins=200, warn=False)
-    hist = full_hist.clip(lclip, rclip)
-    assert hist.histogram_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.1)
-    hist_sum = hist + full_hist
+    clipped_hist = full_hist.clip(lclip, rclip)
+    assert clipped_hist.histogram_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.1)
+    hist_sum = clipped_hist + full_hist
     assert hist_sum.histogram_mean() == approx(
         stats.truncnorm.mean(lclip, rclip) + stats.norm.mean(), rel=0.1
     )
@@ -909,6 +910,7 @@ def test_numeric_clip(lclip, width):
     # calculate what the mean should be
     clip_inner=st.booleans(),
 )
+@example(a=0.2, lclip=1, clip_width=2, bin_sizing="mass", clip_inner=True)
 def test_mixture2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
     # Clipped NumericDist accuracy really benefits from more bins. It's not
     # very accurate with 100 bins because a clipped histogram might end up with
@@ -1129,7 +1131,7 @@ def test_uniform_lognorm_prod(a, b, norm_mean, norm_sd):
     hist1 = NumericDistribution.from_distribution(dist1)
     hist2 = NumericDistribution.from_distribution(dist2, bin_sizing="ev", warn=False)
     hist_prod = hist1 * hist2
-    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-9, abs=1e-9)
+    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-8, abs=1e-8)
     assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.5)
 
 

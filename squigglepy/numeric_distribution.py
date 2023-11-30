@@ -131,7 +131,8 @@ class NumericDistribution:
     average of the samples. You might call this the expected value (EV) method,
     in contrast to two methods described below.
 
-    The EV method guarantees that the histogram's expected value exactly equals
+    The EV method guarantees that, whenever the histogram width covers the full
+    support of the distribution, the histogram's expected value exactly equals
     the expected value of the true distribution (modulo floating point rounding
     errors).
 
@@ -182,7 +183,7 @@ class NumericDistribution:
         exact_sd: Optional[float] = None,
     ):
         """Create a probability mass histogram. You should usually not call
-        this constructor directly; instead use :func:`from_distribution`.
+        this constructor directly; instead, use :func:`from_distribution`.
 
         Parameters
         ----------
@@ -218,7 +219,6 @@ class NumericDistribution:
     def _construct_bins(
         cls,
         num_bins,
-        total_ev_contribution,
         support,
         dist,
         cdf,
@@ -279,11 +279,6 @@ class NumericDistribution:
         # of the distribution.
         edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
         bin_ev_contributions = np.diff(edge_ev_contributions)
-
-        # Adjust the sum of EV contributions so that the total EV is exactly
-        # correct. The EV can end up slightly off for binning methods that
-        # leave out a small amount of probability mass at the tails.
-        bin_ev_contributions *= total_ev_contribution / (edge_ev_contributions[-1] - edge_ev_contributions[0])
 
         # For sufficiently large edge values, CDF rounds to 1 which makes the
         # mass 0. Values can also be 0 due to floating point rounding if
@@ -373,14 +368,13 @@ class NumericDistribution:
         # -------------------------------------------------------------------
 
         bin_sizing = BinSizing(bin_sizing or DEFAULT_BIN_SIZING[type(dist)])
-        max_support = {
+        support = {
             # These are the widest possible supports, but they maybe narrowed
             # later by lclip/rclip or by some bin sizing methods
             LognormalDistribution: (0, np.inf),
             NormalDistribution: (-np.inf, np.inf),
             UniformDistribution: (dist.x, dist.y),
         }[type(dist)]
-        support = max_support
         ppf = {
             LognormalDistribution: lambda p: stats.lognorm.ppf(
                 p, dist.norm_sd, scale=np.exp(dist.norm_mean)
@@ -482,19 +476,6 @@ class NumericDistribution:
                 exact_mean = (support[0] + support[1]) / 2
                 exact_sd = np.sqrt(1 / 12) * (support[1] - support[0])
 
-        # For bin sizings that limit the support, adjust the EV so that it is
-        # exactly correct instead of slightly off
-
-        ev_adjustment = 1
-        if bin_sizing in [BinSizing.uniform, BinSizing.log_uniform] and dist.lclip is None and dist.rclip is None:
-            domain_ev = dist.contribution_to_ev(
-                support[1], normalized=False
-            ) - dist.contribution_to_ev(support[0], normalized=False)
-            max_support_ev = dist.contribution_to_ev(
-                max_support[1], normalized=False
-            ) - dist.contribution_to_ev(max_support[0], normalized=False)
-            ev_adjustment = max_support_ev / domain_ev
-
         # -----------------------------------------------------------------
         # Split dist into negative and positive sides and generate bins for
         # each side
@@ -503,20 +484,22 @@ class NumericDistribution:
         total_ev_contribution = dist.contribution_to_ev(
             support[1], normalized=False
         ) - dist.contribution_to_ev(support[0], normalized=False)
-        total_ev_contribution *= ev_adjustment
         neg_ev_contribution = max(
             0,
             dist.contribution_to_ev(0, normalized=False)
             - dist.contribution_to_ev(support[0], normalized=False),
-        ) * ev_adjustment
+        )
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
         if bin_sizing == BinSizing.ev:
             neg_prop = neg_ev_contribution / total_ev_contribution
             pos_prop = pos_ev_contribution / total_ev_contribution
         elif bin_sizing == BinSizing.mass:
-            neg_prop = cdf(0)
-            pos_prop = 1 - neg_prop
+            neg_mass = max(0, cdf(0) - cdf(support[0]))
+            pos_mass = max(0, cdf(support[1]) - cdf(0))
+            total_mass = neg_mass + pos_mass
+            neg_prop = neg_mass / total_mass
+            pos_prop = pos_mass / total_mass
         elif bin_sizing == BinSizing.uniform:
             if support[0] > 0:
                 neg_prop = 0
@@ -542,7 +525,6 @@ class NumericDistribution:
         )
         neg_masses, neg_values = cls._construct_bins(
             num_neg_bins,
-            neg_ev_contribution,
             (support[0], min(0, support[1])),
             dist,
             cdf,
@@ -553,7 +535,6 @@ class NumericDistribution:
         neg_values = -neg_values
         pos_masses, pos_values = cls._construct_bins(
             num_pos_bins,
-            pos_ev_contribution,
             (max(0, support[0]), support[1]),
             dist,
             cdf,
@@ -684,19 +665,23 @@ class NumericDistribution:
         return np.squeeze(self.quantile(np.asarray(p) / 100))
 
     def clip(self, lclip, rclip):
-        """Return a new distribution clipped to the given bounds.
+        """Return a new distribution clipped to the given bounds. Does not
+        modify the current distribution.
 
         Parameters
         ----------
         lclip : Optional[float]
-            The lower bound of the new distribution.
+            The new lower bound of the distribution, or None if the lower bound
+            should not change.
         rclip : Optional[float]
-            The upper bound of the new distribution.
+            The new upper bound of the distribution, or None if the upper bound
+            should not change.
 
         Return
         ------
         clipped : NumericDistribution
             A new distribution clipped to the given bounds.
+
         """
         if lclip is None and rclip is None:
             return NumericDistribution(
@@ -721,8 +706,8 @@ class NumericDistribution:
         start_index = np.searchsorted(self.values, lclip, side="left")
         end_index = np.searchsorted(self.values, rclip, side="right")
 
-        new_values = self.values[start_index:end_index]
-        new_masses = self.masses[start_index:end_index]
+        new_values = np.array(self.values[start_index:end_index])
+        new_masses = np.array(self.masses[start_index:end_index])
         clipped_mass = np.sum(new_masses)
         new_masses /= clipped_mass
         zero_bin_index = max(0, self.zero_bin_index - start_index)
