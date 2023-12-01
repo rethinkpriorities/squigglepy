@@ -85,17 +85,9 @@ class BinSizing(Enum):
     log_uniform = "log-uniform"
     ev = "ev"
     mass = "mass"
-    fat_hybrid = "fat-hybrid"
     bin_count = "bin-count"
-
-
-DEFAULT_BIN_SIZING = {
-    NormalDistribution: BinSizing.uniform,
-    LognormalDistribution: BinSizing.fat_hybrid,
-    UniformDistribution: BinSizing.uniform,
-}
-
-DEFAULT_NUM_BINS = 100
+    fat_hybrid = "fat-hybrid"
+    quantile_hybrid = "quantile-hybrid"
 
 
 def _bin_sizing_scale(bin_sizing, num_bins):
@@ -111,9 +103,29 @@ def _bin_sizing_scale(bin_sizing, num_bins):
     # leaves off less than 1e-10 of the probability mass.
     return {
         BinSizing.uniform: max(7, 4.5 + np.log(num_bins) ** 0.5),
-        BinSizing.log_uniform: 4 + np.log(num_bins) ** 0.5,
-        BinSizing.fat_hybrid: 4 + np.log(num_bins) ** 0.5,
+        BinSizing.log_uniform: max(7, 4.5 + np.log(num_bins) ** 0.5),
+        BinSizing.fat_hybrid: 4.5 + np.log(num_bins) ** 0.5,
     }[bin_sizing]
+
+
+DEFAULT_BIN_SIZING = {
+    NormalDistribution: BinSizing.uniform,
+    LognormalDistribution: BinSizing.log_uniform,
+    UniformDistribution: BinSizing.uniform,
+}
+
+DEFAULT_NUM_BINS = 100
+
+CACHED_LOGNORM_CDFS = {}
+
+def cached_lognorm_cdfs(num_bins):
+    if num_bins in CACHED_LOGNORM_CDFS:
+        return CACHED_LOGNORM_CDFS[num_bins]
+    scale = _bin_sizing_scale(BinSizing.log_uniform, num_bins)
+    values = np.exp(np.linspace(-scale, scale, num_bins + 1))
+    cdfs = stats.lognorm.cdf(values, 1)
+    CACHED_LOGNORM_CDFS[num_bins] = cdfs
+    return cdfs
 
 
 def _narrow_support(
@@ -129,21 +141,23 @@ def _narrow_support(
 
 class BaseNumericDistribution(ABC):
     def quantile(self, q):
-        """Estimate the value of the distribution at quantile ``q`` using
-        interpolation between known values.
+        """Estimate the value of the distribution at quantile ``q`` by
+        interpolating between known values.
 
-        This function is not very accurate in certain cases:
-
-        1. Fat-tailed distributions put much of their probability mass in the
+        Warning: This function is not very accurate in certain cases. Namely,
+        fat-tailed distributions put much of their probability mass in the
         smallest bins because the difference between (say) the 10th percentile
         and the 20th percentile is inconsequential for most purposes. For these
         distributions, small quantiles will be very inaccurate, in exchange for
-        greater accuracy in quantiles close to 1.
+        greater accuracy in quantiles close to 1--this function can often
+        reliably distinguish between (say) the 99.8th and 99.9th percentiles
+        for fat-tailed distributions.
 
-        2. For values with CDFs very close to 1, the values in bins may not be
-        strictly ordered, in which case ``quantile`` may return an incorrect
-        result. This will only happen if you request a quantile very close
-        to 1 (such as 0.9999999).
+        The accuracy at different quantiles depends on the bin sizing method
+        used. :ref:``BinSizing.mass`` will produce bins that are evenly spaced
+        across quantiles. ``BinSizing.ev`` and ``BinSizing.log_uniform`` for
+        fat-tailed distributions will lose accuracy at lower quantiles in
+        exchange for greater accuracy on the right tail.
 
         Parameters
         ----------
@@ -154,6 +168,7 @@ class BaseNumericDistribution(ABC):
         ------
         quantiles: number or array-like
             The estimated value at the given quantile(s).
+
         """
         return self.ppf(q)
 
@@ -320,9 +335,11 @@ class NumericDistribution(BaseNumericDistribution):
         is_reversed,
     ):
         """Construct a list of bin masses and values. Helper function for
-        :func:`from_distribution`, do not call this directly."""
+        :func:`from_distribution`; do not call this directly."""
         if num_bins <= 0:
             return (np.array([]), np.array([]))
+
+        edge_cdfs = None
 
         if bin_sizing == BinSizing.uniform:
             edge_values = np.linspace(support[0], support[1], num_bins + 1)
@@ -331,6 +348,9 @@ class NumericDistribution(BaseNumericDistribution):
             log_support = (np.log(support[0]), np.log(support[1]))
             log_edge_values = np.linspace(log_support[0], log_support[1], num_bins + 1)
             edge_values = np.exp(log_edge_values)
+            if isinstance(dist, LognormalDistribution) and dist.lclip is None and dist.rclip is None:
+                # edge_cdfs = cached_lognorm_cdfs(num_bins)
+                pass
 
         elif bin_sizing == BinSizing.ev:
             # Don't call get_edge_value on the left and right edges because it's
@@ -383,11 +403,39 @@ class NumericDistribution(BaseNumericDistribution):
             edge_values = np.where(lu_edge_values > ev_edge_values, lu_edge_values, ev_edge_values)
             edge_values = np.concatenate((edge_values, [support[1]]))
 
+        elif bin_sizing == BinSizing.quantile_hybrid:
+            # Use mass on the left tail and ev on the right tail to maximize
+            # the accuracy of quantiles.
+            # TODO: should really use mass near 0 and ev further out for two-sided dists
+            # TODO: the constants are made up, could probably be better
+            mass_support = _narrow_support(support, (support[0], ppf(0.5)))
+            ev_support = _narrow_support(support, (ppf(0.5), support[1]))
+            num_mass_bins = num_bins // 4
+            num_ev_bins = num_bins - num_mass_bins
+            mass_edge_values = ppf(
+                np.linspace(cdf(mass_support[0]), cdf(mass_support[1]), num_mass_bins + 1)
+            )
+            ev_left_prop = dist.contribution_to_ev(ev_support[0])
+            ev_right_prop = dist.contribution_to_ev(ev_support[1])
+            ev_edge_values = np.concatenate(
+                (
+                    np.atleast_1d(
+                        dist.inv_contribution_to_ev(
+                            np.linspace(ev_left_prop, ev_right_prop, num_ev_bins + 1)[1:-1]
+                        )
+                    )
+                    if num_ev_bins > 1
+                    else [],
+                    [ev_support[1]],
+                )
+            )
+            edge_values = np.concatenate((mass_edge_values, ev_edge_values))
+
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
 
         # Avoid re-calculating CDFs if we can because it's really slow.
-        if bin_sizing != BinSizing.mass:
+        if edge_cdfs is None:
             edge_cdfs = cdf(edge_values)
 
         masses = np.diff(edge_cdfs)
@@ -420,10 +468,9 @@ class NumericDistribution(BaseNumericDistribution):
         sign = -1 if is_reversed else 1
         bot_diffs = sign * np.diff(values[: (num_bins // 10)])
         top_diffs = sign * np.diff(values[-(num_bins // 10) :])
-        non_monotonic = (
-            [i for i in range(len(bot_diffs)) if bot_diffs[i] < 0]
-            + [i + 1 + num_bins - len(top_diffs) for i in range(len(top_diffs)) if top_diffs[i] < 0]
-        )
+        non_monotonic = [i for i in range(len(bot_diffs)) if bot_diffs[i] < 0] + [
+            i + 1 + num_bins - len(top_diffs) for i in range(len(top_diffs)) if top_diffs[i] < 0
+        ]
         bad_indexes = set(mass_zeros + ev_zeros + non_monotonic)
 
         if len(bad_indexes) > 0:
@@ -440,7 +487,9 @@ class NumericDistribution(BaseNumericDistribution):
                     f"1 bin had zero expected value, most likely because it was too small"
                 )
             elif len(ev_zeros) > 1:
-                messages.append(f"{len(ev_zeros)} bins had zero expected value, most likely because they were too small")
+                messages.append(
+                    f"{len(ev_zeros)} bins had zero expected value, most likely because they were too small"
+                )
 
             if len(non_monotonic) > 0:
                 messages.append(f"{len(non_monotonic) + 1} neighboring values were non-monotonic")
@@ -587,6 +636,9 @@ class NumericDistribution(BaseNumericDistribution):
                     support[1],
                 )
 
+        elif bin_sizing == BinSizing.quantile_hybrid:
+            dist_bin_sizing_supported = True
+
         if new_support is not None:
             support = _narrow_support(support, new_support)
             dist_bin_sizing_supported = True
@@ -663,7 +715,7 @@ class NumericDistribution(BaseNumericDistribution):
         elif bin_sizing == BinSizing.ev:
             neg_prop = neg_ev_contribution / total_ev_contribution
             pos_prop = pos_ev_contribution / total_ev_contribution
-        elif bin_sizing == BinSizing.mass:
+        elif bin_sizing == BinSizing.mass or bin_sizing == BinSizing.quantile_hybrid:
             neg_mass = max(0, cdf(0) - cdf(support[0]))
             pos_mass = max(0, cdf(support[1]) - cdf(0))
             total_mass = neg_mass + pos_mass
@@ -821,9 +873,7 @@ class NumericDistribution(BaseNumericDistribution):
         return self.exact_sd
 
     def cdf(self, x):
-        """Estimate the proportion of the distribution that lies below ``x``.
-        Uses linear interpolation between known values.
-        """
+        """Estimate the proportion of the distribution that lies below ``x``."""
         if self.interpolate_cdf is None:
             # Subtracting 0.5 * masses because eg the first out of 100 values
             # represents the 0.5th percentile, not the 1st percentile
@@ -834,8 +884,15 @@ class NumericDistribution(BaseNumericDistribution):
     def ppf(self, q):
         """An alias for :ref:``quantile``."""
         if self.interpolate_ppf is None:
-            self._cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
-            self.interpolate_ppf = PchipInterpolator(self._cum_mass, self.values, extrapolate=True)
+            cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
+
+            # Mass diffs can be 0 if a mass is very small and gets rounded off.
+            # The interpolator doesn't like this, so remove these values.
+            nonzero_indexes = [i for (i, d) in enumerate(np.diff(cum_mass)) if d > 0]
+            cum_mass = cum_mass[nonzero_indexes]
+            values = self.values[nonzero_indexes]
+            self.interpolate_ppf = PchipInterpolator(cum_mass, values, extrapolate=True)
+            # self.interpolate_ppf = CubicSpline(cum_mass, values, extrapolate=True)
         return self.interpolate_ppf(q)
 
     def clip(self, lclip, rclip):
@@ -1463,21 +1520,33 @@ class ZeroNumericDistribution(BaseNumericDistribution):
 
         if dist.exact_mean is not None:
             self.exact_mean = dist.exact_mean * self.nonzero_mass
+        if dist.exact_sd is not None:
+            nonzero_component = dist.exact_sd**2 * self.nonzero_mass
+            zero_component = self.zero_mass * dist.exact_mean**2
+            self.exact_sd = np.sqrt(nonzero_component + zero_component)
 
         self._neg_mass = np.sum(dist.masses[: dist.zero_bin_index]) * self.nonzero_mass
 
         # To be computed lazily
         self.interpolate_ppf = None
 
-    def mean(self):
-        return self.dist.mean() * self.nonzero_mass
-
     def histogram_mean(self):
         return self.dist.histogram_mean() * self.nonzero_mass
 
+    def mean(self):
+        return self.dist.mean() * self.nonzero_mass
+
+    def histogram_sd(self):
+        nonzero_component = self.dist.histogram_sd() ** 2 * self.nonzero_mass
+        zero_component = self.zero_mass * self.dist.histogram_mean() ** 2
+        return np.sqrt(nonzero_component + zero_component)
+
     def sd(self):
-        # TODO: is there an easy way to calculate SD?
-        raise NotImplementedError
+        if self.exact_sd is not None:
+            return self.exact_sd
+        nonzero_component = self.dist.sd() ** 2 * self.nonzero_mass
+        zero_component = self.zero_mass * self.dist.mean() ** 2
+        return np.sqrt(nonzero_component + zero_component)
 
     def ppf(self, q):
         if not isinstance(q, float) and not isinstance(q, int):

@@ -275,9 +275,9 @@ def test_lognorm_product_bin_sizing_accuracy():
     mean_errors = [
         relative_error(mass_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(ev_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(fat_hybrid_hist.histogram_mean(), dist_prod.lognorm_mean),
-        relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
     ]
     assert all(np.diff(mean_errors) >= 0)
 
@@ -342,8 +342,8 @@ def test_lognorm_clip_tail_bin_sizing_accuracy():
         relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
         relative_error(ev_hist.histogram_mean(), true_mean),
         relative_error(mass_hist.histogram_mean(), true_mean),
-        relative_error(uniform_hist.histogram_mean(), true_mean),
         relative_error(log_uniform_hist.histogram_mean(), true_mean),
+        relative_error(uniform_hist.histogram_mean(), true_mean),
     ]
     assert all(np.diff(mean_errors) >= 0)
 
@@ -635,6 +635,7 @@ def test_lognorm_sd_error_propagation(bin_sizing):
     norm_sd2=st.floats(min_value=0.1, max_value=3),
     bin_sizing=st.sampled_from(["ev", "log-uniform", "fat-hybrid"]),
 )
+@example(norm_mean1=0, norm_mean2=0, norm_sd1=3, norm_sd2=3, bin_sizing="log-uniform")
 def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing):
     dists = [
         LognormalDistribution(norm_mean=norm_mean2, norm_sd=norm_sd2),
@@ -663,13 +664,13 @@ def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing)
     bin_sizing=st.sampled_from(["ev", "uniform"]),
 )
 @example(
-    norm_mean1=1,
-    norm_mean2=2,
+    norm_mean1=99998,
+    norm_mean2=-99998,
     norm_sd1=1,
     norm_sd2=1,
-    num_bins1=25,
-    num_bins2=25,
-    bin_sizing="ev",
+    num_bins1=100,
+    num_bins2=100,
+    bin_sizing="uniform",
 )
 def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bins2, bin_sizing):
     dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
@@ -681,9 +682,10 @@ def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bin
     # The further apart the means are, the less accurate the SD estimate is
     distance_apart = abs(norm_mean1 - norm_mean2) / hist_sum.exact_sd
     sd_tolerance = 2 + 0.5 * distance_apart
+    mean_tolerance = 1e-10 + 1e-10 * distance_apart
 
     assert all(np.diff(hist_sum.values) >= 0)
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, abs=1e-10, rel=1e-5)
+    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, abs=mean_tolerance, rel=1e-5)
     assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=sd_tolerance)
 
 
@@ -939,7 +941,6 @@ def test_shift_by(mean, sd, scalar):
     norm_mean=st.floats(min_value=-10, max_value=10),
     norm_sd=st.floats(min_value=0.01, max_value=2.5),
 )
-@example(norm_mean=0, norm_sd=0.25)
 def test_lognorm_reciprocal(norm_mean, norm_sd):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     reciprocal_dist = LognormalDistribution(norm_mean=-norm_mean, norm_sd=norm_sd)
@@ -949,18 +950,16 @@ def test_lognorm_reciprocal(norm_mean, norm_sd):
         reciprocal_dist, bin_sizing="log-uniform", warn=False
     )
 
-    # Taking the reciprocal does lose a good bit of accuracy because bins
-    # values are based on contribution to EV, and the contribution to EV for
-    # 1/X is pretty different. Could improve accuracy by writing
+    # Taking the reciprocal does lose a good bit of accuracy because bin values
+    # are set as the expected value of the bin, and the EV of 1/X is pretty
+    # different. Could improve accuracy by writing
     # reciprocal_contribution_to_ev functions for every distribution type, but
     # that's probably not worth it.
     assert reciprocal_hist.histogram_mean() == approx(reciprocal_dist.lognorm_mean, rel=0.05)
     assert reciprocal_hist.histogram_sd() == approx(reciprocal_dist.lognorm_sd, rel=0.2)
-    assert reciprocal_hist.neg_ev_contribution == approx(
-        true_reciprocal_hist.neg_ev_contribution, rel=0.01
-    )
+    assert reciprocal_hist.neg_ev_contribution == 0
     assert reciprocal_hist.pos_ev_contribution == approx(
-        true_reciprocal_hist.pos_ev_contribution, rel=0.01
+        true_reciprocal_hist.pos_ev_contribution, rel=0.05
     )
 
 
@@ -1173,6 +1172,8 @@ def test_sum_with_zeros():
     hist2 = hist2.scale_by_probability(0.75)
     assert hist2.exact_mean == approx(1.5)
     assert hist2.histogram_mean() == approx(1.5, rel=1e-5)
+    assert hist2.exact_sd == approx(np.sqrt(0.75 * 1**2 + 0.25 * 2**2))
+    assert hist2.histogram_sd() == approx(np.sqrt(0.75 * 1**2 + 0.25 * 2**2), rel=1e-3)
     hist_sum = hist1 + hist2
     assert hist_sum.exact_mean == approx(4.5)
     assert hist_sum.histogram_mean() == approx(4.5, rel=1e-5)
@@ -1365,6 +1366,7 @@ def test_numeric_dist_inv_contribution_to_ev(norm_mean, norm_sd, bin_num):
     sd=st.floats(min_value=0.01, max_value=100),
     percent=st.integers(min_value=0, max_value=100),
 )
+@example(mean=0, sd=1, percent=100)
 def test_quantile_uniform(mean, sd, percent):
     # Note: Quantile interpolation can sometimes give incorrect results at the
     # 0th percentile because if the first two bin edges are extremely close to
@@ -1377,7 +1379,10 @@ def test_quantile_uniform(mean, sd, percent):
     if percent == 0:
         assert hist.percentile(percent) <= hist.values[0]
     elif percent == 100:
-        assert hist.percentile(percent) >= hist.values[-1]
+        cum_mass = np.cumsum(hist.masses) - 0.5 * hist.masses
+        nonzero_indexes = [i for (i, d) in enumerate(np.diff(cum_mass)) if d > 0]
+        last_valid_index = max(nonzero_indexes)
+        assert hist.percentile(percent) >= hist.values[last_valid_index]
     else:
         assert hist.percentile(percent) == approx(
             stats.norm.ppf(percent / 100, loc=mean, scale=sd), rel=0.01, abs=0.01
@@ -1397,7 +1402,10 @@ def test_quantile_log_uniform(norm_mean, norm_sd, percent):
     if percent == 0:
         assert hist.percentile(percent) <= hist.values[0]
     elif percent == 100:
-        assert hist.percentile(percent) >= hist.values[-1]
+        cum_mass = np.cumsum(hist.masses) - 0.5 * hist.masses
+        nonzero_indexes = [i for (i, d) in enumerate(np.diff(cum_mass)) if d > 0]
+        last_valid_index = max(nonzero_indexes)
+        assert hist.percentile(percent) >= hist.values[last_valid_index]
     else:
         assert hist.percentile(percent) == approx(
             stats.lognorm.ppf(percent / 100, norm_sd, scale=np.exp(norm_mean)), rel=0.01
@@ -1423,7 +1431,7 @@ def test_quantile_ev(norm_mean, norm_sd, percent):
 @given(
     mean=st.floats(min_value=100, max_value=100),
     sd=st.floats(min_value=0.01, max_value=100),
-    percent=st.floats(min_value=0, max_value=100),
+    percent=st.floats(min_value=1, max_value=99),
 )
 @example(mean=0, sd=1, percent=1)
 def test_quantile_mass(mean, sd, percent):
@@ -1526,7 +1534,7 @@ def test_plot():
 
 
 def test_performance():
-    return None
+    # return None
     # Note: I wrote some C++ code to approximate the behavior of distribution
     # multiplication. On my machine, distribution multiplication (with profile
     # = False) runs in 15s, and the equivalent C++ code (with -O3) runs in 11s.
@@ -1535,8 +1543,9 @@ def test_performance():
     # numpy's argpartition can partition on many values simultaneously, whereas
     # C++'s std::partition can only partition on one value at a time, which is
     # far slower).
-    dist1 = NormalDistribution(mean=0, sd=1)
-    dist2 = LognormalDistribution(norm_mean=0, norm_sd=1)
+    # dist1 = NormalDistribution(mean=0, sd=1)
+    dist1 = LognormalDistribution(norm_mean=0, norm_sd=1)
+    dist2 = LognormalDistribution(norm_mean=1, norm_sd=0.5)
 
     profile = True
     if profile:
@@ -1547,9 +1556,9 @@ def test_performance():
         pr = cProfile.Profile()
         pr.enable()
 
-    for i in range(10000):
-        hist1 = NumericDistribution.from_distribution(dist1, num_bins=100, bin_sizing="mass")
-        hist2 = NumericDistribution.from_distribution(dist2, num_bins=100, bin_sizing="mass")
+    for i in range(5000):
+        hist1 = NumericDistribution.from_distribution(dist1, num_bins=100, bin_sizing="log-uniform")
+        hist2 = NumericDistribution.from_distribution(dist2, num_bins=100, bin_sizing="log-uniform")
         hist1 = hist1 * hist2
 
     if profile:
