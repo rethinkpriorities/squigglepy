@@ -147,7 +147,7 @@ def test_lognorm_product_exact_summary_stats(norm_mean1, norm_mean2, norm_sd1, n
 @example(mean=0, sd=1)
 def test_norm_basic(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
-    hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
+    hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=True)
     assert hist.histogram_mean() == approx(mean)
     assert hist.histogram_sd() == approx(sd, rel=0.01)
 

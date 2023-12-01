@@ -110,7 +110,7 @@ def _bin_sizing_scale(bin_sizing, num_bins):
     # will cover 6.6 standard deviations in each direction which
     # leaves off less than 1e-10 of the probability mass.
     return {
-        BinSizing.uniform: max(6.7, 4.5 + np.log(num_bins) ** 0.5),
+        BinSizing.uniform: max(7, 4.5 + np.log(num_bins) ** 0.5),
         BinSizing.log_uniform: 4 + np.log(num_bins) ** 0.5,
         BinSizing.fat_hybrid: 4 + np.log(num_bins) ** 0.5,
     }[bin_sizing]
@@ -317,6 +317,7 @@ class NumericDistribution(BaseNumericDistribution):
         ppf,
         bin_sizing,
         warn,
+        is_reversed,
     ):
         """Construct a list of bin masses and values. Helper function for
         :func:`from_distribution`, do not call this directly."""
@@ -398,38 +399,59 @@ class NumericDistribution(BaseNumericDistribution):
         # of the distribution.
         edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
         bin_ev_contributions = np.diff(edge_ev_contributions)
+        values = bin_ev_contributions / masses
+
+        bad_indexes = []
 
         # For sufficiently large edge values, CDF rounds to 1 which makes the
         # mass 0. Values can also be 0 due to floating point rounding if
         # support is very small. Remove any 0s.
-        if any(masses == 0) or any(bin_ev_contributions == 0):
-            mass_zeros = len([x for x in masses if x == 0])
-            ev_zeros = len([x for x in bin_ev_contributions if x == 0])
-            nonzero_indexes = [
-                i for i in range(len(masses)) if masses[i] != 0 and bin_ev_contributions[i] != 0
-            ]
-            bin_ev_contributions = bin_ev_contributions[nonzero_indexes]
-            masses = masses[nonzero_indexes]
-            mass_zeros_message = f"{mass_zeros + 1} neighboring values had equal CDFs"
-            if ev_zeros == 1:
-                ev_zeros_message = (
+        mass_zeros = [i for i in range(len(masses)) if masses[i] == 0]
+        ev_zeros = [i for i in range(len(bin_ev_contributions)) if bin_ev_contributions[i] == 0]
+
+        # Values can be non-monotonic if there are rounding errors when
+        # calculating EV contribution. Look at the bottom and top separately
+        # because on the bottom, the lower value will be the incorrect one, and
+        # on the top, the upper value will be the incorrect one.
+        #
+        # TODO: We should be able to calculate in advance when float rounding
+        # errors will start occurring and narrow ``support`` accordingly, which
+        # means we don't have to reduce bin count. But the math is non-trivial.
+        sign = -1 if is_reversed else 1
+        bot_diffs = sign * np.diff(values[: (num_bins // 10)])
+        top_diffs = sign * np.diff(values[-(num_bins // 10) :])
+        non_monotonic = (
+            [i for i in range(len(bot_diffs)) if bot_diffs[i] < 0]
+            + [i + 1 + num_bins - len(top_diffs) for i in range(len(top_diffs)) if top_diffs[i] < 0]
+        )
+        bad_indexes = set(mass_zeros + ev_zeros + non_monotonic)
+
+        if len(bad_indexes) > 0:
+            good_indexes = [i for i in range(num_bins) if i not in set(bad_indexes)]
+            bin_ev_contributions = bin_ev_contributions[good_indexes]
+            masses = masses[good_indexes]
+            values = bin_ev_contributions / masses
+            messages = []
+
+            if len(mass_zeros) > 0:
+                messages.append(f"{len(mass_zeros) + 1} neighboring values had equal CDFs")
+            if len(ev_zeros) == 1:
+                messages.append(
                     f"1 bin had zero expected value, most likely because it was too small"
                 )
-            else:
-                ev_zeros_message = f"{ev_zeros} bins had zero expected value, most likely because they were too small"
-            if mass_zeros > 0 and ev_zeros > 0:
-                joint_message = f"{mass_zeros_message}; and {ev_zeros_message}"
-            elif mass_zeros > 0:
-                joint_message = mass_zeros_message
-            else:
-                joint_message = ev_zeros_message
+            elif len(ev_zeros) > 1:
+                messages.append(f"{len(ev_zeros)} bins had zero expected value, most likely because they were too small")
+
+            if len(non_monotonic) > 0:
+                messages.append(f"{len(non_monotonic) + 1} neighboring values were non-monotonic")
+            joint_message = "; and".join(messages)
+
             if warn:
                 warnings.warn(
                     f"When constructing NumericDistribution, {joint_message}.",
                     RuntimeWarning,
                 )
 
-        values = bin_ev_contributions / masses
         return (masses, values)
 
     @classmethod
@@ -667,6 +689,7 @@ class NumericDistribution(BaseNumericDistribution):
             ppf,
             bin_sizing,
             warn,
+            is_reversed=True,
         )
         neg_values = -neg_values
         pos_masses, pos_values = cls._construct_bins(
@@ -677,6 +700,7 @@ class NumericDistribution(BaseNumericDistribution):
             ppf,
             bin_sizing,
             warn,
+            is_reversed=False,
         )
 
         # Resize in case some bins got removed due to having zero mass/EV
@@ -706,7 +730,9 @@ class NumericDistribution(BaseNumericDistribution):
         )
 
     @classmethod
-    def mixture(cls, dists, weights, lclip=None, rclip=None, num_bins=None, bin_sizing=None, warn=True):
+    def mixture(
+        cls, dists, weights, lclip=None, rclip=None, num_bins=None, bin_sizing=None, warn=True
+    ):
         if num_bins is None:
             num_bins = DEFAULT_NUM_BINS
         # This replicates how MixtureDistribution handles lclip/rclip: it
@@ -1518,10 +1544,10 @@ class ZeroNumericDistribution(BaseNumericDistribution):
 
 
 def numeric(
-        dist: BaseDistribution,
-        num_bins: Optional[int] = None,
-        bin_sizing: Optional[str] = None,
-        warn: bool = True,
+    dist: BaseDistribution,
+    num_bins: Optional[int] = None,
+    bin_sizing: Optional[str] = None,
+    warn: bool = True,
 ):
     """Create a probability mass histogram from the given distribution.
 
