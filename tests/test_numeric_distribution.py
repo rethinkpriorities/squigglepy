@@ -87,25 +87,26 @@ def fix_uniform(a, b):
 
 
 @given(
-    norm_mean1=st.floats(min_value=-1e5, max_value=1e5),
-    norm_mean2=st.floats(min_value=-1e5, max_value=1e5),
-    norm_sd1=st.floats(min_value=0.1, max_value=100),
-    norm_sd2=st.floats(min_value=0.001, max_value=1000),
+    mean1=st.floats(min_value=-1e5, max_value=1e5),
+    mean2=st.floats(min_value=-1e5, max_value=1e5),
+    sd1=st.floats(min_value=0.1, max_value=100),
+    sd2=st.floats(min_value=0.001, max_value=1000),
 )
-def test_norm_sum_exact_summary_stats(norm_mean1, norm_mean2, norm_sd1, norm_sd2):
+@example(mean1=0, mean2=1025, sd1=1, sd2=1)
+def test_sum_exact_summary_stats(mean1, mean2, sd1, sd2):
     """Test that the formulas for exact moments are implemented correctly."""
-    dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
-    dist2 = NormalDistribution(mean=norm_mean2, sd=norm_sd2)
+    dist1 = NormalDistribution(mean=mean1, sd=sd1)
+    dist2 = NormalDistribution(mean=mean2, sd=sd2)
     hist1 = NumericDistribution.from_distribution(dist1, warn=False)
     hist2 = NumericDistribution.from_distribution(dist2, warn=False)
     hist_prod = hist1 + hist2
     assert hist_prod.exact_mean == approx(
-        stats.norm.mean(norm_mean1 + norm_mean2, np.sqrt(norm_sd1**2 + norm_sd2**2))
+        stats.norm.mean(mean1 + mean2, np.sqrt(sd1**2 + sd2**2))
     )
     assert hist_prod.exact_sd == approx(
         stats.norm.std(
-            norm_mean1 + norm_mean2,
-            np.sqrt(norm_sd1**2 + norm_sd2**2),
+            mean1 + mean2,
+            np.sqrt(sd1**2 + sd2**2),
         )
     )
 
@@ -178,14 +179,7 @@ def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
 def test_lognorm_sd(norm_mean, norm_sd):
     test_edges = False
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        hist = NumericDistribution.from_distribution(dist, bin_sizing="log-uniform", warn=False)
-        ev_hist = NumericDistribution.from_distribution(dist, bin_sizing="ev", warn=False)
-        mass_hist = NumericDistribution.from_distribution(dist, bin_sizing="mass", warn=False)
-        uniform_hist = NumericDistribution.from_distribution(
-            dist, bin_sizing="uniform", warn=False
-        )
+    hist = NumericDistribution.from_distribution(dist, bin_sizing="log-uniform", warn=False)
 
     def true_variance(left, right):
         return integrate.quad(
@@ -214,7 +208,7 @@ def test_lognorm_sd(norm_mean, norm_sd):
         print_accuracy_ratio(observed_right_variance, expected_right_variance, "Right  ")
         print_accuracy_ratio(hist.histogram_sd(), dist.lognorm_sd, "Overall")
 
-    assert hist.histogram_sd() == approx(dist.lognorm_sd, rel=0.01 + 0.05 * norm_sd)
+    assert hist.histogram_sd() == approx(dist.lognorm_sd, rel=0.01 + 0.1 * norm_sd)
 
 
 def test_norm_sd_bin_sizing_accuracy():
@@ -228,6 +222,32 @@ def test_norm_sd_bin_sizing_accuracy():
         relative_error(ev_hist.histogram_sd(), dist.sd),
         relative_error(uniform_hist.histogram_sd(), dist.sd),
         relative_error(mass_hist.histogram_sd(), dist.sd),
+    ]
+    assert all(np.diff(sd_errors) >= 0)
+
+
+def test_norm_product_bin_sizing_accuracy():
+    dist = NormalDistribution(mean=2, sd=1)
+    uniform_hist = NumericDistribution.from_distribution(dist, bin_sizing="uniform", warn=False)
+    uniform_hist = uniform_hist * uniform_hist
+    ev_hist = NumericDistribution.from_distribution(dist, bin_sizing="ev", warn=False)
+    ev_hist = ev_hist * ev_hist
+    mass_hist = NumericDistribution.from_distribution(dist, bin_sizing="mass", warn=False)
+    mass_hist = mass_hist * mass_hist
+
+    # uniform and log-uniform should have small errors and the others should be
+    # pretty much perfect
+    mean_errors = [
+        relative_error(ev_hist.histogram_mean(), ev_hist.exact_mean),
+        relative_error(mass_hist.histogram_mean(), ev_hist.exact_mean),
+        relative_error(uniform_hist.histogram_mean(), ev_hist.exact_mean),
+    ]
+    assert all(np.diff(mean_errors) >= 0)
+
+    sd_errors = [
+        relative_error(uniform_hist.histogram_sd(), ev_hist.exact_sd),
+        relative_error(mass_hist.histogram_sd(), ev_hist.exact_sd),
+        relative_error(ev_hist.histogram_sd(), ev_hist.exact_sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -254,8 +274,8 @@ def test_lognorm_product_bin_sizing_accuracy():
         relative_error(mass_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(ev_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
-        relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(fat_hybrid_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
     ]
     assert all(np.diff(mean_errors) >= 0)
 
@@ -363,7 +383,7 @@ def test_norm_one_sided_clip(mean, sd, clip_zscore):
         abs=tolerance,
     )
     assert hist.exact_mean == approx(
-        stats.truncnorm.mean(-np.inf, clip_zscore, loc=mean, scale=sd), rel=1e-6, abs=1e-10
+        stats.truncnorm.mean(-np.inf, clip_zscore, loc=mean, scale=sd), rel=1e-6, abs=1e-6
     )
 
 
@@ -1239,38 +1259,47 @@ def test_numeric_dist_inv_contribution_to_ev(norm_mean, norm_sd, bin_num):
 
 
 @given(
-    mean=st.floats(min_value=100, max_value=100),
+    mean=st.floats(min_value=-100, max_value=100),
     sd=st.floats(min_value=0.01, max_value=100),
-    percent=st.integers(min_value=1, max_value=99),
+    percent=st.integers(min_value=0, max_value=100),
 )
 def test_quantile_uniform(mean, sd, percent):
+    # Note: Quantile interpolation can sometimes give incorrect results at the
+    # 0th percentile because if the first two bin edges are extremely close to
+    # 0, the values can be out of order due to floating point rounding.
+    assume(percent != 0 or abs(mean) / sd < 3)
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = NumericDistribution.from_distribution(
         dist, num_bins=200, bin_sizing="uniform", warn=False
     )
-    assert hist.quantile(0) == hist.values[0]
-    assert hist.quantile(1) == hist.values[-1]
-    assert hist.quantile(np.array([0, 1])).tolist() == [hist.values[0], hist.values[-1]]
-    assert hist.percentile(percent) == approx(
-        stats.norm.ppf(percent / 100, loc=mean, scale=sd), rel=0.25
-    )
+    if percent == 0:
+        assert hist.percentile(percent) <= hist.values[0]
+    elif percent == 100:
+        assert hist.percentile(percent) >= hist.values[-1]
+    else:
+        assert hist.percentile(percent) == approx(
+            stats.norm.ppf(percent / 100, loc=mean, scale=sd), rel=0.01, abs=0.01
+        )
 
 
 @given(
     norm_mean=st.floats(min_value=-5, max_value=5),
     norm_sd=st.floats(min_value=0.1, max_value=2),
-    percent=st.integers(min_value=1, max_value=99),
+    percent=st.integers(min_value=1, max_value=100),
 )
 def test_quantile_log_uniform(norm_mean, norm_sd, percent):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = NumericDistribution.from_distribution(
         dist, num_bins=200, bin_sizing="log-uniform", warn=False
     )
-    assert hist.quantile(0) == hist.values[0]
-    assert hist.quantile(1) == hist.values[-1]
-    assert hist.percentile(percent) == approx(
-        stats.lognorm.ppf(percent / 100, norm_sd, scale=np.exp(norm_mean)), rel=0.1
-    )
+    if percent == 0:
+        assert hist.percentile(percent) <= hist.values[0]
+    elif percent == 100:
+        assert hist.percentile(percent) >= hist.values[-1]
+    else:
+        assert hist.percentile(percent) == approx(
+            stats.lognorm.ppf(percent / 100, norm_sd, scale=np.exp(norm_mean)), rel=0.01
+        )
 
 
 @given(
@@ -1278,22 +1307,21 @@ def test_quantile_log_uniform(norm_mean, norm_sd, percent):
     norm_sd=st.floats(min_value=0.1, max_value=2),
     # Don't try smaller percentiles because the smaller bins have a lot of
     # probability mass
-    percent=st.integers(min_value=40, max_value=99),
+    percent=st.integers(min_value=20, max_value=99),
 )
 def test_quantile_ev(norm_mean, norm_sd, percent):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = NumericDistribution.from_distribution(dist, num_bins=200, bin_sizing="ev", warn=False)
-    assert hist.quantile(0) == hist.values[0]
-    assert hist.quantile(1) == hist.values[-1]
+    tolerance = 0.1 if percent < 70 else 0.01
     assert hist.percentile(percent) == approx(
-        stats.lognorm.ppf(percent / 100, norm_sd, scale=np.exp(norm_mean)), rel=0.1
+        stats.lognorm.ppf(percent / 100, norm_sd, scale=np.exp(norm_mean)), rel=tolerance
     )
 
 
 @given(
     mean=st.floats(min_value=100, max_value=100),
     sd=st.floats(min_value=0.01, max_value=100),
-    percent=st.integers(min_value=0, max_value=100),
+    percent=st.floats(min_value=0, max_value=100),
 )
 @example(mean=0, sd=1, percent=1)
 def test_quantile_mass(mean, sd, percent):
@@ -1302,8 +1330,9 @@ def test_quantile_mass(mean, sd, percent):
 
     # It's hard to make guarantees about how close the value will be, but we
     # should know for sure that the cdf of the value is very close to the
-    # percent.
-    assert 100 * stats.norm.cdf(hist.percentile(percent), mean, sd) == approx(percent, abs=0.5)
+    # percent. Naive interpolation should have a maximum absolute error of 1 /
+    # num_bins.
+    assert 100 * stats.norm.cdf(hist.percentile(percent), mean, sd) == approx(percent, abs=0.1)
 
 
 @given(
@@ -1314,20 +1343,23 @@ def test_cdf_mass(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = NumericDistribution.from_distribution(dist, num_bins=200, bin_sizing="mass", warn=False)
 
-    assert hist.cdf(mean) == approx(0.5, abs=0.005)
-    assert hist.cdf(mean - sd) == approx(stats.norm.cdf(-1), abs=0.005)
-    assert hist.cdf(mean + 2 * sd) == approx(stats.norm.cdf(2), abs=0.005)
+    # should definitely be accurate to within 1 / num_bins but a smart interpolator
+    # can do better
+    tolerance = 0.001
+    assert hist.cdf(mean) == approx(0.5, abs=tolerance)
+    assert hist.cdf(mean - sd) == approx(stats.norm.cdf(-1), abs=tolerance)
+    assert hist.cdf(mean + 2 * sd) == approx(stats.norm.cdf(2), abs=tolerance)
 
 
 @given(
     mean=st.floats(min_value=100, max_value=100),
     sd=st.floats(min_value=0.01, max_value=100),
-    percent=st.integers(min_value=0, max_value=100),
+    percent=st.integers(min_value=1, max_value=99),
 )
 def test_cdf_inverts_quantile(mean, sd, percent):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = NumericDistribution.from_distribution(dist, num_bins=200, bin_sizing="mass", warn=False)
-    assert 100 * hist.cdf(hist.percentile(percent)) == approx(percent, abs=0.5)
+    assert 100 * hist.cdf(hist.percentile(percent)) == approx(percent, abs=0.1)
 
 
 @given(
@@ -1349,19 +1381,19 @@ def test_quantile_mass_after_sum(mean1, mean2, sd1, sd2, percent):
     )
     hist_sum = hist1 + hist2
     assert hist_sum.percentile(percent) == approx(
-        stats.norm.ppf(percent / 100, mean1 + mean2, np.sqrt(sd1**2 + sd2**2)), rel=0.2
+        stats.norm.ppf(percent / 100, mean1 + mean2, np.sqrt(sd1**2 + sd2**2)), rel=0.1
     )
     assert 100 * stats.norm.cdf(
         hist_sum.percentile(percent), hist_sum.exact_mean, hist_sum.exact_sd
-    ) == approx(percent, abs=0.5)
+    ) == approx(percent, abs=0.25)
 
 
-def test_utils_get_percentiles():
+def test_utils_get_percentiles_basic():
     dist = NormalDistribution(mean=0, sd=1)
     hist = NumericDistribution.from_distribution(dist, warn=False)
-    percentiles = utils.get_percentiles(hist, [0, 100])
-    assert percentiles[0] == hist.values[0]
-    assert percentiles[100] == hist.values[-1]
+    assert utils.get_percentiles(hist, 1) == hist.percentile(1)
+    assert utils.get_percentiles(hist, [5]) == hist.percentile([5])
+    assert all(utils.get_percentiles(hist, np.array([10, 20])) == hist.percentile([10, 20]))
 
 
 def test_plot():

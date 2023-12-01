@@ -3,6 +3,7 @@ from enum import Enum
 from functools import reduce
 import numpy as np
 from scipy import optimize, stats
+from scipy.interpolate import PchipInterpolator
 from typing import Literal, Optional, Tuple
 import warnings
 
@@ -84,7 +85,7 @@ class BinSizing(Enum):
 
 DEFAULT_BIN_SIZING = {
     NormalDistribution: BinSizing.uniform,
-    LognormalDistribution: BinSizing.log_uniform,
+    LognormalDistribution: BinSizing.fat_hybrid,
     UniformDistribution: BinSizing.uniform,
 }
 
@@ -196,7 +197,7 @@ class NumericDistribution:
             The probability masses of the values.
         zero_bin_index : int
             The index of the smallest bin that contains positive values (0 if all bins are positive).
-        bin_sizing : Literal["ev", "quantile", "uniform"]
+        bin_sizing : :ref:``BinSizing``
             The method used to size the bins.
         neg_ev_contribution : float
             The (absolute value of) contribution to expected value from the negative portion of the distribution.
@@ -217,6 +218,10 @@ class NumericDistribution:
         self.pos_ev_contribution = pos_ev_contribution
         self.exact_mean = exact_mean
         self.exact_sd = exact_sd
+
+        # These are computed lazily
+        self.interpolate_cdf = None
+        self.interpolate_ppf = None
 
     @classmethod
     def _construct_bins(
@@ -314,12 +319,9 @@ class NumericDistribution:
             ]
             bin_ev_contributions = bin_ev_contributions[nonzero_indexes]
             masses = masses[nonzero_indexes]
-            if mass_zeros == 1:
-                mass_zeros_message = f"1 value >= {edge_values[-1]} had a CDF of 1"
-            else:
-                mass_zeros_message = (
-                    f"{mass_zeros} values >= {edge_values[-mass_zeros]} had CDFs of 1"
-                )
+            mass_zeros_message = (
+                f"{mass_zeros + 1} neighboring values had equal CDFs"
+            )
             if ev_zeros == 1:
                 ev_zeros_message = (
                     f"1 bin had zero expected value, most likely because it was too small"
@@ -431,11 +433,11 @@ class NumericDistribution:
                 # domain increases error at the tails. Inter-bin error is
                 # proportional to width^3 / num_bins^2 and tail error is
                 # proportional to something like exp(-width^2). Setting width
-                # proportional to log(num_bins) balances these two sources of
-                # error. These scale coefficients means that a histogram with
-                # 100 bins will cover 7.1 standard deviations in each direction
-                # which leaves off less than 1e-12 of the probability mass.
-                scale = 2.5 + np.log(num_bins)
+                # using the formula below balances these two sources of error.
+                # These scale coefficients means that a histogram with 100 bins
+                # will cover 6.6 standard deviations in each direction which
+                # leaves off less than 1e-10 of the probability mass.
+                scale = 4.5 + np.log(num_bins)**0.5
                 new_support = (
                     dist.mean - dist.sd * scale,
                     dist.mean + dist.sd * scale,
@@ -445,7 +447,7 @@ class NumericDistribution:
 
         elif bin_sizing == BinSizing.log_uniform:
             if isinstance(dist, LognormalDistribution):
-                scale = 2 + np.log(num_bins)
+                scale = 4 + np.log(num_bins)**0.5
                 new_support = (
                     np.exp(dist.norm_mean - dist.norm_sd * scale),
                     np.exp(dist.norm_mean + dist.norm_sd * scale),
@@ -657,12 +659,22 @@ class NumericDistribution:
         """Estimate the proportion of the distribution that lies below ``x``.
         Uses linear interpolation between known values.
         """
-        cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
-        return np.interp(x, self.values, cum_mass)
+        if self.interpolate_cdf is None:
+            # Subtracting 0.5 * masses because eg the first out of 100 values
+            # represents the 0.5th percentile, not the 1st percentile
+            self._cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
+            self.interpolate_cdf = PchipInterpolator(
+                self.values, self._cum_mass, extrapolate=True
+            )
+        return self.interpolate_cdf(x)
+
+    def ppf(self, q):
+        """An alias for :ref:``quantile``."""
+        return self.quantile(q)
 
     def quantile(self, q):
         """Estimate the value of the distribution at quantile ``q`` using
-        linear interpolation between known values.
+        interpolation between known values.
 
         This function is not very accurate in certain cases:
 
@@ -687,14 +699,12 @@ class NumericDistribution:
         quantiles: number or array-like
             The estimated value at the given quantile(s).
         """
-        # Subtracting 0.5 * masses because eg the first out of 100 values
-        # represents the 0.5th percentile, not the 1st percentile
-        cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
-        return np.interp(q, cum_mass, self.values)
-
-    def ppf(self, q):
-        """An alias for :ref:``quantile``."""
-        return self.quantile(q)
+        if self.interpolate_ppf is None:
+            self._cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
+            self.interpolate_ppf = PchipInterpolator(
+                self._cum_mass, self.values, extrapolate=True
+            )
+        return self.interpolate_ppf(q)
 
     def percentile(self, p):
         """Estimate the value of the distribution at percentile ``p``. See

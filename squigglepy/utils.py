@@ -438,7 +438,10 @@ def get_percentiles(
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
 
     if type(data).__name__ == "NumericDistribution":
-        values = data.percentile(percentiles)
+        if len(percentiles) == 1:
+            values = [data.percentile(percentiles[0])]
+        else:
+            values = data.percentile(percentiles)
     else:
         values = np.percentile(data, percentiles)
     values = [_round(p, digits) for p in values]
