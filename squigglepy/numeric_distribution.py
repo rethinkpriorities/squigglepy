@@ -86,6 +86,7 @@ class BinSizing(Enum):
     ev = "ev"
     mass = "mass"
     fat_hybrid = "fat-hybrid"
+    merge = "merge"
 
 
 DEFAULT_BIN_SIZING = {
@@ -95,6 +96,24 @@ DEFAULT_BIN_SIZING = {
 }
 
 DEFAULT_NUM_BINS = 100
+
+def _bin_sizing_scale(bin_sizing, num_bins):
+    """Return how many standard deviations away from the mean to set the bounds
+    for a bin sizing method with fixed bounds."""
+    # Wider domain increases error within each bin, and narrower
+    # domain increases error at the tails. Inter-bin error is
+    # proportional to width^3 / num_bins^2 and tail error is
+    # proportional to something like exp(-width^2). Setting width
+    # using the formula below balances these two sources of error.
+    # These scale coefficients means that a histogram with 100 bins
+    # will cover 6.6 standard deviations in each direction which
+    # leaves off less than 1e-10 of the probability mass.
+    return {
+        BinSizing.uniform: max(6.7, 4.5 + np.log(num_bins) ** 0.5),
+        BinSizing.log_uniform: 4 + np.log(num_bins) ** 0.5,
+        BinSizing.fat_hybrid: 4 + np.log(num_bins) ** 0.5,
+    }[bin_sizing]
+
 
 
 def _narrow_support(
@@ -339,7 +358,7 @@ class NumericDistribution(BaseNumericDistribution):
 
         elif bin_sizing == BinSizing.fat_hybrid:
             # Use a combination of ev and log-uniform
-            scale = 1 + np.log(num_bins)**0.5
+            scale = _bin_sizing_scale(bin_sizing, num_bins)
             lu_support = _narrow_support(
                 (np.log(support[0]), np.log(support[1])),
                 (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd),
@@ -508,15 +527,7 @@ class NumericDistribution(BaseNumericDistribution):
                 # distribution no matter how you set the bounds.
                 new_support = (0, np.exp(dist.norm_mean + 7 * dist.norm_sd))
             elif isinstance(dist, NormalDistribution):
-                # Wider domain increases error within each bin, and narrower
-                # domain increases error at the tails. Inter-bin error is
-                # proportional to width^3 / num_bins^2 and tail error is
-                # proportional to something like exp(-width^2). Setting width
-                # using the formula below balances these two sources of error.
-                # These scale coefficients means that a histogram with 100 bins
-                # will cover 6.6 standard deviations in each direction which
-                # leaves off less than 1e-10 of the probability mass.
-                scale = max(6.7, 4.5 + np.log(num_bins) ** 0.5)
+                scale = _bin_sizing_scale(bin_sizing, num_bins)
                 new_support = (
                     dist.mean - dist.sd * scale,
                     dist.mean + dist.sd * scale,
@@ -526,7 +537,7 @@ class NumericDistribution(BaseNumericDistribution):
 
         elif bin_sizing == BinSizing.log_uniform:
             if isinstance(dist, LognormalDistribution):
-                scale = 4 + np.log(num_bins) ** 0.5
+                scale = _bin_sizing_scale(bin_sizing, num_bins)
                 new_support = (
                     np.exp(dist.norm_mean - dist.norm_sd * scale),
                     np.exp(dist.norm_mean + dist.norm_sd * scale),
@@ -947,7 +958,7 @@ class NumericDistribution(BaseNumericDistribution):
         return (num_neg_bins, num_pos_bins)
 
     @classmethod
-    def _resize_bins(
+    def _resize_pos_bins(
         cls,
         extended_values,
         extended_masses,
@@ -1016,19 +1027,104 @@ class NumericDistribution(BaseNumericDistribution):
         values = bin_evs / masses
         return (values, masses)
 
-    def _resize_bins_new(
+    def _resize_bins(
         cls,
-        extended_neg_values,
-        extended_neg_masses,
-        extended_pos_values,
-        extended_pos_masses,
-        num_bins,
-        neg_ev_contribution,
-        pos_ev_contribution,
-        bin_sizing=BinSizing.merge,
-        is_sorted=False,
+        extended_neg_values: np.ndarray,
+        extended_neg_masses: np.ndarray,
+        extended_pos_values: np.ndarray,
+        extended_pos_masses: np.ndarray,
+        num_bins: int,
+        neg_ev_contribution: float,
+        pos_ev_contribution: float,
+        bin_sizing: Optional[BinSizing] = BinSizing.merge,
+        is_sorted: Optional[bool] = False,
     ):
-        pass
+        """Given two arrays of values and masses representing the result of a
+        binary operation on two distributions, compress the arrays down to
+        ``num_bins`` bins and return the new values and masses of the bins.
+
+        Parameters
+        ----------
+        extended_neg_values : np.ndarray
+            The values of the negative side of the distribution. The values must
+            all be negative.
+        extended_neg_masses : np.ndarray
+            The probability masses of the negative side of the distribution.
+        extended_pos_values : np.ndarray
+            The values of the positive side of the distribution. The values must
+            all be positive.
+        extended_pos_masses : np.ndarray
+            The probability masses of the positive side of the distribution.
+        num_bins : int
+            The number of bins to compress the distribution into.
+        neg_ev_contribution : float
+            The expected value of the negative side of the distribution.
+        pos_ev_contribution : float
+            The expected value of the positive side of the distribution.
+        is_sorted : bool
+            If True, assume that ``extended_neg_values``,
+            ``extended_neg_masses``, ``extended_pos_values``, and
+            ``extended_pos_masses`` are already sorted in ascending order. This
+            provides a significant performance improvement (~3x).
+
+        Returns
+        -------
+        values : np.ndarray
+            The values of the bins.
+        masses : np.ndarray
+            The probability masses of the bins.
+
+        """
+        # Set the number of bins per side to be approximately proportional to
+        # the EV contribution, but make sure that if a side has nonzero EV
+        # contribution, it gets at least one bin.
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
+            num_bins, len(extended_neg_masses), len(extended_pos_masses)
+        )
+        total_ev = pos_ev_contribution - neg_ev_contribution
+        if num_neg_bins == 0:
+            neg_ev_contribution = 0
+            pos_ev_contribution = total_ev
+        if num_pos_bins == 0:
+            neg_ev_contribution = -total_ev
+            pos_ev_contribution = 0
+
+        # Collect extended_values and extended_masses into the correct number
+        # of bins. Make ``extended_values`` positive because ``_resize_bins``
+        # can only operate on non-negative values. Making them positive means
+        # they're now reverse-sorted, so reverse them.
+        neg_values, neg_masses = cls._resize_pos_bins(
+            extended_values=np.flip(-extended_neg_values),
+            extended_masses=np.flip(extended_neg_masses),
+            num_bins=num_neg_bins,
+            ev=neg_ev_contribution,
+            is_sorted=is_sorted,
+        )
+
+        # ``_resize_bins`` returns positive values, so negate and reverse them.
+        neg_values = np.flip(-neg_values)
+        neg_masses = np.flip(neg_masses)
+
+        # Collect extended_values and extended_masses into the correct number
+        # of bins, for the positive values this time.
+        pos_values, pos_masses = cls._resize_pos_bins(
+            extended_values=extended_pos_values,
+            extended_masses=extended_pos_masses,
+            num_bins=num_pos_bins,
+            ev=pos_ev_contribution,
+            is_sorted=is_sorted,
+        )
+
+        # Construct the resulting ``NumericDistribution`` object.
+        values = np.concatenate((neg_values, pos_values))
+        masses = np.concatenate((neg_masses, pos_masses))
+        return NumericDistribution(
+            values=values,
+            masses=masses,
+            zero_bin_index=len(neg_masses),
+            neg_ev_contribution=neg_ev_contribution,
+            pos_ev_contribution=pos_ev_contribution,
+        )
 
 
     def __eq__(x, y):
@@ -1071,54 +1167,15 @@ class NumericDistribution(BaseNumericDistribution):
         # negative.
         pos_ev_contribution = max(0, sum_mean + neg_ev_contribution)
 
-        # Set the number of bins per side to be approximately proportional to
-        # the EV contribution, but make sure that if a side has nonzero EV
-        # contribution, it gets at least one bin.
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-            num_bins, zero_index, len(extended_masses) - zero_index
-        )
-        if num_neg_bins == 0:
-            neg_ev_contribution = 0
-            pos_ev_contribution = sum_mean
-        if num_pos_bins == 0:
-            neg_ev_contribution = -sum_mean
-            pos_ev_contribution = 0
-
-        # Collect extended_values and extended_masses into the correct number
-        # of bins. Make ``extended_values`` positive because ``_resize_bins``
-        # can only operate on non-negative values. Making them positive means
-        # they're now reverse-sorted, so reverse them.
-        neg_values, neg_masses = cls._resize_bins(
-            extended_values=np.flip(-extended_values[:zero_index]),
-            extended_masses=np.flip(extended_masses[:zero_index]),
-            num_bins=num_neg_bins,
-            ev=neg_ev_contribution,
-            is_sorted=is_sorted,
-        )
-
-        # ``_resize_bins`` returns positive values, so negate and reverse them.
-        neg_values = np.flip(-neg_values)
-        neg_masses = np.flip(neg_masses)
-
-        # Collect extended_values and extended_masses into the correct number
-        # of bins, for the positive values this time.
-        pos_values, pos_masses = cls._resize_bins(
-            extended_values=extended_values[zero_index:],
-            extended_masses=extended_masses[zero_index:],
-            num_bins=num_pos_bins,
-            ev=pos_ev_contribution,
-            is_sorted=is_sorted,
-        )
-
-        # Construct the resulting ``ProbabiltyMassHistogram`` object.
-        values = np.concatenate((neg_values, pos_values))
-        masses = np.concatenate((neg_masses, pos_masses))
-        res = NumericDistribution(
-            values=values,
-            masses=masses,
-            zero_bin_index=np.searchsorted(values, 0),
+        res = cls._resize_bins(
+            extended_neg_values=extended_values[:zero_index],
+            extended_neg_masses=extended_masses[:zero_index],
+            extended_pos_values=extended_values[zero_index:],
+            extended_pos_masses=extended_masses[zero_index:],
+            num_bins=num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
+            is_sorted=is_sorted,
         )
 
         if x.exact_mean is not None and y.exact_mean is not None:
@@ -1221,53 +1278,17 @@ class NumericDistribution(BaseNumericDistribution):
             x.neg_ev_contribution * y.neg_ev_contribution
             + x.pos_ev_contribution * y.pos_ev_contribution
         )
-        product_mean = x.mean() * y.mean()
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-            num_bins, len(extended_neg_masses), len(extended_pos_masses)
-        )
-        if num_neg_bins == 0:
-            neg_ev_contribution = 0
-            pos_ev_contribution = product_mean
-        if num_pos_bins == 0:
-            neg_ev_contribution = -product_mean
-            pos_ev_contribution = 0
 
-        # Collect extended_values and extended_masses into the correct number
-        # of bins. Make ``extended_values`` positive because ``_resize_bins``
-        # can only operate on non-negative values. Making them positive means
-        # they're now reverse-sorted, so reverse them.
-        neg_values, neg_masses = cls._resize_bins(
-            -extended_neg_values,
-            extended_neg_masses,
-            num_neg_bins,
-            ev=neg_ev_contribution,
-        )
-
-        # ``_resize_bins`` returns positive values, so negate and reverse them.
-        neg_values = np.flip(-neg_values)
-        neg_masses = np.flip(neg_masses)
-
-        # Collect extended_values and extended_masses into the correct number
-        # of bins, for the positive values this time.
-        pos_values, pos_masses = cls._resize_bins(
-            extended_pos_values,
-            extended_pos_masses,
-            num_pos_bins,
-            ev=pos_ev_contribution,
-        )
-
-        # Construct the resulting ``ProbabiltyMassHistogram`` object.
-        values = np.concatenate((neg_values, pos_values))
-        masses = np.concatenate((neg_masses, pos_masses))
-        zero_bin_index = len(neg_values)
-        res = NumericDistribution(
-            values=values,
-            masses=masses,
-            zero_bin_index=zero_bin_index,
+        res = cls._resize_bins(
+            extended_neg_values=extended_neg_values,
+            extended_neg_masses=extended_neg_masses,
+            extended_pos_values=extended_pos_values,
+            extended_pos_masses=extended_pos_masses,
+            num_bins=num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
+            is_sorted=False,
         )
-
         if x.exact_mean is not None and y.exact_mean is not None:
             res.exact_mean = x.exact_mean * y.exact_mean
         if x.exact_sd is not None and y.exact_sd is not None:
