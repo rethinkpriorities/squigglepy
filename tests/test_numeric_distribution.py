@@ -2,12 +2,14 @@ from functools import reduce
 from hypothesis import assume, example, given, settings
 import hypothesis.strategies as st
 import numpy as np
+import operator
 from pytest import approx
 from scipy import integrate, stats
 import sys
 import warnings
 
 from ..squigglepy.distributions import (
+    ComplexDistribution,
     LognormalDistribution,
     MixtureDistribution,
     NormalDistribution,
@@ -881,6 +883,16 @@ def test_sub(type_and_size, mean1, mean2, sd1, sd2, num_bins):
         assert hist_diff.histogram_sd() == approx(hist_sum.histogram_sd(), rel=0.05)
 
 
+def test_lognorm_sub():
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    hist = NumericDistribution.from_distribution(dist, warn=False)
+    hist_diff = 0.97 * hist - 0.03 * hist
+    assert not any(np.isnan(hist_diff.values))
+    assert all(np.diff(hist_diff.values) >= 0)
+    assert hist_diff.histogram_mean() == approx(0.94 * dist.lognorm_mean, rel=0.001)
+    assert hist_diff.histogram_sd() == approx(hist_diff.exact_sd, rel=0.05)
+
+
 @given(
     mean=st.floats(min_value=-100, max_value=100),
     sd=st.floats(min_value=0.001, max_value=1000),
@@ -899,6 +911,28 @@ def test_scale(mean, sd, scalar):
     )
     assert scaled_hist.exact_mean == approx(scalar * hist.exact_mean)
     assert scaled_hist.exact_sd == approx(abs(scalar) * hist.exact_sd)
+
+
+@given(
+    mean=st.floats(min_value=-100, max_value=100),
+    sd=st.floats(min_value=0.001, max_value=1000),
+    scalar=st.floats(min_value=-100, max_value=100),
+)
+def test_shift_by(mean, sd, scalar):
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = NumericDistribution.from_distribution(dist)
+    shifted_hist = hist + scalar
+    assert shifted_hist.histogram_mean() == approx(
+        hist.histogram_mean() + scalar, abs=1e-6, rel=1e-6
+    )
+    assert shifted_hist.histogram_sd() == approx(hist.histogram_sd(), abs=1e-6, rel=1e-6)
+    assert shifted_hist.exact_mean == approx(hist.exact_mean + scalar)
+    assert shifted_hist.exact_sd == approx(hist.exact_sd)
+    assert shifted_hist.pos_ev_contribution - shifted_hist.neg_ev_contribution == approx(shifted_hist.exact_mean)
+    if shifted_hist.zero_bin_index < len(shifted_hist.values):
+        assert shifted_hist.values[shifted_hist.zero_bin_index] > 0
+    if shifted_hist.zero_bin_index > 0:
+        assert shifted_hist.values[shifted_hist.zero_bin_index - 1] < 0
 
 
 @given(
@@ -1121,6 +1155,65 @@ def test_mixture3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
         tolerance = 0.1
     assert hist.histogram_mean() == approx(true_mean, rel=tolerance)
 
+
+def test_sum_with_zeros():
+    dist1 = NormalDistribution(mean=3, sd=1)
+    dist2 = NormalDistribution(mean=2, sd=1)
+    hist1 = NumericDistribution.from_distribution(dist1)
+    hist2 = NumericDistribution.from_distribution(dist2)
+    hist2 = hist2.scale_by_probability(0.75)
+    assert hist2.exact_mean == approx(1.5)
+    assert hist2.histogram_mean() == approx(1.5, rel=1e-5)
+    hist_sum = hist1 + hist2
+    assert hist_sum.exact_mean == approx(4.5)
+    assert hist_sum.histogram_mean() == approx(4.5, rel=1e-5)
+
+
+def test_product_with_zeros():
+    dist1 = LognormalDistribution(norm_mean=1, norm_sd=1)
+    dist2 = LognormalDistribution(norm_mean=2, norm_sd=1)
+    hist1 = NumericDistribution.from_distribution(dist1)
+    hist2 = NumericDistribution.from_distribution(dist2)
+    hist1 = hist1.scale_by_probability(2 / 3)
+    hist2 = hist2.scale_by_probability(0.5)
+    assert hist2.exact_mean == approx(dist2.lognorm_mean / 2)
+    assert hist2.histogram_mean() == approx(dist2.lognorm_mean / 2, rel=1e-5)
+    hist_prod = hist1 * hist2
+    dist_prod = LognormalDistribution(norm_mean=3, norm_sd=np.sqrt(2))
+    assert hist_prod.exact_mean == approx(dist_prod.lognorm_mean / 3)
+    assert hist_prod.histogram_mean() == approx(dist_prod.lognorm_mean / 3, rel=1e-5)
+
+
+def test_condition_on_success():
+    dist1 = NormalDistribution(mean=4, sd=2)
+    dist2 = LognormalDistribution(norm_mean=-1, norm_sd=1)
+    hist = NumericDistribution.from_distribution(dist1)
+    event = NumericDistribution.from_distribution(dist2)
+    outcome = hist.condition_on_success(event)
+    assert outcome.exact_mean == approx(hist.exact_mean * dist2.lognorm_mean)
+
+
+def test_quantile_with_zeros():
+    mean = 1
+    sd = 1
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = NumericDistribution.from_distribution(
+        dist, bin_sizing="uniform", warn=False
+    ).scale_by_probability(0.25)
+
+    tolerance = 0.01
+
+    # When we scale down by 4x, the quantile that used to be at q is now at 4q
+    assert hist.quantile(0.025) == approx(stats.norm.ppf(0.1, mean, sd), rel=tolerance)
+    assert hist.quantile(stats.norm.cdf(-0.01, mean, sd)/4) == approx(-0.01, rel=tolerance, abs=1e-3)
+
+    # The values in the ~middle 75% equal 0
+    assert hist.quantile(stats.norm.cdf(0.01, mean, sd)/4) == 0
+    assert hist.quantile(0.4 + stats.norm.cdf(0.01, mean, sd)/4) == 0
+
+    # The values above 0 work like the values below 0
+    assert hist.quantile(0.75 + stats.norm.cdf(0.01, mean, sd)/4) == approx(0.01, rel=tolerance, abs=1e-3)
+    assert hist.quantile([0.99]) == approx([stats.norm.ppf(0.96, mean, sd)], rel=tolerance)
 
 @given(
     a=st.floats(min_value=-100, max_value=100),
@@ -1386,6 +1479,24 @@ def test_quantile_mass_after_sum(mean1, mean2, sd1, sd2, percent):
     assert 100 * stats.norm.cdf(
         hist_sum.percentile(percent), hist_sum.exact_mean, hist_sum.exact_sd
     ) == approx(percent, abs=0.25)
+
+
+def test_complex_dist():
+    left = NormalDistribution(mean=1, sd=1)
+    right = NormalDistribution(mean=0, sd=1)
+    dist = ComplexDistribution(left, right, operator.add)
+    hist = NumericDistribution.from_distribution(dist, warn=False)
+    assert hist.exact_mean == approx(1)
+    assert hist.histogram_mean() == approx(1, rel=1e-6)
+
+
+def test_complex_dist_with_float():
+    left = NormalDistribution(mean=1, sd=1)
+    right = 2
+    dist = ComplexDistribution(left, right, operator.mul)
+    hist = NumericDistribution.from_distribution(dist, warn=False)
+    assert hist.exact_mean == approx(2)
+    assert hist.histogram_mean() == approx(2, rel=1e-6)
 
 
 def test_utils_get_percentiles_basic():

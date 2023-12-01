@@ -437,7 +437,10 @@ def get_percentiles(
     percentiles = percentiles if isinstance(percentiles, list) else [percentiles]
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
 
-    if type(data).__name__ == "NumericDistribution":
+    if (
+        type(data).__name__ == "NumericDistribution"
+        or type(data).__name__ == "ZeroNumericDistribution"
+    ):
         if len(percentiles) == 1:
             values = [data.percentile(percentiles[0])]
         else:
@@ -449,6 +452,15 @@ def get_percentiles(
         return values[0]
     else:
         return dict(list(zip(percentile_labels, values)))
+
+
+def mean(x):
+    if (
+        type(x).__name__ == "NumericDistribution"
+        or type(x).__name__ == "ZeroNumericDistribution"
+    ):
+        return x.mean()
+    return np.mean(x)
 
 
 def get_log_percentiles(
@@ -1198,6 +1210,7 @@ def extremize(p, e):
         return 1 - ((1 - p) ** e)
     else:
         return p**e
+
 
 class ConvergenceWarning(RuntimeWarning):
     ...

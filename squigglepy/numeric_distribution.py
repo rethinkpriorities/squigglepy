@@ -4,11 +4,12 @@ from functools import reduce
 import numpy as np
 from scipy import optimize, stats
 from scipy.interpolate import PchipInterpolator
-from typing import Literal, Optional, Tuple
+from typing import Literal, Optional, Tuple, Union
 import warnings
 
 from .distributions import (
     BaseDistribution,
+    ComplexDistribution,
     LognormalDistribution,
     MixtureDistribution,
     NormalDistribution,
@@ -50,6 +51,10 @@ class BinSizing(Enum):
         falls between two percentiles. This method is generally not recommended
         because it puts too much probability mass near the center of the
         distribution, where precision is the least useful.
+    merge : str
+        Shorten a vector of bins by merging every (1/len) bins together. Cannot
+        be used when creating a NumericDistribution, can only be used for
+        resizing.
 
     Interpretation for two-sided distributions
     ------------------------------------------
@@ -103,7 +108,67 @@ def _narrow_support(
     return support
 
 
-class NumericDistribution:
+class BaseNumericDistribution(ABC):
+    def quantile(self, q):
+        """Estimate the value of the distribution at quantile ``q`` using
+        interpolation between known values.
+
+        This function is not very accurate in certain cases:
+
+        1. Fat-tailed distributions put much of their probability mass in the
+        smallest bins because the difference between (say) the 10th percentile
+        and the 20th percentile is inconsequential for most purposes. For these
+        distributions, small quantiles will be very inaccurate, in exchange for
+        greater accuracy in quantiles close to 1.
+
+        2. For values with CDFs very close to 1, the values in bins may not be
+        strictly ordered, in which case ``quantile`` may return an incorrect
+        result. This will only happen if you request a quantile very close
+        to 1 (such as 0.9999999).
+
+        Parameters
+        ----------
+        q : number or array_like
+            The quantile or quantiles for which to determine the value(s).
+
+        Return
+        ------
+        quantiles: number or array-like
+            The estimated value at the given quantile(s).
+        """
+        return self.ppf(q)
+
+    def percentile(self, p):
+        """Estimate the value of the distribution at percentile ``p``. See
+        :ref:``quantile`` for notes on this function's accuracy.
+        """
+        return np.squeeze(self.ppf(np.asarray(p) / 100))
+
+    def __ne__(x, y):
+        return not (x == y)
+
+    def __radd__(x, y):
+        return x + y
+
+    def __sub__(x, y):
+        return x + (-y)
+
+    def __rsub__(x, y):
+        return -x + y
+
+    def __rmul__(x, y):
+        return x * y
+
+    def __truediv__(x, y):
+        if isinstance(y, int) or isinstance(y, float):
+            return x.scale_by(1 / y)
+        return x * y.reciprocal()
+
+    def __rtruediv__(x, y):
+        return y * x.reciprocal()
+
+
+class NumericDistribution(BaseNumericDistribution):
     """NumericDistribution
 
     A numerical representation of a probability distribution as a histogram of
@@ -256,7 +321,9 @@ class NumericDistribution:
                 (
                     [support[0]],
                     np.atleast_1d(
-                        dist.inv_contribution_to_ev(np.linspace(left_prop, right_prop, num_bins + 1)[1:-1])
+                        dist.inv_contribution_to_ev(
+                            np.linspace(left_prop, right_prop, num_bins + 1)[1:-1]
+                        )
                     )
                     if num_bins > 1
                     else [],
@@ -272,8 +339,11 @@ class NumericDistribution:
 
         elif bin_sizing == BinSizing.fat_hybrid:
             # Use a combination of ev and log-uniform
-            scale = 1 + np.log(num_bins)
-            lu_support = _narrow_support((np.log(support[0]), np.log(support[1])), (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd))
+            scale = 1 + np.log(num_bins)**0.5
+            lu_support = _narrow_support(
+                (np.log(support[0]), np.log(support[1])),
+                (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd),
+            )
             lu_edge_values = np.linspace(lu_support[0], lu_support[1], num_bins + 1)[:-1]
             lu_edge_values = np.exp(lu_edge_values)
             ev_left_prop = dist.contribution_to_ev(support[0])
@@ -282,7 +352,9 @@ class NumericDistribution:
                 (
                     [support[0]],
                     np.atleast_1d(
-                        dist.inv_contribution_to_ev(np.linspace(ev_left_prop, ev_right_prop, num_bins + 1)[1:-1])
+                        dist.inv_contribution_to_ev(
+                            np.linspace(ev_left_prop, ev_right_prop, num_bins + 1)[1:-1]
+                        )
                     )
                     if num_bins > 1
                     else [],
@@ -319,9 +391,7 @@ class NumericDistribution:
             ]
             bin_ev_contributions = bin_ev_contributions[nonzero_indexes]
             masses = masses[nonzero_indexes]
-            mass_zeros_message = (
-                f"{mass_zeros + 1} neighboring values had equal CDFs"
-            )
+            mass_zeros_message = f"{mass_zeros + 1} neighboring values had equal CDFs"
             if ev_zeros == 1:
                 ev_zeros_message = (
                     f"1 bin had zero expected value, most likely because it was too small"
@@ -387,6 +457,15 @@ class NumericDistribution:
                 lambda acc, d: acc + d, [w * d for w, d in zip(dist.weights, sub_dists)]
             )
             return mixture.clip(dist.lclip, dist.rclip)
+        if isinstance(dist, ComplexDistribution):
+            left = dist.left
+            right = dist.right
+            if isinstance(left, BaseDistribution):
+                left = cls.from_distribution(left, num_bins, bin_sizing, warn)
+            if isinstance(right, BaseDistribution):
+                right = cls.from_distribution(right, num_bins, bin_sizing, warn)
+            return dist.fn(left, right)
+
         if type(dist) not in DEFAULT_BIN_SIZING:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
 
@@ -437,7 +516,7 @@ class NumericDistribution:
                 # These scale coefficients means that a histogram with 100 bins
                 # will cover 6.6 standard deviations in each direction which
                 # leaves off less than 1e-10 of the probability mass.
-                scale = 4.5 + np.log(num_bins)**0.5
+                scale = max(6.7, 4.5 + np.log(num_bins) ** 0.5)
                 new_support = (
                     dist.mean - dist.sd * scale,
                     dist.mean + dist.sd * scale,
@@ -447,7 +526,7 @@ class NumericDistribution:
 
         elif bin_sizing == BinSizing.log_uniform:
             if isinstance(dist, LognormalDistribution):
-                scale = 4 + np.log(num_bins)**0.5
+                scale = 4 + np.log(num_bins) ** 0.5
                 new_support = (
                     np.exp(dist.norm_mean - dist.norm_sd * scale),
                     np.exp(dist.norm_mean + dist.norm_sd * scale),
@@ -663,54 +742,15 @@ class NumericDistribution:
             # Subtracting 0.5 * masses because eg the first out of 100 values
             # represents the 0.5th percentile, not the 1st percentile
             self._cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
-            self.interpolate_cdf = PchipInterpolator(
-                self.values, self._cum_mass, extrapolate=True
-            )
+            self.interpolate_cdf = PchipInterpolator(self.values, self._cum_mass, extrapolate=True)
         return self.interpolate_cdf(x)
 
     def ppf(self, q):
         """An alias for :ref:``quantile``."""
-        return self.quantile(q)
-
-    def quantile(self, q):
-        """Estimate the value of the distribution at quantile ``q`` using
-        interpolation between known values.
-
-        This function is not very accurate in certain cases:
-
-        1. Fat-tailed distributions put much of their probability mass in the
-        smallest bins because the difference between (say) the 10th percentile
-        and the 20th percentile is inconsequential for most purposes. For these
-        distributions, small quantiles will be very inaccurate, in exchange for
-        greater accuracy in quantiles close to 1.
-
-        2. For values with CDFs very close to 1, the values in bins may not be
-        strictly ordered, in which case ``quantile`` may return an incorrect
-        result. This will only happen if you request a quantile very close
-        to 1 (such as 0.9999999).
-
-        Parameters
-        ----------
-        q : number or array_like
-            The quantile or quantiles for which to determine the value(s).
-
-        Return
-        ------
-        quantiles: number or array-like
-            The estimated value at the given quantile(s).
-        """
         if self.interpolate_ppf is None:
             self._cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
-            self.interpolate_ppf = PchipInterpolator(
-                self._cum_mass, self.values, extrapolate=True
-            )
+            self.interpolate_ppf = PchipInterpolator(self._cum_mass, self.values, extrapolate=True)
         return self.interpolate_ppf(q)
-
-    def percentile(self, p):
-        """Estimate the value of the distribution at percentile ``p``. See
-        :ref:``quantile`` for notes on this function's accuracy.
-        """
-        return np.squeeze(self.quantile(np.asarray(p) / 100))
 
     def clip(self, lclip, rclip):
         """Return a new distribution clipped to the given bounds. Does not
@@ -913,6 +953,7 @@ class NumericDistribution:
         extended_masses,
         num_bins,
         ev,
+        bin_sizing=BinSizing.merge,
         is_sorted=False,
     ):
         """Given two arrays of values and masses representing the result of a
@@ -975,13 +1016,32 @@ class NumericDistribution:
         values = bin_evs / masses
         return (values, masses)
 
+    def _resize_bins_new(
+        cls,
+        extended_neg_values,
+        extended_neg_masses,
+        extended_pos_values,
+        extended_pos_masses,
+        num_bins,
+        neg_ev_contribution,
+        pos_ev_contribution,
+        bin_sizing=BinSizing.merge,
+        is_sorted=False,
+    ):
+        pass
+
+
     def __eq__(x, y):
         return x.values == y.values and x.masses == y.masses
 
-    def __ne__(x, y):
-        return not (x == y)
-
     def __add__(x, y):
+        if isinstance(y, int) or isinstance(y, float):
+            return x.shift_by(y)
+        elif isinstance(y, ZeroNumericDistribution):
+            return y.__radd__(x)
+        elif not isinstance(y, NumericDistribution):
+            raise TypeError(f"Cannot add types {type(x)} and {type(y)}")
+
         cls = x
         num_bins = max(len(x), len(y))
 
@@ -1067,6 +1127,20 @@ class NumericDistribution:
             res.exact_sd = np.sqrt(x.exact_sd**2 + y.exact_sd**2)
         return res
 
+    def shift_by(self, scalar):
+        """Shift the distribution over by a constant factor."""
+        values = self.values + scalar
+        zero_bin_index = np.searchsorted(values, 0)
+        return NumericDistribution(
+            values=values,
+            masses=self.masses,
+            zero_bin_index=zero_bin_index,
+            neg_ev_contribution=-np.sum(values[:zero_bin_index] * self.masses[:zero_bin_index]),
+            pos_ev_contribution=np.sum(values[zero_bin_index:] * self.masses[zero_bin_index:]),
+            exact_mean=self.exact_mean + scalar if self.exact_mean is not None else None,
+            exact_sd=self.exact_sd,
+        )
+
     def __neg__(self):
         return NumericDistribution(
             values=np.flip(-self.values),
@@ -1078,12 +1152,14 @@ class NumericDistribution:
             exact_sd=self.exact_sd,
         )
 
-    def __sub__(x, y):
-        return x + (-y)
-
     def __mul__(x, y):
         if isinstance(y, int) or isinstance(y, float):
             return x.scale_by(y)
+        elif isinstance(y, ZeroNumericDistribution):
+            return y.__rmul__(x)
+        elif not isinstance(y, NumericDistribution):
+            raise TypeError(f"Cannot add types {type(x)} and {type(y)}")
+
         cls = x
         num_bins = max(len(x), len(y))
 
@@ -1216,14 +1292,41 @@ class NumericDistribution:
             exact_sd=self.exact_sd * scalar if self.exact_sd is not None else None,
         )
 
-    def __radd__(x, y):
-        return x + y
+    def scale_by_probability(self, p):
+        return ZeroNumericDistribution(self, 1 - p)
 
-    def __rsub__(x, y):
-        return -x + y
+    def condition_on_success(
+        self,
+        event: BaseNumericDistribution,
+        failure_outcome: Optional[Union[BaseNumericDistribution, float]] = 0,
+    ):
+        """``event`` is a probability distribution over a probability for some
+        binary outcome. If the event succeeds, the result is the random
+        variable defined by ``self``. If the event fails, the result is zero.
+        Or, if ``failure_outcome`` is provided, the result is
+        ``failure_outcome``.
 
-    def __rmul__(x, y):
-        return x * y
+        This function's return value represents the probability
+        distribution over outcomes in this scenario.
+
+        The return value is equivalent to the result of this procedure:
+
+        1. Generate a probability ``p`` according to the distribution defined
+           by ``event``.
+        2. Generate a Bernoulli random variable with probability ``p``.
+        3. If success, generate a random outcome according to the distribution
+           defined by ``self``.
+        4. Otherwise, generate a random outcome according to the distribution
+           defined by ``failure_outcome``.
+
+        """
+        if failure_outcome != 0:
+            # TODO: you can't just do a sum. I think what you want to do is
+            # scale the masses and then smush the bins together
+            raise NotImplementedError
+        # TODO: generalize this to accept point probabilities
+        p_success = event.mean()
+        return ZeroNumericDistribution(self, 1 - p_success)
 
     def reciprocal(self):
         """Return the reciprocal of the distribution.
@@ -1258,25 +1361,99 @@ class NumericDistribution:
             exact_sd=None,
         )
 
-    def __truediv__(x, y):
-        if isinstance(y, int) or isinstance(y, float):
-            return x.scale_by(1 / y)
-        return x * y.reciprocal()
-
-    def __rtruediv__(x, y):
-        return y * x.reciprocal()
-
-    def __floordiv__(x, y):
-        raise NotImplementedError
-
-    def __rfloordiv__(x, y):
-        raise NotImplementedError
-
     def __hash__(self):
         return hash(repr(self.values) + "," + repr(self.masses))
 
 
-def numeric(dist, n=10000):
-    # ``n`` is not directly meaningful, this is written as a drop-in
-    # replacement for ``sq.sample``
-    return NumericDistribution.from_distribution(dist, num_bins=max(100, int(np.ceil(np.sqrt(n)))))
+class ZeroNumericDistribution(BaseNumericDistribution):
+    def __init__(self, dist: NumericDistribution, zero_mass: float):
+        self.dist = dist
+        self.zero_mass = zero_mass
+        self.nonzero_mass = 1 - zero_mass
+
+        if dist.exact_mean is not None:
+            self.exact_mean = dist.exact_mean * self.nonzero_mass
+
+        self._neg_mass = np.sum(dist.masses[:dist.zero_bin_index]) * self.nonzero_mass
+
+        # To be computed lazily
+        self.interpolate_ppf = None
+
+    def mean(self):
+        return self.dist.mean() * self.nonzero_mass
+
+    def histogram_mean(self):
+        return self.dist.histogram_mean() * self.nonzero_mass
+
+    def sd(self):
+        # TODO: is there an easy way to calculate SD?
+        raise NotImplementedError
+
+    def ppf(self, q):
+        if not isinstance(q, float) and not isinstance(q, int):
+            return np.array([self.ppf(x) for x in q])
+
+        if q < 0 or q > 1:
+            raise ValueError(f"q must be between 0 and 1, got {q}")
+
+        if q <= self._neg_mass:
+            return self.dist.ppf(q / self.nonzero_mass)
+        elif q < self._neg_mass + self.zero_mass:
+            return 0
+        else:
+            return self.dist.ppf((q - self.zero_mass) / self.nonzero_mass)
+
+
+    def __eq__(x, y):
+        return x.zero_mass == y.zero_mass and x.dist == y.dist
+
+    def __add__(x, y):
+        if isinstance(y, NumericDistribution):
+            return x + ZeroNumericDistribution(y, 0)
+        elif not isinstance(y, ZeroNumericDistribution):
+            raise ValueError(f"Cannot add types {type(x)} and {type(y)}")
+        nonzero_sum = (x.dist + y.dist) * x.nonzero_mass * y.nonzero_mass
+        extra_x = x.dist * x.nonzero_mass * y.zero_mass
+        extra_y = y.dist * x.zero_mass * y.nonzero_mass
+        zero_mass = x.zero_mass * y.zero_mass
+        return ZeroNumericDistribution(nonzero_sum + extra_x + extra_y, zero_mass)
+
+    def shift_by(self, scalar):
+        # TODO: test this
+        warnings.warn("ZeroNumericDistribution.shift_by is untested, use at your own risk")
+        old_zero_index = self.dist.zero_bin_index
+        shifted_dist = self.dist.shift_by(scalar)
+        scaled_masses = shifted_dist * self.nonzero_mass
+        return NumericDistribution(
+            values=np.insert(shifted_dist.values, old_zero_index, scalar),
+            masses=np.insert(scaled_masses, old_zero_index, self.zero_mass),
+            zero_bin_index=shifted_dist.zero_bin_index,
+            neg_ev_contribution=shifted_dist.neg_ev_contribution * self.nonzero_mass
+            + min(0, -scalar) * self.zero_mass,
+            pos_ev_contribution=shifted_dist.pos_ev_contribution * self.nonzero_mass
+            + min(0, scalar) * self.zero_mass,
+            exact_mean=dist.exact_mean * self.nonzero_mass + scalar * self.zero_mass,
+            exact_sd=None,  # TODO: compute exact_sd
+        )
+
+    def __neg__(self):
+        return ZeroNumericDistribution(-self.dist, self.zero_mass)
+
+    def __mul__(x, y):
+        dist = x.dist * y.dist
+        nonzero_mass = x.nonzero_mass * y.nonzero_mass
+        return ZeroNumericDistribution(dist, 1 - nonzero_mass)
+
+    def scale_by(self, scalar):
+        return ZeroNumericDistribution(self.dist.scale_by(scalar), self.zero_mass)
+
+    def reciprocal(self):
+        raise ValueError("Reciprocal is undefined for probability distributions with mass at zero")
+
+    def __hash__(self):
+        return 33 * hash(repr(self.zero_mass)) + hash(self.dist)
+
+
+def numeric(dist, num_bins):
+    # TODO: flesh this out
+    return NumericDistribution.from_distribution(dist, num_bins=num_bins)
