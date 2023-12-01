@@ -51,7 +51,7 @@ class BinSizing(Enum):
         falls between two percentiles. This method is generally not recommended
         because it puts too much probability mass near the center of the
         distribution, where precision is the least useful.
-    merge : str
+    bin-count : str
         Shorten a vector of bins by merging every (1/len) bins together. Cannot
         be used when creating a NumericDistribution, can only be used for
         resizing.
@@ -86,7 +86,7 @@ class BinSizing(Enum):
     ev = "ev"
     mass = "mass"
     fat_hybrid = "fat-hybrid"
-    merge = "merge"
+    bin_count = "bin-count"
 
 
 DEFAULT_BIN_SIZING = {
@@ -96,6 +96,7 @@ DEFAULT_BIN_SIZING = {
 }
 
 DEFAULT_NUM_BINS = 100
+
 
 def _bin_sizing_scale(bin_sizing, num_bins):
     """Return how many standard deviations away from the mean to set the bounds
@@ -113,7 +114,6 @@ def _bin_sizing_scale(bin_sizing, num_bins):
         BinSizing.log_uniform: 4 + np.log(num_bins) ** 0.5,
         BinSizing.fat_hybrid: 4 + np.log(num_bins) ** 0.5,
     }[bin_sizing]
-
 
 
 def _narrow_support(
@@ -446,36 +446,42 @@ class NumericDistribution(BaseNumericDistribution):
         ----------
         dist : BaseDistribution
             A distribution from which to generate numeric values.
-        num_bins : Optional[int] (default = 100)
+        num_bins : Optional[int] (default = ref:``DEFAULT_NUM_BINS``)
             The number of bins for the numeric distribution to use. The time to
             construct a NumericDistribution is linear with ``num_bins``, and
             the time to run a binary operation on two distributions with the
             same number of bins is approximately quadratic with ``num_bins``.
             100 bins provides a good balance between accuracy and speed.
         bin_sizing : Optional[str]
-            The bin sizing method to use. If none is given, a default will be
-            chosen from :ref:``DEFAULT_BIN_SIZING`` based on the distribution
-            type of ``dist``. It is recommended to use the default bin sizing
-            method most of the time. See
+            The bin sizing method to use, which affects the accuracy of the
+            bins. If none is given, a default will be chosen from
+            :ref:``DEFAULT_BIN_SIZING`` based on the distribution type of
+            ``dist``. It is recommended to use the default bin sizing method
+            most of the time. See
             :ref:`squigglepy.numeric_distribution.BinSizing` for a list of
-            valid options and explanations of their behavior.
-        warn : Optional[bool] (default = True)
-            If True, raise warnings about bins with zero mass.
+            valid options and explanations of their behavior. warn :
+            Optional[bool] (default = True) If True, raise warnings about bins
+            with zero mass.
+
+        Return
+        ------
+        result : NumericDistribution | ZeroNumericDistribution
+            The generated numeric distribution that represents ``dist``.
 
         """
         if num_bins is None:
             num_bins = DEFAULT_NUM_BINS
 
         if isinstance(dist, MixtureDistribution):
-            # This replicates how MixtureDistribution handles lclip/rclip: it
-            # clips the sub-distributions based on their own lclip/rclip, then
-            # takes the mixture sample, then clips the mixture sample based on
-            # the mixture lclip/rclip.
-            sub_dists = [cls.from_distribution(d, num_bins, bin_sizing, warn) for d in dist.dists]
-            mixture = reduce(
-                lambda acc, d: acc + d, [w * d for w, d in zip(dist.weights, sub_dists)]
+            return cls.mixture(
+                dist.dists,
+                dist.weights,
+                lclip=dist.lclip,
+                rclip=dist.rclip,
+                num_bins=num_bins,
+                bin_sizing=bin_sizing,
+                warn=warn,
             )
-            return mixture.clip(dist.lclip, dist.rclip)
         if isinstance(dist, ComplexDistribution):
             left = dist.left
             right = dist.right
@@ -483,7 +489,7 @@ class NumericDistribution(BaseNumericDistribution):
                 left = cls.from_distribution(left, num_bins, bin_sizing, warn)
             if isinstance(right, BaseDistribution):
                 right = cls.from_distribution(right, num_bins, bin_sizing, warn)
-            return dist.fn(left, right)
+            return dist.fn(left, right).clip(dist.lclip, dist.rclip)
 
         if type(dist) not in DEFAULT_BIN_SIZING:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
@@ -699,6 +705,49 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=exact_sd,
         )
 
+    @classmethod
+    def mixture(cls, dists, weights, lclip=None, rclip=None, num_bins=None, bin_sizing=None, warn=True):
+        if num_bins is None:
+            num_bins = DEFAULT_NUM_BINS
+        # This replicates how MixtureDistribution handles lclip/rclip: it
+        # clips the sub-distributions based on their own lclip/rclip, then
+        # takes the mixture sample, then clips the mixture sample based on
+        # the mixture lclip/rclip.
+        dists = [d for d in dists]  # create new list to avoid mutating
+
+        # Convert any Squigglepy dists into NumericDistributions
+        for i in range(len(dists)):
+            if isinstance(dists[i], BaseDistribution):
+                dists[i] = NumericDistribution.from_distribution(dists[i], num_bins, bin_sizing)
+            elif not isinstance(dists[i], BaseNumericDistribution):
+                raise ValueError(f"Cannot create a mixture with type {type(dists[i])}")
+
+        value_vectors = [d.values for d in dists]
+        weighted_mass_vectors = [d.masses * w for d, w in zip(dists, weights)]
+        extended_values = np.concatenate(value_vectors)
+        extended_masses = np.concatenate(weighted_mass_vectors)
+
+        sorted_indexes = np.argsort(extended_values, kind="mergesort")
+        extended_values = extended_values[sorted_indexes]
+        extended_masses = extended_masses[sorted_indexes]
+        zero_index = np.searchsorted(extended_values, 0)
+
+        neg_ev_contribution = -np.sum(extended_masses[:zero_index] * extended_values[:zero_index])
+        pos_ev_contribution = np.sum(extended_masses[zero_index:] * extended_values[zero_index:])
+
+        mixture = cls._resize_bins(
+            extended_neg_values=extended_values[:zero_index],
+            extended_neg_masses=extended_masses[:zero_index],
+            extended_pos_values=extended_values[zero_index:],
+            extended_pos_masses=extended_masses[zero_index:],
+            num_bins=num_bins,
+            neg_ev_contribution=neg_ev_contribution,
+            pos_ev_contribution=pos_ev_contribution,
+            is_sorted=True,
+        )
+
+        return mixture.clip(lclip, rclip)
+
     def __len__(self):
         return self.num_bins
 
@@ -833,15 +882,12 @@ class NumericDistribution(BaseNumericDistribution):
     def _contribution_to_ev(
         cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float, normalized=True
     ):
-        """Return the approximate fraction of expected value that is less than
-        the given value.
-        """
         if isinstance(x, np.ndarray) and x.ndim == 0:
             x = x.item()
         elif isinstance(x, np.ndarray):
             return np.array([cls._contribution_to_ev(values, masses, xi, normalized) for xi in x])
 
-        contributions = np.squeeze(np.sum(masses * values * (values <= x)))
+        contributions = np.squeeze(np.sum(masses * abs(values) * (values <= x)))
         if normalized:
             mean = np.sum(masses * values)
             return contributions / mean
@@ -858,15 +904,12 @@ class NumericDistribution(BaseNumericDistribution):
         if fraction <= 0:
             raise ValueError("fraction must be greater than 0")
         mean = np.sum(masses * values)
-        fractions_of_ev = np.cumsum(masses * values) / mean
+        fractions_of_ev = np.cumsum(masses * abs(values)) / mean
         epsilon = 1e-10  # to avoid floating point rounding issues
         index = np.searchsorted(fractions_of_ev, fraction - epsilon)
         return values[index]
 
     def contribution_to_ev(self, x: np.ndarray | float):
-        """Return the approximate fraction of expected value that is less than
-        the given value.
-        """
         return self._contribution_to_ev(self.values, self.masses, x)
 
     def inv_contribution_to_ev(self, fraction: np.ndarray | float):
@@ -964,7 +1007,7 @@ class NumericDistribution(BaseNumericDistribution):
         extended_masses,
         num_bins,
         ev,
-        bin_sizing=BinSizing.merge,
+        bin_sizing=BinSizing.bin_count,
         is_sorted=False,
     ):
         """Given two arrays of values and masses representing the result of a
@@ -987,7 +1030,7 @@ class NumericDistribution(BaseNumericDistribution):
             already sorted in ascending order. This provides a significant
             performance improvement (~3x).
 
-        Returns
+        Return
         -------
         values : np.ndarray
             The values of the bins.
@@ -1027,6 +1070,7 @@ class NumericDistribution(BaseNumericDistribution):
         values = bin_evs / masses
         return (values, masses)
 
+    @classmethod
     def _resize_bins(
         cls,
         extended_neg_values: np.ndarray,
@@ -1036,7 +1080,7 @@ class NumericDistribution(BaseNumericDistribution):
         num_bins: int,
         neg_ev_contribution: float,
         pos_ev_contribution: float,
-        bin_sizing: Optional[BinSizing] = BinSizing.merge,
+        bin_sizing: Optional[BinSizing] = BinSizing.bin_count,
         is_sorted: Optional[bool] = False,
     ):
         """Given two arrays of values and masses representing the result of a
@@ -1067,7 +1111,7 @@ class NumericDistribution(BaseNumericDistribution):
             ``extended_pos_masses`` are already sorted in ascending order. This
             provides a significant performance improvement (~3x).
 
-        Returns
+        Return
         -------
         values : np.ndarray
             The values of the bins.
@@ -1125,7 +1169,6 @@ class NumericDistribution(BaseNumericDistribution):
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
         )
-
 
     def __eq__(x, y):
         return x.values == y.values and x.masses == y.masses
@@ -1395,7 +1438,7 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         if dist.exact_mean is not None:
             self.exact_mean = dist.exact_mean * self.nonzero_mass
 
-        self._neg_mass = np.sum(dist.masses[:dist.zero_bin_index]) * self.nonzero_mass
+        self._neg_mass = np.sum(dist.masses[: dist.zero_bin_index]) * self.nonzero_mass
 
         # To be computed lazily
         self.interpolate_ppf = None
@@ -1423,7 +1466,6 @@ class ZeroNumericDistribution(BaseNumericDistribution):
             return 0
         else:
             return self.dist.ppf((q - self.zero_mass) / self.nonzero_mass)
-
 
     def __eq__(x, y):
         return x.zero_mass == y.zero_mass and x.dist == y.dist
@@ -1475,6 +1517,38 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         return 33 * hash(repr(self.zero_mass)) + hash(self.dist)
 
 
-def numeric(dist, num_bins):
-    # TODO: flesh this out
-    return NumericDistribution.from_distribution(dist, num_bins=num_bins)
+def numeric(
+        dist: BaseDistribution,
+        num_bins: Optional[int] = None,
+        bin_sizing: Optional[str] = None,
+        warn: bool = True,
+):
+    """Create a probability mass histogram from the given distribution.
+
+    Parameters
+    ----------
+    dist : BaseDistribution
+        A distribution from which to generate numeric values.
+    num_bins : Optional[int] (default = ref:``DEFAULT_NUM_BINS``)
+        The number of bins for the numeric distribution to use. The time to
+        construct a NumericDistribution is linear with ``num_bins``, and
+        the time to run a binary operation on two distributions with the
+        same number of bins is approximately quadratic with ``num_bins``.
+        100 bins provides a good balance between accuracy and speed.
+    bin_sizing : Optional[str]
+        The bin sizing method to use, which affects the accuracy of the
+        bins. If none is given, a default will be chosen from
+        :ref:``DEFAULT_BIN_SIZING`` based on the distribution type of
+        ``dist``. It is recommended to use the default bin sizing method
+        most of the time. See
+        :ref:`squigglepy.numeric_distribution.BinSizing` for a list of
+        valid options and explanations of their behavior. warn :
+        Optional[bool] (default = True) If True, raise warnings about bins
+        with zero mass.
+
+    Return
+    ------
+    result : NumericDistribution | ZeroNumericDistribution
+        The generated numeric distribution that represents ``dist``.
+    """
+    return NumericDistribution.from_distribution(dist, num_bins, bin_sizing, warn)

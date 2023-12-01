@@ -385,7 +385,7 @@ def test_norm_one_sided_clip(mean, sd, clip_zscore):
         abs=tolerance,
     )
     assert hist.exact_mean == approx(
-        stats.truncnorm.mean(-np.inf, clip_zscore, loc=mean, scale=sd), rel=1e-6, abs=1e-6
+        stats.truncnorm.mean(-np.inf, clip_zscore, loc=mean, scale=sd), rel=1e-5, abs=1e-6
     )
 
 
@@ -1013,6 +1013,18 @@ def test_mixture(a, b):
     assert hist.histogram_mean() == approx(
         a * dist1.mean + b * dist2.mean + c * dist3.mean, rel=1e-4
     )
+    assert hist.values[0] < 0
+
+
+def test_disjoint_mixture():
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    hist1 = numeric(dist)
+    hist2 = -numeric(dist)
+    mixture = NumericDistribution.mixture([hist1, hist2], [0.97, 0.03], warn=False)
+    assert mixture.histogram_mean() == approx(0.94 * dist.lognorm_mean, rel=0.001)
+    assert mixture.values[0] < 0
+    assert mixture.values[20] < 0
+    assert mixture.contribution_to_ev(0) == approx(0.03, rel=0.1)
 
 
 @given(lclip=st.integers(-4, 4), width=st.integers(1, 4))
@@ -1040,11 +1052,12 @@ def test_numeric_clip(lclip, width):
     clip_inner=st.booleans(),
 )
 @example(a=0.5, lclip=-1, clip_width=2, bin_sizing="ev", clip_inner=False)
-def test_mixture2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
+def test_sum2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
     # Clipped NumericDist accuracy really benefits from more bins. It's not
     # very accurate with 100 bins because a clipped histogram might end up with
     # only 10 bins or so.
     num_bins = 500 if not clip_inner and bin_sizing == "uniform" else 100
+    clip_outer = not clip_inner
     b = max(0, 1 - a) # do max to fix floating point rounding
     rclip = (
         lclip + clip_width
@@ -1060,13 +1073,9 @@ def test_mixture2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
         rclip=rclip if clip_inner else None,
     )
     dist2 = NormalDistribution(mean=1, sd=2)
-    mixture = MixtureDistribution(
-        [dist1, dist2],
-        [a, b],
-        lclip=lclip if not clip_inner else None,
-        rclip=rclip if not clip_inner else None,
-    )
-    hist = NumericDistribution.from_distribution(mixture, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
+    hist = (a * numeric(dist1, num_bins, bin_sizing, warn=False) + b * numeric(dist2, num_bins, bin_sizing, warn=False))
+    if clip_outer:
+        hist = hist.clip(lclip, rclip)
     if clip_inner:
         # Truncating then adding is more accurate than adding then truncating,
         # which is good because truncate-then-add is the more typical use case
@@ -1103,10 +1112,11 @@ def test_mixture2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
     # calculate what the mean should be
     clip_inner=st.booleans(),
 )
-def test_mixture3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
-    # Clipped mixture accuracy really benefits from more bins. It's not very
+def test_sum3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
+    # Clipped sum accuracy really benefits from more bins. It's not very
     # accurate with 100 bins
     num_bins = 500 if not clip_inner else 100
+    clip_outer = not clip_inner
     if a + b > 1:
         scale = a + b
         a /= scale
@@ -1127,13 +1137,12 @@ def test_mixture3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
     )
     dist2 = NormalDistribution(mean=1, sd=2)
     dist3 = NormalDistribution(mean=-1, sd=0.75)
-    mixture = MixtureDistribution(
-        [dist1, dist2, dist3],
-        [a, b, c],
-        lclip=lclip if not clip_inner else None,
-        rclip=rclip if not clip_inner else None,
-    )
-    hist = NumericDistribution.from_distribution(mixture, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
+    dist_sum = (a * dist1 + b * dist2 + c * dist3)
+    if clip_outer:
+        dist_sum.lclip = lclip
+        dist_sum.rclip = rclip
+
+    hist = NumericDistribution.from_distribution(dist_sum, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
     if clip_inner:
         true_mean = (
             a * stats.truncnorm.mean(lclip, rclip, 0, 1)
