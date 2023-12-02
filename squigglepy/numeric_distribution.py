@@ -116,7 +116,17 @@ DEFAULT_BIN_SIZING = {
 
 DEFAULT_NUM_BINS = 100
 
+CACHED_NORM_CDFS = {}
 CACHED_LOGNORM_CDFS = {}
+
+def cached_norm_cdfs(num_bins):
+    if num_bins in CACHED_NORM_CDFS:
+        return CACHED_NORM_CDFS[num_bins]
+    scale = _bin_sizing_scale(BinSizing.uniform, num_bins)
+    values = np.linspace(-scale, scale, num_bins + 1)
+    cdfs = stats.norm.cdf(values)
+    CACHED_NORM_CDFS[num_bins] = cdfs
+    return cdfs
 
 def cached_lognorm_cdfs(num_bins):
     if num_bins in CACHED_LOGNORM_CDFS:
@@ -343,14 +353,15 @@ class NumericDistribution(BaseNumericDistribution):
 
         if bin_sizing == BinSizing.uniform:
             edge_values = np.linspace(support[0], support[1], num_bins + 1)
+            if isinstance(dist, NormalDistribution) and support == (-np.inf, np.inf):
+                edge_cdfs = cached_norm_cdfs(num_bins)
 
         elif bin_sizing == BinSizing.log_uniform:
             log_support = (np.log(support[0]), np.log(support[1]))
             log_edge_values = np.linspace(log_support[0], log_support[1], num_bins + 1)
             edge_values = np.exp(log_edge_values)
-            if isinstance(dist, LognormalDistribution) and dist.lclip is None and dist.rclip is None:
-                # edge_cdfs = cached_lognorm_cdfs(num_bins)
-                pass
+            if isinstance(dist, LognormalDistribution) and support == (0, np.inf):
+                edge_cdfs = cached_lognorm_cdfs(num_bins)
 
         elif bin_sizing == BinSizing.ev:
             # Don't call get_edge_value on the left and right edges because it's
