@@ -337,6 +337,7 @@ class NumericDistribution(BaseNumericDistribution):
         cls,
         num_bins,
         support,
+        max_support,
         dist,
         cdf,
         ppf,
@@ -353,14 +354,24 @@ class NumericDistribution(BaseNumericDistribution):
 
         if bin_sizing == BinSizing.uniform:
             edge_values = np.linspace(support[0], support[1], num_bins + 1)
+            if dist.lclip is None:
+                edge_values[0] = max_support[0]
+            if dist.rclip is None:
+                edge_values[-1] = max_support[1]
             if isinstance(dist, NormalDistribution) and support == (-np.inf, np.inf):
+                # TODO: this actually doesn't work because support is not gonna
+                # be (-inf, inf)
                 edge_cdfs = cached_norm_cdfs(num_bins)
 
         elif bin_sizing == BinSizing.log_uniform:
             log_support = (np.log(support[0]), np.log(support[1]))
             log_edge_values = np.linspace(log_support[0], log_support[1], num_bins + 1)
             edge_values = np.exp(log_edge_values)
-            if isinstance(dist, LognormalDistribution) and support == (0, np.inf):
+            if dist.lclip is None:
+                edge_values[0] = max_support[0]
+            if dist.rclip is None:
+                edge_values[-1] = max_support[1]
+            if isinstance(dist, LognormalDistribution) and dist.lclip is None and dist.rclip is None:
                 edge_cdfs = cached_lognorm_cdfs(num_bins)
 
         elif bin_sizing == BinSizing.ev:
@@ -588,6 +599,7 @@ class NumericDistribution(BaseNumericDistribution):
             NormalDistribution: (-np.inf, np.inf),
             UniformDistribution: (dist.x, dist.y),
         }[type(dist)]
+        max_support = support
         ppf = {
             LognormalDistribution: lambda p: stats.lognorm.ppf(
                 p, dist.norm_sd, scale=np.exp(dist.norm_mean)
@@ -747,6 +759,7 @@ class NumericDistribution(BaseNumericDistribution):
         neg_masses, neg_values = cls._construct_bins(
             num_neg_bins,
             (support[0], min(0, support[1])),
+            (max_support[0], min(0, max_support[1])),
             dist,
             cdf,
             ppf,
@@ -758,6 +771,7 @@ class NumericDistribution(BaseNumericDistribution):
         pos_masses, pos_values = cls._construct_bins(
             num_pos_bins,
             (max(0, support[0]), support[1]),
+            (max(0, max_support[0]), max_support[1]),
             dist,
             cdf,
             ppf,
