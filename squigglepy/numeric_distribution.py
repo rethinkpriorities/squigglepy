@@ -51,6 +51,11 @@ class BinSizing(Enum):
         falls between two percentiles. This method is generally not recommended
         because it puts too much probability mass near the center of the
         distribution, where precision is the least useful.
+    fat-hybrid : str
+        A hybrid method designed for fat-tailed distributions. Uses mass bin
+        sizing close to the center and log-uniform bin siding on the right
+        tail. Empirically, this combination provides the best balance for the
+        accuracy of fat-tailed distributions at the center and at the tails.
     bin-count : str
         Shorten a vector of bins by merging every (1/len) bins together. Cannot
         be used when creating a NumericDistribution, can only be used for
@@ -85,12 +90,11 @@ class BinSizing(Enum):
     log_uniform = "log-uniform"
     ev = "ev"
     mass = "mass"
-    bin_count = "bin-count"
     fat_hybrid = "fat-hybrid"
-    quantile_hybrid = "quantile-hybrid"
+    bin_count = "bin-count"
 
 
-def _bin_sizing_scale(bin_sizing, num_bins):
+def _bin_sizing_scale(bin_sizing, dist_name, num_bins):
     """Return how many standard deviations away from the mean to set the bounds
     for a bin sizing method with fixed bounds."""
     # Wider domain increases error within each bin, and narrower
@@ -102,15 +106,15 @@ def _bin_sizing_scale(bin_sizing, num_bins):
     # will cover 6.6 standard deviations in each direction which
     # leaves off less than 1e-10 of the probability mass.
     return {
-        BinSizing.uniform: max(7, 4.5 + np.log(num_bins) ** 0.5),
-        BinSizing.log_uniform: max(7, 4.5 + np.log(num_bins) ** 0.5),
-        BinSizing.fat_hybrid: 4.5 + np.log(num_bins) ** 0.5,
-    }[bin_sizing]
+        (BinSizing.uniform, "NormalDistribution"): max(7, 4.5 + np.log(num_bins) ** 0.5),
+        (BinSizing.uniform, "LognormalDistribution"): 7,
+        (BinSizing.log_uniform, "LognormalDistribution"): max(7, 4.5 + np.log(num_bins) ** 0.5),
+    }.get((bin_sizing, dist_name))
 
 
 DEFAULT_BIN_SIZING = {
     NormalDistribution: BinSizing.uniform,
-    LognormalDistribution: BinSizing.log_uniform,
+    LognormalDistribution: BinSizing.fat_hybrid,
     UniformDistribution: BinSizing.uniform,
 }
 
@@ -119,19 +123,21 @@ DEFAULT_NUM_BINS = 100
 CACHED_NORM_CDFS = {}
 CACHED_LOGNORM_CDFS = {}
 
+
 def cached_norm_cdfs(num_bins):
     if num_bins in CACHED_NORM_CDFS:
         return CACHED_NORM_CDFS[num_bins]
-    scale = _bin_sizing_scale(BinSizing.uniform, num_bins)
+    scale = _bin_sizing_scale(BinSizing.uniform, "NormalDistribution", num_bins)
     values = np.linspace(-scale, scale, num_bins + 1)
     cdfs = stats.norm.cdf(values)
     CACHED_NORM_CDFS[num_bins] = cdfs
     return cdfs
 
+
 def cached_lognorm_cdfs(num_bins):
     if num_bins in CACHED_LOGNORM_CDFS:
         return CACHED_LOGNORM_CDFS[num_bins]
-    scale = _bin_sizing_scale(BinSizing.log_uniform, num_bins)
+    scale = _bin_sizing_scale(BinSizing.log_uniform, "LognormalDistribution", num_bins)
     values = np.exp(np.linspace(-scale, scale, num_bins + 1))
     cdfs = stats.lognorm.cdf(values, 1)
     CACHED_LOGNORM_CDFS[num_bins] = cdfs
@@ -371,7 +377,11 @@ class NumericDistribution(BaseNumericDistribution):
                 edge_values[0] = max_support[0]
             if dist.rclip is None:
                 edge_values[-1] = max_support[1]
-            if isinstance(dist, LognormalDistribution) and dist.lclip is None and dist.rclip is None:
+            if (
+                isinstance(dist, LognormalDistribution)
+                and dist.lclip is None
+                and dist.rclip is None
+            ):
                 edge_cdfs = cached_lognorm_cdfs(num_bins)
 
         elif bin_sizing == BinSizing.ev:
@@ -400,58 +410,21 @@ class NumericDistribution(BaseNumericDistribution):
             edge_values = ppf(edge_cdfs)
 
         elif bin_sizing == BinSizing.fat_hybrid:
-            # Use a combination of ev and log-uniform
-            scale = _bin_sizing_scale(bin_sizing, num_bins)
-            lu_support = _narrow_support(
+            # Use a combination of mass and log-uniform
+            bin_scale = _bin_sizing_scale(BinSizing.log_uniform, type(dist).__name__, num_bins)
+            logu_support = _narrow_support(
                 (np.log(support[0]), np.log(support[1])),
-                (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd),
+                (dist.norm_mean - bin_scale * dist.norm_sd, dist.norm_mean + bin_scale * dist.norm_sd),
             )
-            lu_edge_values = np.linspace(lu_support[0], lu_support[1], num_bins + 1)[:-1]
-            lu_edge_values = np.exp(lu_edge_values)
-            ev_left_prop = dist.contribution_to_ev(support[0])
-            ev_right_prop = dist.contribution_to_ev(support[1])
-            ev_edge_values = np.concatenate(
-                (
-                    [support[0]],
-                    np.atleast_1d(
-                        dist.inv_contribution_to_ev(
-                            np.linspace(ev_left_prop, ev_right_prop, num_bins + 1)[1:-1]
-                        )
-                    )
-                    if num_bins > 1
-                    else [],
-                )
-            )
-            edge_values = np.where(lu_edge_values > ev_edge_values, lu_edge_values, ev_edge_values)
-            edge_values = np.concatenate((edge_values, [support[1]]))
+            logu_edge_values = np.linspace(logu_support[0], logu_support[1], num_bins + 1)[1:-1]
+            logu_edge_values = np.exp(logu_edge_values)
+            mass_edge_cdfs = np.linspace(cdf(support[0]), cdf(support[1]), num_bins + 1)[1:-1]
+            mass_edge_values = ppf(mass_edge_cdfs)
 
-        elif bin_sizing == BinSizing.quantile_hybrid:
-            # Use mass on the left tail and ev on the right tail to maximize
-            # the accuracy of quantiles.
-            # TODO: should really use mass near 0 and ev further out for two-sided dists
-            # TODO: the constants are made up, could probably be better
-            mass_support = _narrow_support(support, (support[0], ppf(0.5)))
-            ev_support = _narrow_support(support, (ppf(0.5), support[1]))
-            num_mass_bins = num_bins // 4
-            num_ev_bins = num_bins - num_mass_bins
-            mass_edge_values = ppf(
-                np.linspace(cdf(mass_support[0]), cdf(mass_support[1]), num_mass_bins + 1)
+            edge_values = np.where(
+                logu_edge_values > mass_edge_values, logu_edge_values, mass_edge_values
             )
-            ev_left_prop = dist.contribution_to_ev(ev_support[0])
-            ev_right_prop = dist.contribution_to_ev(ev_support[1])
-            ev_edge_values = np.concatenate(
-                (
-                    np.atleast_1d(
-                        dist.inv_contribution_to_ev(
-                            np.linspace(ev_left_prop, ev_right_prop, num_ev_bins + 1)[1:-1]
-                        )
-                    )
-                    if num_ev_bins > 1
-                    else [],
-                    [ev_support[1]],
-                )
-            )
-            edge_values = np.concatenate((mass_edge_values, ev_edge_values))
+            edge_values = np.concatenate(([support[0]], edge_values, [support[1]]))
 
         else:
             raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
@@ -621,26 +594,25 @@ class NumericDistribution(BaseNumericDistribution):
 
         dist_bin_sizing_supported = False
         new_support = None
+        bin_scale = _bin_sizing_scale(bin_sizing, type(dist).__name__, num_bins)
         if bin_sizing == BinSizing.uniform:
             if isinstance(dist, LognormalDistribution):
                 # Uniform bin sizing is not gonna be very accurate for a lognormal
                 # distribution no matter how you set the bounds.
-                new_support = (0, np.exp(dist.norm_mean + 7 * dist.norm_sd))
+                new_support = (0, np.exp(dist.norm_mean + bin_scale * dist.norm_sd))
             elif isinstance(dist, NormalDistribution):
-                scale = _bin_sizing_scale(bin_sizing, num_bins)
                 new_support = (
-                    dist.mean - dist.sd * scale,
-                    dist.mean + dist.sd * scale,
+                    dist.mean - dist.sd * bin_scale,
+                    dist.mean + dist.sd * bin_scale,
                 )
             elif isinstance(dist, UniformDistribution):
                 new_support = support
 
         elif bin_sizing == BinSizing.log_uniform:
             if isinstance(dist, LognormalDistribution):
-                scale = _bin_sizing_scale(bin_sizing, num_bins)
                 new_support = (
-                    np.exp(dist.norm_mean - dist.norm_sd * scale),
-                    np.exp(dist.norm_mean + dist.norm_sd * scale),
+                    np.exp(dist.norm_mean - dist.norm_sd * bin_scale),
+                    np.exp(dist.norm_mean + dist.norm_sd * bin_scale),
                 )
 
         elif bin_sizing == BinSizing.ev:
@@ -650,16 +622,6 @@ class NumericDistribution(BaseNumericDistribution):
             dist_bin_sizing_supported = True
 
         elif bin_sizing == BinSizing.fat_hybrid:
-            if isinstance(dist, LognormalDistribution):
-                # Set a left bound but not a right bound because the right tail
-                # will use ev bin sizing
-                scale = 1 + np.log(num_bins)
-                new_support = (
-                    np.exp(dist.norm_mean - dist.norm_sd * scale),
-                    support[1],
-                )
-
-        elif bin_sizing == BinSizing.quantile_hybrid:
             dist_bin_sizing_supported = True
 
         if new_support is not None:
@@ -738,7 +700,7 @@ class NumericDistribution(BaseNumericDistribution):
         elif bin_sizing == BinSizing.ev:
             neg_prop = neg_ev_contribution / total_ev_contribution
             pos_prop = pos_ev_contribution / total_ev_contribution
-        elif bin_sizing == BinSizing.mass or bin_sizing == BinSizing.quantile_hybrid:
+        elif bin_sizing == BinSizing.mass:
             neg_mass = max(0, cdf(0) - cdf(support[0]))
             pos_mass = max(0, cdf(support[1]) - cdf(0))
             total_mass = neg_mass + pos_mass
@@ -1227,12 +1189,17 @@ class NumericDistribution(BaseNumericDistribution):
             The probability masses of the bins.
 
         """
-        # Set the number of bins per side to be approximately proportional to
-        # the EV contribution, but make sure that if a side has nonzero EV
-        # contribution, it gets at least one bin.
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-            num_bins, len(extended_neg_masses), len(extended_pos_masses)
-        )
+        if bin_sizing == BinSizing.bin_count:
+            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
+                num_bins, len(extended_neg_masses), len(extended_pos_masses)
+            )
+        elif bin_siing == BinSizing.ev:
+            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
+                num_bins, neg_ev_contribution, pos_ev_contribution
+            )
+        else:
+            raise ValueError(f"resize_bins: Unsupported bin sizing method: {bin_sizing}")
+
         total_ev = pos_ev_contribution - neg_ev_contribution
         if num_neg_bins == 0:
             neg_ev_contribution = 0
@@ -1245,11 +1212,13 @@ class NumericDistribution(BaseNumericDistribution):
         # of bins. Make ``extended_values`` positive because ``_resize_bins``
         # can only operate on non-negative values. Making them positive means
         # they're now reverse-sorted, so reverse them.
+        import ipdb; ipdb.set_trace()
         neg_values, neg_masses = cls._resize_pos_bins(
             extended_values=np.flip(-extended_neg_values),
             extended_masses=np.flip(extended_neg_masses),
             num_bins=num_neg_bins,
             ev=neg_ev_contribution,
+            bin_sizing=bin_sizing,
             is_sorted=is_sorted,
         )
 
@@ -1264,6 +1233,7 @@ class NumericDistribution(BaseNumericDistribution):
             extended_masses=extended_pos_masses,
             num_bins=num_pos_bins,
             ev=pos_ev_contribution,
+            bin_sizing=bin_sizing,
             is_sorted=is_sorted,
         )
 
