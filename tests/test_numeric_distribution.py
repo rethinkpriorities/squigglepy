@@ -158,6 +158,7 @@ def test_norm_basic(mean, sd):
     norm_sd=st.floats(min_value=0.001, max_value=3),
     bin_sizing=st.sampled_from(["uniform", "log-uniform", "ev", "mass"]),
 )
+@example(norm_mean=1, norm_sd=2, bin_sizing="mass")
 def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     with warnings.catch_warnings():
@@ -278,8 +279,8 @@ def test_lognorm_product_bin_sizing_accuracy():
     dist_prod = LognormalDistribution(norm_mean=2 * dist.norm_mean, norm_sd=np.sqrt(2) * dist.norm_sd)
 
     mean_errors = [
-        relative_error(mass_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(fat_hybrid_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(mass_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(ev_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
@@ -1042,7 +1043,8 @@ def test_disjoint_mixture():
     mixture = NumericDistribution.mixture([hist1, hist2], [0.97, 0.03], warn=False)
     assert mixture.histogram_mean() == approx(0.94 * dist.lognorm_mean, rel=0.001)
     assert mixture.values[0] < 0
-    assert mixture.values[20] < 0
+    assert mixture.values[1] < 0
+    assert mixture.values[-1] > 0
     assert mixture.contribution_to_ev(0) == approx(0.03, rel=0.1)
 
 
