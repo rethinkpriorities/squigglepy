@@ -1,5 +1,6 @@
 from hypothesis import assume, example, given
 import hypothesis.strategies as st
+from numbers import Real
 import numpy as np
 import pytest
 from pytest import approx
@@ -246,3 +247,16 @@ def test_simplify_big_sum():
     assert isinstance(simplified.left.left.left, NormalDistribution)
     assert simplified.left.left.left.mean == 0
     assert simplified.left.left.left.sd == approx(np.sqrt(5))
+
+
+def test_preserve_non_commutative_op():
+    simplified = (2 ** 3 ** norm(mean=0, sd=1)).simplify()
+    assert isinstance(simplified, ComplexDistribution)
+    assert simplified.fn_str == "**"
+    assert isinstance(simplified.left, Real)
+    assert simplified.left == 2
+    assert isinstance(simplified.right, ComplexDistribution)
+    assert simplified.right.fn_str == "**"
+    assert isinstance(simplified.right.left, Real)
+    assert simplified.right.left == 3
+    assert isinstance(simplified.right.right, NormalDistribution)

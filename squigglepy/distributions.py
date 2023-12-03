@@ -1767,12 +1767,13 @@ class FlatTree:
 
     COMMUTABLE_OPERATIONS = set([operator.add, operator.mul])
 
-    def __init__(self, dist=None, fn=None, fn_str=None, children=None, is_unary=False):
+    def __init__(self, dist=None, fn=None, fn_str=None, children=None, is_unary=False, infix=None):
         self.dist = dist
         self.fn = fn
         self.fn_str = fn_str
         self.children = children
         self.is_unary = is_unary
+        self.infix = infix
         if dist is not None:
             self.is_leaf = True
         elif fn is not None and children is not None:
@@ -1803,13 +1804,6 @@ class FlatTree:
         is_unary = dist.right is None
         if is_unary and dist.right is not None:
             raise ValueError(f"Multiple arguments provided for unary operator {dist.fn}")
-
-        # Simplify unary operations
-        if dist.fn == operator.neg:
-            if isinstance(dist.left, Real):
-                return cls.build(-dist.left)
-            if isinstance(dist.left, NormalDistribution):
-                return cls.build(NormalDistribution(mean=-dist.left.mean, sd=dist.left.sd))
 
         # Convert x - y into x + (-y)
         if dist.fn == operator.sub:
@@ -1860,7 +1854,7 @@ class FlatTree:
             else:
                 children.append(right_tree)
 
-        return cls(fn=dist.fn, fn_str=dist.fn_str, children=children, is_unary=is_unary)
+        return cls(fn=dist.fn, fn_str=dist.fn_str, children=children, is_unary=is_unary, infix=dist.infix)
 
     def _join_dists(self, left_type, right_type, join_fn, commutative=True, condition=None):
         simplified_dists = []
@@ -1900,7 +1894,8 @@ class FlatTree:
             simplified_dists.insert(acc_index, acc)
         self.children = simplified_dists
 
-    def _lognormal_times_const(self, norm_mean, norm_sd, k):
+    @classmethod
+    def _lognormal_times_const(cls, norm_mean, norm_sd, k):
         if k == 0:
             return 0
         elif k > 0:
@@ -1917,6 +1912,17 @@ class FlatTree:
         for i in range(len(self.children)):
             if isinstance(self.children[i], FlatTree):
                 self.children[i] = self.children[i].simplify()
+
+        # Simplify unary operations
+        if len(self.children) == 1:
+            child = self.children[0]
+            if self.fn == operator.neg:
+                if isinstance(child, Real):
+                    return -child
+                if isinstance(child, NormalDistribution):
+                    return NormalDistribution(mean=-child.mean, sd=child.sd)
+
+            return ComplexDistribution(child, right=None, fn=self.fn, fn_str=self.fn_str, infix=self.infix)
 
         if self.fn == operator.add:
             self._join_dists(
@@ -2048,4 +2054,4 @@ class FlatTree:
                 condition=lambda x, y: y > 0,
             )
 
-        return reduce(lambda acc, x: ComplexDistribution(acc, x), self.children)
+        return reduce(lambda acc, x: ComplexDistribution(acc, x, fn=self.fn, fn_str=self.fn_str), self.children)
