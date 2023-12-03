@@ -1773,14 +1773,9 @@ class FlatTree:
             return cls.build(
                 ComplexDistribution(
                     dist.left,
-                    ComplexDistribution(
-                        dist.right,
-                        right=None,
-                        fn=operator.neg,
-                        fn_str="-"
-                    ),
+                    ComplexDistribution(dist.right, right=None, fn=operator.neg, fn_str="-"),
                     fn=operator.add,
-                    fn_str="+"
+                    fn_str="+",
                 )
             )
 
@@ -1818,7 +1813,7 @@ class FlatTree:
 
         return cls(fn=dist.fn, dists=dists, children=children, is_unary=is_unary)
 
-    def _join_dists(self, left_type, right_type, join_fn, commutative=True):
+    def _join_dists(self, left_type, right_type, join_fn, commutative=True, condition=None):
         simplified_dists = []
         acc = None
         acc_index = None
@@ -1827,13 +1822,24 @@ class FlatTree:
             if acc is None and isinstance(x, left_type):
                 acc = x
                 acc_index = i
-            elif acc is not None and isinstance(x, right_type) and acc_is_left:
+            elif (
+                acc is not None
+                and isinstance(x, right_type)
+                and acc_is_left
+                and (condition is None or condition(acc, x))
+            ):
                 acc = join_fn(acc, x)
             elif commutative and acc is None and isinstance(x, right_type):
                 acc = x
                 acc_index = i
                 acc_is_left = False
-            elif commutative and acc is not None and isinstance(x, left_type) and not acc_is_left:
+            elif (
+                commutative
+                and acc is not None
+                and isinstance(x, left_type)
+                and not acc_is_left
+                and (condition is None or condition(x, acc))
+            ):
                 acc = join_fn(x, acc)
             else:
                 simplified_dists.append(x)
@@ -1857,17 +1863,96 @@ class FlatTree:
         simplified_children = [child.simplify() for child in self.children]
 
         if self.fn == operator.add:
-            self._join_dists(NormalDistribution, NormalDistribution, lambda x, y: NormalDistribution(mean=x.mean + y.mean, sd=np.sqrt(x.sd**2 + y.sd**2)))
-            self._join_dists(NormalDistribution, Real, lambda x, y: NormalDistribution(mean=x.mean + y, sd=x.sd))
+            self._join_dists(
+                NormalDistribution,
+                NormalDistribution,
+                lambda x, y: NormalDistribution(
+                    mean=x.mean + y.mean, sd=np.sqrt(x.sd**2 + y.sd**2)
+                ),
+            )
+            self._join_dists(
+                NormalDistribution, Real, lambda x, y: NormalDistribution(mean=x.mean + y, sd=x.sd)
+            )
 
         elif self.fn == operator.mul:
-            self._join_dists(LognormalDistribution, LognormalDistribution, lambda x, y: LognormalDistribution(norm_mean=x.norm_mean + y.norm_mean, norm_sd=np.sqrt(x.norm_sd**2 + y.norm_sd**2)))
-            self._join_dists(LognormalDistribution, Real, lambda x, y: self._lognormal_times_const(x.norm_mean, x.norm_sd, y))
-            self._join_dists(NormalDistribution, Real, lambda x, y: NormalDistribution(mean=x.mean * y, sd=x.sd * y))
+            self._join_dists(
+                LognormalDistribution,
+                LognormalDistribution,
+                lambda x, y: LognormalDistribution(
+                    norm_mean=x.norm_mean + y.norm_mean,
+                    norm_sd=np.sqrt(x.norm_sd**2 + y.norm_sd**2),
+                ),
+            )
+            self._join_dists(
+                LognormalDistribution,
+                Real,
+                lambda x, y: self._lognormal_times_const(x.norm_mean, x.norm_sd, y),
+            )
+            self._join_dists(
+                NormalDistribution,
+                Real,
+                lambda x, y: NormalDistribution(mean=x.mean * y, sd=x.sd * y),
+            )
 
         elif self.fn == operator.truediv:
-            self._join_dists(LognormalDistribution, LognormalDistribution, lambda x, y: LognormalDistribution(norm_mean=x.norm_mean - y.norm_mean, norm_sd=np.sqrt(x.norm_sd ** 2 + y.norm_sd ** 2)), commutative=False)
-            self._join_dists(LognormalDistribution, Real, lambda x, y: self._lognormal_times_const(x.norm_mean, x.norm_sd, 1 / y), commutative=False)
-            self._join_dists(Real, LognormalDistribution, lambda x, y: self._lognormal_times_const(-y.norm_mean, y.norm_sd, x), commutative=False)
+            self._join_dists(
+                LognormalDistribution,
+                LognormalDistribution,
+                lambda x, y: LognormalDistribution(
+                    norm_mean=x.norm_mean - y.norm_mean,
+                    norm_sd=np.sqrt(x.norm_sd**2 + y.norm_sd**2),
+                ),
+                commutative=False,
+            )
+            self._join_dists(
+                LognormalDistribution,
+                Real,
+                lambda x, y: self._lognormal_times_const(x.norm_mean, x.norm_sd, 1 / y),
+                commutative=False,
+            )
+            self._join_dists(
+                Real,
+                LognormalDistribution,
+                lambda x, y: self._lognormal_times_const(-y.norm_mean, y.norm_sd, x),
+                commutative=False,
+            )
+            self._join_dists(
+                NormalDistribution,
+                Real,
+                lambda x, y: NormalDistribution(mean=x.mean / y, sd=x.sd / y),
+                commutative=False,
+            )
+            self._join_dists(
+                Real,
+                NormalDistribution,
+                lambda x, y: NormalDistribution(mean=x / y.mean, sd=x / y.sd),
+                commutative=False,
+            )
+
+        elif self.fn == operator.pow:
+            self._join_dists(
+                LognormalDistribution,
+                Real,
+                lambda x, y: LognormalDistribution(
+                    norm_mean=x.norm_mean * y, norm_sd=x.norm_sd * y
+                ),
+                commutative=False,
+                condition=lambda x, y: y > 0,
+            )
+
+        # There are a few other operations that can be simplified but they're a
+        # bit more obscure:
+        #
+        # Bernoulli + Bernoulli = binomial
+        # binomial + binomial = binomial
+        # Poisson + Poisson = Poisson
+        # Cauchy + Cauchy = Cauchy
+        # Gamma + Gamma = Gamma
+        # Chi^2 + Chi^2 = Chi^2
+        # central normal / central normal = Cauchy
+        #
+        # There are also a lot of known analytic expressions for combinations
+        # of distributions but where the analytic expression isn't a named
+        # distribution (and some of them are really complicated).
 
         return reduce(lambda acc, x: ComplexDistribution(acc, x), simplified_children + self.dists)
