@@ -13,6 +13,7 @@ from collections.abc import Iterable
 
 from abc import ABC, abstractmethod
 from functools import reduce
+from numbers import Real
 
 
 class BaseDistribution(ABC):
@@ -1709,6 +1710,27 @@ def geometric(p):
 
 
 class FlatTree:
+    """Helper class for simplifying analytic expressions. A ``FlatTree`` is
+    sort of like a ``ComplexDistribution`` except that it flattens
+    commutative/associative operations onto a single object instead of having
+    one object per binary operation.
+
+    This class operates in two phases.
+
+    Phase 1: Generate a ``FlatTree`` object from a :ref:``BaseDistribution`` by
+    calling ``FlatTree.build(dist)``. This generates a tree where any series of
+    a single commutative/associative operation done repeatedly is flattened
+    onto a single ``FlatTree`` node. It also converts operations into a
+    normalized form, for example converting ``a - b`` into ``a + (-b)``.
+
+    Phase 2: Generate a simplified ``Distribution`` by calling
+    :ref:``simplify``. This works by combing through each flat list of
+    distributions to find which ones can be analytically simplified (for
+    example, converting a sum of normal distributions into a single normal
+    distribution).
+
+    """
+
     COMMUTABLE_OPERATIONS = set([operator.add, operator.mul])
 
     def __init__(self, dist=None, fn=None, dists=None, children=None, is_unary=False):
@@ -1726,24 +1748,27 @@ class FlatTree:
 
     @classmethod
     def build(cls, dist):
-        if isinstance(dist, int) or isinstance(dist, float):
-            return FlatTree(dist=float(dist))
+        if dist is None:
+            return None
+        if isinstance(dist, Real):
+            return FlatTree(dist=dist)
         if not isinstance(dist, BaseDistribution):
-            import ipdb; ipdb.set_trace()
             raise ValueError(f"dist must be a BaseDistribution or numeric type, not {type(dist)}")
         if not isinstance(dist, ComplexDistribution):
             return FlatTree(dist=dist)
 
-        # make a list of possibly-joinable distributions, plus a list of
-        # children as trees who could not be simplified at this level
-        dists = []
-        children = []
         is_unary = dist.right is None
         if is_unary and dist.right is not None:
             raise ValueError(f"Multiple arguments provided for unary operator {dist.fn}")
+
+        # Simplify unary operations
         if dist.fn == operator.neg:
+            if isinstance(dist.left, Real):
+                return cls.build(-dist.left)
             if isinstance(dist.left, NormalDistribution):
                 return cls.build(NormalDistribution(mean=-dist.left.mean, sd=dist.left.sd))
+
+        # Normalize binary operations
         if dist.fn == operator.sub:
             return cls.build(
                 ComplexDistribution(
@@ -1759,9 +1784,21 @@ class FlatTree:
                 )
             )
 
+        # TODO: maybe use operator.invert (~) as the symbol for reciprocal.
+        # actually that's a bad idea because then simplify() might output
+        # content with ~ in it
+
         left_tree = cls.build(dist.left)
         right_tree = cls.build(dist.right)
 
+        # Make a list of possibly-joinable distributions, plus a list of
+        # children as trees who could not be simplified at this level
+        dists = []
+        children = []
+
+        # If the child nodes use the same commutable operation as ``dist``, add
+        # their flattened ``dists`` lists to ``dists``. Otherwise, put them in
+        # the irreducible list of ``children``.
         if left_tree.is_leaf:
             dists.append(left_tree.dist)
         elif left_tree.fn == dist.fn and dist.fn in cls.COMMUTABLE_OPERATIONS:
@@ -1776,42 +1813,61 @@ class FlatTree:
             else:
                 children.append(right_tree)
 
-        dists.sort(key=lambda d: type(d).__name__)
+        if dist.fn in cls.COMMUTABLE_OPERATIONS:
+            dists.sort(key=lambda d: type(d).__name__)
 
         return cls(fn=dist.fn, dists=dists, children=children, is_unary=is_unary)
 
     def _join_dists(self, left_type, right_type, join_fn, commutative=True):
-        dists = []
+        simplified_dists = []
         acc = None
+        acc_index = None
         acc_is_left = True
-        for x in self.dists:
+        for i, x in enumerate(self.dists):
             if acc is None and isinstance(x, left_type):
                 acc = x
-            elif acc is None and commutative and isinstance(x, right_type):
-                acc = x
-                acc_is_left = False
+                acc_index = i
             elif acc is not None and isinstance(x, right_type) and acc_is_left:
                 acc = join_fn(acc, x)
-            elif acc is not None and commutative and isinstance(x, left_type) and not acc_is_left:
+            elif commutative and acc is None and isinstance(x, right_type):
+                acc = x
+                acc_index = i
+                acc_is_left = False
+            elif commutative and acc is not None and isinstance(x, left_type) and not acc_is_left:
                 acc = join_fn(x, acc)
             else:
-                dists.append(x)
+                simplified_dists.append(x)
 
         if acc is not None:
-            dists.insert(0, acc)
-        self.dists = dists
+            simplified_dists.insert(acc_index, acc)
+        self.dists = simplified_dists
+
+    def _lognormal_times_const(self, norm_mean, norm_sd, k):
+        if k == 0:
+            return 0
+        elif k > 0:
+            return LognormalDistribution(norm_mean=norm_mean + np.log(k), norm_sd=norm_sd)
+        else:
+            return -LognormalDistribution(norm_mean=norm_mean + np.log(-k), norm_sd=norm_sd)
 
     def simplify(self):
         if self.is_leaf:
             return self.dist
 
         simplified_children = [child.simplify() for child in self.children]
+
         if self.fn == operator.add:
             self._join_dists(NormalDistribution, NormalDistribution, lambda x, y: NormalDistribution(mean=x.mean + y.mean, sd=np.sqrt(x.sd**2 + y.sd**2)))
-            self._join_dists(NormalDistribution, float, lambda x, y: NormalDistribution(mean=x.mean + y, sd=x.sd))
+            self._join_dists(NormalDistribution, Real, lambda x, y: NormalDistribution(mean=x.mean + y, sd=x.sd))
+
         elif self.fn == operator.mul:
             self._join_dists(LognormalDistribution, LognormalDistribution, lambda x, y: LognormalDistribution(norm_mean=x.norm_mean + y.norm_mean, norm_sd=np.sqrt(x.norm_sd**2 + y.norm_sd**2)))
-            self._join_dists(LognormalDistribution, float, lambda x, y: LognormalDistribution(norm_mean=x.norm_mean * y, norm_sd=x.norm_sd))
-            self._join_dists(NormalDistribution, float, lambda x, y: NormalDistribution(mean=x.mean * y, sd=x.sd * y))
+            self._join_dists(LognormalDistribution, Real, lambda x, y: self._lognormal_times_const(x.norm_mean, x.norm_sd, y))
+            self._join_dists(NormalDistribution, Real, lambda x, y: NormalDistribution(mean=x.mean * y, sd=x.sd * y))
+
+        elif self.fn == operator.truediv:
+            self._join_dists(LognormalDistribution, LognormalDistribution, lambda x, y: LognormalDistribution(norm_mean=x.norm_mean - y.norm_mean, norm_sd=np.sqrt(x.norm_sd ** 2 + y.norm_sd ** 2)), commutative=False)
+            self._join_dists(LognormalDistribution, Real, lambda x, y: self._lognormal_times_const(x.norm_mean, x.norm_sd, 1 / y), commutative=False)
+            self._join_dists(Real, LognormalDistribution, lambda x, y: self._lognormal_times_const(-y.norm_mean, y.norm_sd, x), commutative=False)
 
         return reduce(lambda acc, x: ComplexDistribution(acc, x), simplified_children + self.dists)
