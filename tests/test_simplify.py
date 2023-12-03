@@ -6,7 +6,7 @@ from pytest import approx
 
 from ..squigglepy.distributions import *
 
-def test_simplify_normal_add():
+def test_simplify_add_normal():
     x = NormalDistribution(mean=1, sd=1)
     y = NormalDistribution(mean=2, sd=2)
     sum2 = x + y
@@ -15,7 +15,7 @@ def test_simplify_normal_add():
     assert simplified2.mean == 3
     assert simplified2.sd == approx(np.sqrt(5))
 
-def test_simplify_normal_add3():
+def test_simplify_add_3_normals():
     x = NormalDistribution(mean=1, sd=1)
     y = NormalDistribution(mean=2, sd=2)
     z = NormalDistribution(mean=-3, sd=2)
@@ -30,7 +30,25 @@ def test_simplify_normal_add3():
     assert simplified3_right.mean == 0
     assert simplified3_right.sd == approx(np.sqrt(1 + 4 + 4))
 
-def test_simplify_lognorm_mul3():
+def test_simplify_normal_plus_const():
+    x = NormalDistribution(mean=0, sd=1)
+    y = 2
+    sum2 = x + y
+    simplified = sum2.simplify()
+    assert isinstance(simplified, NormalDistribution)
+    assert simplified.mean == 2
+    assert simplified.sd == approx(1)
+
+def simplify_scale_normal():
+    x = NormalDistribution(mean=2, sd=4)
+    y = 1.5
+    product2 = x * y
+    simplified = product2.simplify()
+    assert isinstance(simplified, NormalDistribution)
+    assert simplified.mean == approx(3)
+    assert simplified.sd == approx(6)
+
+def test_simplify_mul_3_normals():
     x = LognormalDistribution(norm_mean=1, norm_sd=1)
     y = LognormalDistribution(norm_mean=2, norm_sd=2)
     z = LognormalDistribution(norm_mean=-2, norm_sd=3)
