@@ -1819,7 +1819,10 @@ class FlatTree:
         acc_index = None
         acc_is_left = True
         for i, x in enumerate(self.dists):
-            if acc is None and isinstance(x, left_type):
+            if isinstance(x, BaseDistribution) and (x.lclip is not None or x.rclip is not None):
+                # We can't simplify a clipped distribution
+                simplified_dists.append(x)
+            elif acc is None and isinstance(x, left_type):
                 acc = x
                 acc_index = i
             elif (

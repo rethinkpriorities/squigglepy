@@ -146,13 +146,28 @@ def test_simplify_div_const_by_normal():
 def test_simplify_lognorm_pow():
     x = LognormalDistribution(norm_mean=3, norm_sd=2)
     y = 2
-    product = x ** y
+    product = x**y
     simplified = product.simplify()
     assert isinstance(simplified, LognormalDistribution)
     assert simplified.norm_mean == approx(6)
     assert simplified.norm_sd == approx(4)
 
     y = -1
-    product = x ** y
+    product = x**y
     simplified = product.simplify()
     assert isinstance(simplified, ComplexDistribution)
+
+
+def test_simplify_clipped_normal():
+    x = NormalDistribution(mean=1, sd=1)
+    y = NormalDistribution(mean=0, sd=1, lclip=1)
+    z = NormalDistribution(mean=3, sd=2)
+    simplified = (x + y + z).simplify()
+    assert isinstance(simplified, ComplexDistribution)
+    assert isinstance(simplified.left, NormalDistribution)
+    assert isinstance(simplified.right, NormalDistribution)
+    assert simplified.left.mean == 4
+    assert simplified.left.sd == approx(np.sqrt(5))
+    assert simplified.right.mean == 0
+    assert simplified.right.sd == 1
+    assert simplified.right.lclip == 1
