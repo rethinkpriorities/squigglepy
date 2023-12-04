@@ -4,9 +4,14 @@ import pytest
 from pytest import approx
 from scipy import stats
 import warnings
-from hypothesis import assume, given, settings
+from hypothesis import assume, example, given, settings
 
-from ..squigglepy.distributions import LognormalDistribution, NormalDistribution, UniformDistribution
+from ..squigglepy.distributions import (
+    BetaDistribution,
+    LognormalDistribution,
+    NormalDistribution,
+    UniformDistribution,
+)
 from ..squigglepy.utils import ConvergenceWarning
 
 
@@ -52,7 +57,7 @@ def test_norm_contribution_to_ev(mu, sigma):
 
     # contribution_to_ev should be monotonic
     assert dist.contribution_to_ev(mu - 2 * sigma) < dist.contribution_to_ev(mu - 1 * sigma)
-    assert dist.contribution_to_ev(mu -  sigma) < dist.contribution_to_ev(mu)
+    assert dist.contribution_to_ev(mu - sigma) < dist.contribution_to_ev(mu)
     assert dist.contribution_to_ev(mu) < dist.contribution_to_ev(mu + sigma)
     assert dist.contribution_to_ev(mu + sigma) < dist.contribution_to_ev(mu + 2 * sigma)
 
@@ -90,7 +95,9 @@ def test_norm_inv_contribution_to_ev(mu, sigma):
 )
 def test_norm_inv_contribution_to_ev_inverts_contribution_to_ev(mu, sigma, ev_fraction):
     dist = NormalDistribution(mean=mu, sd=sigma)
-    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(ev_fraction)) == approx(ev_fraction, abs=1e-8)
+    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(ev_fraction)) == approx(
+        ev_fraction, abs=1e-8
+    )
 
 
 def test_uniform_contribution_to_ev_basic():
@@ -156,3 +163,28 @@ def test_uniform_inv_contribution_to_ev_inverts_contribution_to_ev(a, b, prop):
         return None
     dist = UniformDistribution(x=a, y=b)
     assert dist.contribution_to_ev(dist.inv_contribution_to_ev(prop)) == approx(prop)
+
+
+@given(
+    ab=st.floats(min_value=0.01, max_value=10),
+)
+@example(ab=1)
+def test_beta_contribution_to_ev_basic(ab):
+    dist = BetaDistribution(ab, ab)
+    assert dist.contribution_to_ev(0) == approx(0)
+    assert dist.contribution_to_ev(1) == approx(1)
+    assert dist.contribution_to_ev(1, normalized=False) == approx(0.5)
+    assert dist.contribution_to_ev(0.5) > 0
+    assert dist.contribution_to_ev(0.5) <= 0.5
+
+
+@given(
+    a=st.floats(min_value=0.5, max_value=10),
+    b=st.floats(min_value=0.5, max_value=10),
+    fraction=st.floats(min_value=0, max_value=1),
+)
+def test_beta_inv_contribution_ev_inverts_contribution_to_ev(a, b, fraction):
+    # Note: The answers do become a bit off for small fractional values of a, b
+    dist = BetaDistribution(a, b)
+    tolerance = 1e-6 if a < 1 or b < 1 else 1e-8
+    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(fraction, rel=tolerance)

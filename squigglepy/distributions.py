@@ -7,6 +7,7 @@ import numpy as np
 from numpy import exp, log, pi, sqrt
 import operator
 import scipy.stats
+from scipy import special
 from scipy.special import erf, erfinv
 import warnings
 
@@ -743,7 +744,7 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
         # crosses zero.
         pseudo_mean = (b - a) / 2
 
-        fraction = np.squeeze((x - a)**2 / (b - a)**2)
+        fraction = np.squeeze((x - a) ** 2 / (b - a) ** 2)
         fraction = np.where(x < a, 0, fraction)
         fraction = np.where(x > b, 1, fraction)
         if normalized:
@@ -777,11 +778,16 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
         a = self.x
         b = self.y
 
-        pos_sol = 1 / np.sqrt(fraction) * np.sqrt(b**2 * np.sign(b) - (1 - fraction) * a**2 * np.sign(a))
+        pos_sol = (
+            1
+            / np.sqrt(fraction)
+            * np.sqrt(b**2 * np.sign(b) - (1 - fraction) * a**2 * np.sign(a))
+        )
         neg_sol = -pos_sol
 
         # TODO: There are two solutions to the polynomial, but idk how to tell
         # which one is correct when a < 0 and b > 0
+
 
 def uniform(x, y):
     """
@@ -945,12 +951,15 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
                 guess = (lower + upper) / 2
 
         if full_output:
-            return (np.squeeze(guess), {
-                'success': converged,
-                'newton_iterations': newton_iter,
-                'binary_search_iterations': binary_iter,
-                'used_binary_search': binary_iter > 0,
-            })
+            return (
+                np.squeeze(guess),
+                {
+                    "success": converged,
+                    "newton_iterations": newton_iter,
+                    "binary_search_iterations": binary_iter,
+                    "used_binary_search": binary_iter > 0,
+                },
+            )
         else:
             return np.squeeze(guess)
 
@@ -1095,8 +1104,8 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         mu = self.norm_mean
         sigma = self.norm_sd
         left_bound = self._EV_SCALE  # at x=0
-        right_bound = (
-            self._EV_SCALE * erf((-log(x) + mu + sigma**2) / self._EV_DENOM)
+        right_bound = self._EV_SCALE * np.where(
+            x == 0, 1, erf((-log(x) + mu + sigma**2) / self._EV_DENOM)
         )
 
         return np.squeeze(right_bound - left_bound) / (self.lognorm_mean if normalized else 1)
@@ -1266,14 +1275,34 @@ def binomial(n, p):
     return BinomialDistribution(n=n, p=p)
 
 
-class BetaDistribution(ContinuousDistribution):
+class BetaDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, a, b):
         super().__init__()
         self.a = a
         self.b = b
+        self.mean = scipy.stats.beta.mean(a, b)
 
     def __str__(self):
         return "<Distribution> beta(a={}, b={})".format(self.a, self.b)
+
+    def contribution_to_ev(self, x: np.ndarray | float, normalized=True):
+        x = np.asarray(x)
+        a = self.a
+        b = self.b
+
+        res = special.betainc(a + 1, b, x) * special.beta(a + 1, b) / special.beta(a, b)
+        return np.squeeze(res) / (self.mean if normalized else 1)
+
+    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError("fraction must be between 0 and 1 (inclusive)")
+
+        a = self.a
+        b = self.b
+        y = fraction * self.mean * special.beta(a, b) / special.beta(a + 1, b)
+        return np.squeeze(special.betaincinv(a + 1, b, y))
 
 
 def beta(a, b):

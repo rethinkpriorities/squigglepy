@@ -9,6 +9,7 @@ import warnings
 
 from .distributions import (
     BaseDistribution,
+    BetaDistribution,
     ComplexDistribution,
     LognormalDistribution,
     MixtureDistribution,
@@ -114,12 +115,19 @@ def _bin_sizing_scale(bin_sizing, dist_name, num_bins):
 
 
 DEFAULT_BIN_SIZING = {
-    NormalDistribution: BinSizing.uniform,
+    BetaDistribution: BinSizing.mass,
     LognormalDistribution: BinSizing.fat_hybrid,
+    NormalDistribution: BinSizing.uniform,
     UniformDistribution: BinSizing.uniform,
 }
 
-DEFAULT_NUM_BINS = 100
+DEFAULT_NUM_BINS = {
+    BetaDistribution: 50,
+    LognormalDistribution: 200,
+    MixtureDistribution: 200,
+    NormalDistribution: 200,
+    UniformDistribution: 50,
+}
 
 CACHED_NORM_CDFS = {}
 CACHED_LOGNORM_CDFS = {}
@@ -443,7 +451,11 @@ class NumericDistribution(BaseNumericDistribution):
             )
 
         elif bin_sizing == BinSizing.mass:
-            if isinstance(dist, LognormalDistribution) and dist.lclip is None and dist.rclip is None:
+            if (
+                isinstance(dist, LognormalDistribution)
+                and dist.lclip is None
+                and dist.rclip is None
+            ):
                 edge_cdfs, edge_zscores = cached_lognorm_ppf_zscore(num_bins)
                 edge_values = np.exp(dist.norm_mean + dist.norm_sd * edge_zscores)
             else:
@@ -453,13 +465,15 @@ class NumericDistribution(BaseNumericDistribution):
         elif bin_sizing == BinSizing.fat_hybrid:
             # Use a combination of mass and log-uniform
             bin_scale = _bin_sizing_scale(BinSizing.log_uniform, type(dist).__name__, num_bins)
-            logu_support = np.exp(_narrow_support(
-                (_log(support[0]), _log(support[1])),
-                (
-                    dist.norm_mean - bin_scale * dist.norm_sd,
-                    dist.norm_mean + bin_scale * dist.norm_sd,
-                ),
-            ))
+            logu_support = np.exp(
+                _narrow_support(
+                    (_log(support[0]), _log(support[1])),
+                    (
+                        dist.norm_mean - bin_scale * dist.norm_sd,
+                        dist.norm_mean + bin_scale * dist.norm_sd,
+                    ),
+                )
+            )
             logu_edge_values, logu_edge_cdfs = cls._construct_edge_values(
                 num_bins, logu_support, max_support, dist, cdf, ppf, BinSizing.log_uniform
             )
@@ -623,8 +637,10 @@ class NumericDistribution(BaseNumericDistribution):
             The number of bins for the numeric distribution to use. The time to
             construct a NumericDistribution is linear with ``num_bins``, and
             the time to run a binary operation on two distributions with the
-            same number of bins is approximately quadratic with ``num_bins``.
-            100 bins provides a good balance between accuracy and speed.
+            same number of bins is approximately quadratic. 100 bins provides a
+            good balance between accuracy and speed. 1000 bins provides greater
+            accuracy and is fast for small models, but for large models there
+            will be some noticeable slowdown in binary operations.
         bin_sizing : Optional[str]
             The bin sizing method to use, which affects the accuracy of the
             bins. If none is given, a default will be chosen from
@@ -642,8 +658,10 @@ class NumericDistribution(BaseNumericDistribution):
             The generated numeric distribution that represents ``dist``.
 
         """
-        if num_bins is None:
-            num_bins = DEFAULT_NUM_BINS
+
+        # --------------------------------------------------
+        # Handle special distributions (Mixture and Complex)
+        # --------------------------------------------------
 
         if isinstance(dist, MixtureDistribution):
             return cls.mixture(
@@ -664,23 +682,32 @@ class NumericDistribution(BaseNumericDistribution):
                 right = cls.from_distribution(right, num_bins, bin_sizing, warn)
             return dist.fn(left, right).clip(dist.lclip, dist.rclip)
 
+        # ------------
+        # Basic checks
+        # ------------
+
         if type(dist) not in DEFAULT_BIN_SIZING:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
+
+        if num_bins is None:
+            num_bins = DEFAULT_NUM_BINS[type(dist)]
 
         # -------------------------------------------------------------------
         # Set up required parameters based on dist type and bin sizing method
         # -------------------------------------------------------------------
 
         bin_sizing = BinSizing(bin_sizing or DEFAULT_BIN_SIZING[type(dist)])
-        support = {
+        max_support = {
             # These are the widest possible supports, but they maybe narrowed
-            # later by lclip/rclip or by some bin sizing methods
+            # later by lclip/rclip or by some bin sizing methods.
+            BetaDistribution: (0, 1),
             LognormalDistribution: (0, np.inf),
             NormalDistribution: (-np.inf, np.inf),
             UniformDistribution: (dist.x, dist.y),
         }[type(dist)]
-        max_support = support
+        support = max_support
         ppf = {
+            BetaDistribution: lambda p: stats.beta.ppf(p, dist.a, dist.b),
             LognormalDistribution: lambda p: stats.lognorm.ppf(
                 p, dist.norm_sd, scale=np.exp(dist.norm_mean)
             ),
@@ -688,6 +715,7 @@ class NumericDistribution(BaseNumericDistribution):
             UniformDistribution: lambda p: stats.uniform.ppf(p, loc=dist.x, scale=dist.y - dist.x),
         }[type(dist)]
         cdf = {
+            BetaDistribution: lambda x: stats.beta.cdf(x, dist.a, dist.b),
             LognormalDistribution: lambda x: stats.lognorm.cdf(
                 x, dist.norm_sd, scale=np.exp(dist.norm_mean)
             ),
@@ -712,7 +740,7 @@ class NumericDistribution(BaseNumericDistribution):
                     dist.mean - dist.sd * bin_scale,
                     dist.mean + dist.sd * bin_scale,
                 )
-            elif isinstance(dist, UniformDistribution):
+            elif isinstance(dist, BetaDistribution) or isinstance(dist, UniformDistribution):
                 new_support = support
 
         elif bin_sizing == BinSizing.log_uniform:
@@ -721,6 +749,8 @@ class NumericDistribution(BaseNumericDistribution):
                     np.exp(dist.norm_mean - dist.norm_sd * bin_scale),
                     np.exp(dist.norm_mean + dist.norm_sd * bin_scale),
                 )
+            elif isinstance(dist, BetaDistribution):
+                new_support = support
 
         elif bin_sizing == BinSizing.ev:
             dist_bin_sizing_supported = True
@@ -729,7 +759,8 @@ class NumericDistribution(BaseNumericDistribution):
             dist_bin_sizing_supported = True
 
         elif bin_sizing == BinSizing.fat_hybrid:
-            dist_bin_sizing_supported = True
+            if isinstance(dist, LognormalDistribution):
+                dist_bin_sizing_supported = True
 
         if new_support is not None:
             support = _narrow_support(support, new_support)
@@ -749,7 +780,10 @@ class NumericDistribution(BaseNumericDistribution):
         # ---------------------------
 
         if dist.lclip is None and dist.rclip is None:
-            if isinstance(dist, LognormalDistribution):
+            if isinstance(dist, BetaDistribution):
+                exact_mean = stats.beta.mean(dist.a, dist.b)
+                exact_sd = stats.beta.std(dist.a, dist.b)
+            elif isinstance(dist, LognormalDistribution):
                 exact_mean = dist.lognorm_mean
                 exact_sd = dist.lognorm_sd
             elif isinstance(dist, NormalDistribution):
@@ -759,7 +793,7 @@ class NumericDistribution(BaseNumericDistribution):
                 exact_mean = (dist.x + dist.y) / 2
                 exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
         else:
-            if isinstance(dist, LognormalDistribution):
+            if isinstance(dist, BetaDistribution) or isinstance(dist, LognormalDistribution):
                 contribution_to_ev = dist.contribution_to_ev(
                     support[1], normalized=False
                 ) - dist.contribution_to_ev(support[0], normalized=False)
@@ -880,7 +914,7 @@ class NumericDistribution(BaseNumericDistribution):
         cls, dists, weights, lclip=None, rclip=None, num_bins=None, bin_sizing=None, warn=True
     ):
         if num_bins is None:
-            num_bins = DEFAULT_NUM_BINS
+            mixture_num_bins = DEFAULT_NUM_BINS[MixtureDistribution]
         # This replicates how MixtureDistribution handles lclip/rclip: it
         # clips the sub-distributions based on their own lclip/rclip, then
         # takes the mixture sample, then clips the mixture sample based on
@@ -912,7 +946,7 @@ class NumericDistribution(BaseNumericDistribution):
             extended_neg_masses=extended_masses[:zero_index],
             extended_pos_values=extended_values[zero_index:],
             extended_pos_masses=extended_masses[zero_index:],
-            num_bins=num_bins,
+            num_bins=num_bins or mixture_num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
             bin_sizing=BinSizing.ev,
@@ -1745,7 +1779,9 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         return ZeroNumericDistribution(self.dist.scale_by(scalar), self.zero_mass)
 
     def reciprocal(self):
-        raise ValueError("Reciprocal is undefined for probability distributions with non-infinitesimal mass at zero")
+        raise ValueError(
+            "Reciprocal is undefined for probability distributions with non-infinitesimal mass at zero"
+        )
 
     def __hash__(self):
         return 33 * hash(repr(self.zero_mass)) + hash(self.dist)
