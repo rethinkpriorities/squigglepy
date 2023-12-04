@@ -15,6 +15,7 @@ from .distributions import (
     NormalDistribution,
     UniformDistribution,
 )
+from .version import __version__
 
 
 class BinSizing(Enum):
@@ -339,6 +340,7 @@ class NumericDistribution(BaseNumericDistribution):
 
         """
         assert len(values) == len(masses)
+        self._version = __version__
         self.values = values
         self.masses = masses
         self.num_bins = len(values)
@@ -363,6 +365,41 @@ class NumericDistribution(BaseNumericDistribution):
         ppf,
         bin_sizing,
     ):
+        """Construct a list of bin edge values. Helper function for
+        :func:`from_distribution`; do not call this directly.
+
+        Parameters
+        ----------
+        num_bins : int
+            The number of bins to use.
+        support : Tuple[float, float]
+            The support of the distribution.
+        max_support : Tuple[float, float]
+            The maximum support of the distribution, after clipping but before
+            narrowing due to limitations of certain bin sizing methods. Namely,
+            uniform and log-uniform bin sizing is undefined for infinite bounds,
+            so ``support`` is narrowed to finite bounds, but ``max_support`` is
+            not.
+        dist : BaseDistribution
+            The distribution to convert to a NumericDistribution.
+        cdf : Callable[[np.ndarray], np.ndarray]
+            The CDF of the distribution.
+        ppf : Callable[[np.ndarray], np.ndarray]
+            The inverse CDF of the distribution.
+        bin_sizing : BinSizing
+            The bin sizing method to use.
+
+        Return
+        ------
+        edge_values : np.ndarray
+            The value of each bin edge.
+        edge_cdfs : Optional[np.ndarray]
+            The CDF at each bin edge. Only provided as a performance
+            optimization if the CDFs are either required to determine bin edge
+            values or if they can be pulled from a cache. Otherwise, the parent
+            caller is responsible for calculating the CDFs.
+
+        """
         edge_cdfs = None
         if bin_sizing == BinSizing.uniform:
             edge_values = np.linspace(support[0], support[1], num_bins + 1)
@@ -415,10 +452,6 @@ class NumericDistribution(BaseNumericDistribution):
 
         elif bin_sizing == BinSizing.fat_hybrid:
             # Use a combination of mass and log-uniform
-            # TODO: under at least some conditions, this method assigns half
-            # the bins to mass and the second half to log-uniform. perhaps we
-            # should just do that? (remember for clipped dists that you want
-            # half of the max mass, not the clipped mass)
             bin_scale = _bin_sizing_scale(BinSizing.log_uniform, type(dist).__name__, num_bins)
             logu_support = np.exp(_narrow_support(
                 (_log(support[0]), _log(support[1])),
@@ -427,7 +460,6 @@ class NumericDistribution(BaseNumericDistribution):
                     dist.norm_mean + bin_scale * dist.norm_sd,
                 ),
             ))
-
             logu_edge_values, logu_edge_cdfs = cls._construct_edge_values(
                 num_bins, logu_support, max_support, dist, cdf, ppf, BinSizing.log_uniform
             )
@@ -462,7 +494,38 @@ class NumericDistribution(BaseNumericDistribution):
         is_reversed,
     ):
         """Construct a list of bin masses and values. Helper function for
-        :func:`from_distribution`; do not call this directly."""
+        :func:`from_distribution`; do not call this directly.
+
+        Parameters
+        ----------
+        num_bins : int
+            The number of bins to use.
+        support : Tuple[float, float]
+            The support of the distribution.
+        max_support : Tuple[float, float]
+            The maximum support of the distribution, after clipping but before
+            narrowing due to limitations of certain bin sizing methods. Namely,
+            uniform and log-uniform bin sizing is undefined for infinite bounds,
+            so ``support`` is narrowed to finite bounds, but ``max_support`` is
+            not.
+        dist : BaseDistribution
+            The distribution to convert to a NumericDistribution.
+        cdf : Callable[[np.ndarray], np.ndarray]
+            The CDF of the distribution.
+        ppf : Callable[[np.ndarray], np.ndarray]
+            The inverse CDF of the distribution.
+        bin_sizing : BinSizing
+            The bin sizing method to use.
+        warn : bool
+            If True, raise warnings about bins with zero mass.
+
+        Return
+        ------
+        masses : np.ndarray
+            The probability mass of each bin.
+        values : np.ndarray
+            The value of each bin.
+        """
         if num_bins <= 0:
             return (np.array([]), np.array([]))
 
@@ -1584,7 +1647,12 @@ class NumericDistribution(BaseNumericDistribution):
 
 
 class ZeroNumericDistribution(BaseNumericDistribution):
+    """
+    A :ref:``NumericDistribution`` with a point mass at zero.
+    """
+
     def __init__(self, dist: NumericDistribution, zero_mass: float):
+        self._version = __version__
         self.dist = dist
         self.zero_mass = zero_mass
         self.nonzero_mass = 1 - zero_mass
@@ -1677,7 +1745,7 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         return ZeroNumericDistribution(self.dist.scale_by(scalar), self.zero_mass)
 
     def reciprocal(self):
-        raise ValueError("Reciprocal is undefined for probability distributions with mass at zero")
+        raise ValueError("Reciprocal is undefined for probability distributions with non-infinitesimal mass at zero")
 
     def __hash__(self):
         return 33 * hash(repr(self.zero_mass)) + hash(self.dist)

@@ -1028,6 +1028,10 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         self.lclip = lclip
         self.rclip = rclip
 
+        # Cached values for calculating ``contribution_to_ev``
+        self._EV_SCALE = -1 / 2 * exp(self.norm_mean + self.norm_sd**2 / 2)
+        self._EV_DENOM = sqrt(2) * self.norm_sd
+
         if self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
         if self.x is not None and self.x <= 0:
@@ -1090,10 +1094,9 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         x = np.asarray(x)
         mu = self.norm_mean
         sigma = self.norm_sd
-        u = log(x)
-        left_bound = -1 / 2 * exp(mu + sigma**2 / 2)  # at x=0 / u=-infinity
+        left_bound = self._EV_SCALE  # at x=0
         right_bound = (
-            -1 / 2 * exp(mu + sigma**2 / 2) * erf((-u + mu + sigma**2) / (sqrt(2) * sigma))
+            self._EV_SCALE * erf((-log(x) + mu + sigma**2) / self._EV_DENOM)
         )
 
         return np.squeeze(right_bound - left_bound) / (self.lognorm_mean if normalized else 1)
