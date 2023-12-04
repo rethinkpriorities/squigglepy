@@ -126,13 +126,27 @@ def test_simplify_div_lognorms():
     assert simplified.norm_sd == approx(np.sqrt(5))
 
 
-def test_simplify_div_normal_by_const():
+def test_simplify_div_norm_by_const():
     x = norm(mean=3, sd=1)
     y = 2
     simplified = (x / y).simplify()
     assert isinstance(simplified, NormalDistribution)
     assert simplified.mean == approx(1.5)
     assert simplified.sd == approx(0.5)
+
+
+def test_simplify_div_norm_by_lognorm():
+    x = norm(mean=3, sd=1)
+    y = lognorm(norm_mean=2, norm_sd=2)
+    simplified = (x / y).simplify()
+    assert isinstance(simplified, ComplexDistribution)
+    assert simplified.fn_str == "*"
+    assert isinstance(simplified.left, NormalDistribution)
+    assert simplified.left.mean == 3
+    assert simplified.left.sd == 1
+    assert isinstance(simplified.right, LognormalDistribution)
+    assert simplified.right.norm_mean == -2
+    assert simplified.right.norm_sd == approx(2)
 
 
 def test_simplify_lognorm_pow():

@@ -1829,6 +1829,15 @@ class FlatTree:
                     fn_str="*",
                 )
             )
+        if dist.fn == operator.truediv and isinstance(dist.right, LognormalDistribution):
+            return cls.build(
+                ComplexDistribution(
+                    dist.left,
+                    LognormalDistribution(norm_mean=-dist.right.norm_mean, norm_sd=dist.right.norm_sd),
+                    fn=operator.mul,
+                    fn_str="*",
+                )
+            )
 
         left_tree = cls.build(dist.left)
         right_tree = cls.build(dist.right)
@@ -2024,24 +2033,12 @@ class FlatTree:
                 ),
                 commutative=False,
             )
-            # self._join_dists(
-            #     LognormalDistribution,
-            #     Real,
-            #     lambda x, y: self._lognormal_times_const(x.norm_mean, x.norm_sd, 1 / y),
-            #     commutative=False,
-            # )
             self._join_dists(
                 Real,
                 LognormalDistribution,
                 lambda x, y: self._lognormal_times_const(-y.norm_mean, y.norm_sd, x),
                 commutative=False,
             )
-            # self._join_dists(
-            #     NormalDistribution,
-            #     Real,
-            #     lambda x, y: NormalDistribution(mean=x.mean / y, sd=x.sd / y),
-            #     commutative=False,
-            # )
 
         elif self.fn == operator.pow:
             self._join_dists(
