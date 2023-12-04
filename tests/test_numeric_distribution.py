@@ -148,7 +148,7 @@ def test_lognorm_product_exact_summary_stats(norm_mean1, norm_mean2, norm_sd1, n
 @example(mean=0, sd=1)
 def test_norm_basic(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
-    hist = numeric(dist, bin_sizing="uniform", warn=True)
+    hist = numeric(dist, bin_sizing="uniform", warn=False)
     assert hist.histogram_mean() == approx(mean)
     assert hist.histogram_sd() == approx(sd, rel=0.01)
 
@@ -345,9 +345,9 @@ def test_lognorm_clip_tail_bin_sizing_accuracy():
     dist1 = LognormalDistribution(norm_mean=0, norm_sd=1, lclip=10)
     dist2 = LognormalDistribution(norm_mean=0, norm_sd=2, rclip=27)
     true_mean1 = stats.lognorm.expect(lambda x: x, args=(dist1.norm_sd,), scale=np.exp(dist1.norm_mean), lb=dist1.lclip, ub=dist1.rclip, conditional=True)
-    true_sd1 = np.sqrt(stats.lognorm.expect(lambda x: (x - true_mean1) ** 2, args=(dist1.norm_sd,), scale=np.exp(dist1.norm_mean), lb=dist1.lclip, conditional=True))
+    true_sd1 = np.sqrt(stats.lognorm.expect(lambda x: (x - true_mean1) ** 2, args=(dist1.norm_sd,), scale=np.exp(dist1.norm_mean), lb=dist1.lclip, ub=dist1.rclip, conditional=True))
     true_mean2 = stats.lognorm.expect(lambda x: x, args=(dist2.norm_sd,), scale=np.exp(dist2.norm_mean), lb=dist2.lclip, ub=dist2.rclip, conditional=True)
-    true_sd2 = np.sqrt(stats.lognorm.expect(lambda x: (x - true_mean2) ** 2, args=(dist2.norm_sd,), scale=np.exp(dist2.norm_mean), lb=dist2.lclip, conditional=True))
+    true_sd2 = np.sqrt(stats.lognorm.expect(lambda x: (x - true_mean2) ** 2, args=(dist2.norm_sd,), scale=np.exp(dist2.norm_mean), lb=dist2.lclip, ub=dist2.rclip, conditional=True))
     true_mean = true_mean1 * true_mean2
     true_sd = np.sqrt(true_sd1**2 * true_mean2**2 + true_mean1**2 * true_sd2**2 + true_sd1**2 * true_sd2**2)
 
@@ -696,8 +696,8 @@ def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing)
 def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bins2, bin_sizing):
     dist1 = NormalDistribution(mean=norm_mean1, sd=norm_sd1)
     dist2 = NormalDistribution(mean=norm_mean2, sd=norm_sd2)
-    hist1 = numeric(dist1, num_bins=num_bins1, bin_sizing=bin_sizing)
-    hist2 = numeric(dist2, num_bins=num_bins2, bin_sizing=bin_sizing)
+    hist1 = numeric(dist1, num_bins=num_bins1, bin_sizing=bin_sizing, warn=False)
+    hist2 = numeric(dist2, num_bins=num_bins2, bin_sizing=bin_sizing, warn=False)
     hist_sum = hist1 + hist2
 
     # The further apart the means are, the less accurate the SD estimate is
@@ -924,7 +924,7 @@ def test_lognorm_sub():
 def test_scale(mean, sd, scalar):
     assume(scalar != 0)
     dist = NormalDistribution(mean=mean, sd=sd)
-    hist = numeric(dist)
+    hist = numeric(dist, warn=False)
     scaled_hist = scalar * hist
     assert scaled_hist.histogram_mean() == approx(
         scalar * hist.histogram_mean(), abs=1e-6, rel=1e-6
@@ -943,7 +943,7 @@ def test_scale(mean, sd, scalar):
 )
 def test_shift_by(mean, sd, scalar):
     dist = NormalDistribution(mean=mean, sd=sd)
-    hist = numeric(dist)
+    hist = numeric(dist, warn=False)
     shifted_hist = hist + scalar
     assert shifted_hist.histogram_mean() == approx(
         hist.histogram_mean() + scalar, abs=1e-6, rel=1e-6

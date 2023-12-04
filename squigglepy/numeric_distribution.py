@@ -483,7 +483,9 @@ class NumericDistribution(BaseNumericDistribution):
         # of the distribution.
         edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
         bin_ev_contributions = np.diff(edge_ev_contributions)
-        values = bin_ev_contributions / masses
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            values = bin_ev_contributions / masses
 
         bad_indexes = []
 
@@ -498,9 +500,10 @@ class NumericDistribution(BaseNumericDistribution):
         # because on the bottom, the lower value will be the incorrect one, and
         # on the top, the upper value will be the incorrect one.
         #
-        # TODO: We should be able to calculate in advance when float rounding
-        # errors will start occurring and narrow ``support`` accordingly, which
-        # means we don't have to reduce bin count. But the math is non-trivial.
+        # TODO: Theoretically, we should be able to calculate in advance when
+        # float rounding errors will start occurring and narrow ``support``
+        # accordingly, which means we don't have to reduce bin count. But the
+        # math is non-trivial.
         sign = -1 if is_reversed else 1
         bot_diffs = sign * np.diff(values[: (num_bins // 10)])
         top_diffs = sign * np.diff(values[-(num_bins // 10) :])
