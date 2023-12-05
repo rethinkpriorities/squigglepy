@@ -1037,10 +1037,6 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         self.lclip = lclip
         self.rclip = rclip
 
-        # Cached values for calculating ``contribution_to_ev``
-        self._EV_SCALE = -1 / 2 * exp(self.norm_mean + self.norm_sd**2 / 2)
-        self._EV_DENOM = sqrt(2) * self.norm_sd
-
         if self.x is not None and self.y is not None and self.x > self.y:
             raise ValueError("`high value` cannot be lower than `low value`")
         if self.x is not None and self.x <= 0:
@@ -1083,6 +1079,10 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
                 (self.lognorm_mean**2 / sqrt(self.lognorm_sd**2 + self.lognorm_mean**2))
             )
             self.norm_sd = sqrt(log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
+
+        # Cached values for calculating ``contribution_to_ev``
+        self._EV_SCALE = -1 / 2 * exp(self.norm_mean + self.norm_sd**2 / 2)
+        self._EV_DENOM = sqrt(2) * self.norm_sd
 
     def __str__(self):
         out = "<Distribution> lognorm(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
