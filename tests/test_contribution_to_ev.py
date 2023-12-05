@@ -8,6 +8,7 @@ from hypothesis import assume, example, given, settings
 
 from ..squigglepy.distributions import (
     BetaDistribution,
+    GammaDistribution,
     LognormalDistribution,
     NormalDistribution,
     UniformDistribution,
@@ -187,4 +188,40 @@ def test_beta_inv_contribution_ev_inverts_contribution_to_ev(a, b, fraction):
     # Note: The answers do become a bit off for small fractional values of a, b
     dist = BetaDistribution(a, b)
     tolerance = 1e-6 if a < 1 or b < 1 else 1e-8
-    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(fraction, rel=tolerance)
+    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(
+        fraction, rel=tolerance
+    )
+
+
+@given(
+    shape=st.floats(min_value=0.1, max_value=100),
+    scale=st.floats(min_value=0.1, max_value=100),
+    x=st.floats(min_value=0, max_value=100),
+)
+def test_gamma_contribution_to_ev_basic(shape, scale, x):
+    dist = GammaDistribution(shape, scale)
+    assert dist.contribution_to_ev(0) == approx(0)
+    assert dist.contribution_to_ev(1) < dist.contribution_to_ev(2) or (
+        dist.contribution_to_ev(1) == 0 and dist.contribution_to_ev(2) == 0
+    )
+    if shape * scale <= 1:
+        assert dist.contribution_to_ev(shape * scale, normalized=False) < stats.gamma.cdf(
+            shape * scale, shape, scale=scale
+        )
+    assert dist.contribution_to_ev(100 * shape * scale, normalized=False) == approx(
+        shape * scale, rel=1e-3
+    )
+
+
+@given(
+    shape=st.floats(min_value=0.1, max_value=100),
+    scale=st.floats(min_value=0.1, max_value=100),
+    fraction=st.floats(min_value=0, max_value=1 - 1e-6),
+)
+@example(shape=1, scale=2, fraction=0.5)
+def test_gamma_inv_contribution_ev_inverts_contribution_to_ev(shape, scale, fraction):
+    dist = GammaDistribution(shape, scale)
+    tolerance = 1e-6 if shape < 1 or scale < 1 else 1e-8
+    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(
+        fraction, rel=tolerance
+    )

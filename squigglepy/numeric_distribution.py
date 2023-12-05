@@ -11,6 +11,7 @@ from .distributions import (
     BaseDistribution,
     BetaDistribution,
     ComplexDistribution,
+    GammaDistribution,
     LognormalDistribution,
     MixtureDistribution,
     NormalDistribution,
@@ -96,26 +97,52 @@ class BinSizing(Enum):
     bin_count = "bin-count"
 
 
-def _bin_sizing_scale(bin_sizing, dist_name, num_bins):
-    """Return how many standard deviations away from the mean to set the bounds
-    for a bin sizing method with fixed bounds."""
-    # Wider domain increases error within each bin, and narrower
-    # domain increases error at the tails. Inter-bin error is
-    # proportional to width^3 / num_bins^2 and tail error is
-    # proportional to something like exp(-width^2). Setting width
-    # using the formula below balances these two sources of error.
-    # These scale coefficients means that a histogram with 100 bins
-    # will cover 6.6 standard deviations in each direction which
-    # leaves off less than 1e-10 of the probability mass.
-    return {
-        (BinSizing.uniform, "NormalDistribution"): max(7, 4.5 + np.log(num_bins) ** 0.5),
-        (BinSizing.uniform, "LognormalDistribution"): 7,
-        (BinSizing.log_uniform, "LognormalDistribution"): max(7, 4.5 + np.log(num_bins) ** 0.5),
-    }.get((bin_sizing, dist_name))
+def _support_for_bin_sizing(dist, bin_sizing, num_bins):
+    """Return where to set the bounds for a bin sizing method with fixed
+    bounds, or None if the given dist/bin sizing does not require finite
+    bounds.
+    """
+    # For norm/lognorm, wider domain increases error within each bin, and
+    # narrower domain increases error at the tails. Inter-bin error is
+    # proportional to width^3 / num_bins^2 and tail error is proportional to
+    # something like exp(-width^2). Setting width using the formula below
+    # balances these two sources of error. These scale coefficients means that
+    # a histogram with 100 bins will cover 6.6 standard deviations in each
+    # direction which leaves off less than 1e-10 of the probability mass.
+    if isinstance(dist, NormalDistribution) and bin_sizing == BinSizing.uniform:
+        scale = max(7, 4.5 + np.log(num_bins) ** 0.5)
+        return (dist.mean - scale * dist.sd, dist.mean + scale * dist.sd)
+    if isinstance(dist, LognormalDistribution) and bin_sizing == BinSizing.log_uniform:
+        scale = max(7, 4.5 + np.log(num_bins) ** 0.5)
+        return np.exp(
+            (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd)
+        )
+
+    # Uniform bin sizing is not gonna be very accurate for a lognormal
+    # distribution no matter how you set the bounds.
+    if isinstance(dist, LognormalDistribution) and bin_sizing == BinSizing.uniform:
+        scale = 7
+        return np.exp(
+            (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd)
+        )
+
+    # Compute the upper bound numerically because there is no good
+    # closed-form expression (that I could find) that reliably
+    # captures almost all of the mass without far overshooting.
+    if isinstance(dist, GammaDistribution) and bin_sizing == BinSizing.uniform:
+        upper_bound = stats.gamma.ppf(1 - 1e-9, dist.shape, scale=dist.scale)
+        return (0, upper_bound)
+    if isinstance(dist, GammaDistribution) and bin_sizing == BinSizing.log_uniform:
+        lower_bound = stats.gamma.ppf(1e-10, dist.shape, scale=dist.scale)
+        upper_bound = stats.gamma.ppf(1 - 1e-10, dist.shape, scale=dist.scale)
+        return (lower_bound, upper_bound)
+
+    return None
 
 
 DEFAULT_BIN_SIZING = {
     BetaDistribution: BinSizing.mass,
+    GammaDistribution: BinSizing.ev,
     LognormalDistribution: BinSizing.fat_hybrid,
     NormalDistribution: BinSizing.uniform,
     UniformDistribution: BinSizing.uniform,
@@ -123,6 +150,7 @@ DEFAULT_BIN_SIZING = {
 
 DEFAULT_NUM_BINS = {
     BetaDistribution: 50,
+    GammaDistribution: 200,
     LognormalDistribution: 200,
     MixtureDistribution: 200,
     NormalDistribution: 200,
@@ -137,8 +165,10 @@ CACHED_LOGNORM_PPFS = {}
 def cached_norm_cdfs(num_bins):
     if num_bins in CACHED_NORM_CDFS:
         return CACHED_NORM_CDFS[num_bins]
-    scale = _bin_sizing_scale(BinSizing.uniform, "NormalDistribution", num_bins)
-    values = np.linspace(-scale, scale, num_bins + 1)
+    support = _support_for_bin_sizing(
+        NormalDistribution(mean=0, sd=1), BinSizing.uniform, num_bins
+    )
+    values = np.linspace(support[0], support[1], num_bins + 1)
     cdfs = stats.norm.cdf(values)
     CACHED_NORM_CDFS[num_bins] = cdfs
     return cdfs
@@ -147,8 +177,10 @@ def cached_norm_cdfs(num_bins):
 def cached_lognorm_cdfs(num_bins):
     if num_bins in CACHED_LOGNORM_CDFS:
         return CACHED_LOGNORM_CDFS[num_bins]
-    scale = _bin_sizing_scale(BinSizing.log_uniform, "LognormalDistribution", num_bins)
-    values = np.exp(np.linspace(-scale, scale, num_bins + 1))
+    support = _support_for_bin_sizing(
+        LognormalDistribution(norm_mean=0, norm_sd=1), BinSizing.log_uniform, num_bins
+    )
+    values = np.exp(np.linspace(np.log(support[0]), np.log(support[1]), num_bins + 1))
     cdfs = stats.lognorm.cdf(values, 1)
     CACHED_LOGNORM_CDFS[num_bins] = cdfs
     return cdfs
@@ -464,16 +496,17 @@ class NumericDistribution(BaseNumericDistribution):
 
         elif bin_sizing == BinSizing.fat_hybrid:
             # Use a combination of mass and log-uniform
-            bin_scale = _bin_sizing_scale(BinSizing.log_uniform, type(dist).__name__, num_bins)
-            logu_support = np.exp(
-                _narrow_support(
-                    (_log(support[0]), _log(support[1])),
-                    (
-                        dist.norm_mean - bin_scale * dist.norm_sd,
-                        dist.norm_mean + bin_scale * dist.norm_sd,
-                    ),
-                )
-            )
+            logu_support = _support_for_bin_sizing(dist, BinSizing.log_uniform, num_bins)
+            logu_support = _narrow_support(support, logu_support)
+            # logu_support = np.exp(
+            #     _narrow_support(
+            #         (_log(support[0]), _log(support[1])),
+            #         (
+            #             dist.norm_mean - bin_scale * dist.norm_sd,
+            #             dist.norm_mean + bin_scale * dist.norm_sd,
+            #         ),
+            #     )
+            # )
             logu_edge_values, logu_edge_cdfs = cls._construct_edge_values(
                 num_bins, logu_support, max_support, dist, cdf, ppf, BinSizing.log_uniform
             )
@@ -553,40 +586,36 @@ class NumericDistribution(BaseNumericDistribution):
 
         masses = np.diff(edge_cdfs)
 
-        # Set the value for each bin equal to its average value. This is
-        # equivalent to generating infinitely many Monte Carlo samples and
-        # grouping them into bins, and it has the nice property that the
-        # expected value of the histogram will exactly equal the expected value
-        # of the distribution.
+        # Note: Re-calculating this for BinSize.ev appears to add ~zero
+        # performance penalty. Perhaps Python is caching the result somehow?
         edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
         bin_ev_contributions = np.diff(edge_ev_contributions)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            values = bin_ev_contributions / masses
-
-        bad_indexes = []
 
         # For sufficiently large edge values, CDF rounds to 1 which makes the
         # mass 0. Values can also be 0 due to floating point rounding if
         # support is very small. Remove any 0s.
         mass_zeros = [i for i in range(len(masses)) if masses[i] == 0]
         ev_zeros = [i for i in range(len(bin_ev_contributions)) if bin_ev_contributions[i] == 0]
+        non_monotonic = []
 
-        # Values can be non-monotonic if there are rounding errors when
-        # calculating EV contribution. Look at the bottom and top separately
-        # because on the bottom, the lower value will be the incorrect one, and
-        # on the top, the upper value will be the incorrect one.
-        #
-        # TODO: Theoretically, we should be able to calculate in advance when
-        # float rounding errors will start occurring and narrow ``support``
-        # accordingly, which means we don't have to reduce bin count. But the
-        # math is non-trivial.
-        sign = -1 if is_reversed else 1
-        bot_diffs = sign * np.diff(values[: (num_bins // 10)])
-        top_diffs = sign * np.diff(values[-(num_bins // 10) :])
-        non_monotonic = [i for i in range(len(bot_diffs)) if bot_diffs[i] < 0] + [
-            i + 1 + num_bins - len(top_diffs) for i in range(len(top_diffs)) if top_diffs[i] < 0
-        ]
+        if len(mass_zeros) == 0:
+            # Set the value of each bin to equal the average value within the
+            # bin.
+            values = bin_ev_contributions / masses
+
+            # Values can be non-monotonic if there are rounding errors when
+            # calculating EV contribution. Look at the bottom and top separately
+            # because on the bottom, the lower value will be the incorrect one, and
+            # on the top, the upper value will be the incorrect one.
+            sign = -1 if is_reversed else 1
+            bot_diffs = sign * np.diff(values[: (num_bins // 10)])
+            top_diffs = sign * np.diff(values[-(num_bins // 10) :])
+            non_monotonic = [i for i in range(len(bot_diffs)) if bot_diffs[i] < 0] + [
+                i + 1 + num_bins - len(top_diffs)
+                for i in range(len(top_diffs))
+                if top_diffs[i] < 0
+            ]
+
         bad_indexes = set(mass_zeros + ev_zeros + non_monotonic)
 
         if len(bad_indexes) > 0:
@@ -701,6 +730,7 @@ class NumericDistribution(BaseNumericDistribution):
             # These are the widest possible supports, but they maybe narrowed
             # later by lclip/rclip or by some bin sizing methods.
             BetaDistribution: (0, 1),
+            GammaDistribution: (0, np.inf),
             LognormalDistribution: (0, np.inf),
             NormalDistribution: (-np.inf, np.inf),
             UniformDistribution: (dist.x, dist.y),
@@ -708,6 +738,7 @@ class NumericDistribution(BaseNumericDistribution):
         support = max_support
         ppf = {
             BetaDistribution: lambda p: stats.beta.ppf(p, dist.a, dist.b),
+            GammaDistribution: lambda p: stats.gamma.ppf(p, dist.shape, scale=dist.scale),
             LognormalDistribution: lambda p: stats.lognorm.ppf(
                 p, dist.norm_sd, scale=np.exp(dist.norm_mean)
             ),
@@ -716,6 +747,7 @@ class NumericDistribution(BaseNumericDistribution):
         }[type(dist)]
         cdf = {
             BetaDistribution: lambda x: stats.beta.cdf(x, dist.a, dist.b),
+            GammaDistribution: lambda x: stats.gamma.cdf(x, dist.shape, scale=dist.scale),
             LognormalDistribution: lambda x: stats.lognorm.cdf(
                 x, dist.norm_sd, scale=np.exp(dist.norm_mean)
             ),
@@ -728,43 +760,24 @@ class NumericDistribution(BaseNumericDistribution):
         # -----------
 
         dist_bin_sizing_supported = False
-        new_support = None
-        bin_scale = _bin_sizing_scale(bin_sizing, type(dist).__name__, num_bins)
-        if bin_sizing == BinSizing.uniform:
-            if isinstance(dist, LognormalDistribution):
-                # Uniform bin sizing is not gonna be very accurate for a lognormal
-                # distribution no matter how you set the bounds.
-                new_support = (0, np.exp(dist.norm_mean + bin_scale * dist.norm_sd))
-            elif isinstance(dist, NormalDistribution):
-                new_support = (
-                    dist.mean - dist.sd * bin_scale,
-                    dist.mean + dist.sd * bin_scale,
-                )
-            elif isinstance(dist, BetaDistribution) or isinstance(dist, UniformDistribution):
-                new_support = support
-
-        elif bin_sizing == BinSizing.log_uniform:
-            if isinstance(dist, LognormalDistribution):
-                new_support = (
-                    np.exp(dist.norm_mean - dist.norm_sd * bin_scale),
-                    np.exp(dist.norm_mean + dist.norm_sd * bin_scale),
-                )
-            elif isinstance(dist, BetaDistribution):
-                new_support = support
-
-        elif bin_sizing == BinSizing.ev:
-            dist_bin_sizing_supported = True
-
-        elif bin_sizing == BinSizing.mass:
-            dist_bin_sizing_supported = True
-
-        elif bin_sizing == BinSizing.fat_hybrid:
-            if isinstance(dist, LognormalDistribution):
-                dist_bin_sizing_supported = True
+        new_support = _support_for_bin_sizing(dist, bin_sizing, num_bins)
 
         if new_support is not None:
             support = _narrow_support(support, new_support)
             dist_bin_sizing_supported = True
+        elif bin_sizing == BinSizing.uniform:
+            if isinstance(dist, BetaDistribution) or isinstance(dist, UniformDistribution):
+                dist_bin_sizing_supported = True
+        elif bin_sizing == BinSizing.log_uniform:
+            if isinstance(dist, BetaDistribution):
+                dist_bin_sizing_supported = True
+        elif bin_sizing == BinSizing.ev:
+            dist_bin_sizing_supported = True
+        elif bin_sizing == BinSizing.mass:
+            dist_bin_sizing_supported = True
+        elif bin_sizing == BinSizing.fat_hybrid:
+            if isinstance(dist, GammaDistribution) or isinstance(dist, LognormalDistribution):
+                dist_bin_sizing_supported = True
 
         if not dist_bin_sizing_supported:
             raise ValueError(f"Unsupported bin sizing method {bin_sizing} for {type(dist)}.")
@@ -783,6 +796,9 @@ class NumericDistribution(BaseNumericDistribution):
             if isinstance(dist, BetaDistribution):
                 exact_mean = stats.beta.mean(dist.a, dist.b)
                 exact_sd = stats.beta.std(dist.a, dist.b)
+            elif isinstance(dist, GammaDistribution):
+                exact_mean = stats.gamma.mean(dist.shape, scale=dist.scale)
+                exact_sd = stats.gamma.std(dist.shape, scale=dist.scale)
             elif isinstance(dist, LognormalDistribution):
                 exact_mean = dist.lognorm_mean
                 exact_sd = dist.lognorm_sd
@@ -793,7 +809,14 @@ class NumericDistribution(BaseNumericDistribution):
                 exact_mean = (dist.x + dist.y) / 2
                 exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
         else:
-            if isinstance(dist, BetaDistribution) or isinstance(dist, LognormalDistribution):
+            if (
+                isinstance(dist, BetaDistribution)
+                or isinstance(dist, GammaDistribution)
+                or isinstance(dist, LognormalDistribution)
+            ):
+                # For one-sided distributions without a known formula for
+                # truncated mean, compute the mean using
+                # ``contribution_to_ev``.
                 contribution_to_ev = dist.contribution_to_ev(
                     support[1], normalized=False
                 ) - dist.contribution_to_ev(support[0], normalized=False)

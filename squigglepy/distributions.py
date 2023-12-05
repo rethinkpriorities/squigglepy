@@ -773,7 +773,7 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
             fraction = np.array([fraction])
 
         if any(fraction < 0) or any(fraction > 1):
-            raise ValueError(f"fraction must be between 0 and 1 inclusive, not {fraction}")
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
 
         a = self.x
         b = self.y
@@ -909,7 +909,7 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         tolerance = 1e-8
 
         if any(fraction <= 0) or any(fraction >= 1):
-            raise ValueError(f"fraction must be between 0 and 1 exclusive, not {fraction}")
+            raise ValueError(f"fraction must be > 0 and < 1, not {fraction}")
 
         # Approximate using Newton's method. Sometimes this has trouble
         # converging b/c it diverges or gets caught in a cycle, so use binary
@@ -1121,7 +1121,7 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         if isinstance(fraction, float):
             fraction = np.array([fraction])
         if any(fraction <= 0) or any(fraction >= 1):
-            raise ValueError("fraction must be between 0 and 1")
+            raise ValueError(f"fraction must be > 0 and < 1, not {fraction}")
 
         mu = self.norm_mean
         sigma = self.norm_sd
@@ -1280,7 +1280,7 @@ class BetaDistribution(ContinuousDistribution, IntegrableEVDistribution):
         super().__init__()
         self.a = a
         self.b = b
-        self.mean = scipy.stats.beta.mean(a, b)
+        self.mean = a / (a + b)
 
     def __str__(self):
         return "<Distribution> beta(a={}, b={})".format(self.a, self.b)
@@ -1297,7 +1297,7 @@ class BetaDistribution(ContinuousDistribution, IntegrableEVDistribution):
         if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
         if any(fraction < 0) or any(fraction > 1):
-            raise ValueError("fraction must be between 0 and 1 (inclusive)")
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
 
         a = self.a
         b = self.b
@@ -1778,13 +1778,14 @@ def exponential(scale, lclip=None, rclip=None):
     return ExponentialDistribution(scale=scale, lclip=lclip, rclip=rclip)
 
 
-class GammaDistribution(ContinuousDistribution):
+class GammaDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, shape, scale=1, lclip=None, rclip=None):
         super().__init__()
         self.shape = shape
         self.scale = scale
         self.lclip = lclip
         self.rclip = rclip
+        self.mean = shape * scale
 
     def __str__(self):
         out = "<Distribution> gamma(shape={}, scale={}".format(self.shape, self.scale)
@@ -1794,6 +1795,23 @@ class GammaDistribution(ContinuousDistribution):
             out += ", rclip={}".format(self.rclip)
         out += ")"
         return out
+
+    def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
+        x = np.asarray(x)
+        k = self.shape
+        scale = self.scale
+        res = special.gammainc(k + 1, x / scale)
+        return np.squeeze(res) * (1 if normalized else self.mean)
+
+    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+        if any(fraction < 0) or any(fraction >= 1):
+            raise ValueError(f"fraction must be >= 0 and < 1, not {fraction}")
+
+        k = self.shape
+        scale = self.scale
+        return np.squeeze(special.gammaincinv(k + 1, fraction) * scale)
 
 
 def gamma(shape, scale=1, lclip=None, rclip=None):
