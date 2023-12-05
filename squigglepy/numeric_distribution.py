@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import reduce
+from numbers import Real
 import numpy as np
 from scipy import optimize, stats
 from scipy.interpolate import PchipInterpolator
@@ -60,9 +61,9 @@ class BinSizing(Enum):
         tail. Empirically, this combination provides the best balance for the
         accuracy of fat-tailed distributions at the center and at the tails.
     bin-count : str
-        Shorten a vector of bins by merging every (1/len) bins together. Cannot
-        be used when creating a NumericDistribution, can only be used for
-        resizing.
+        Shorten a vector of bins by merging every (1/len) bins together. Can
+        only be used for resizing an existing NumericDistribution, not for
+        initializing a new one.
 
     Interpretation for two-sided distributions
     ------------------------------------------
@@ -243,6 +244,11 @@ class BaseNumericDistribution(ABC):
         """
         return self.ppf(q)
 
+    @abstractmethod
+    def ppf(self, q):
+        """Percent point function/inverse CD. An alias for :ref:``quantile``."""
+        ...
+
     def percentile(self, p):
         """Estimate the value of the distribution at percentile ``p``. See
         :ref:``quantile`` for notes on this function's accuracy.
@@ -265,7 +271,7 @@ class BaseNumericDistribution(ABC):
         return x * y
 
     def __truediv__(x, y):
-        if isinstance(y, int) or isinstance(y, float):
+        if isinstance(y, Real):
             return x.scale_by(1 / y)
         return x * y.reciprocal()
 
@@ -1053,7 +1059,6 @@ class NumericDistribution(BaseNumericDistribution):
         return self.interpolate_cdf(x)
 
     def ppf(self, q):
-        """An alias for :ref:``quantile``."""
         self._init_interpolate_ppf()
         return self.interpolate_ppf(q)
 
@@ -1453,7 +1458,7 @@ class NumericDistribution(BaseNumericDistribution):
         return x.values == y.values and x.masses == y.masses
 
     def __add__(x, y):
-        if isinstance(y, int) or isinstance(y, float):
+        if isinstance(y, Real):
             return x.shift_by(y)
         elif isinstance(y, ZeroNumericDistribution):
             return y.__radd__(x)
@@ -1532,7 +1537,7 @@ class NumericDistribution(BaseNumericDistribution):
         )
 
     def __mul__(x, y):
-        if isinstance(y, int) or isinstance(y, float):
+        if isinstance(y, Real):
             return x.scale_by(y)
         elif isinstance(y, ZeroNumericDistribution):
             return y.__rmul__(x)
@@ -1621,6 +1626,20 @@ class NumericDistribution(BaseNumericDistribution):
             )
         return res
 
+    def __pow__(x, y):
+        """Raise the distribution to a power."""
+        if isinstance(y, Real) or isinstance(y, NumericDistribution):
+            return (x.log() * y).exp()
+        else:
+            raise TypeError(f"Cannot compute x**y for types {type(x)} and {type(y)}")
+
+    def __rpow__(x, y):
+        # Compute y**x
+        if isinstance(y, Real):
+            return (x * np.log(y)).exp()
+        else:
+            raise TypeError(f"Cannot compute x**y for types {type(x)} and {type(y)}")
+
     def scale_by(self, scalar):
         """Scale the distribution by a constant factor."""
         if scalar < 0:
@@ -1704,6 +1723,79 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=None,
         )
 
+    def exp(self):
+        """Return the exponential of the distribution."""
+        # Note: This code naively sets the average value within each bin to
+        # e^x, which is wrong because we want E[e^X], not e^E[X]. An
+        # alternative method, which you might expect to be more accurate, is to
+        # interpolate the edges of each bin and then set each bin's value to
+        # the result of the integral
+        #
+        #     .. math::
+        #     \int_{lb}^{ub} \frac{1}{ub - lb} exp(x) dx
+        #
+        # However, this method turns out to be less accurate overall (although
+        # it's more accurate in the tails of the distribution).
+        #
+        # Where the underlying distribution is normal, the naive e^E[X] method
+        # systematically underestimates expected value (by something like 0.1%
+        # with num_bins=200), and the integration method overestimates expected
+        # value by about 3x as much. Both methods mis-estimate the standard
+        # deviation in the same direction as they mis-estimate the mean but by
+        # a somewhat larger margin, with the naive method again having the
+        # better estimate.
+        #
+        # Another method would be not to interpolate the edge values, and
+        # instead record the true edge values when the numeric distribution is
+        # generated and carry them through mathematical operations by
+        # re-calculating them. But this method would be much more complicated,
+        # and we'd need to lazily compute the edge values to avoid a ~2x
+        # performance penalty.
+        self._init_interpolate_ppf()
+        edge_masses = np.concatenate(([0], np.cumsum(self.masses)))
+        edge_values = self.interpolate_ppf(edge_masses)
+        edge_value_diffs = np.diff(edge_values)
+        edge_exp_values = np.exp(edge_values)
+        edge_exp_diffs = np.diff(edge_exp_values)
+
+        # Remove any entries where edge_value_diffs == 0
+        nonzero_indexes = edge_value_diffs != 0
+        edge_value_diffs = edge_value_diffs[nonzero_indexes]
+        edge_exp_diffs = edge_exp_diffs[nonzero_indexes]
+
+        values_from_interp = edge_exp_diffs / edge_value_diffs
+        values = np.exp(self.values)
+        # values = values_from_interp
+        return NumericDistribution(
+            values=values,
+            masses=self.masses,
+            zero_bin_index=0,
+            neg_ev_contribution=0,
+            pos_ev_contribution=np.sum(values * self.masses),
+            exact_mean=None,
+            exact_sd=None,
+        )
+
+    def log(self):
+        """Return the natural log of the distribution."""
+        # See :ref:``exp`` for some discussion of accuracy. For ``log`` on a
+        # log-normal distribution, both the naive method and the integration
+        # method tend to overestimate the true mean, but the naive method
+        # overestimates it by less.
+        if self.zero_bin_index != 0:
+            raise ValueError("Cannot take the log of a distribution with non-positive values")
+
+        values = np.log(self.values)
+        return NumericDistribution(
+            values=values,
+            masses=self.masses,
+            zero_bin_index=np.searchsorted(values, 0),
+            neg_ev_contribution=np.sum(values[: self.zero_bin_index] * self.masses[: self.zero_bin_index]),
+            pos_ev_contribution=np.sum(values[self.zero_bin_index :] * self.masses[self.zero_bin_index :]),
+            exact_mean=None,
+            exact_sd=None,
+        )
+
     def __hash__(self):
         return hash(repr(self.values) + "," + repr(self.masses))
 
@@ -1718,13 +1810,17 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         self.dist = dist
         self.zero_mass = zero_mass
         self.nonzero_mass = 1 - zero_mass
+        self.exact_mean = None
+        self.exact_sd = None
+        self.exact_2nd_moment = None
 
         if dist.exact_mean is not None:
             self.exact_mean = dist.exact_mean * self.nonzero_mass
-        if dist.exact_sd is not None:
-            nonzero_component = dist.exact_sd**2 * self.nonzero_mass
-            zero_component = self.zero_mass * dist.exact_mean**2
-            self.exact_sd = np.sqrt(nonzero_component + zero_component)
+            if dist.exact_sd is not None:
+                nonzero_moment2 = dist.exact_mean**2 + dist.exact_sd**2
+                moment2 = self.nonzero_mass * nonzero_moment2
+                variance = moment2 - self.exact_mean**2
+                self.exact_sd = np.sqrt(variance)
 
         self._neg_mass = np.sum(dist.masses[: dist.zero_bin_index]) * self.nonzero_mass
 
@@ -1738,19 +1834,19 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         return self.dist.mean() * self.nonzero_mass
 
     def histogram_sd(self):
-        nonzero_component = self.dist.histogram_sd() ** 2 * self.nonzero_mass
-        zero_component = self.zero_mass * self.dist.histogram_mean() ** 2
-        return np.sqrt(nonzero_component + zero_component)
+        mean = self.mean()
+        nonzero_variance = np.sum(self.dist.masses * (self.dist.values - mean)**2) * self.nonzero_mass
+        zero_variance = self.zero_mass * mean ** 2
+        variance = nonzero_variance + zero_variance
+        return np.sqrt(variance)
 
     def sd(self):
         if self.exact_sd is not None:
             return self.exact_sd
-        nonzero_component = self.dist.sd() ** 2 * self.nonzero_mass
-        zero_component = self.zero_mass * self.dist.mean() ** 2
-        return np.sqrt(nonzero_component + zero_component)
+        return self.histogram_sd()
 
     def ppf(self, q):
-        if not isinstance(q, float) and not isinstance(q, int):
+        if not isinstance(q, Real):
             return np.array([self.ppf(x) for x in q])
 
         if q < 0 or q > 1:
@@ -1769,6 +1865,8 @@ class ZeroNumericDistribution(BaseNumericDistribution):
     def __add__(x, y):
         if isinstance(y, NumericDistribution):
             return x + ZeroNumericDistribution(y, 0)
+        elif isinstance(y, Real):
+            return x.shift_by(y)
         elif not isinstance(y, ZeroNumericDistribution):
             raise ValueError(f"Cannot add types {type(x)} and {type(y)}")
         nonzero_sum = (x.dist + y.dist) * x.nonzero_mass * y.nonzero_mass
@@ -1782,21 +1880,36 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         warnings.warn("ZeroNumericDistribution.shift_by is untested, use at your own risk")
         old_zero_index = self.dist.zero_bin_index
         shifted_dist = self.dist.shift_by(scalar)
-        scaled_masses = shifted_dist * self.nonzero_mass
+        scaled_masses = shifted_dist.masses * self.nonzero_mass
+        values = np.insert(shifted_dist.values, old_zero_index, scalar)
+        masses = np.insert(scaled_masses, old_zero_index, self.zero_mass)
+        exact_mean = None
+        if self.exact_mean is not None:
+            exact_mean = self.exact_mean + scalar
+        exact_sd = self.exact_sd
+
         return NumericDistribution(
-            values=np.insert(shifted_dist.values, old_zero_index, scalar),
-            masses=np.insert(scaled_masses, old_zero_index, self.zero_mass),
+            values=values,
+            masses=masses,
             zero_bin_index=shifted_dist.zero_bin_index,
             neg_ev_contribution=shifted_dist.neg_ev_contribution * self.nonzero_mass
             + min(0, -scalar) * self.zero_mass,
             pos_ev_contribution=shifted_dist.pos_ev_contribution * self.nonzero_mass
             + min(0, scalar) * self.zero_mass,
-            exact_mean=dist.exact_mean * self.nonzero_mass + scalar * self.zero_mass,
-            exact_sd=None,  # TODO: compute exact_sd
+            exact_mean=exact_mean,
+            exact_sd=exact_sd,
         )
 
     def __neg__(self):
         return ZeroNumericDistribution(-self.dist, self.zero_mass)
+
+    def exp(self):
+        # TODO: exponentiate the wrapped dist, then do something like shift_by
+        # to insert a 1 into the bins
+        return NotImplementedError
+
+    def log(self):
+        raise ValueError("Cannot take the log of a distribution with non-positive values")
 
     def __mul__(x, y):
         dist = x.dist * y.dist

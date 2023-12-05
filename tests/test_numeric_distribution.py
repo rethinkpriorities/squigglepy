@@ -41,9 +41,9 @@ def relative_error(x, y):
     if x == 0 and y == 0:
         return 0
     if x == 0:
-        return -1
+        return abs(y)
     if y == 0:
-        return np.inf
+        return abs(x)
     return max(x / y, y / x) - 1
 
 
@@ -867,6 +867,23 @@ def test_norm_lognorm_sum(mean1, mean2, sd1, sd2, lognorm_bin_sizing):
     assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=sd_tolerance)
 
 
+@given(
+    norm_mean=st.floats(min_value=-10, max_value=10),
+    norm_sd=st.floats(min_value=0.1, max_value=2),
+)
+def test_lognorm_to_const_power(norm_mean, norm_sd):
+    # If you make the power bigger, mean stays pretty accurate but SD gets
+    # pretty far off (>100%) for high-variance dists
+    power = 1.5
+    dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
+    hist = numeric(dist, bin_sizing="log-uniform", warn=False)
+
+    hist_pow = hist**power
+    true_dist_pow = LognormalDistribution(norm_mean=power * norm_mean, norm_sd=power * norm_sd)
+    assert hist_pow.histogram_mean() == approx(true_dist_pow.lognorm_mean, rel=0.005)
+    assert hist_pow.histogram_sd() == approx(true_dist_pow.lognorm_sd, rel=0.5)
+
+
 def test_norm_product_sd_accuracy_vs_monte_carlo():
     """Test that PMH SD is more accurate than Monte Carlo SD both for initial
     distributions and when multiplying up to 8 distributions together.
@@ -1108,6 +1125,57 @@ def test_lognorm_quotient(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing
 
 
 @given(
+    mean=st.floats(min_value=-20, max_value=20),
+    sd=st.floats(min_value=0.1, max_value=3),
+)
+def test_norm_exp(mean, sd):
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = numeric(dist, warn=False)
+    exp_hist = hist.exp()
+    true_exp_dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
+    true_exp_hist = numeric(true_exp_dist, warn=False)
+    assert exp_hist.histogram_mean() == approx(true_exp_hist.exact_mean, rel=0.005)
+    assert exp_hist.histogram_sd() == approx(true_exp_hist.exact_sd, rel=0.1)
+
+
+@given(
+    loga=st.floats(min_value=-5, max_value=5),
+    logb=st.floats(min_value=0, max_value=10),
+)
+@example(loga=0, logb=0.001)
+@example(loga=0, logb=2)
+@example(loga=-5, logb=10)
+@settings(max_examples=1)
+def test_uniform_exp(loga, logb):
+    loga, logb = fix_uniform(loga, logb)
+    dist = UniformDistribution(loga, logb)
+    hist = numeric(dist)
+    exp_hist = hist.exp()
+    a = np.exp(loga)
+    b = np.exp(logb)
+    true_mean = (b - a) / np.log(b / a)
+    true_sd = np.sqrt((b**2 - a**2) / (2 * np.log(b / a)) - ((b - a) / (np.log(b / a)))**2)
+    assert exp_hist.histogram_mean() == approx(true_mean, rel=0.01)
+    if not np.isnan(true_sd):
+        # variance can be slightly negative due to rounding errors
+        assert exp_hist.histogram_sd() == approx(true_sd, rel=0.2, abs=1e-5)
+
+
+@given(
+    mean=st.floats(min_value=-20, max_value=20),
+    sd=st.floats(min_value=0.1, max_value=3),
+)
+def test_lognorm_log(mean, sd):
+    dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
+    hist = numeric(dist, warn=False)
+    log_hist = hist.log()
+    true_log_dist = NormalDistribution(mean=mean, sd=sd)
+    true_log_hist = numeric(true_log_dist, warn=False)
+    assert log_hist.histogram_mean() == approx(true_log_hist.exact_mean, rel=0.005, abs=0.005)
+    assert log_hist.histogram_sd() == approx(true_log_hist.exact_sd, rel=0.1)
+
+
+@given(
     a=st.floats(min_value=1e-6, max_value=1),
     b=st.floats(min_value=1e-6, max_value=1),
 )
@@ -1274,8 +1342,7 @@ def test_sum_with_zeros():
     hist2 = hist2.scale_by_probability(0.75)
     assert hist2.exact_mean == approx(1.5)
     assert hist2.histogram_mean() == approx(1.5, rel=1e-5)
-    assert hist2.exact_sd == approx(np.sqrt(0.75 * 1**2 + 0.25 * 2**2))
-    assert hist2.histogram_sd() == approx(np.sqrt(0.75 * 1**2 + 0.25 * 2**2), rel=1e-3)
+    assert hist2.histogram_sd() == approx(hist2.exact_sd, rel=1e-3)
     hist_sum = hist1 + hist2
     assert hist_sum.exact_mean == approx(4.5)
     assert hist_sum.histogram_mean() == approx(4.5, rel=1e-5)
@@ -1294,6 +1361,18 @@ def test_product_with_zeros():
     dist_prod = LognormalDistribution(norm_mean=3, norm_sd=np.sqrt(2))
     assert hist_prod.exact_mean == approx(dist_prod.lognorm_mean / 3)
     assert hist_prod.histogram_mean() == approx(dist_prod.lognorm_mean / 3, rel=1e-5)
+
+
+def test_shift_with_zeros():
+    dist = NormalDistribution(mean=1, sd=1)
+    wrapped_hist = numeric(dist, warn=False)
+    hist = wrapped_hist.scale_by_probability(0.5)
+    shifted_hist = hist + 2
+    assert shifted_hist.exact_mean == approx(2.5)
+    assert shifted_hist.histogram_mean() == approx(2.5, rel=1e-5)
+    assert shifted_hist.masses[np.searchsorted(shifted_hist.values, 2)] == approx(0.5)
+    assert shifted_hist.histogram_sd() == approx(hist.histogram_sd(), rel=1e-3)
+    assert shifted_hist.histogram_sd() == approx(shifted_hist.exact_sd, rel=1e-3)
 
 
 def test_condition_on_success():
