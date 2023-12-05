@@ -651,7 +651,7 @@ class NumericDistribution(BaseNumericDistribution):
     @classmethod
     def from_distribution(
         cls,
-        dist: BaseDistribution,
+        dist: BaseDistribution | BaseNumericDistribution,
         num_bins: Optional[int] = None,
         bin_sizing: Optional[str] = None,
         warn: bool = True,
@@ -660,8 +660,10 @@ class NumericDistribution(BaseNumericDistribution):
 
         Parameters
         ----------
-        dist : BaseDistribution
-            A distribution from which to generate numeric values.
+        dist : BaseDistribution | BaseNumericDistribution
+            A distribution from which to generate numeric values. If the
+            provided value is a :ref:``BaseNumericDistribution``, simply return
+            it.
         num_bins : Optional[int] (default = ref:``DEFAULT_NUM_BINS``)
             The number of bins for the numeric distribution to use. The time to
             construct a NumericDistribution is linear with ``num_bins``, and
@@ -714,6 +716,9 @@ class NumericDistribution(BaseNumericDistribution):
         # ------------
         # Basic checks
         # ------------
+
+        if isinstance(dist, BaseNumericDistribution):
+            return dist
 
         if type(dist) not in DEFAULT_BIN_SIZING:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
@@ -1820,8 +1825,10 @@ def numeric(
 
     Parameters
     ----------
-    dist : BaseDistribution
-        A distribution from which to generate numeric values.
+    dist : BaseDistribution | BaseNumericDistribution
+        A distribution from which to generate numeric values. If the
+        provided value is a :ref:``BaseNumericDistribution``, simply return
+        it.
     num_bins : Optional[int] (default = ref:``DEFAULT_NUM_BINS``)
         The number of bins for the numeric distribution to use. The time to
         construct a NumericDistribution is linear with ``num_bins``, and
