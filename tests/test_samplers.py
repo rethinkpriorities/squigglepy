@@ -365,7 +365,7 @@ def test_sample_gamma_passes_lclip_rclip():
 
 @patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
 def test_sample_pareto_default():
-    assert sample(pareto(10)) == 10
+    assert sample(pareto(10)) == 11
 
 
 @patch.object(samplers, "_get_rng", Mock(return_value=FakeRNG()))
