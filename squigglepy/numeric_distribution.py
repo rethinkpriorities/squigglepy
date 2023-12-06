@@ -11,7 +11,9 @@ import warnings
 from .distributions import (
     BaseDistribution,
     BetaDistribution,
+    ChiSquareDistribution,
     ComplexDistribution,
+    ExponentialDistribution,
     GammaDistribution,
     LognormalDistribution,
     MixtureDistribution,
@@ -54,7 +56,8 @@ class BinSizing(Enum):
         quantiles; for example, with 100 bins, it ensures that every bin value
         falls between two percentiles. This method is generally not recommended
         because it puts too much probability mass near the center of the
-        distribution, where precision is the least useful.
+        distribution, where precision is the lea
+    st useful.
     fat-hybrid : str
         A hybrid method designed for fat-tailed distributions. Uses mass bin
         sizing close to the center and log-uniform bin siding on the right
@@ -143,6 +146,8 @@ def _support_for_bin_sizing(dist, bin_sizing, num_bins):
 
 DEFAULT_BIN_SIZING = {
     BetaDistribution: BinSizing.mass,
+    ChiSquareDistribution: BinSizing.ev,
+    ExponentialDistribution: BinSizing.ev,
     GammaDistribution: BinSizing.ev,
     LognormalDistribution: BinSizing.fat_hybrid,
     NormalDistribution: BinSizing.uniform,
@@ -151,6 +156,8 @@ DEFAULT_BIN_SIZING = {
 
 DEFAULT_NUM_BINS = {
     BetaDistribution: 50,
+    ChiSquareDistribution: 200,
+    ExponentialDistribution: 200,
     GammaDistribution: 200,
     LognormalDistribution: 200,
     MixtureDistribution: 200,
@@ -729,14 +736,33 @@ class NumericDistribution(BaseNumericDistribution):
         if type(dist) not in DEFAULT_BIN_SIZING:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
 
-        if num_bins is None:
-            num_bins = DEFAULT_NUM_BINS[type(dist)]
+        num_bins = num_bins or DEFAULT_NUM_BINS[type(dist)]
+        bin_sizing = BinSizing(bin_sizing or DEFAULT_BIN_SIZING[type(dist)])
+
+        # ------------------------------------------------------------------
+        # Handle distributions that are special cases of other distributions
+        # ------------------------------------------------------------------
+
+        if isinstance(dist, ChiSquareDistribution):
+            return cls.from_distribution(
+                GammaDistribution(shape=dist.df / 2, scale=2, lclip=dist.lclip, rclip=dist.rclip),
+                num_bins=num_bins,
+                bin_sizing=bin_sizing,
+                warn=warn,
+            )
+
+        if isinstance(dist, ExponentialDistribution):
+            return cls.from_distribution(
+                GammaDistribution(shape=1, scale=dist.scale, lclip=dist.lclip, rclip=dist.rclip),
+                num_bins=num_bins,
+                bin_sizing=bin_sizing,
+                warn=warn,
+            )
 
         # -------------------------------------------------------------------
         # Set up required parameters based on dist type and bin sizing method
         # -------------------------------------------------------------------
 
-        bin_sizing = BinSizing(bin_sizing or DEFAULT_BIN_SIZING[type(dist)])
         max_support = {
             # These are the widest possible supports, but they maybe narrowed
             # later by lclip/rclip or by some bin sizing methods.
@@ -1751,21 +1777,7 @@ class NumericDistribution(BaseNumericDistribution):
         # re-calculating them. But this method would be much more complicated,
         # and we'd need to lazily compute the edge values to avoid a ~2x
         # performance penalty.
-        self._init_interpolate_ppf()
-        edge_masses = np.concatenate(([0], np.cumsum(self.masses)))
-        edge_values = self.interpolate_ppf(edge_masses)
-        edge_value_diffs = np.diff(edge_values)
-        edge_exp_values = np.exp(edge_values)
-        edge_exp_diffs = np.diff(edge_exp_values)
-
-        # Remove any entries where edge_value_diffs == 0
-        nonzero_indexes = edge_value_diffs != 0
-        edge_value_diffs = edge_value_diffs[nonzero_indexes]
-        edge_exp_diffs = edge_exp_diffs[nonzero_indexes]
-
-        values_from_interp = edge_exp_diffs / edge_value_diffs
         values = np.exp(self.values)
-        # values = values_from_interp
         return NumericDistribution(
             values=values,
             masses=self.masses,
@@ -1790,8 +1802,12 @@ class NumericDistribution(BaseNumericDistribution):
             values=values,
             masses=self.masses,
             zero_bin_index=np.searchsorted(values, 0),
-            neg_ev_contribution=np.sum(values[: self.zero_bin_index] * self.masses[: self.zero_bin_index]),
-            pos_ev_contribution=np.sum(values[self.zero_bin_index :] * self.masses[self.zero_bin_index :]),
+            neg_ev_contribution=np.sum(
+                values[: self.zero_bin_index] * self.masses[: self.zero_bin_index]
+            ),
+            pos_ev_contribution=np.sum(
+                values[self.zero_bin_index :] * self.masses[self.zero_bin_index :]
+            ),
             exact_mean=None,
             exact_sd=None,
         )
@@ -1835,8 +1851,10 @@ class ZeroNumericDistribution(BaseNumericDistribution):
 
     def histogram_sd(self):
         mean = self.mean()
-        nonzero_variance = np.sum(self.dist.masses * (self.dist.values - mean)**2) * self.nonzero_mass
-        zero_variance = self.zero_mass * mean ** 2
+        nonzero_variance = (
+            np.sum(self.dist.masses * (self.dist.values - mean) ** 2) * self.nonzero_mass
+        )
+        zero_variance = self.zero_mass * mean**2
         variance = nonzero_variance + zero_variance
         return np.sqrt(variance)
 

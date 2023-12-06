@@ -8,15 +8,7 @@ from scipy import integrate, stats
 import sys
 import warnings
 
-from ..squigglepy.distributions import (
-    BetaDistribution,
-    ComplexDistribution,
-    GammaDistribution,
-    LognormalDistribution,
-    MixtureDistribution,
-    NormalDistribution,
-    UniformDistribution,
-)
+from ..squigglepy.distributions import *
 from ..squigglepy.numeric_distribution import numeric, NumericDistribution
 from ..squigglepy import samplers, utils
 
@@ -1607,6 +1599,30 @@ def test_gamma_product(shape, scale, mean, sd):
     hist_prod = hist1 * hist2
     assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
     assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.01)
+
+
+@given(
+    df=st.floats(min_value=0.1, max_value=100),
+)
+def test_chi_square(df):
+    dist = ChiSquareDistribution(df=df)
+    hist = numeric(dist)
+    assert hist.exact_mean == approx(df)
+    assert hist.exact_sd == approx(np.sqrt(2 * df))
+    assert hist.histogram_mean() == approx(hist.exact_mean)
+    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.01)
+
+
+@given(
+    scale=st.floats(min_value=0.1, max_value=1e6),
+)
+def test_exponential_dist(scale):
+    dist = ExponentialDistribution(scale=scale)
+    hist = numeric(dist)
+    assert hist.exact_mean == approx(scale)
+    assert hist.exact_sd == approx(scale)
+    assert hist.histogram_mean() == approx(hist.exact_mean)
+    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.01)
 
 
 @given(
