@@ -11,6 +11,7 @@ from ..squigglepy.distributions import (
     GammaDistribution,
     LognormalDistribution,
     NormalDistribution,
+    ParetoDistribution,
     UniformDistribution,
 )
 from ..squigglepy.utils import ConvergenceWarning
@@ -224,4 +225,15 @@ def test_gamma_inv_contribution_ev_inverts_contribution_to_ev(shape, scale, frac
     tolerance = 1e-6 if shape < 1 or scale < 1 else 1e-8
     assert dist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(
         fraction, rel=tolerance
+    )
+
+
+@given(
+    shape=st.floats(min_value=1.1, max_value=100),
+    fraction=st.floats(min_value=0, max_value=1 - 1e-6),
+)
+def test_pareto_inv_contribution_to_ev_inverts_contribution_to_ev(shape, fraction):
+    dist = ParetoDistribution(shape)
+    assert dist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(
+        fraction, rel=1e-8
     )

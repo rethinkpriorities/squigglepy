@@ -1841,13 +1841,30 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
     return GammaDistribution(shape=shape, scale=scale, lclip=lclip, rclip=rclip)
 
 
-class ParetoDistribution(ContinuousDistribution):
+class ParetoDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, shape):
         super().__init__()
         self.shape = shape
+        self.mean = np.inf if shape <= 1 else shape / (shape - 1)
 
     def __str__(self):
         return "<Distribution> pareto({})".format(self.shape)
+
+    def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
+        x = np.asarray(x)
+        a = self.shape
+        res = np.where(x <= 1, 0, a / (a - 1) * (1 - x**(1 - a)))
+        return np.squeeze(res) / (self.mean if normalized else 1)
+
+    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+        if any(fraction < 0) or any(fraction >= 1):
+            raise ValueError(f"fraction must be >= 0 and < 1, not {fraction}")
+
+        a = self.shape
+        x = (1 - fraction)**(1 / (1 - a))
+        return np.squeeze(x)
 
 
 def pareto(shape):
@@ -1867,6 +1884,7 @@ def pareto(shape):
     --------
     >>> pareto(1)
     <Distribution> pareto(1)
+
     """
     return ParetoDistribution(shape=shape)
 

@@ -1626,6 +1626,22 @@ def test_exponential_dist(scale):
 
 
 @given(
+    shape=st.floats(min_value=1.1, max_value=100),
+)
+def test_pareto_dist(shape):
+    dist = ParetoDistribution(shape)
+    hist = numeric(dist)
+    assert hist.exact_mean == approx(shape / (shape - 1))
+    assert hist.histogram_mean() == approx(hist.exact_mean, rel=0.01 / (shape - 1))
+    if shape <= 2:
+        assert hist.exact_sd == approx(np.inf)
+    else:
+        assert hist.histogram_sd() == approx(
+            hist.exact_sd, rel=max(0.01, 0.1 / (shape - 2))
+        )
+
+
+@given(
     norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=4),
     bin_num=st.integers(min_value=1, max_value=99),

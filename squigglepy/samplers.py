@@ -466,13 +466,14 @@ def pareto_sample(shape, samples=1):
     Returns
     -------
     int
-        A random number sampled from an pareto distribution.
+        A random number sampled from a pareto distribution.
 
     Examples
     --------
     >>> set_seed(42)
     >>> pareto_sample(1)
     10.069666324736094
+
     """
     return _simplify(_get_rng().pareto(shape, samples))
 

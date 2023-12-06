@@ -18,6 +18,7 @@ from .distributions import (
     LognormalDistribution,
     MixtureDistribution,
     NormalDistribution,
+    ParetoDistribution,
     UniformDistribution,
 )
 from .version import __version__
@@ -151,6 +152,7 @@ DEFAULT_BIN_SIZING = {
     GammaDistribution: BinSizing.ev,
     LognormalDistribution: BinSizing.fat_hybrid,
     NormalDistribution: BinSizing.uniform,
+    ParetoDistribution: BinSizing.ev,
     UniformDistribution: BinSizing.uniform,
 }
 
@@ -162,6 +164,7 @@ DEFAULT_NUM_BINS = {
     LognormalDistribution: 200,
     MixtureDistribution: 200,
     NormalDistribution: 200,
+    ParetoDistribution: 200,
     UniformDistribution: 50,
 }
 
@@ -479,6 +482,10 @@ class NumericDistribution(BaseNumericDistribution):
         elif bin_sizing == BinSizing.ev:
             # Don't call get_edge_value on the left and right edges because it's
             # undefined for 0 and 1
+            if not hasattr(dist, "inv_contribution_to_ev"):
+                raise ValueError(
+                    f"Bin sizing {bin_sizing} requires an inv_contribution_to_ev method, but {type(dist)} does not have one."
+                )
             left_prop = dist.contribution_to_ev(support[0])
             right_prop = dist.contribution_to_ev(support[1])
             edge_values = np.concatenate(
@@ -770,6 +777,7 @@ class NumericDistribution(BaseNumericDistribution):
             GammaDistribution: (0, np.inf),
             LognormalDistribution: (0, np.inf),
             NormalDistribution: (-np.inf, np.inf),
+            ParetoDistribution: (0, np.inf),
             UniformDistribution: (dist.x, dist.y),
         }[type(dist)]
         support = max_support
@@ -780,6 +788,7 @@ class NumericDistribution(BaseNumericDistribution):
                 p, dist.norm_sd, scale=np.exp(dist.norm_mean)
             ),
             NormalDistribution: lambda p: stats.norm.ppf(p, loc=dist.mean, scale=dist.sd),
+            ParetoDistribution: lambda p: stats.pareto.ppf(p, dist.shape),
             UniformDistribution: lambda p: stats.uniform.ppf(p, loc=dist.x, scale=dist.y - dist.x),
         }[type(dist)]
         cdf = {
@@ -789,6 +798,7 @@ class NumericDistribution(BaseNumericDistribution):
                 x, dist.norm_sd, scale=np.exp(dist.norm_mean)
             ),
             NormalDistribution: lambda x: stats.norm.cdf(x, loc=dist.mean, scale=dist.sd),
+            ParetoDistribution: lambda x: stats.pareto.cdf(x, dist.shape),
             UniformDistribution: lambda x: stats.uniform.cdf(x, loc=dist.x, scale=dist.y - dist.x),
         }[type(dist)]
 
@@ -842,6 +852,20 @@ class NumericDistribution(BaseNumericDistribution):
             elif isinstance(dist, NormalDistribution):
                 exact_mean = dist.mean
                 exact_sd = dist.sd
+            elif isinstance(dist, ParetoDistribution):
+                if dist.shape <= 1:
+                    raise ValueError(
+                        "NumericDistribution does not support Pareto distributions with shape <= 1 because they have infinite mean."
+                    )
+                # exact_mean = 1 / (dist.shape - 1)  # Lomax
+                exact_mean = dist.shape / (dist.shape - 1)
+                if dist.shape <= 2:
+                    exact_sd = np.inf
+                else:
+                    # exact_sd = np.sqrt(dist.shape / ((dist.shape - 1) ** 2 * (dist.shape - 2)))  # Lomax
+                    exact_sd = np.sqrt(
+                        dist.shape / ((dist.shape - 1) ** 2 * (dist.shape - 2))
+                    )
             elif isinstance(dist, UniformDistribution):
                 exact_mean = (dist.x + dist.y) / 2
                 exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
