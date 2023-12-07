@@ -53,12 +53,9 @@ class BinSizing(Enum):
         average value of the two edges).
     mass : str
         Divides the distribution into bins such that each bin has equal
-        probability mass. This maximizes the accuracy of uniformly-distributed
-        quantiles; for example, with 100 bins, it ensures that every bin value
-        falls between two percentiles. This method is generally not recommended
+        probability mass. This method is generally not recommended
         because it puts too much probability mass near the center of the
-        distribution, where precision is the lea
-    st useful.
+        distribution, where precision is the least useful.
     fat-hybrid : str
         A hybrid method designed for fat-tailed distributions. Uses mass bin
         sizing close to the center and log-uniform bin siding on the right
@@ -1083,7 +1080,9 @@ class NumericDistribution(BaseNumericDistribution):
     def sd(self):
         """Standard deviation of the distribution. May be calculated using a
         stored exact value or the histogram data."""
-        return self.exact_sd
+        if self.exact_sd is not None:
+            return self.exact_sd
+        return self.histogram_sd()
 
     def _init_interpolate_cdf(self):
         if self.interpolate_cdf is None:
@@ -1677,7 +1676,11 @@ class NumericDistribution(BaseNumericDistribution):
         return res
 
     def __pow__(x, y):
-        """Raise the distribution to a power."""
+        """Raise the distribution to a power.
+
+        Note: x * x does not give the same result as x ** 2 because
+        multiplication assumes that the two distributions are independent.
+        """
         if isinstance(y, Real) or isinstance(y, NumericDistribution):
             return (x.log() * y).exp()
         else:

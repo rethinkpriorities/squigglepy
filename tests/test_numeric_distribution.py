@@ -153,12 +153,11 @@ def test_norm_basic(mean, sd):
     norm_sd=st.floats(min_value=0.001, max_value=3),
     bin_sizing=st.sampled_from(["uniform", "log-uniform", "ev", "mass"]),
 )
-@example(norm_mean=1, norm_sd=2, bin_sizing="mass")
+@example(norm_mean=0, norm_sd=1, bin_sizing="log-uniform")
 def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        hist = numeric(dist, bin_sizing=bin_sizing, warn=False)
+    hist = numeric(dist, bin_sizing=bin_sizing, warn=False)
+    import ipdb; ipdb.set_trace()
     if bin_sizing == "ev":
         tolerance = 1e-6
     elif bin_sizing == "log-uniform":
@@ -1823,6 +1822,77 @@ def test_utils_get_percentiles_basic():
     assert utils.get_percentiles(hist, 1) == hist.percentile(1)
     assert utils.get_percentiles(hist, [5]) == hist.percentile([5])
     assert all(utils.get_percentiles(hist, np.array([10, 20])) == hist.percentile([10, 20]))
+
+
+def test_quantile_accuracy():
+    def fmt(x):
+        return f"{(100*x):.4f}%"
+
+    props = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999])
+    # props = np.array([0.05, 0.1, 0.25, 0.75, 0.9, 0.95, 0.99, 0.999])
+    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    true_quantiles = stats.lognorm.ppf(props, dist.norm_sd, scale=np.exp(dist.norm_mean))
+    # dist = NormalDistribution(mean=0, sd=1)
+    # true_quantiles = stats.norm.ppf(props, dist.mean, dist.sd)
+    num_bins = 100
+    num_mc_samples = num_bins**2
+
+    # Formula from Goodman, "Accuracy and Efficiency of Monte Carlo Method."
+    # https://inis.iaea.org/collection/NCLCollectionStore/_Public/19/047/19047359.pdf
+    # Figure 20 on page 434.
+    mc_error = np.sqrt(props * (1 - props)) * np.sqrt(2 * np.pi) * dist.norm_sd * np.exp(0.5 * (np.log(true_quantiles) - dist.norm_mean)**2 / dist.norm_sd**2) / np.sqrt(num_mc_samples)
+    # mc_error = np.sqrt(props * (1 - props)) * np.sqrt(2 * np.pi) * np.exp(0.5 * (true_quantiles - dist.mean)**2) / abs(true_quantiles) / np.sqrt(num_mc_samples)
+
+    print("\n")
+    print(f"MC error: average {fmt(np.mean(mc_error))}, median {fmt(np.median(mc_error))}, max {fmt(np.max(mc_error))}")
+
+    for bin_sizing in ["log-uniform", "mass", "ev", "fat-hybrid"]:
+    # for bin_sizing in ["uniform", "mass", "ev"]:
+        hist = numeric(dist, bin_sizing=bin_sizing, warn=False, num_bins=num_bins)
+        linear_quantiles = np.interp(props, np.cumsum(hist.masses) - 0.5 * hist.masses, hist.values)
+        if bin_sizing == "mass":
+            import ipdb; ipdb.set_trace()
+        hist_quantiles = hist.quantile(props)
+        linear_error = abs(true_quantiles - linear_quantiles) / abs(true_quantiles)
+        hist_error = abs(true_quantiles - hist_quantiles) / abs(true_quantiles)
+        print(f"\n{bin_sizing}")
+        print(f"\tLinear error: average {fmt(np.mean(linear_error))}, median {fmt(np.median(linear_error))}, max {fmt(np.max(linear_error))}")
+        print(f"\tHist error  : average {fmt(np.mean(hist_error))}, median {fmt(np.median(hist_error))}, max {fmt(np.max(hist_error))}")
+        print(f"\tHist / MC   : average {fmt(np.mean(hist_error / mc_error))}, median {fmt(np.median(hist_error / mc_error))}, max {fmt(np.max(hist_error / mc_error))}")
+
+
+def test_quantile_product_accuracy():
+    def fmt(x):
+        return f"{(100*x):.4f}%"
+
+    props = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999])
+    # props = np.array([0.05, 0.1, 0.25, 0.75, 0.9, 0.95, 0.99, 0.999])
+    dist1 = LognormalDistribution(norm_mean=0, norm_sd=1)
+    num_products = 20
+    dist = LognormalDistribution(norm_mean=0, norm_sd=np.sqrt(num_products))
+    true_quantiles = stats.lognorm.ppf(props, dist.norm_sd, scale=np.exp(dist.norm_mean))
+    num_bins = 100
+    num_mc_samples = num_bins**2
+
+    # I'm not sure how to prove this, but empirically, it looks like the error
+    # for MC(x) * MC(y) is the same as the error for MC(x * y).
+    mc_error = np.sqrt(props * (1 - props)) * np.sqrt(2 * np.pi) * dist.norm_sd * np.exp(0.5 * (np.log(true_quantiles) - dist.norm_mean)**2 / dist.norm_sd**2) / np.sqrt(num_mc_samples)
+
+    print("\n")
+    print(f"MC error: average {fmt(np.mean(mc_error))}, median {fmt(np.median(mc_error))}, max {fmt(np.max(mc_error))}")
+
+    for bin_sizing in ["log-uniform", "mass", "ev", "fat-hybrid"]:
+        hist1 = numeric(dist1, bin_sizing=bin_sizing, warn=False, num_bins=num_bins)
+        hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
+        linear_quantiles = np.interp(props, np.cumsum(hist.masses) - 0.5 * hist.masses, hist.values)
+        hist_quantiles = hist.quantile(props)
+        linear_error = abs(true_quantiles - linear_quantiles) / abs(true_quantiles)
+        hist_error = abs(true_quantiles - hist_quantiles) / abs(true_quantiles)
+        print(f"\n{bin_sizing}")
+        print(f"\tLinear error: average {fmt(np.mean(linear_error))}, median {fmt(np.median(linear_error))}, max {fmt(np.max(linear_error))}")
+        print(f"\tHist error  : average {fmt(np.mean(hist_error))}, median {fmt(np.median(hist_error))}, max {fmt(np.max(hist_error))}")
+        print(f"\tHist / MC   : average {fmt(np.mean(hist_error / mc_error))}, median {fmt(np.median(hist_error / mc_error))}, max {fmt(np.max(hist_error / mc_error))}")
+
 
 
 def test_plot():
