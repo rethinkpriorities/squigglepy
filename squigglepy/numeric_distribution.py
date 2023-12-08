@@ -108,9 +108,8 @@ def _support_for_bin_sizing(dist, bin_sizing, num_bins):
     # narrower domain increases error at the tails. Inter-bin error is
     # proportional to width^3 / num_bins^2 and tail error is proportional to
     # something like exp(-width^2). Setting width using the formula below
-    # balances these two sources of error. These scale coefficients means that
-    # a histogram with 100 bins will cover 6.6 standard deviations in each
-    # direction which leaves off less than 1e-10 of the probability mass.
+    # balances these two sources of error. ``scale`` has an upper bound because
+    # excessively large values result in floating point rounding errors.
     if isinstance(dist, NormalDistribution) and bin_sizing == BinSizing.uniform:
         scale = max(6.5, 4.5 + np.log(num_bins) ** 0.5)
         return (dist.mean - scale * dist.sd, dist.mean + scale * dist.sd)
@@ -165,21 +164,8 @@ DEFAULT_NUM_BINS = {
     UniformDistribution: 50,
 }
 
-CACHED_NORM_CDFS = {}
 CACHED_LOGNORM_CDFS = {}
 CACHED_LOGNORM_PPFS = {}
-
-
-def cached_norm_cdfs(num_bins):
-    if num_bins in CACHED_NORM_CDFS:
-        return CACHED_NORM_CDFS[num_bins]
-    support = _support_for_bin_sizing(
-        NormalDistribution(mean=0, sd=1), BinSizing.uniform, num_bins
-    )
-    values = np.linspace(support[0], support[1], num_bins + 1)
-    cdfs = stats.norm.cdf(values)
-    CACHED_NORM_CDFS[num_bins] = cdfs
-    return cdfs
 
 
 def cached_lognorm_cdfs(num_bins):
@@ -215,7 +201,8 @@ def _narrow_support(
 
 
 def _log(x):
-    return np.where(x == 0, -np.inf, np.log(x))
+    with np.errstate(divide="ignore"):
+        return np.log(x)
 
 
 class BaseNumericDistribution(ABC):
@@ -759,7 +746,7 @@ class NumericDistribution(BaseNumericDistribution):
             GammaDistribution: (0, np.inf),
             LognormalDistribution: (0, np.inf),
             NormalDistribution: (-np.inf, np.inf),
-            ParetoDistribution: (0, np.inf),
+            ParetoDistribution: (1, np.inf),
             UniformDistribution: (dist.x, dist.y),
         }[type(dist)]
         support = max_support
@@ -885,7 +872,7 @@ class NumericDistribution(BaseNumericDistribution):
         ) - dist.contribution_to_ev(support[0], normalized=False)
         neg_ev_contribution = max(
             0,
-            dist.contribution_to_ev(0, normalized=False)
+            dist.contribution_to_ev(max(0, support[0]), normalized=False)
             - dist.contribution_to_ev(support[0], normalized=False),
         )
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
@@ -1942,8 +1929,6 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         return ZeroNumericDistribution(nonzero_sum + extra_x + extra_y, zero_mass)
 
     def shift_by(self, scalar):
-        # TODO: test this
-        warnings.warn("ZeroNumericDistribution.shift_by is untested, use at your own risk")
         old_zero_index = self.dist.zero_bin_index
         shifted_dist = self.dist.shift_by(scalar)
         scaled_masses = shifted_dist.masses * self.nonzero_mass

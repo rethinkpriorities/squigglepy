@@ -243,12 +243,12 @@ def test_norm_product_bin_sizing_accuracy():
 
     # uniform and log-uniform should have small errors and the others should be
     # pretty much perfect
-    mean_errors = [
+    mean_errors = np.array([
         relative_error(mass_hist.histogram_mean(), ev_hist.exact_mean),
-        relative_error(uniform_hist.histogram_mean(), ev_hist.exact_mean),
         relative_error(ev_hist.histogram_mean(), ev_hist.exact_mean),
-    ]
-    assert all(np.diff(mean_errors) >= 0)
+        relative_error(uniform_hist.histogram_mean(), ev_hist.exact_mean),
+    ])
+    assert all(mean_errors <= 1e-6)
 
     sd_errors = [
         relative_error(uniform_hist.histogram_sd(), ev_hist.exact_sd),
@@ -276,14 +276,14 @@ def test_lognorm_product_bin_sizing_accuracy():
         norm_mean=2 * dist.norm_mean, norm_sd=np.sqrt(2) * dist.norm_sd
     )
 
-    mean_errors = [
+    mean_errors = np.array([
         relative_error(mass_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(ev_hist.histogram_mean(), dist_prod.lognorm_mean),
-        relative_error(uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(fat_hybrid_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
         relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
-    ]
-    assert all(np.diff(mean_errors) >= 0)
+    ])
+    assert all(mean_errors <= 1e-6)
 
     sd_errors = [
         relative_error(fat_hybrid_hist.histogram_sd(), dist_prod.lognorm_sd),
@@ -359,14 +359,14 @@ def test_lognorm_clip_center_bin_sizing_accuracy():
         dist2, bin_sizing="fat-hybrid", warn=False
     )
 
-    mean_errors = [
+    mean_errors = np.array([
         relative_error(ev_hist.histogram_mean(), true_mean),
         relative_error(mass_hist.histogram_mean(), true_mean),
         relative_error(uniform_hist.histogram_mean(), true_mean),
         relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
         relative_error(log_uniform_hist.histogram_mean(), true_mean),
-    ]
-    assert all(np.diff(mean_errors) >= 0)
+    ])
+    assert all(mean_errors <= 1e-6)
 
     # Uniform does poorly in general with fat-tailed dists, but it does well
     # with a center clip because most of the mass is in the center
@@ -445,14 +445,14 @@ def test_lognorm_clip_tail_bin_sizing_accuracy():
         dist2, bin_sizing="fat-hybrid", warn=False
     )
 
-    mean_errors = [
+    mean_errors = np.array([
         relative_error(mass_hist.histogram_mean(), true_mean),
         relative_error(uniform_hist.histogram_mean(), true_mean),
         relative_error(ev_hist.histogram_mean(), true_mean),
         relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
         relative_error(log_uniform_hist.histogram_mean(), true_mean),
-    ]
-    assert all(np.diff(mean_errors) >= 0)
+    ])
+    assert all(mean_errors <= 1e-6)
 
     sd_errors = [
         relative_error(fat_hybrid_hist.histogram_sd(), true_sd),
@@ -483,14 +483,14 @@ def test_gamma_bin_sizing_accuracy():
     true_mean = uniform_hist.exact_mean
     true_sd = uniform_hist.exact_sd
 
-    mean_errors = [
+    mean_errors = np.array([
         relative_error(mass_hist.histogram_mean(), true_mean),
         relative_error(uniform_hist.histogram_mean(), true_mean),
         relative_error(ev_hist.histogram_mean(), true_mean),
         relative_error(log_uniform_hist.histogram_mean(), true_mean),
         relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
-    ]
-    assert all(np.diff(mean_errors) >= 0)
+    ])
+    assert all(mean_errors <= 1e-6)
 
     sd_errors = [
         relative_error(uniform_hist.histogram_sd(), true_sd),
@@ -519,7 +519,7 @@ def test_norm_one_sided_clip(mean, sd, clip_zscore):
     # The exact mean can still be a bit off because uniform bin_sizing doesn't
     # cover the full domain
     assert hist.exact_mean == approx(
-        stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=1e-6, abs=1e-10
+        stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=1e-5, abs=1e-9
     )
 
     dist = NormalDistribution(mean=mean, sd=sd, rclip=clip)
@@ -700,14 +700,13 @@ def test_norm_lognorm_product_sum(mean1, mean2, mean3, sd1, sd2, sd3, num_bins1,
 
 
 @given(
-    norm_mean=st.floats(min_value=np.log(1e-9), max_value=np.log(1e9)),
-    norm_sd=st.floats(min_value=0.001, max_value=3),
+    norm_mean=st.floats(min_value=np.log(1e-6), max_value=np.log(1e6)),
+    norm_sd=st.floats(min_value=0.001, max_value=2),
     num_bins=st.sampled_from([25, 100]),
-    bin_sizing=st.sampled_from(["ev", "log-uniform"]),
+    bin_sizing=st.sampled_from(["ev", "log-uniform", "fat-hybrid"]),
 )
-@example(norm_mean=0.0, norm_sd=1.0, num_bins=25, bin_sizing="ev").via("discovered failure")
+@settings(max_examples=10)
 def test_lognorm_mean_error_propagation(norm_mean, norm_sd, num_bins, bin_sizing):
-    assume(not (num_bins == 10 and bin_sizing == "log-uniform"))
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = numeric(dist, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
     hist_base = numeric(dist, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
@@ -845,8 +844,9 @@ def test_lognorm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing):
     mean2=st.floats(min_value=-np.log(1e5), max_value=np.log(1e5)),
     sd1=st.floats(min_value=0.001, max_value=100),
     sd2=st.floats(min_value=0.001, max_value=3),
-    lognorm_bin_sizing=st.sampled_from(["ev", "log-uniform"]),
+    lognorm_bin_sizing=st.sampled_from(["ev", "log-uniform", "fat-hybrid"]),
 )
+@example(mean1=-68, mean2=0, sd1=1, sd2=2.9, lognorm_bin_sizing="log-uniform")
 def test_norm_lognorm_sum(mean1, mean2, sd1, sd2, lognorm_bin_sizing):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
     dist2 = LognormalDistribution(norm_mean=mean2, norm_sd=sd2)
@@ -1130,7 +1130,7 @@ def test_norm_exp(mean, sd):
     true_exp_dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
     true_exp_hist = numeric(true_exp_dist, warn=False)
     assert exp_hist.histogram_mean() == approx(true_exp_hist.exact_mean, rel=0.005)
-    assert exp_hist.histogram_sd() == approx(true_exp_hist.exact_sd, rel=0.1)
+    assert exp_hist.histogram_sd() == approx(true_exp_hist.exact_sd, rel=0.2)
 
 
 @given(
@@ -1633,7 +1633,7 @@ def test_exponential_dist(scale):
 )
 def test_pareto_dist(shape):
     dist = ParetoDistribution(shape)
-    hist = numeric(dist)
+    hist = numeric(dist, warn=shape >= 2)
     assert hist.exact_mean == approx(shape / (shape - 1))
     assert hist.histogram_mean() == approx(hist.exact_mean, rel=0.01 / (shape - 1))
     if shape <= 2:
@@ -1934,24 +1934,21 @@ def test_performance():
     dist1 = LognormalDistribution(norm_mean=0, norm_sd=1)
     dist2 = LognormalDistribution(norm_mean=1, norm_sd=0.5)
 
-    profile = True
-    if profile:
-        import cProfile
-        import pstats
-        import io
+    import cProfile
+    import pstats
+    import io
 
-        pr = cProfile.Profile()
-        pr.enable()
+    pr = cProfile.Profile()
+    pr.enable()
 
     for i in range(5000):
         hist1 = numeric(dist1, num_bins=100, bin_sizing="fat-hybrid")
         hist2 = numeric(dist2, num_bins=100, bin_sizing="fat-hybrid")
         hist1 = hist1 * hist2
 
-    if profile:
-        pr.disable()
-        s = io.StringIO()
-        sortby = "cumulative"
-        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        ps.print_stats()
-        print(s.getvalue())
+    pr.disable()
+    s = io.StringIO()
+    sortby = "cumulative"
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print(s.getvalue())

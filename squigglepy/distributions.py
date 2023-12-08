@@ -1104,9 +1104,9 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         mu = self.norm_mean
         sigma = self.norm_sd
         left_bound = self._EV_SCALE  # at x=0
-        right_bound = self._EV_SCALE * np.where(
-            x == 0, 1, erf((-log(x) + mu + sigma**2) / self._EV_DENOM)
-        )
+
+        with np.errstate(divide="ignore"):
+            right_bound = self._EV_SCALE * erf((-log(x) + mu + sigma**2) / self._EV_DENOM)
 
         return np.squeeze(right_bound - left_bound) / (self.lognorm_mean if normalized else 1)
 
@@ -1853,7 +1853,7 @@ class ParetoDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
         x = np.asarray(x)
         a = self.shape
-        res = np.where(x <= 1, 0, a / (a - 1) * (1 - x**(1 - a)))
+        res = np.where(x <= 1, 0, a / (a - 1) * (1 - x ** (1 - a)))
         return np.squeeze(res) / (self.mean if normalized else 1)
 
     def inv_contribution_to_ev(self, fraction: np.ndarray | float):
@@ -1863,7 +1863,7 @@ class ParetoDistribution(ContinuousDistribution, IntegrableEVDistribution):
             raise ValueError(f"fraction must be >= 0 and < 1, not {fraction}")
 
         a = self.shape
-        x = (1 - fraction)**(1 / (1 - a))
+        x = (1 - fraction) ** (1 / (1 - a))
         return np.squeeze(x)
 
 
