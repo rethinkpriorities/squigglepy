@@ -10,9 +10,11 @@ import warnings
 
 from .distributions import (
     BaseDistribution,
+    BernoulliDistribution,
     BetaDistribution,
     ChiSquareDistribution,
     ComplexDistribution,
+    ConstantDistribution,
     ExponentialDistribution,
     GammaDistribution,
     LognormalDistribution,
@@ -640,7 +642,7 @@ class NumericDistribution(BaseNumericDistribution):
     @classmethod
     def from_distribution(
         cls,
-        dist: BaseDistribution | BaseNumericDistribution,
+        dist: BaseDistribution | BaseNumericDistribution | Real,
         num_bins: Optional[int] = None,
         bin_sizing: Optional[str] = None,
         warn: bool = True,
@@ -649,7 +651,7 @@ class NumericDistribution(BaseNumericDistribution):
 
         Parameters
         ----------
-        dist : BaseDistribution | BaseNumericDistribution
+        dist : BaseDistribution | BaseNumericDistribution | Real
             A distribution from which to generate numeric values. If the
             provided value is a :ref:``BaseNumericDistribution``, simply return
             it.
@@ -679,10 +681,23 @@ class NumericDistribution(BaseNumericDistribution):
 
         """
 
-        # --------------------------------------------------
-        # Handle special distributions (Mixture and Complex)
-        # --------------------------------------------------
+        # ----------------------------
+        # Handle special distributions
+        # ----------------------------
 
+        if isinstance(dist, ConstantDistribution) or isinstance(dist, Real):
+            x = dist if isinstance(dist, Real) else dist.x
+            return cls(
+                values=np.array([x]),
+                masses=np.array([1]),
+                zero_bin_index=0 if x >= 0 else 1,
+                neg_ev_contribution=0 if x >= 0 else -x,
+                pos_ev_contribution=x if x >= 0 else 0,
+                exact_mean=x,
+                exact_sd=0,
+            )
+        if isinstance(dist, BernoulliDistribution):
+            return cls.from_distribution(1, num_bins, bin_sizing, warn).scale_by_probability(dist.p)
         if isinstance(dist, MixtureDistribution):
             return cls.mixture(
                 dist.dists,
@@ -953,8 +968,8 @@ class NumericDistribution(BaseNumericDistribution):
         masses /= np.sum(masses)
 
         return cls(
-            np.array(values),
-            np.array(masses),
+            values=np.array(values),
+            masses=np.array(masses),
             zero_bin_index=num_neg_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,

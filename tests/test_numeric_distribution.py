@@ -1820,6 +1820,37 @@ def test_complex_dist_with_float():
     assert hist.histogram_mean() == approx(2, rel=1e-6)
 
 
+@given(
+    x=st.floats(min_value=-100, max_value=100),
+    wrap_in_dist=st.booleans(),
+)
+def test_constant_dist(x, wrap_in_dist):
+    dist1 = NormalDistribution(mean=1, sd=1)
+    if wrap_in_dist:
+        dist2 = ConstantDistribution(x=x)
+    else:
+        dist2 = x
+    hist1 = numeric(dist1, warn=False)
+    hist2 = numeric(dist2, warn=False)
+    hist_sum = hist1 + hist2
+    assert hist_sum.exact_mean == approx(1 + x)
+    assert hist_sum.histogram_mean() == approx(1 + x, rel=1e-6)
+    assert hist_sum.exact_sd == approx(1)
+    assert hist_sum.histogram_sd() == approx(hist1.histogram_sd(), rel=1e-6)
+
+
+@given(
+    p=st.floats(min_value=0.001, max_value=0.999),
+)
+def test_bernoulli_dist(p):
+    dist = BernoulliDistribution(p=p)
+    hist = numeric(dist, warn=False)
+    assert hist.exact_mean == approx(p)
+    assert hist.histogram_mean() == approx(p, rel=1e-6)
+    assert hist.exact_sd == approx(np.sqrt(p * (1 - p)))
+    assert hist.histogram_sd() == approx(hist.exact_sd, rel=1e-6)
+
+
 def test_utils_get_percentiles_basic():
     dist = NormalDistribution(mean=0, sd=1)
     hist = numeric(dist, warn=False)
