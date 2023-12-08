@@ -112,10 +112,10 @@ def _support_for_bin_sizing(dist, bin_sizing, num_bins):
     # a histogram with 100 bins will cover 6.6 standard deviations in each
     # direction which leaves off less than 1e-10 of the probability mass.
     if isinstance(dist, NormalDistribution) and bin_sizing == BinSizing.uniform:
-        scale = max(7, 4.5 + np.log(num_bins) ** 0.5)
+        scale = max(6.5, 4.5 + np.log(num_bins) ** 0.5)
         return (dist.mean - scale * dist.sd, dist.mean + scale * dist.sd)
     if isinstance(dist, LognormalDistribution) and bin_sizing == BinSizing.log_uniform:
-        scale = max(7, 4.5 + np.log(num_bins) ** 0.5)
+        scale = max(6.5, 4.5 + np.log(num_bins) ** 0.5)
         return np.exp(
             (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd)
         )
@@ -128,9 +128,9 @@ def _support_for_bin_sizing(dist, bin_sizing, num_bins):
             (dist.norm_mean - scale * dist.norm_sd, dist.norm_mean + scale * dist.norm_sd)
         )
 
-    # Compute the upper bound numerically because there is no good
-    # closed-form expression (that I could find) that reliably
-    # captures almost all of the mass without far overshooting.
+    # Compute the upper bound numerically because there is no good closed-form
+    # expression (that I could find) that reliably captures almost all of the
+    # mass without making the bins overly wide.
     if isinstance(dist, GammaDistribution) and bin_sizing == BinSizing.uniform:
         upper_bound = stats.gamma.ppf(1 - 1e-9, dist.shape, scale=dist.scale)
         return (0, upper_bound)
@@ -456,29 +456,21 @@ class NumericDistribution(BaseNumericDistribution):
         edge_cdfs = None
         if bin_sizing == BinSizing.uniform:
             edge_values = np.linspace(support[0], support[1], num_bins + 1)
-            if dist.lclip is None:
-                edge_values[0] = max_support[0]
-            if dist.rclip is None:
-                edge_values[-1] = max_support[1]
 
         elif bin_sizing == BinSizing.log_uniform:
             log_support = (_log(support[0]), _log(support[1]))
             log_edge_values = np.linspace(log_support[0], log_support[1], num_bins + 1)
             edge_values = np.exp(log_edge_values)
-            if dist.lclip is None:
-                edge_values[0] = max_support[0]
-            if dist.rclip is None:
-                edge_values[-1] = max_support[1]
             if (
                 isinstance(dist, LognormalDistribution)
                 and dist.lclip is None
                 and dist.rclip is None
             ):
+                # Edge CDFs are the same regardless of the mean and SD of the
+                # distribution, so we can cache them
                 edge_cdfs = cached_lognorm_cdfs(num_bins)
 
         elif bin_sizing == BinSizing.ev:
-            # Don't call get_edge_value on the left and right edges because it's
-            # undefined for 0 and 1
             if not hasattr(dist, "inv_contribution_to_ev"):
                 raise ValueError(
                     f"Bin sizing {bin_sizing} requires an inv_contribution_to_ev method, but {type(dist)} does not have one."
@@ -487,6 +479,8 @@ class NumericDistribution(BaseNumericDistribution):
             right_prop = dist.contribution_to_ev(support[1])
             edge_values = np.concatenate(
                 (
+                    # Don't call inv_contribution_to_ev on the left and right
+                    # edges because it's undefined for 0 and 1
                     [support[0]],
                     np.atleast_1d(
                         dist.inv_contribution_to_ev(
@@ -515,15 +509,6 @@ class NumericDistribution(BaseNumericDistribution):
             # Use a combination of mass and log-uniform
             logu_support = _support_for_bin_sizing(dist, BinSizing.log_uniform, num_bins)
             logu_support = _narrow_support(support, logu_support)
-            # logu_support = np.exp(
-            #     _narrow_support(
-            #         (_log(support[0]), _log(support[1])),
-            #         (
-            #             dist.norm_mean - bin_scale * dist.norm_sd,
-            #             dist.norm_mean + bin_scale * dist.norm_sd,
-            #         ),
-            #     )
-            # )
             logu_edge_values, logu_edge_cdfs = cls._construct_edge_values(
                 num_bins, logu_support, max_support, dist, cdf, ppf, BinSizing.log_uniform
             )
@@ -1356,17 +1341,47 @@ class NumericDistribution(BaseNumericDistribution):
                 extra_zeros = np.zeros(num_bins * items_per_bin - len(extended_masses))
                 extended_values = np.concatenate((extra_zeros, extended_values))
                 extended_masses = np.concatenate((extra_zeros, extended_masses))
-            boundary_bins = np.arange(0, num_bins + 1) * items_per_bin
+            boundary_indexes = np.arange(0, num_bins + 1) * items_per_bin
         elif bin_sizing == BinSizing.ev:
+            # TODO: I think this is wrong, you have to sort/partition the values first
             extended_evs = extended_values * extended_masses
             cumulative_evs = np.concatenate(([0], np.cumsum(extended_evs)))
             boundary_values = np.linspace(0, cumulative_evs[-1], num_bins + 1)
-            boundary_bins = np.searchsorted(cumulative_evs, boundary_values, side="right") - 1
+            boundary_indexes = np.searchsorted(cumulative_evs, boundary_values, side="right") - 1
             # remove bin boundaries where boundary[i] == boundary[i+1]
-            old_boundary_bins = boundary_bins
-            boundary_bins = np.concatenate(
-                (boundary_bins[:-1][np.diff(boundary_bins) > 0], [boundary_bins[-1]])
+            old_boundary_bins = boundary_indexes
+            boundary_indexes = np.concatenate(
+                (boundary_indexes[:-1][np.diff(boundary_indexes) > 0], [boundary_indexes[-1]])
             )
+        elif bin_sizing == BinSizing.log_uniform:
+            # ``bin_count`` puts too much mass in the bins on the left and
+            # right tails, but it's still more accurate than log-uniform
+            # sizing, I don't know why.
+            assert num_bins % 2 == 0
+            assert len(extended_values) == num_bins**2
+
+            # method 1: size bins in a pyramid shape. this preserves
+            # log-uniform bin sizing but it makes the bin widths unnecessarily
+            # large>
+            # ascending_indexes = 2 * np.array(range(num_bins // 2 + 1))**2
+            # descending_indexes = np.flip(num_bins**2 - ascending_indexes)
+            # boundary_indexes = np.concatenate((ascending_indexes, descending_indexes[1:]))
+
+            # method 2: size bins by going out a fixed number of log-standard
+            # deviations in each direction
+            log_mean = np.average(np.log(extended_values), weights=extended_masses)
+            log_sd = np.sqrt(np.average((np.log(extended_values) - log_mean)**2, weights=extended_masses))
+            log_left_bound = log_mean - 6.5 * log_sd
+            log_right_bound = log_mean + 6.5 * log_sd
+            log_boundary_values = np.linspace(log_left_bound, log_right_bound, num_bins + 1)
+            boundary_values = np.exp(log_boundary_values)
+
+            sorted_indexes = extended_values.argsort(kind="mergesort")
+            extended_values = extended_values[sorted_indexes]
+            extended_masses = extended_masses[sorted_indexes]
+            is_sorted = True
+
+            boundary_indexes = np.searchsorted(extended_values, boundary_values)
         else:
             raise ValueError(f"resize_pos_bins: Unsupported bin sizing method: {bin_sizing}")
 
@@ -1375,7 +1390,7 @@ class NumericDistribution(BaseNumericDistribution):
             # or equal to the values in the next bin. Values within bins
             # don't need to be sorted, and partitioning is ~10% faster than
             # timsort.
-            partitioned_indexes = extended_values.argpartition(boundary_bins[1:-1])
+            partitioned_indexes = extended_values.argpartition(boundary_indexes[1:-1])
             extended_values = extended_values[partitioned_indexes]
             extended_masses = extended_masses[partitioned_indexes]
 
@@ -1387,9 +1402,15 @@ class NumericDistribution(BaseNumericDistribution):
             bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
         elif bin_sizing == BinSizing.ev:
             # Calculate the expected value of each bin
-            bin_evs = np.diff(cumulative_evs[boundary_bins])
+            bin_evs = np.diff(cumulative_evs[boundary_indexes])
             cumulative_masses = np.concatenate(([0], np.cumsum(extended_masses)))
-            masses = np.diff(cumulative_masses[boundary_bins])
+            masses = np.diff(cumulative_masses[boundary_indexes])
+        elif bin_sizing == BinSizing.log_uniform:
+            # Compute sums one at a time instead of using ``cumsum`` because
+            # ``cumsum`` produces non-trivial rounding errors.
+            extended_evs = extended_values * extended_masses
+            bin_evs = np.array([np.sum(extended_evs[i:j]) for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])])
+            masses = np.array([np.sum(extended_masses[i:j]) for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])])
         else:
             raise ValueError(f"resize_pos_bins: Unsupported bin sizing method: {bin_sizing}")
 
