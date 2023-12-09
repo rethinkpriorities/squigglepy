@@ -1174,6 +1174,50 @@ def test_lognorm_log(mean, sd):
 
 
 @given(
+    mean=st.floats(min_value=-20, max_value=20),
+    sd=st.floats(min_value=0.1, max_value=10),
+)
+@settings(max_examples=10)
+def test_norm_abs(mean, sd):
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = abs(numeric(dist))
+    shape = abs(mean) / sd
+    scale = sd
+    true_mean = stats.foldnorm.mean(shape, loc=0, scale=scale)
+    true_sd = stats.foldnorm.std(shape, loc=0, scale=scale)
+    assert hist.histogram_mean() == approx(true_mean, rel=0.001)
+    assert hist.histogram_sd() == approx(true_sd, rel=0.01)
+
+
+@given(
+    mean=st.floats(min_value=-20, max_value=20),
+    sd=st.floats(min_value=0.1, max_value=10),
+    left_zscore=st.floats(min_value=-2, max_value=2),
+    zscore_width=st.floats(min_value=2, max_value=5),
+)
+@settings(max_examples=10)
+def test_given_value_satisfies(mean, sd, left_zscore, zscore_width):
+    right_zscore = left_zscore + zscore_width
+    left = mean + left_zscore * sd
+    right = mean + right_zscore * sd
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = numeric(dist).given_value_satisfies(lambda x: x >= left and x <= right)
+    true_mean = stats.truncnorm.mean(left_zscore, right_zscore, loc=mean, scale=sd)
+    true_sd = stats.truncnorm.std(left_zscore, right_zscore, loc=mean, scale=sd)
+    assert hist.histogram_mean() == approx(true_mean, rel=0.1, abs=0.05)
+    assert hist.histogram_sd() == approx(true_sd, rel=0.1, abs=0.05)
+
+
+def test_probability_value_satisfies():
+    dist = NormalDistribution(mean=0, sd=1)
+    hist = numeric(dist)
+    prob1 = hist.probability_value_satisfies(lambda x: x >= 0)
+    assert prob1 == approx(0.5, rel=0.01)
+    prob2 = hist.probability_value_satisfies(lambda x: x < 1)
+    assert prob2 == approx(stats.norm.cdf(1), rel=0.01)
+
+
+@given(
     a=st.floats(min_value=1e-6, max_value=1),
     b=st.floats(min_value=1e-6, max_value=1),
 )
@@ -1337,7 +1381,7 @@ def test_sum_with_zeros():
     dist2 = NormalDistribution(mean=2, sd=1)
     hist1 = numeric(dist1)
     hist2 = numeric(dist2)
-    hist2 = hist2.scale_by_probability(0.75)
+    hist2 = hist2.condition_on_success(0.75)
     assert hist2.exact_mean == approx(1.5)
     assert hist2.histogram_mean() == approx(1.5, rel=1e-5)
     assert hist2.histogram_sd() == approx(hist2.exact_sd, rel=1e-3)
@@ -1351,8 +1395,8 @@ def test_product_with_zeros():
     dist2 = LognormalDistribution(norm_mean=2, norm_sd=1)
     hist1 = numeric(dist1)
     hist2 = numeric(dist2)
-    hist1 = hist1.scale_by_probability(2 / 3)
-    hist2 = hist2.scale_by_probability(0.5)
+    hist1 = hist1.condition_on_success(2 / 3)
+    hist2 = hist2.condition_on_success(0.5)
     assert hist2.exact_mean == approx(dist2.lognorm_mean / 2)
     assert hist2.histogram_mean() == approx(dist2.lognorm_mean / 2, rel=1e-5)
     hist_prod = hist1 * hist2
@@ -1364,13 +1408,22 @@ def test_product_with_zeros():
 def test_shift_with_zeros():
     dist = NormalDistribution(mean=1, sd=1)
     wrapped_hist = numeric(dist, warn=False)
-    hist = wrapped_hist.scale_by_probability(0.5)
+    hist = wrapped_hist.condition_on_success(0.5)
     shifted_hist = hist + 2
     assert shifted_hist.exact_mean == approx(2.5)
     assert shifted_hist.histogram_mean() == approx(2.5, rel=1e-5)
     assert shifted_hist.masses[np.searchsorted(shifted_hist.values, 2)] == approx(0.5)
     assert shifted_hist.histogram_sd() == approx(hist.histogram_sd(), rel=1e-3)
     assert shifted_hist.histogram_sd() == approx(shifted_hist.exact_sd, rel=1e-3)
+
+
+def test_abs_with_zeros():
+    dist = NormalDistribution(mean=1, sd=2)
+    wrapped_hist = numeric(dist, warn=False)
+    hist = wrapped_hist.condition_on_success(0.5)
+    abs_hist = abs(hist)
+    true_mean = stats.foldnorm.mean(1 / 2, loc=0, scale=2)
+    assert abs_hist.histogram_mean() == approx(0.5 * true_mean, rel=0.001)
 
 
 def test_condition_on_success():
@@ -1382,11 +1435,20 @@ def test_condition_on_success():
     assert outcome.exact_mean == approx(hist.exact_mean * dist2.lognorm_mean)
 
 
+def test_probability_value_satisfies_with_zeros():
+    dist = NormalDistribution(mean=0, sd=1)
+    hist = numeric(dist).condition_on_success(0.5)
+    assert hist.probability_value_satisfies(lambda x: x == 0) == approx(0.5)
+    assert hist.probability_value_satisfies(lambda x: x != 0) == approx(0.5)
+    assert hist.probability_value_satisfies(lambda x: x > 0) == approx(0.25)
+    assert hist.probability_value_satisfies(lambda x: x >= 0) == approx(0.75)
+
+
 def test_quantile_with_zeros():
     mean = 1
     sd = 1
     dist = NormalDistribution(mean=mean, sd=sd)
-    hist = numeric(dist, bin_sizing="uniform", warn=False).scale_by_probability(0.25)
+    hist = numeric(dist, bin_sizing="uniform", warn=False).condition_on_success(0.25)
 
     tolerance = 0.01
 

@@ -79,7 +79,7 @@ class IntegrableEVDistribution(ABC):
     """
 
     @abstractmethod
-    def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized: bool = True):
         """Find the fraction of this distribution's absolute expected value
         given by the portion of the distribution that lies to the left of x.
         For a distribution with support on [a, b], ``contribution_to_ev(a) =
@@ -119,7 +119,7 @@ class IntegrableEVDistribution(ABC):
         ...
 
     @abstractmethod
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         """For a given fraction of expected value, find the number such that
         that fraction lies to the left of that number. The inverse of
         :func:`contribution_to_ev`.
@@ -734,7 +734,7 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __str__(self):
         return "<Distribution> uniform({}, {})".format(self.x, self.y)
 
-    def contribution_to_ev_old(self, x: np.ndarray | float, normalized=True):
+    def contribution_to_ev_old(self, x: Union[np.ndarray, float], normalized=True):
         x = np.asarray(x)
         a = self.x
         b = self.y
@@ -752,7 +752,7 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
         else:
             return fraction * (b - a) / 2
 
-    def contribution_to_ev(self, x: np.ndarray | float, normalized=True):
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized=True):
         x = np.asarray(x)
         a = self.x
         b = self.y
@@ -766,7 +766,7 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
         normalizer = self.contribution_to_ev(b, normalized=False)
         return fraction / normalizer
 
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         # TODO: rewrite this
         raise NotImplementedError
         if isinstance(fraction, float) or isinstance(fraction, int):
@@ -857,7 +857,7 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         out += ")"
         return out
 
-    def contribution_to_ev(self, x: np.ndarray | float, normalized=True):
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized=True):
         x = np.asarray(x)
         mu = self.mean
         sigma = self.sd
@@ -901,7 +901,7 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         deriv = x * exp(-((mu - abs(x)) ** 2) / (2 * sigma**2)) / (sigma * sqrt(2 * pi))
         return deriv
 
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float, full_output: bool = False):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float], full_output: bool = False):
         if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
         mu = self.mean
@@ -1110,7 +1110,7 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
 
         return np.squeeze(right_bound - left_bound) / (self.lognorm_mean if normalized else 1)
 
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         """For a given fraction of expected value, find the number such that
         that fraction lies to the left of that number. The inverse of
         `contribution_to_ev`.
@@ -1285,7 +1285,7 @@ class BetaDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __str__(self):
         return "<Distribution> beta(a={}, b={})".format(self.a, self.b)
 
-    def contribution_to_ev(self, x: np.ndarray | float, normalized=True):
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized=True):
         x = np.asarray(x)
         a = self.a
         b = self.b
@@ -1293,7 +1293,7 @@ class BetaDistribution(ContinuousDistribution, IntegrableEVDistribution):
         res = special.betainc(a + 1, b, x) * special.beta(a + 1, b) / special.beta(a, b)
         return np.squeeze(res) / (self.mean if normalized else 1)
 
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
         if any(fraction < 0) or any(fraction > 1):
@@ -1796,14 +1796,14 @@ class GammaDistribution(ContinuousDistribution, IntegrableEVDistribution):
         out += ")"
         return out
 
-    def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized: bool = True):
         x = np.asarray(x)
         k = self.shape
         scale = self.scale
         res = special.gammainc(k + 1, x / scale)
         return np.squeeze(res) * (1 if normalized else self.mean)
 
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
         if any(fraction < 0) or any(fraction >= 1):
@@ -1850,13 +1850,13 @@ class ParetoDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __str__(self):
         return "<Distribution> pareto({})".format(self.shape)
 
-    def contribution_to_ev(self, x: np.ndarray | float, normalized: bool = True):
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized: bool = True):
         x = np.asarray(x)
         a = self.shape
         res = np.where(x <= 1, 0, a / (a - 1) * (1 - x ** (1 - a)))
         return np.squeeze(res) / (self.mean if normalized else 1)
 
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
         if any(fraction < 0) or any(fraction >= 1):

@@ -5,7 +5,7 @@ from numbers import Real
 import numpy as np
 from scipy import optimize, stats
 from scipy.interpolate import PchipInterpolator
-from typing import Literal, Optional, Tuple, Union
+from typing import Callable, Literal, Optional, Tuple, Union
 import warnings
 
 from .distributions import (
@@ -203,6 +203,37 @@ class BaseNumericDistribution(ABC):
     def __str__(self):
         return f"{type(self).__name__}(mean={self.mean()}, sd={self.sd()})"
 
+    def mean(self, axis=None, dtype=None, out=None):
+        """Mean of the distribution. May be calculated using a stored exact
+        value or the histogram data.
+
+        Parameters
+        ----------
+        None of the parameters do anything, they're only there so that
+        ``numpy.mean()`` can be called on a ``BaseNumericDistribution``.
+        """
+        if self.exact_mean is not None:
+            return self.exact_mean
+        return self.histogram_mean()
+
+    def sd(self):
+        """Standard deviation of the distribution. May be calculated using a
+        stored exact value or the histogram data."""
+        if self.exact_sd is not None:
+            return self.exact_sd
+        return self.histogram_sd()
+
+    def std(self, axis=None, dtype=None, out=None):
+        """Standard deviation of the distribution. May be calculated using a
+        stored exact value or the histogram data.
+
+        Parameters
+        ----------
+        None of the parameters do anything, they're only there so that
+        ``numpy.std()`` can be called on a ``BaseNumericDistribution``.
+        """
+        return self.sd()
+
     def quantile(self, q):
         """Estimate the value of the distribution at quantile ``q`` by
         interpolating between known values.
@@ -236,6 +267,43 @@ class BaseNumericDistribution(ABC):
         :any:`quantile` for notes on this function's accuracy.
         """
         return np.squeeze(self.ppf(np.asarray(p) / 100))
+
+    def condition_on_success(
+        self,
+        event: Union["BaseNumericDistribution", float],
+        failure_outcome: Optional[Union["BaseNumericDistribution", float]] = 0,
+    ):
+        """``event`` is a probability distribution over a probability for some
+        binary outcome. If the event succeeds, the result is the random
+        variable defined by ``self``. If the event fails, the result is zero.
+        Or, if ``failure_outcome`` is provided, the result is
+        ``failure_outcome``.
+
+        This function's return value represents the probability
+        distribution over outcomes in this scenario.
+
+        The return value is equivalent to the result of this procedure:
+
+        1. Generate a probability ``p`` according to the distribution defined
+           by ``event``.
+        2. Generate a Bernoulli random variable with probability ``p``.
+        3. If success, generate a random outcome according to the distribution
+           defined by ``self``.
+        4. Otherwise, generate a random outcome according to the distribution
+           defined by ``failure_outcome``.
+
+        """
+        if failure_outcome != 0:
+            # TODO: you can't just do a sum. I think what you want to do is
+            # scale the masses and then smush the bins together
+            raise NotImplementedError
+        if isinstance(event, Real):
+            p_success = event
+        elif isinstance(event, BaseNumericDistribution):
+            p_success = event.mean()
+        else:
+            raise TypeError(f"Cannot condition on type {type(event)}")
+        return ZeroNumericDistribution.wrap(self, 1 - p_success)
 
     def __ne__(x, y):
         return not (x == y)
@@ -579,7 +647,7 @@ class NumericDistribution(BaseNumericDistribution):
     @classmethod
     def from_distribution(
         cls,
-        dist: BaseDistribution | BaseNumericDistribution | Real,
+        dist: Union[BaseDistribution, BaseNumericDistribution, Real],
         num_bins: Optional[int] = None,
         bin_sizing: Optional[str] = None,
         warn: bool = True,
@@ -638,7 +706,7 @@ class NumericDistribution(BaseNumericDistribution):
                 exact_sd=0,
             )
         if isinstance(dist, BernoulliDistribution):
-            return cls.from_distribution(1, num_bins, bin_sizing, warn).scale_by_probability(
+            return cls.from_distribution(1, num_bins, bin_sizing, warn).condition_on_success(
                 dist.p
             )
         if isinstance(dist, MixtureDistribution):
@@ -950,10 +1018,7 @@ class NumericDistribution(BaseNumericDistribution):
 
         # Convert any Squigglepy dists into NumericDistributions
         for i in range(len(dists)):
-            if isinstance(dists[i], BaseDistribution):
-                dists[i] = NumericDistribution.from_distribution(dists[i], num_bins, bin_sizing)
-            elif not isinstance(dists[i], BaseNumericDistribution):
-                raise ValueError(f"Cannot create a mixture with type {type(dists[i])}")
+            dists[i] = NumericDistribution.from_distribution(dists[i], num_bins, bin_sizing)
 
         value_vectors = [d.values for d in dists]
         weighted_mass_vectors = [d.masses * w for d, w in zip(dists, weights)]
@@ -981,6 +1046,41 @@ class NumericDistribution(BaseNumericDistribution):
         )
 
         return mixture.clip(lclip, rclip)
+
+    def given_value_satisfies(self, condition: Callable[float, bool]):
+        """Return a new distribution conditioned on the value of the random
+        variable satisfying ``condition``.
+
+        Parameters
+        ----------
+        condition : Callable[float, bool]
+        """
+        good_indexes = np.where(np.vectorize(condition)(self.values))
+        values = self.values[good_indexes]
+        masses = self.masses[good_indexes]
+        masses /= np.sum(masses)
+        zero_bin_index = np.searchsorted(values, 0, side="left")
+        neg_ev_contribution = -np.sum(masses[:zero_bin_index] * values[:zero_bin_index])
+        pos_ev_contribution = np.sum(masses[zero_bin_index:] * values[zero_bin_index:])
+        return NumericDistribution(
+            values=values,
+            masses=masses,
+            zero_bin_index=zero_bin_index,
+            neg_ev_contribution=neg_ev_contribution,
+            pos_ev_contribution=pos_ev_contribution,
+            exact_mean=None,
+            exact_sd=None,
+        )
+
+    def probability_value_satisfies(self, condition: Callable[float, bool]):
+        """Return the probability that the random variable satisfies
+        ``condition``.
+
+        Parameters
+        ----------
+        condition : Callable[float, bool]
+        """
+        return np.sum(self.masses[np.where(np.vectorize(condition)(self.values))])
 
     def __len__(self):
         return self.num_bins
@@ -1010,25 +1110,11 @@ class NumericDistribution(BaseNumericDistribution):
         if the exact mean is known)."""
         return np.sum(self.masses * self.values)
 
-    def mean(self):
-        """Mean of the distribution. May be calculated using a stored exact
-        value or the histogram data."""
-        if self.exact_mean is not None:
-            return self.exact_mean
-        return self.histogram_mean()
-
     def histogram_sd(self):
         """Standard deviation of the distribution, calculated using the
         histogram data (even if the exact SD is known)."""
         mean = self.mean()
         return np.sqrt(np.sum(self.masses * (self.values - mean) ** 2))
-
-    def sd(self):
-        """Standard deviation of the distribution. May be calculated using a
-        stored exact value or the histogram data."""
-        if self.exact_sd is not None:
-            return self.exact_sd
-        return self.histogram_sd()
 
     def _init_interpolate_cdf(self):
         if self.interpolate_cdf is None:
@@ -1063,8 +1149,9 @@ class NumericDistribution(BaseNumericDistribution):
 
         It is strongly recommended that, whenever possible, you construct a
         ``NumericDistribution`` by supplying a ``Distribution`` that has
-        lclip/rclip defined on it, rather than clipping after the fact.
-        Clipping after the fact can greatly decrease accuracy.
+        lclip/rclip defined on it, rather than calling
+        ``NumericDistribution.clip``. ``NumericDistribution.clip`` works by
+        deleting bins, which can greatly decrease accuracy.
 
         Parameters
         ----------
@@ -1128,7 +1215,7 @@ class NumericDistribution(BaseNumericDistribution):
 
     @classmethod
     def _contribution_to_ev(
-        cls, values: np.ndarray, masses: np.ndarray, x: np.ndarray | float, normalized=True
+        cls, values: np.ndarray, masses: np.ndarray, x: Union[np.ndarray, float], normalized=True
     ):
         if isinstance(x, np.ndarray) and x.ndim == 0:
             x = x.item()
@@ -1143,7 +1230,7 @@ class NumericDistribution(BaseNumericDistribution):
 
     @classmethod
     def _inv_contribution_to_ev(
-        cls, values: np.ndarray, masses: np.ndarray, fraction: np.ndarray | float
+        cls, values: np.ndarray, masses: np.ndarray, fraction: Union[np.ndarray, float]
     ):
         if isinstance(fraction, np.ndarray):
             return np.array(
@@ -1157,10 +1244,10 @@ class NumericDistribution(BaseNumericDistribution):
         index = np.searchsorted(fractions_of_ev, fraction - epsilon)
         return values[index]
 
-    def contribution_to_ev(self, x: np.ndarray | float):
+    def contribution_to_ev(self, x: Union[np.ndarray, float]):
         return self._contribution_to_ev(self.values, self.masses, x)
 
-    def inv_contribution_to_ev(self, fraction: np.ndarray | float):
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         """Return the value such that ``fraction`` of the contribution to
         expected value lies to the left of that value.
         """
@@ -1572,8 +1659,24 @@ class NumericDistribution(BaseNumericDistribution):
             zero_bin_index=len(self.values) - self.zero_bin_index,
             neg_ev_contribution=self.pos_ev_contribution,
             pos_ev_contribution=self.neg_ev_contribution,
-            exact_mean=-self.exact_mean,
+            exact_mean=-self.exact_mean if self.exact_mean is not None else None,
             exact_sd=self.exact_sd,
+        )
+
+    def __abs__(self):
+        values = abs(self.values)
+        masses = self.masses
+        sorted_indexes = np.argsort(values, kind="mergesort")
+        values = values[sorted_indexes]
+        masses = masses[sorted_indexes]
+        return NumericDistribution(
+            values=values,
+            masses=masses,
+            zero_bin_index=0,
+            neg_ev_contribution=0,
+            pos_ev_contribution=np.sum(values * masses),
+            exact_mean=None,
+            exact_sd=None,
         )
 
     def __mul__(x, y):
@@ -1698,42 +1801,6 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=self.exact_sd * scalar if self.exact_sd is not None else None,
         )
 
-    def scale_by_probability(self, p):
-        return ZeroNumericDistribution(self, 1 - p)
-
-    def condition_on_success(
-        self,
-        event: BaseNumericDistribution,
-        failure_outcome: Optional[Union[BaseNumericDistribution, float]] = 0,
-    ):
-        """``event`` is a probability distribution over a probability for some
-        binary outcome. If the event succeeds, the result is the random
-        variable defined by ``self``. If the event fails, the result is zero.
-        Or, if ``failure_outcome`` is provided, the result is
-        ``failure_outcome``.
-
-        This function's return value represents the probability
-        distribution over outcomes in this scenario.
-
-        The return value is equivalent to the result of this procedure:
-
-        1. Generate a probability ``p`` according to the distribution defined
-           by ``event``.
-        2. Generate a Bernoulli random variable with probability ``p``.
-        3. If success, generate a random outcome according to the distribution
-           defined by ``self``.
-        4. Otherwise, generate a random outcome according to the distribution
-           defined by ``failure_outcome``.
-
-        """
-        if failure_outcome != 0:
-            # TODO: you can't just do a sum. I think what you want to do is
-            # scale the masses and then smush the bins together
-            raise NotImplementedError
-        # TODO: generalize this to accept point probabilities
-        p_success = event.mean()
-        return ZeroNumericDistribution(self, 1 - p_success)
-
     def reciprocal(self):
         """Return the reciprocal of the distribution.
 
@@ -1840,6 +1907,11 @@ class ZeroNumericDistribution(BaseNumericDistribution):
     """
 
     def __init__(self, dist: NumericDistribution, zero_mass: float):
+        if not isinstance(dist, NumericDistribution):
+            raise TypeError(f"dist must be a NumericDistribution, got {type(dist)}")
+        if not isinstance(zero_mass, Real):
+            raise TypeError(f"zero_mass must be a Real, got {type(zero_mass)}")
+
         self._version = __version__
         self.dist = dist
         self.zero_mass = zero_mass
@@ -1861,11 +1933,27 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         # To be computed lazily
         self.interpolate_ppf = None
 
+    @classmethod
+    def wrap(cls, dist: BaseNumericDistribution, zero_mass: float):
+        if isinstance(dist, ZeroNumericDistribution):
+            return cls(dist.dist, zero_mass + dist.zero_mass * (1 - zero_mass))
+        return cls(dist, zero_mass)
+
+    def given_value_satisfies(self, condition):
+        nonzero_dist = self.dist.given_value_satisfies(condition)
+        if condition(0):
+            nonzero_mass = np.sum([x for i, x in enumerate(self.dist.masses) if condition(self.dist.values[i])])
+            zero_mass = self.zero_mass
+            total_mass = nonzero_mass + zero_mass
+            scaled_zero_mass = zero_mass / total_mass
+            return ZeroNumericDistribution(nonzero_dist, scaled_zero_mass)
+        return nonzero_dist
+
+    def probability_value_satisfies(self, condition):
+        return self.dist.probability_value_satisfies(condition) * self.nonzero_mass + condition(0) * self.zero_mass
+
     def histogram_mean(self):
         return self.dist.histogram_mean() * self.nonzero_mass
-
-    def mean(self):
-        return self.dist.mean() * self.nonzero_mass
 
     def histogram_sd(self):
         mean = self.mean()
@@ -1875,11 +1963,6 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         zero_variance = self.zero_mass * mean**2
         variance = nonzero_variance + zero_variance
         return np.sqrt(variance)
-
-    def sd(self):
-        if self.exact_sd is not None:
-            return self.exact_sd
-        return self.histogram_sd()
 
     def ppf(self, q):
         if not isinstance(q, Real):
@@ -1937,6 +2020,9 @@ class ZeroNumericDistribution(BaseNumericDistribution):
     def __neg__(self):
         return ZeroNumericDistribution(-self.dist, self.zero_mass)
 
+    def __abs__(self):
+        return ZeroNumericDistribution(abs(self.dist), self.zero_mass)
+
     def exp(self):
         # TODO: exponentiate the wrapped dist, then do something like shift_by
         # to insert a 1 into the bins
@@ -1946,6 +2032,10 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         raise ValueError("Cannot take the log of a distribution with non-positive values")
 
     def __mul__(x, y):
+        if isinstance(y, NumericDistribution):
+            return x * ZeroNumericDistribution(y, 0)
+        if isinstance(y, Real):
+            return x.scale_by(y)
         dist = x.dist * y.dist
         nonzero_mass = x.nonzero_mass * y.nonzero_mass
         return ZeroNumericDistribution(dist, 1 - nonzero_mass)
@@ -1963,7 +2053,7 @@ class ZeroNumericDistribution(BaseNumericDistribution):
 
 
 def numeric(
-    dist: BaseDistribution,
+    dist: Union[BaseDistribution, BaseNumericDistribution],
     num_bins: Optional[int] = None,
     bin_sizing: Optional[str] = None,
     warn: bool = True,

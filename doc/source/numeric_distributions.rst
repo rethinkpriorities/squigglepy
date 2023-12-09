@@ -56,11 +56,6 @@ https://inis.iaea.org/collection/NCLCollectionStore/_Public/19/047/19047359.pdf
 Runtime performance
 -------------------
 
-Bottom line: On the example models that I tested, simulating the model
-using ``NumericDistribution``s with ``n`` bins ran about 3x faster than
-using Monte Carlo with ``n^2`` bins, and the ``NumericDistribution``
-results were more accurate.
-
 Where ``n`` is the number of bins, constructing a ``NumericDistribution``
 or performing a unary operation has runtime :math:`O(n)`. A binary
 operation (such as addition or multiplication) has a runtime close to
@@ -76,6 +71,10 @@ constructing a ``NumericDistribution``.
 Accuracy is linear in the number of bins but runtime is quadratic, so you
 typically don't want to use bin counts larger than the default unless
 you're particularly concerned about accuracy.
+
+Compared to Monte Carlo, on the example models I tested, ``NumericDistribution``
+was consistently faster when running both at the same level of accuracy, with
+the speed differential ranging from ~10x to ~300x.
 
 On setting values within bins
 -----------------------------
