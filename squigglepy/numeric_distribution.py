@@ -21,6 +21,7 @@ from .distributions import (
     MixtureDistribution,
     NormalDistribution,
     ParetoDistribution,
+    PERTDistribution,
     UniformDistribution,
 )
 from .version import __version__
@@ -121,6 +122,7 @@ DEFAULT_BIN_SIZING = {
     LognormalDistribution: BinSizing.fat_hybrid,
     NormalDistribution: BinSizing.uniform,
     ParetoDistribution: BinSizing.ev,
+    PERTDistribution: BinSizing.mass,
     UniformDistribution: BinSizing.uniform,
 }
 """
@@ -139,6 +141,7 @@ DEFAULT_NUM_BINS = {
     MixtureDistribution: 200,
     NormalDistribution: 200,
     ParetoDistribution: 200,
+    PERTDistribution: 100,
     UniformDistribution: 50,
 }
 """
@@ -686,6 +689,27 @@ class NumericDistribution(BaseNumericDistribution):
                 bin_sizing=bin_sizing,
                 warn=warn,
             )
+        if isinstance(dist, PERTDistribution):
+            # PERT is a generalization of Beta. We can generate a PERT by
+            # generating a Beta and then scaling and shifting it.
+            if dist.lclip is not None or dist.rclip is not None:
+                raise ValueError("PERT distribution with lclip or rclip is not supported.")
+            r = dist.right - dist.left
+            alpha = 1 + dist.lam * (dist.mode - dist.left) / r
+            beta = 1 + dist.lam * (dist.right - dist.mode) / r
+            beta_dist = cls.from_distribution(
+                BetaDistribution(
+                    a=alpha,
+                    b=beta,
+                ),
+                num_bins=num_bins,
+                bin_sizing=bin_sizing,
+                warn=warn,
+            )
+            # Note: There are formulas for the exact mean/SD of a PERT, but
+            # scaling/shifting will correctly produce the exact mean/SD so we
+            # don't need to set them manually.
+            return dist.left + r * beta_dist
 
         # -------------------------------------------------------------------
         # Set up required parameters based on dist type and bin sizing method

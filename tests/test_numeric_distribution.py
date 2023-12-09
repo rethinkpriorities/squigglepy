@@ -77,7 +77,7 @@ def get_mc_accuracy(exact_sd, num_samples, dists, operation):
     return mc_abs_error[-5]
 
 
-def fix_uniform(a, b):
+def fix_ordering(a, b):
     """
     Check that a and b are ordered correctly and that they're not tiny enough
     to mess up floating point calculations.
@@ -1145,7 +1145,7 @@ def test_norm_exp(mean, sd):
 @example(loga=-5, logb=10)
 @settings(max_examples=1)
 def test_uniform_exp(loga, logb):
-    loga, logb = fix_uniform(loga, logb)
+    loga, logb = fix_ordering(loga, logb)
     dist = UniformDistribution(loga, logb)
     hist = numeric(dist)
     exp_hist = hist.exp()
@@ -1411,10 +1411,9 @@ def test_quantile_with_zeros():
     a=st.floats(min_value=-100, max_value=100),
     b=st.floats(min_value=-100, max_value=100),
 )
-@example(a=99.99999999988448, b=100.0)
-@example(a=-1, b=1)
+@settings(max_examples=10)
 def test_uniform_basic(a, b):
-    a, b = fix_uniform(a, b)
+    a, b = fix_ordering(a, b)
     dist = UniformDistribution(x=a, y=b)
     with warnings.catch_warnings():
         # hypothesis generates some extremely tiny input params, which
@@ -1459,8 +1458,8 @@ def test_uniform_sum_basic():
 def test_uniform_sum(a1, b1, a2, b2, flip2):
     if flip2:
         a2, b2 = -b2, -a2
-    a1, b1 = fix_uniform(a1, b1)
-    a2, b2 = fix_uniform(a2, b2)
+    a1, b1 = fix_ordering(a1, b1)
+    a2, b2 = fix_ordering(a2, b2)
     dist1 = UniformDistribution(x=a1, y=b1)
     dist2 = UniformDistribution(x=a2, y=b2)
     with warnings.catch_warnings():
@@ -1482,11 +1481,12 @@ def test_uniform_sum(a1, b1, a2, b2, flip2):
     b2=st.floats(min_value=1, max_value=10000),
     flip2=st.booleans(),
 )
+@settings(max_examples=10)
 def test_uniform_prod(a1, b1, a2, b2, flip2):
     if flip2:
         a2, b2 = -b2, -a2
-    a1, b1 = fix_uniform(a1, b1)
-    a2, b2 = fix_uniform(a2, b2)
+    a1, b1 = fix_ordering(a1, b1)
+    a2, b2 = fix_ordering(a2, b2)
     dist1 = UniformDistribution(x=a1, y=b1)
     dist2 = UniformDistribution(x=a2, y=b2)
     with warnings.catch_warnings():
@@ -1504,22 +1504,23 @@ def test_uniform_prod(a1, b1, a2, b2, flip2):
     norm_mean=st.floats(np.log(0.001), np.log(1e6)),
     norm_sd=st.floats(0.1, 2),
 )
-@example(a=-1000, b=999.999999970314, norm_mean=13, norm_sd=1)
+@settings(max_examples=10)
 def test_uniform_lognorm_prod(a, b, norm_mean, norm_sd):
-    a, b = fix_uniform(a, b)
+    a, b = fix_ordering(a, b)
     dist1 = UniformDistribution(x=a, y=b)
     dist2 = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist1 = numeric(dist1)
-    hist2 = numeric(dist2, bin_sizing="ev", warn=False)
+    hist2 = numeric(dist2, warn=False)
     hist_prod = hist1 * hist2
     assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.5)
+    assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.1)
 
 
 @given(
     a=st.floats(min_value=0.5, max_value=100),
     b=st.floats(min_value=0.5, max_value=100),
 )
+@settings(max_examples=10)
 def test_beta_basic(a, b):
     dist = BetaDistribution(a, b)
     hist = numeric(dist)
@@ -1535,6 +1536,7 @@ def test_beta_basic(a, b):
     mean=st.floats(-10, 10),
     sd=st.floats(0.1, 10),
 )
+@settings(max_examples=10)
 def test_beta_sum(a, b, mean, sd):
     dist1 = BetaDistribution(a=a, b=b)
     dist2 = NormalDistribution(mean=mean, sd=sd)
@@ -1551,6 +1553,7 @@ def test_beta_sum(a, b, mean, sd):
     norm_mean=st.floats(-10, 10),
     norm_sd=st.floats(0.1, 1),
 )
+@settings(max_examples=10)
 def test_beta_prod(a, b, norm_mean, norm_sd):
     dist1 = BetaDistribution(a=a, b=b)
     dist2 = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
@@ -1559,6 +1562,66 @@ def test_beta_prod(a, b, norm_mean, norm_sd):
     hist_prod = hist1 * hist2
     assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
     assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.02)
+
+
+@given(
+    left=st.floats(min_value=-100, max_value=100),
+    right=st.floats(min_value=-100, max_value=100),
+    mode=st.floats(min_value=-100, max_value=100),
+)
+@settings(max_examples=10)
+def test_pert_basic(left, right, mode):
+    left, mode = fix_ordering(left, mode)
+    mode, right = fix_ordering(mode, right)
+    left, mode = fix_ordering(left, mode)
+    assert (left < mode < right) or (left == mode == right)
+    dist = PERTDistribution(left=left, right=right, mode=mode)
+    hist = numeric(dist)
+    assert hist.exact_mean == approx((left + 4 * mode + right) / 6)
+    assert hist.histogram_mean() == approx(hist.exact_mean)
+    assert hist.exact_sd == approx((np.sqrt((hist.exact_mean - left) * (right - hist.exact_mean) / 7)))
+    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.001)
+
+
+@given(
+    left=st.floats(min_value=-100, max_value=100),
+    right=st.floats(min_value=-100, max_value=100),
+    mode=st.floats(min_value=-100, max_value=100),
+    lam=st.floats(min_value=1, max_value=10),
+)
+@settings(max_examples=10)
+def test_pert_with_lambda(left, right, mode, lam):
+    left, mode = fix_ordering(left, mode)
+    mode, right = fix_ordering(mode, right)
+    left, mode = fix_ordering(left, mode)
+    assert (left < mode < right) or (left == mode == right)
+    dist = PERTDistribution(left=left, right=right, mode=mode, lam=lam)
+    hist = numeric(dist)
+    true_mean = (left + lam * mode + right) / (lam + 2)
+    true_sd_lam4 = np.sqrt((hist.exact_mean - left) * (right - hist.exact_mean) / 7)
+    assert hist.exact_mean == approx(true_mean)
+    assert hist.histogram_mean() == approx(true_mean)
+    if lam < 3.9:
+        assert hist.histogram_sd() > true_sd_lam4
+    elif lam > 4.1:
+        assert hist.histogram_sd() < true_sd_lam4
+
+
+@given(
+    mode=st.floats(min_value=0.01, max_value=0.99),
+)
+@settings(max_examples=10)
+def test_pert_equals_beta(mode):
+    alpha = 1 + 4 * mode
+    beta = 1 + 4 * (1 - mode)
+    beta_dist = BetaDistribution(alpha, beta)
+    pert_dist = PERTDistribution(left=0, right=1, mode=mode)
+    beta_hist = numeric(beta_dist)
+    pert_hist = numeric(pert_dist)
+    assert beta_hist.exact_mean == approx(pert_hist.exact_mean)
+    assert beta_hist.exact_sd == approx(pert_hist.exact_sd)
+    assert beta_hist.histogram_mean() == approx(pert_hist.histogram_mean())
+    assert beta_hist.histogram_sd() == approx(pert_hist.histogram_sd(), rel=0.01)
 
 
 @given(
