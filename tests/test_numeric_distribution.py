@@ -6,6 +6,7 @@ import operator
 from pytest import approx
 from scipy import integrate, stats
 import sys
+from unittest.mock import patch, Mock
 import warnings
 
 from ..squigglepy.distributions import *
@@ -727,7 +728,7 @@ def test_lognorm_mean_error_propagation(norm_mean, norm_sd, num_bins, bin_sizing
 @given(bin_sizing=st.sampled_from(["ev", "log-uniform"]))
 def test_lognorm_sd_error_propagation(bin_sizing):
     verbose = False
-    dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+    dist = LognormalDistribution(norm_mean=0, norm_sd=0.1)
     num_bins = 100
     hist = numeric(dist, num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
     abs_error = []
@@ -736,12 +737,14 @@ def test_lognorm_sd_error_propagation(bin_sizing):
     if verbose:
         print("")
     for i in [1, 2, 4, 8, 16, 32]:
+        oneshot = numeric(LognormalDistribution(norm_mean=0, norm_sd=0.1 * np.sqrt(i)), num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
         true_mean = stats.lognorm.mean(np.sqrt(i))
         true_sd = hist.exact_sd
         abs_error.append(abs(hist.histogram_sd() - true_sd))
         rel_error.append(relative_error(hist.histogram_sd(), true_sd))
         if verbose:
-            print(f"n = {i:2d}: {rel_error[-1]*100:4.1f}% from SD {hist.histogram_sd():.3f}")
+            print(f"i={i:2d}: Hist error  : {rel_error[-1] * 100:.4f}%")
+            print(f"i={i:2d}: Hist / 1shot: {(rel_error[-1] / relative_error(oneshot.histogram_sd(), true_sd)) * 100:.0f}%")
         hist = hist * hist
 
     expected_error_pcts = (
@@ -1645,6 +1648,55 @@ def test_pareto_dist(shape):
 
 
 @given(
+    x=st.floats(min_value=-100, max_value=100),
+    wrap_in_dist=st.booleans(),
+)
+def test_constant_dist(x, wrap_in_dist):
+    dist1 = NormalDistribution(mean=1, sd=1)
+    if wrap_in_dist:
+        dist2 = ConstantDistribution(x=x)
+    else:
+        dist2 = x
+    hist1 = numeric(dist1, warn=False)
+    hist2 = numeric(dist2, warn=False)
+    hist_sum = hist1 + hist2
+    assert hist_sum.exact_mean == approx(1 + x)
+    assert hist_sum.histogram_mean() == approx(1 + x, rel=1e-6)
+    assert hist_sum.exact_sd == approx(1)
+    assert hist_sum.histogram_sd() == approx(hist1.histogram_sd(), rel=1e-6)
+
+
+@given(
+    p=st.floats(min_value=0.001, max_value=0.999),
+)
+def test_bernoulli_dist(p):
+    dist = BernoulliDistribution(p=p)
+    hist = numeric(dist, warn=False)
+    assert hist.exact_mean == approx(p)
+    assert hist.histogram_mean() == approx(p, rel=1e-6)
+    assert hist.exact_sd == approx(np.sqrt(p * (1 - p)))
+    assert hist.histogram_sd() == approx(hist.exact_sd, rel=1e-6)
+
+
+def test_complex_dist():
+    left = NormalDistribution(mean=1, sd=1)
+    right = NormalDistribution(mean=0, sd=1)
+    dist = ComplexDistribution(left, right, operator.add)
+    hist = numeric(dist, warn=False)
+    assert hist.exact_mean == approx(1)
+    assert hist.histogram_mean() == approx(1, rel=1e-6)
+
+
+def test_complex_dist_with_float():
+    left = NormalDistribution(mean=1, sd=1)
+    right = 2
+    dist = ComplexDistribution(left, right, operator.mul)
+    hist = numeric(dist, warn=False)
+    assert hist.exact_mean == approx(2)
+    assert hist.histogram_mean() == approx(2, rel=1e-6)
+
+
+@given(
     norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=4),
     bin_num=st.integers(min_value=1, max_value=99),
@@ -1802,63 +1854,6 @@ def test_quantile_mass_after_sum(mean1, mean2, sd1, sd2, percent):
     ) == approx(percent, abs=0.25)
 
 
-def test_complex_dist():
-    left = NormalDistribution(mean=1, sd=1)
-    right = NormalDistribution(mean=0, sd=1)
-    dist = ComplexDistribution(left, right, operator.add)
-    hist = numeric(dist, warn=False)
-    assert hist.exact_mean == approx(1)
-    assert hist.histogram_mean() == approx(1, rel=1e-6)
-
-
-def test_complex_dist_with_float():
-    left = NormalDistribution(mean=1, sd=1)
-    right = 2
-    dist = ComplexDistribution(left, right, operator.mul)
-    hist = numeric(dist, warn=False)
-    assert hist.exact_mean == approx(2)
-    assert hist.histogram_mean() == approx(2, rel=1e-6)
-
-
-@given(
-    x=st.floats(min_value=-100, max_value=100),
-    wrap_in_dist=st.booleans(),
-)
-def test_constant_dist(x, wrap_in_dist):
-    dist1 = NormalDistribution(mean=1, sd=1)
-    if wrap_in_dist:
-        dist2 = ConstantDistribution(x=x)
-    else:
-        dist2 = x
-    hist1 = numeric(dist1, warn=False)
-    hist2 = numeric(dist2, warn=False)
-    hist_sum = hist1 + hist2
-    assert hist_sum.exact_mean == approx(1 + x)
-    assert hist_sum.histogram_mean() == approx(1 + x, rel=1e-6)
-    assert hist_sum.exact_sd == approx(1)
-    assert hist_sum.histogram_sd() == approx(hist1.histogram_sd(), rel=1e-6)
-
-
-@given(
-    p=st.floats(min_value=0.001, max_value=0.999),
-)
-def test_bernoulli_dist(p):
-    dist = BernoulliDistribution(p=p)
-    hist = numeric(dist, warn=False)
-    assert hist.exact_mean == approx(p)
-    assert hist.histogram_mean() == approx(p, rel=1e-6)
-    assert hist.exact_sd == approx(np.sqrt(p * (1 - p)))
-    assert hist.histogram_sd() == approx(hist.exact_sd, rel=1e-6)
-
-
-def test_utils_get_percentiles_basic():
-    dist = NormalDistribution(mean=0, sd=1)
-    hist = numeric(dist, warn=False)
-    assert utils.get_percentiles(hist, 1) == hist.percentile(1)
-    assert utils.get_percentiles(hist, [5]) == hist.percentile([5])
-    assert all(utils.get_percentiles(hist, np.array([10, 20])) == hist.percentile([10, 20]))
-
-
 def test_quantile_accuracy():
     if not RUN_PRINT_ONLY_TESTS:
         return None
@@ -1909,13 +1904,12 @@ def test_quantile_product_accuracy():
     # props = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999]) # lognorm
     # props = np.array([0.05, 0.1, 0.25, 0.75, 0.9, 0.95, 0.99, 0.999])  # norm
     num_bins = 200
-    num_products = 30
     print("\n")
     # print(f"MC error: average {fmt(np.mean(mc_error))}, median {fmt(np.median(mc_error))}, max {fmt(np.max(mc_error))}")
 
     bin_sizing = "log-uniform"
     # for bin_sizing in ["log-uniform", "mass", "ev", "fat-hybrid"]:
-    for num_products in [2, 4, 8, 16, 32, 64, 128]:
+    for num_products in [2, 4, 8, 16, 32, 64, 128, 256, 512]:
         dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
         dist = LognormalDistribution(norm_mean=dist1.norm_mean * num_products, norm_sd=dist1.norm_sd * np.sqrt(num_products))
         true_quantiles = stats.lognorm.ppf(props, dist.norm_sd, scale=np.exp(dist.norm_mean))
@@ -1940,6 +1934,23 @@ def test_quantile_product_accuracy():
         print(f"\tHist error  : average {fmt(np.mean(hist_error))}, median {fmt(np.median(hist_error))}, max {fmt(np.max(hist_error))}")
         print(f"\tHist / MC   : average {fmt(np.mean(hist_error / mc_error))}, median {fmt(np.median(hist_error / mc_error))}, max {fmt(np.max(hist_error / mc_error))}")
         print(f"\tHist / 1shot: average {fmt(np.mean(hist_error / oneshot_error))}, median {fmt(np.median(hist_error / oneshot_error))}, max {fmt(np.max(hist_error / oneshot_error))}")
+
+
+@patch.object(np.random, "uniform", Mock(return_value=0.5))
+@given(mean=st.floats(min_value=-10, max_value=10))
+def test_sample(mean):
+    dist = NormalDistribution(mean=mean, sd=1)
+    hist = numeric(dist)
+    assert hist.sample() == approx(mean, rel=1e-3)
+
+
+
+def test_utils_get_percentiles_basic():
+    dist = NormalDistribution(mean=0, sd=1)
+    hist = numeric(dist, warn=False)
+    assert utils.get_percentiles(hist, 1) == hist.percentile(1)
+    assert utils.get_percentiles(hist, [5]) == hist.percentile([5])
+    assert all(utils.get_percentiles(hist, np.array([10, 20])) == hist.percentile([10, 20]))
 
 
 

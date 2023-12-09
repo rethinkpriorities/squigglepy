@@ -89,7 +89,7 @@ class BinSizing(Enum):
     This binning method means that the distribution EV is exactly preserved
     and there is no bin that contains the value zero. However, the positive
     and negative bins do not necessarily have equal contribution to EV, and
-    the magnitude of the error is at most 1 / num_bins / 2.
+    the magnitude of the error is at most ``1 / num_bins / 2``.
 
     """
 
@@ -143,6 +143,12 @@ def _support_for_bin_sizing(dist, bin_sizing, num_bins):
     return None
 
 
+"""
+Default bin sizing method for each distribution type. Chosen based on
+empirical tests of which method best balances the accuracy across summary
+statistics and across operations (addition, multiplication, left/right clip,
+etc.).
+"""
 DEFAULT_BIN_SIZING = {
     BetaDistribution: BinSizing.mass,
     ChiSquareDistribution: BinSizing.ev,
@@ -154,6 +160,12 @@ DEFAULT_BIN_SIZING = {
     UniformDistribution: BinSizing.uniform,
 }
 
+"""
+Default number of bins for each distribution type. The default is 200 for
+most distributions, which provides a good balance of accuracy and speed. Some
+distributions use a smaller number of bins because they are sufficiently narrow
+and well-behaved that not many bins are needed for high accuracy.
+"""
 DEFAULT_NUM_BINS = {
     BetaDistribution: 50,
     ChiSquareDistribution: 200,
@@ -208,6 +220,16 @@ def _log(x):
 
 
 class BaseNumericDistribution(ABC):
+    """BaseNumericDistribution
+
+    An abstract base class for numeric distributions. For more documentation,
+    see :class:`NumericDistribution` and :class:`ZeroNumericDistribution`.
+
+    """
+
+    def __str__(self):
+        return f"{type(self).__name__}(mean={self.mean()}, sd={self.sd()})"
+
     def quantile(self, q):
         """Estimate the value of the distribution at quantile ``q`` by
         interpolating between known values.
@@ -222,7 +244,7 @@ class BaseNumericDistribution(ABC):
         for fat-tailed distributions.
 
         The accuracy at different quantiles depends on the bin sizing method
-        used. :ref:``BinSizing.mass`` will produce bins that are evenly spaced
+        used. :any:`BinSizing.mass` will produce bins that are evenly spaced
         across quantiles. ``BinSizing.ev`` and ``BinSizing.log_uniform`` for
         fat-tailed distributions will lose accuracy at lower quantiles in
         exchange for greater accuracy on the right tail.
@@ -232,8 +254,8 @@ class BaseNumericDistribution(ABC):
         q : number or array_like
             The quantile or quantiles for which to determine the value(s).
 
-        Return
-        ------
+        Returns
+        -------
         quantiles: number or array-like
             The estimated value at the given quantile(s).
 
@@ -242,12 +264,12 @@ class BaseNumericDistribution(ABC):
 
     @abstractmethod
     def ppf(self, q):
-        """Percent point function/inverse CD. An alias for :ref:``quantile``."""
+        """Percent point function/inverse CD. An alias for :any:`quantile`."""
         ...
 
     def percentile(self, p):
         """Estimate the value of the distribution at percentile ``p``. See
-        :ref:``quantile`` for notes on this function's accuracy.
+        :any:`quantile` for notes on this function's accuracy.
         """
         return np.squeeze(self.ppf(np.asarray(p) / 100))
 
@@ -293,10 +315,69 @@ class NumericDistribution(BaseNumericDistribution):
     obvious in fat-tailed distributions. In a Monte Carlo simulation, perhaps 1
     in 1000 samples account for 10% of the expected value, but a
     ``NumericDistribution`` (with the right bin sizing method, see
-    :ref:``BinSizing``) can easily track the probability mass of large values.
+    :any:`BinSizing`) can easily track the probability mass of large values.
 
     Implementation Details
     ======================
+
+    Accuracy
+    --------
+
+    The construction of ``NumericDistribution`` ensures that its expected value
+    is always close to 100% accurate. The higher moments (standard deviation,
+    skewness, etc.) and percentiles are less accurate, but still almost always
+    more accurate than Monte Carlo.
+
+    We are probably most interested in the accuracy of percentiles. Consider a
+    simulation that applies binary operations to combine ``m`` different
+    ``NumericDistribution``s, each with ``n`` bins. The relative error of
+    estimated percentiles grows with :math:`O(m / n^2)`. That is, the error is
+    proportional to the number of operations and inversely proportional to the
+    square of the number of bins.
+
+    Compare this to the relative error of percentiles for a Monte Carlo (MC)
+    simulation over a log-normal distribution. MC relative error grows with
+    :math:`O(\sqrt{m} / n)`[1], given the assumption that if our
+    ``NumericDistribution`` has ``n`` bins, then our MC simulation runs ``n^2``
+    samples (because both have a runtime of approximately :math:`O(n^2)`). So
+    MC scales worse with ``n``, but better with ``m``.
+
+    I tested accuracy across a range of percentiles for a variety of values of
+    ``m`` and ``n``. Although MC scales better with ``m`` than
+    ``NumericDistribution``, MC does not achieve lower error rates until ``m =
+    500`` or so (using ``n = 200``). Few simulations will involve combining 500
+    separate variables, so ``NumericDistribution`` should nearly always perform
+    better in practice.
+
+    Similarly, the error on ``NumericDistribution``'s estimated standard
+    deviation scales with :math:`O(m / n^2)`. I don't know the formula for the relative error of MC standard deviation, but empirically, it appears to scale with :math:`O(\sqrt{m} / n)`.
+
+    [1] Goodman (1983). Accuracy and Efficiency of Monte Carlo Method.
+    https://inis.iaea.org/collection/NCLCollectionStore/_Public/19/047/19047359.pdf
+
+    Runtime performance
+    -------------------
+
+    Bottom line: On the example models that I tested, simulating the model
+    using ``NumericDistribution``s with ``n`` bins ran about 3x faster than
+    using Monte Carlo with ``n^2`` bins, and the ``NumericDistribution``
+    results were more accurate.
+
+    Where ``n`` is the number of bins, constructing a ``NumericDistribution``
+    or performing a unary operation has runtime :math:`O(n)`. A binary
+    operation (such as addition or multiplication) has a runtime close to
+    :math:`O(n^2)`. To be precise, the runtime is :math:`O(n^2 \log(n))`
+    because the :math:`n^2` results of a binary operation must be partitioned
+    into :math:`n` ordered bins. In practice, this partitioning operation takes
+    up a fairly small portion of the runtime for ``n = 200`` (the default bin
+    count), and only takes up ~half the runtime for ``n > 1000`.
+
+    For ``n = 200``, a binary operation takes about twice as long as
+    constructing a ``NumericDistribution``.
+
+    Accuracy is linear in the number of bins but runtime is quadratic, so you
+    typically don't want to use bin counts larger than the default unless
+    you're particularly concerned about accuracy.
 
     On setting values within bins
     -----------------------------
@@ -369,7 +450,7 @@ class NumericDistribution(BaseNumericDistribution):
             The probability masses of the values.
         zero_bin_index : int
             The index of the smallest bin that contains positive values (0 if all bins are positive).
-        bin_sizing : :ref:``BinSizing``
+        bin_sizing : :any:`BinSizing`
             The method used to size the bins.
         neg_ev_contribution : float
             The (absolute value of) contribution to expected value from the negative portion of the distribution.
@@ -431,8 +512,8 @@ class NumericDistribution(BaseNumericDistribution):
         bin_sizing : BinSizing
             The bin sizing method to use.
 
-        Return
-        ------
+        Returns
+        -------
         edge_values : np.ndarray
             The value of each bin edge.
         edge_cdfs : Optional[np.ndarray]
@@ -557,8 +638,8 @@ class NumericDistribution(BaseNumericDistribution):
         warn : bool
             If True, raise warnings about bins with zero mass.
 
-        Return
-        ------
+        Returns
+        -------
         masses : np.ndarray
             The probability mass of each bin.
         values : np.ndarray
@@ -653,7 +734,7 @@ class NumericDistribution(BaseNumericDistribution):
         ----------
         dist : BaseDistribution | BaseNumericDistribution | Real
             A distribution from which to generate numeric values. If the
-            provided value is a :ref:``BaseNumericDistribution``, simply return
+            provided value is a :any:`BaseNumericDistribution`, simply return
             it.
         num_bins : Optional[int] (default = ref:``DEFAULT_NUM_BINS``)
             The number of bins for the numeric distribution to use. The time to
@@ -666,16 +747,18 @@ class NumericDistribution(BaseNumericDistribution):
         bin_sizing : Optional[str]
             The bin sizing method to use, which affects the accuracy of the
             bins. If none is given, a default will be chosen from
-            :ref:``DEFAULT_BIN_SIZING`` based on the distribution type of
+            :any:`DEFAULT_BIN_SIZING` based on the distribution type of
             ``dist``. It is recommended to use the default bin sizing method
             most of the time. See
-            :ref:`squigglepy.numeric_distribution.BinSizing` for a list of
+            :any:`squigglepy.numeric_distribution.BinSizing` for a list of
             valid options and explanations of their behavior. warn :
             Optional[bool] (default = True) If True, raise warnings about bins
             with zero mass.
+        warn : Optional[bool] (default = True)
+            If True, raise warnings about bins with zero mass.
 
-        Return
-        ------
+        Returns
+        -------
         result : NumericDistribution | ZeroNumericDistribution
             The generated numeric distribution that represents ``dist``.
 
@@ -685,6 +768,8 @@ class NumericDistribution(BaseNumericDistribution):
         # Handle special distributions
         # ----------------------------
 
+        if isinstance(dist, BaseNumericDistribution):
+            return dist
         if isinstance(dist, ConstantDistribution) or isinstance(dist, Real):
             x = dist if isinstance(dist, Real) else dist.x
             return cls(
@@ -697,7 +782,9 @@ class NumericDistribution(BaseNumericDistribution):
                 exact_sd=0,
             )
         if isinstance(dist, BernoulliDistribution):
-            return cls.from_distribution(1, num_bins, bin_sizing, warn).scale_by_probability(dist.p)
+            return cls.from_distribution(1, num_bins, bin_sizing, warn).scale_by_probability(
+                dist.p
+            )
         if isinstance(dist, MixtureDistribution):
             return cls.mixture(
                 dist.dists,
@@ -720,9 +807,6 @@ class NumericDistribution(BaseNumericDistribution):
         # ------------
         # Basic checks
         # ------------
-
-        if isinstance(dist, BaseNumericDistribution):
-            return dist
 
         if type(dist) not in DEFAULT_BIN_SIZING:
             raise ValueError(f"Unsupported distribution type: {type(dist)}")
@@ -847,9 +931,7 @@ class NumericDistribution(BaseNumericDistribution):
                     exact_sd = np.inf
                 else:
                     # exact_sd = np.sqrt(dist.shape / ((dist.shape - 1) ** 2 * (dist.shape - 2)))  # Lomax
-                    exact_sd = np.sqrt(
-                        dist.shape / ((dist.shape - 1) ** 2 * (dist.shape - 2))
-                    )
+                    exact_sd = np.sqrt(dist.shape / ((dist.shape - 1) ** 2 * (dist.shape - 2)))
             elif isinstance(dist, UniformDistribution):
                 exact_mean = (dist.x + dist.y) / 2
                 exact_sd = np.sqrt(1 / 12) * (dist.y - dist.x)
@@ -1116,8 +1198,8 @@ class NumericDistribution(BaseNumericDistribution):
             The new upper bound of the distribution, or None if the upper bound
             should not change.
 
-        Return
-        ------
+        Returns
+        -------
         clipped : NumericDistribution
             A new distribution clipped to the given bounds.
 
@@ -1163,11 +1245,9 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=None,
         )
 
-    def sample(self, n):
-        """Generate ``n`` random samples from the distribution."""
-        # TODO: Do interpolation instead of returning the same values repeatedly.
-        # Could maybe simplify by calling self.quantile(np.random.uniform(size=n))
-        return np.random.choice(self.values, size=n, p=self.masses)
+    def sample(self, n=1):
+        """Generate ``n`` random samples from the distribution. The samples are generated by interpolating between bin values in the same manner as :any:`ppf`."""
+        return self.ppf(np.random.uniform(size=n))
 
     @classmethod
     def _contribution_to_ev(
@@ -1263,8 +1343,8 @@ class NumericDistribution(BaseNumericDistribution):
         allowance = 0.5 : float
             The fraction
 
-        Return
-        ------
+        Returns
+        -------
         (num_neg_bins, num_pos_bins) : (int, int)
             Number of bins assigned to the negative/positive side of the
             distribution.
@@ -1321,7 +1401,7 @@ class NumericDistribution(BaseNumericDistribution):
             already sorted in ascending order. This provides a significant
             performance improvement (~3x).
 
-        Return
+        Returns
         -------
         values : np.ndarray
             The values of the bins.
@@ -1344,17 +1424,39 @@ class NumericDistribution(BaseNumericDistribution):
                 extended_values = np.concatenate((extra_zeros, extended_values))
                 extended_masses = np.concatenate((extra_zeros, extended_masses))
             boundary_indexes = np.arange(0, num_bins + 1) * items_per_bin
+
+            if not is_sorted:
+                # Partition such that the values in one bin are all less than
+                # or equal to the values in the next bin. Values within bins
+                # don't need to be sorted, and partitioning is ~10% faster than
+                # timsort.
+                partitioned_indexes = extended_values.argpartition(boundary_indexes[1:-1])
+                extended_values = extended_values[partitioned_indexes]
+                extended_masses = extended_masses[partitioned_indexes]
+
+            # Take advantage of the fact that all bins contain the same number
+            # of elements.
+            extended_evs = extended_values * extended_masses
+            masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
+            bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
         elif bin_sizing == BinSizing.ev:
-            # TODO: I think this is wrong, you have to sort/partition the values first
+            if not is_sorted:
+                sorted_indexes = extended_values.argsort(kind="mergesort")
+                extended_values = extended_values[sorted_indexes]
+                extended_masses = extended_masses[sorted_indexes]
+
             extended_evs = extended_values * extended_masses
             cumulative_evs = np.concatenate(([0], np.cumsum(extended_evs)))
             boundary_values = np.linspace(0, cumulative_evs[-1], num_bins + 1)
             boundary_indexes = np.searchsorted(cumulative_evs, boundary_values, side="right") - 1
-            # remove bin boundaries where boundary[i] == boundary[i+1]
-            old_boundary_bins = boundary_indexes
+            # Remove bin boundaries where boundary[i] == boundary[i+1]
             boundary_indexes = np.concatenate(
                 (boundary_indexes[:-1][np.diff(boundary_indexes) > 0], [boundary_indexes[-1]])
             )
+            # Calculate the expected value of each bin
+            bin_evs = np.diff(cumulative_evs[boundary_indexes])
+            cumulative_masses = np.concatenate(([0], np.cumsum(extended_masses)))
+            masses = np.diff(cumulative_masses[boundary_indexes])
         elif bin_sizing == BinSizing.log_uniform:
             # ``bin_count`` puts too much mass in the bins on the left and
             # right tails, but it's still more accurate than log-uniform
@@ -1372,47 +1474,36 @@ class NumericDistribution(BaseNumericDistribution):
             # method 2: size bins by going out a fixed number of log-standard
             # deviations in each direction
             log_mean = np.average(np.log(extended_values), weights=extended_masses)
-            log_sd = np.sqrt(np.average((np.log(extended_values) - log_mean)**2, weights=extended_masses))
+            log_sd = np.sqrt(
+                np.average((np.log(extended_values) - log_mean) ** 2, weights=extended_masses)
+            )
             log_left_bound = log_mean - 6.5 * log_sd
             log_right_bound = log_mean + 6.5 * log_sd
             log_boundary_values = np.linspace(log_left_bound, log_right_bound, num_bins + 1)
             boundary_values = np.exp(log_boundary_values)
 
-            sorted_indexes = extended_values.argsort(kind="mergesort")
-            extended_values = extended_values[sorted_indexes]
-            extended_masses = extended_masses[sorted_indexes]
-            is_sorted = True
+            if not is_sorted:
+                sorted_indexes = extended_values.argsort(kind="mergesort")
+                extended_values = extended_values[sorted_indexes]
+                extended_masses = extended_masses[sorted_indexes]
 
             boundary_indexes = np.searchsorted(extended_values, boundary_values)
-        else:
-            raise ValueError(f"resize_pos_bins: Unsupported bin sizing method: {bin_sizing}")
 
-        if not is_sorted:
-            # Partition such that the values in one bin are all less than
-            # or equal to the values in the next bin. Values within bins
-            # don't need to be sorted, and partitioning is ~10% faster than
-            # timsort.
-            partitioned_indexes = extended_values.argpartition(boundary_indexes[1:-1])
-            extended_values = extended_values[partitioned_indexes]
-            extended_masses = extended_masses[partitioned_indexes]
-
-        if bin_sizing == BinSizing.bin_count:
-            # Take advantage of the fact that all bins contain the same number
-            # of elements.
-            extended_evs = extended_values * extended_masses
-            masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
-            bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
-        elif bin_sizing == BinSizing.ev:
-            # Calculate the expected value of each bin
-            bin_evs = np.diff(cumulative_evs[boundary_indexes])
-            cumulative_masses = np.concatenate(([0], np.cumsum(extended_masses)))
-            masses = np.diff(cumulative_masses[boundary_indexes])
-        elif bin_sizing == BinSizing.log_uniform:
             # Compute sums one at a time instead of using ``cumsum`` because
             # ``cumsum`` produces non-trivial rounding errors.
             extended_evs = extended_values * extended_masses
-            bin_evs = np.array([np.sum(extended_evs[i:j]) for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])])
-            masses = np.array([np.sum(extended_masses[i:j]) for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])])
+            bin_evs = np.array(
+                [
+                    np.sum(extended_evs[i:j])
+                    for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
+                ]
+            )
+            masses = np.array(
+                [
+                    np.sum(extended_masses[i:j])
+                    for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
+                ]
+            )
         else:
             raise ValueError(f"resize_pos_bins: Unsupported bin sizing method: {bin_sizing}")
 
@@ -1460,7 +1551,7 @@ class NumericDistribution(BaseNumericDistribution):
             ``extended_pos_masses`` are already sorted in ascending order. This
             provides a significant performance improvement (~3x).
 
-        Return
+        Returns
         -------
         values : np.ndarray
             The values of the bins.
@@ -1840,7 +1931,7 @@ class NumericDistribution(BaseNumericDistribution):
 
     def log(self):
         """Return the natural log of the distribution."""
-        # See :ref:``exp`` for some discussion of accuracy. For ``log`` on a
+        # See :any:`exp`` for some discussion of accuracy. For ``log` on a
         # log-normal distribution, both the naive method and the integration
         # method tend to overestimate the true mean, but the naive method
         # overestimates it by less.
@@ -1868,7 +1959,7 @@ class NumericDistribution(BaseNumericDistribution):
 
 class ZeroNumericDistribution(BaseNumericDistribution):
     """
-    A :ref:``NumericDistribution`` with a point mass at zero.
+    A :any:`NumericDistribution` with a point mass at zero.
     """
 
     def __init__(self, dist: NumericDistribution, zero_mass: float):
@@ -2006,28 +2097,29 @@ def numeric(
     ----------
     dist : BaseDistribution | BaseNumericDistribution
         A distribution from which to generate numeric values. If the
-        provided value is a :ref:``BaseNumericDistribution``, simply return
+        provided value is a :any:`BaseNumericDistribution`, simply return
         it.
-    num_bins : Optional[int] (default = ref:``DEFAULT_NUM_BINS``)
+    num_bins : Optional[int] (default = :any:``DEFAULT_NUM_BINS``)
         The number of bins for the numeric distribution to use. The time to
         construct a NumericDistribution is linear with ``num_bins``, and
         the time to run a binary operation on two distributions with the
         same number of bins is approximately quadratic with ``num_bins``.
         100 bins provides a good balance between accuracy and speed.
     bin_sizing : Optional[str]
-        The bin sizing method to use, which affects the accuracy of the
-        bins. If none is given, a default will be chosen from
-        :ref:``DEFAULT_BIN_SIZING`` based on the distribution type of
-        ``dist``. It is recommended to use the default bin sizing method
-        most of the time. See
-        :ref:`squigglepy.numeric_distribution.BinSizing` for a list of
-        valid options and explanations of their behavior. warn :
-        Optional[bool] (default = True) If True, raise warnings about bins
-        with zero mass.
+        The bin sizing method to use, which affects the accuracy of the bins.
+        If none is given, a default will be chosen from
+        :any:`DEFAULT_BIN_SIZING` based on the distribution type of ``dist``.
+        It is recommended to use the default bin sizing method most of the
+        time. See :any:`BinSizing` for a list of valid options and explanations
+        of their behavior. warn : Optional[bool] (default = True) If True,
+        raise warnings about bins with zero mass.
+    warn : Optional[bool] (default = True)
+        If True, raise warnings about bins with zero mass.
 
-    Return
-    ------
+    Returns
+    -------
     result : NumericDistribution | ZeroNumericDistribution
         The generated numeric distribution that represents ``dist``.
+
     """
     return NumericDistribution.from_distribution(dist, num_bins, bin_sizing, warn)
