@@ -31,74 +31,44 @@ class BinSizing(Enum):
     with finitely many bins can only contain so much information about the
     shape of a distribution; the choice of bin sizing changes what information
     NumericDistribution prioritizes.
-
-    Attributes
-    ----------
-    uniform : str
-        Divides the distribution into bins of equal width. For distributions
-        with infinite support (such as normal distributions), it chooses a
-        total width to roughly minimize total error, considering both intra-bin
-        error and error due to the excluded tails.
-    log-uniform : str
-        Divides the logarithm of the distribution into bins of equal width. For
-        example, if you generated a NumericDistribution from a log-normal
-        distribution with log-uniform bin sizing, and then took the log of each
-        bin, you'd get a normal distribution with uniform bin sizing.
-    ev : str
-        Divides the distribution into bins such that each bin has equal
-        contribution to expected value (see
-        :func:`squigglepy.distributions.IntegrableEVDistribution.contribution_to_ev`).
-        It works by first computing the bin edge values that equally divide up
-        contribution to expected value, then computing the probability mass of
-        each bin, then setting the value of each bin such that value * mass =
-        contribution to expected value (rather than, say, setting value to the
-        average value of the two edges).
-    mass : str
-        Divides the distribution into bins such that each bin has equal
-        probability mass. This method is generally not recommended
-        because it puts too much probability mass near the center of the
-        distribution, where precision is the least useful.
-    fat-hybrid : str
-        A hybrid method designed for fat-tailed distributions. Uses mass bin
-        sizing close to the center and log-uniform bin siding on the right
-        tail. Empirically, this combination provides the best balance for the
-        accuracy of fat-tailed distributions at the center and at the tails.
-    bin-count : str
-        Shorten a vector of bins by merging every (1/len) bins together. Can
-        only be used for resizing an existing NumericDistribution, not for
-        initializing a new one.
-
-    Interpretation for two-sided distributions
-    ------------------------------------------
-    The interpretation of the EV bin-sizing method is slightly non-obvious
-    for two-sided distributions because we must decide how to interpret bins
-    with negative expected value.
-
-    The EV method arranges values into bins such that:
-        * The negative side has the correct negative contribution to EV and the
-          positive side has the correct positive contribution to EV.
-        * Every negative bin has equal contribution to EV and every positive bin
-          has equal contribution to EV.
-        * If a side has nonzero probability mass, then it has at least one bin,
-          regardless of how small its probability mass.
-        * The number of negative and positive bins are chosen such that the
-          absolute contribution to EV for negative bins is as close as possible
-          to the absolute contribution to EV for positive bins given the above
-          constraints.
-
-    This binning method means that the distribution EV is exactly preserved
-    and there is no bin that contains the value zero. However, the positive
-    and negative bins do not necessarily have equal contribution to EV, and
-    the magnitude of the error is at most ``1 / num_bins / 2``.
-
     """
 
     uniform = "uniform"
+    """Divides the distribution into bins of equal width. For distributions
+    with infinite support (such as normal distributions), it chooses a
+    total width to roughly minimize total error, considering both intra-bin
+    error and error due to the excluded tails."""
+
     log_uniform = "log-uniform"
+    """Divides the distribution into bins with exponentially increasing width.
+    Or, equivalently, divides the logarithm of the distribution into bins
+    of equal width. For example, if you generated a NumericDistribution
+    from a log-normal distribution with log-uniform bin sizing, and then
+    took the log of each bin, you'd get a normal distribution with uniform
+    bin sizing."""
+
     ev = "ev"
+    """Divides the distribution into bins such that each bin has equal
+    contribution to expected value (see
+    :any:`IntegrableEVDistribution.contribution_to_ev`)."""
+
     mass = "mass"
+    """Divides the distribution into bins such that each bin has equal
+    probability mass. This method is generally not recommended
+    because it puts too much probability mass near the center of the
+    distribution, where precision is the least useful."""
+
     fat_hybrid = "fat-hybrid"
+    """A hybrid method designed for fat-tailed distributions. Uses mass bin
+    sizing close to the center and log-uniform bin siding on the right
+    tail. Empirically, this combination provides the best balance for the
+    accuracy of fat-tailed distributions at the center and at the tails."""
+
     bin_count = "bin-count"
+    """Shortens a vector of bins by merging every ``len(vec)/num_bins`` bins
+    together. Can only be used for resizing existing NumericDistributions, not
+    for initializing new ones.
+    """
 
 
 def _support_for_bin_sizing(dist, bin_sizing, num_bins):
@@ -143,12 +113,6 @@ def _support_for_bin_sizing(dist, bin_sizing, num_bins):
     return None
 
 
-"""
-Default bin sizing method for each distribution type. Chosen based on
-empirical tests of which method best balances the accuracy across summary
-statistics and across operations (addition, multiplication, left/right clip,
-etc.).
-"""
 DEFAULT_BIN_SIZING = {
     BetaDistribution: BinSizing.mass,
     ChiSquareDistribution: BinSizing.ev,
@@ -159,13 +123,13 @@ DEFAULT_BIN_SIZING = {
     ParetoDistribution: BinSizing.ev,
     UniformDistribution: BinSizing.uniform,
 }
+"""
+Default bin sizing method for each distribution type. Chosen based on
+empirical tests of which method best balances the accuracy across summary
+statistics and across operations (addition, multiplication, left/right clip,
+etc.).
+"""
 
-"""
-Default number of bins for each distribution type. The default is 200 for
-most distributions, which provides a good balance of accuracy and speed. Some
-distributions use a smaller number of bins because they are sufficiently narrow
-and well-behaved that not many bins are needed for high accuracy.
-"""
 DEFAULT_NUM_BINS = {
     BetaDistribution: 50,
     ChiSquareDistribution: 200,
@@ -177,6 +141,12 @@ DEFAULT_NUM_BINS = {
     ParetoDistribution: 200,
     UniformDistribution: 50,
 }
+"""
+Default number of bins for each distribution type. The default is 200 for
+most distributions, which provides a good balance of accuracy and speed. Some
+distributions use a smaller number of bins because they are sufficiently narrow
+and well-behaved that not many bins are needed for high accuracy.
+"""
 
 CACHED_LOGNORM_CDFS = {}
 CACHED_LOGNORM_PPFS = {}
@@ -234,20 +204,11 @@ class BaseNumericDistribution(ABC):
         """Estimate the value of the distribution at quantile ``q`` by
         interpolating between known values.
 
-        Warning: This function is not very accurate in certain cases. Namely,
-        fat-tailed distributions put much of their probability mass in the
-        smallest bins because the difference between (say) the 10th percentile
-        and the 20th percentile is inconsequential for most purposes. For these
-        distributions, small quantiles will be very inaccurate, in exchange for
-        greater accuracy in quantiles close to 1--this function can often
-        reliably distinguish between (say) the 99.8th and 99.9th percentiles
-        for fat-tailed distributions.
-
         The accuracy at different quantiles depends on the bin sizing method
         used. :any:`BinSizing.mass` will produce bins that are evenly spaced
-        across quantiles. ``BinSizing.ev`` and ``BinSizing.log_uniform`` for
-        fat-tailed distributions will lose accuracy at lower quantiles in
-        exchange for greater accuracy on the right tail.
+        across quantiles. :any:``BinSizing.ev`` for fat-tailed distributions
+        will be very inaccurate at lower quantiles in exchange for greater
+        accuracy on the right tail.
 
         Parameters
         ----------
@@ -317,115 +278,7 @@ class NumericDistribution(BaseNumericDistribution):
     ``NumericDistribution`` (with the right bin sizing method, see
     :any:`BinSizing`) can easily track the probability mass of large values.
 
-    Implementation Details
-    ======================
-
-    Accuracy
-    --------
-
-    The construction of ``NumericDistribution`` ensures that its expected value
-    is always close to 100% accurate. The higher moments (standard deviation,
-    skewness, etc.) and percentiles are less accurate, but still almost always
-    more accurate than Monte Carlo.
-
-    We are probably most interested in the accuracy of percentiles. Consider a
-    simulation that applies binary operations to combine ``m`` different
-    ``NumericDistribution``s, each with ``n`` bins. The relative error of
-    estimated percentiles grows with :math:`O(m / n^2)`. That is, the error is
-    proportional to the number of operations and inversely proportional to the
-    square of the number of bins.
-
-    Compare this to the relative error of percentiles for a Monte Carlo (MC)
-    simulation over a log-normal distribution. MC relative error grows with
-    :math:`O(\sqrt{m} / n)`[1], given the assumption that if our
-    ``NumericDistribution`` has ``n`` bins, then our MC simulation runs ``n^2``
-    samples (because both have a runtime of approximately :math:`O(n^2)`). So
-    MC scales worse with ``n``, but better with ``m``.
-
-    I tested accuracy across a range of percentiles for a variety of values of
-    ``m`` and ``n``. Although MC scales better with ``m`` than
-    ``NumericDistribution``, MC does not achieve lower error rates until ``m =
-    500`` or so (using ``n = 200``). Few simulations will involve combining 500
-    separate variables, so ``NumericDistribution`` should nearly always perform
-    better in practice.
-
-    Similarly, the error on ``NumericDistribution``'s estimated standard
-    deviation scales with :math:`O(m / n^2)`. I don't know the formula for the relative error of MC standard deviation, but empirically, it appears to scale with :math:`O(\sqrt{m} / n)`.
-
-    [1] Goodman (1983). Accuracy and Efficiency of Monte Carlo Method.
-    https://inis.iaea.org/collection/NCLCollectionStore/_Public/19/047/19047359.pdf
-
-    Runtime performance
-    -------------------
-
-    Bottom line: On the example models that I tested, simulating the model
-    using ``NumericDistribution``s with ``n`` bins ran about 3x faster than
-    using Monte Carlo with ``n^2`` bins, and the ``NumericDistribution``
-    results were more accurate.
-
-    Where ``n`` is the number of bins, constructing a ``NumericDistribution``
-    or performing a unary operation has runtime :math:`O(n)`. A binary
-    operation (such as addition or multiplication) has a runtime close to
-    :math:`O(n^2)`. To be precise, the runtime is :math:`O(n^2 \log(n))`
-    because the :math:`n^2` results of a binary operation must be partitioned
-    into :math:`n` ordered bins. In practice, this partitioning operation takes
-    up a fairly small portion of the runtime for ``n = 200`` (the default bin
-    count), and only takes up ~half the runtime for ``n > 1000`.
-
-    For ``n = 200``, a binary operation takes about twice as long as
-    constructing a ``NumericDistribution``.
-
-    Accuracy is linear in the number of bins but runtime is quadratic, so you
-    typically don't want to use bin counts larger than the default unless
-    you're particularly concerned about accuracy.
-
-    On setting values within bins
-    -----------------------------
-    Whenever possible, NumericDistribution assigns the value of each bin as the
-    average value between the two edges (weighted by mass). You can think of
-    this as the result you'd get if you generated infinitely many Monte Carlo
-    samples and grouped them into bins, setting the value of each bin as the
-    average of the samples. You might call this the expected value (EV) method,
-    in contrast to two methods described below.
-
-    The EV method guarantees that, whenever the histogram width covers the full
-    support of the distribution, the histogram's expected value exactly equals
-    the expected value of the true distribution (modulo floating point rounding
-    errors).
-
-    There are some other methods we could use, which are generally worse:
-
-    1. Set the value of each bin to the average of the two edges (the
-    "trapezoid rule"). The purpose of using the trapezoid rule is that we don't
-    know the probability mass within a bin (perhaps the CDF is too hard to
-    evaluate) so we have to estimate it. But whenever we *do* know the CDF, we
-    can calculate the probability mass exactly, so we don't need to use the
-    trapezoid rule.
-
-    2. Set the value of each bin to the center of the probability mass (the
-    "mass method"). This is equivalent to generating infinitely many Monte
-    Carlo samples and grouping them into bins, setting the value of each bin as
-    the **median** of the samples. This approach does not particularly help us
-    because we don't care about the median of every bin. We might care about
-    the median of the distribution, but we can calculate that near-exactly
-    regardless of what value-setting method we use by looking at the value in
-    the bin where the probability mass crosses 0.5. And the mass method will
-    systematically underestimate (the absolute value of) EV because the
-    definition of expected value places larger weight on larger (absolute)
-    values, and the mass method does not.
-
-    Although the EV method perfectly measures the expected value of a
-    distribution, it systematically underestimates the variance. To see this,
-    consider that it is possible to define the variance of a random variable X
-    as
-
-    .. math::
-        E[X^2] - E[X]^2
-
-    The EV method correctly estimates ``E[X]``, so it also correctly estimates
-    ``E[X]^2``. However, it systematically underestimates E[X^2] because E[X^2]
-    places more weight on larger values. But an alternative method that
-    accurately estimated variance would necessarily *over*estimate E[X].
+    For more, see :doc:`/numeric_distributions`.
 
     """
 

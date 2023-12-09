@@ -17,6 +17,7 @@ functionalities in Python.
 
    Installation <installation>
    Usage <usage>
+   Numeric Distributions <numeric_distributions>
    API Reference <reference/modules>
 
 Disclaimers
