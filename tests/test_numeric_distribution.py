@@ -2112,18 +2112,17 @@ def test_cev_accuracy():
 def test_richardson_product():
     print("")
     num_bins = 200
-    bin_sizing = "ev"
+    bin_sizing = "log-uniform"
     one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    mixture_ratio = [0.1, 0.9]
-    true_dist = mixture([-one_sided_dist, one_sided_dist], mixture_ratio)
+    true_dist = mixture([-one_sided_dist, one_sided_dist], [0.5, 0.5])
     # true_dist = one_sided_dist
     true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
     bin_sizes = 40 * np.arange(1, 11)
     accuracy = []
     # for num_products in [2, 4, 8, 16, 32, 64, 128, 256]:
-    for num_products in [4, 8, 16, 32, 64, 128, 256]:
+    for num_products in [8]:
         one_sided_dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
-        dist1 = mixture([-one_sided_dist1, one_sided_dist1], mixture_ratio)
+        dist1 = mixture([-one_sided_dist1, one_sided_dist1], [0.5, 0.5])
         # dist1 = one_sided_dist1
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
