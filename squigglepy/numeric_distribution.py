@@ -746,8 +746,8 @@ class NumericDistribution(BaseNumericDistribution):
         num_bins = num_bins or DEFAULT_NUM_BINS[type(dist)]
         bin_sizing = BinSizing(bin_sizing or DEFAULT_BIN_SIZING[type(dist)])
 
-        if num_bins % 4 != 0:
-            raise ValueError(f"num_bins must be a multiple of 4, not {num_bins}")
+        if num_bins % 2 != 0:
+            raise ValueError(f"num_bins must be even, not {num_bins}")
 
         # ------------------------------------------------------------------
         # Handle distributions that are special cases of other distributions
@@ -1020,6 +1020,8 @@ class NumericDistribution(BaseNumericDistribution):
     def mixture(
         cls, dists, weights, lclip=None, rclip=None, num_bins=None, bin_sizing=None, warn=True
     ):
+        if num_bins is None:
+            mixture_num_bins = DEFAULT_NUM_BINS[MixtureDistribution]
         # This replicates how MixtureDistribution handles lclip/rclip: it
         # clips the sub-distributions based on their own lclip/rclip, then
         # takes the mixture sample, then clips the mixture sample based on
@@ -1048,11 +1050,10 @@ class NumericDistribution(BaseNumericDistribution):
             extended_neg_masses=extended_masses[:zero_index],
             extended_pos_values=extended_values[zero_index:],
             extended_pos_masses=extended_masses[zero_index:],
-            num_bins=num_bins or DEFAULT_NUM_BINS[MixtureDistribution],
+            num_bins=num_bins or mixture_num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
-            # bin_sizing=BinSizing.ev,
-            bin_sizing=BinSizing.bin_count,
+            bin_sizing=BinSizing.ev,
             is_sorted=True,
         )
         if all(d.exact_mean is not None for d in dists):
@@ -1310,9 +1311,7 @@ class NumericDistribution(BaseNumericDistribution):
         """
         min_prop_cutoff = allowance * 1 / num_bins / 2
         total_contribution = neg_contribution + pos_contribution
-
-        num_neg_bins = num_bins // 2  # TODO: lmao
-        # num_neg_bins = int(np.round(num_bins * neg_contribution / total_contribution))
+        num_neg_bins = int(np.round(num_bins * neg_contribution / total_contribution))
         num_pos_bins = num_bins - num_neg_bins
 
         if neg_contribution / total_contribution > min_prop_cutoff:
@@ -1414,14 +1413,7 @@ class NumericDistribution(BaseNumericDistribution):
             cumulative_evs = np.concatenate(([0], np.cumsum(extended_evs)))
             boundary_values = np.linspace(0, cumulative_evs[-1], num_bins + 1)
             boundary_indexes = np.searchsorted(cumulative_evs, boundary_values, side="right") - 1
-            # If boundary[i] == boundary[i+1], split the bin and such that each
-            # chunk has evenly spaced value and equal contribution to EV
-            redundant_indexes = np.where(np.diff(boundary_indexes) == 0)[0]
-            for i in redundant_indexes:
-                pass # TODO
-
-            # Delete redundant indexes (TODO: don't do this, it makes the
-            # number of bins uneven)
+            # Remove bin boundaries where boundary[i] == boundary[i+1]
             boundary_indexes = np.concatenate(
                 (boundary_indexes[:-1][np.diff(boundary_indexes) > 0], [boundary_indexes[-1]])
             )
@@ -1796,8 +1788,20 @@ class NumericDistribution(BaseNumericDistribution):
             exact_mean=y.exact_mean,
             exact_sd=y.exact_sd,
         )
-
         half_res = operation(halfx, halfy)
+
+        # _resize_bins might add an extra bin or two at zero_bin_index, which
+        # makes the arrays not line up. If that happens, delete the extra
+        # bins.
+        # TODO: I think this gets really inaccurate after a lot of operations (~256)
+        # half_res.masses = np.delete(
+        #     half_res.masses,
+        #     range(
+        #         half_res.zero_bin_index,
+        #         half_res.zero_bin_index + max(0, len(half_res.masses) - len(paired_full_masses)),
+        #     ),
+        # )
+
         full_res = operation(x, y)
         paired_full_masses = full_res.masses.reshape(-1, 2).sum(axis=1)
 
