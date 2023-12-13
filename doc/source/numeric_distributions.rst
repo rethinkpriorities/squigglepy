@@ -1,7 +1,7 @@
 Numeric Distributions
 =====================
 
-A ``NumericDistribution`` representats a probability distribution as a histogram
+A ``NumericDistribution`` represents a probability distribution as a histogram
 of values along with the probability mass near each value.
 
 A ``NumericDistribution`` is functionally equivalent to a Monte Carlo
@@ -47,14 +47,16 @@ I tested accuracy across a range of percentiles for a variety of values of
 separate variables, so ``NumericDistribution`` should nearly always perform
 better in practice.
 
-Similarly, the error on ``NumericDistribution``'s estimated standard
-deviation scales with :math:`O(m / n^2)`. I don't know the formula for the relative error of MC standard deviation, but empirically, it appears to scale with :math:`O(\sqrt{m} / n)`.
+Similarly, the error on ``NumericDistribution``'s estimated standard deviation
+scales with :math:`O(m / n^2)`. I don't know the formula for the relative error
+of MC standard deviation, but empirically, it appears to scale with
+:math:`O(\sqrt{m} / n)`.
 
 [1] Goodman (1983). Accuracy and Efficiency of Monte Carlo Method.
 https://inis.iaea.org/collection/NCLCollectionStore/_Public/19/047/19047359.pdf
 
-Runtime performance
--------------------
+Speed
+-----
 
 Where ``n`` is the number of bins, constructing a ``NumericDistribution``
 or performing a unary operation has runtime :math:`O(n)`. A binary
@@ -72,9 +74,15 @@ Accuracy is linear in the number of bins but runtime is quadratic, so you
 typically don't want to use bin counts larger than the default unless
 you're particularly concerned about accuracy.
 
-Compared to Monte Carlo, on the example models I tested, ``NumericDistribution``
-was consistently faster when running both at the same level of accuracy, with
-the speed differential ranging from ~10x to ~300x.
+I tested ``NumericDistribution`` versus Monte Carol on two fairly complex
+example models. On the first model, ``NumericDistribution`` performed ~300x
+better at the same level of accuracy. The second model used some operations for
+which I cannot reliably assess the accuracy, but my best guess is that
+``NumericDistribution`` would perform ~10x better. ``NumericDistribution`` may
+be slower at the same level of accuracy for a model that uses sufficiently many
+operations that ``NumericDistribution`` handles relatively poorly. The most
+inaccurate operations are ``log`` and ``exp`` because they significantly alter
+the shape of the distribution.
 
 On setting values within bins
 -----------------------------

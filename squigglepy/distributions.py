@@ -1120,8 +1120,8 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         """
         if isinstance(fraction, float):
             fraction = np.array([fraction])
-        if any(fraction <= 0) or any(fraction >= 1):
-            raise ValueError(f"fraction must be > 0 and < 1, not {fraction}")
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
 
         mu = self.norm_mean
         sigma = self.norm_sd
