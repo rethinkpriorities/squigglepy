@@ -1383,7 +1383,6 @@ class NumericDistribution(BaseNumericDistribution):
 
                 # Fill any empty space with zeros
                 extra_zeros = np.zeros(num_bins * items_per_bin - len(extended_masses))
-                import ipdb; ipdb.set_trace()
                 extended_values = np.concatenate((extra_zeros, extended_values))
                 extended_masses = np.concatenate((extra_zeros, extended_masses))
             boundary_indexes = np.arange(0, num_bins + 1) * items_per_bin
@@ -1736,9 +1735,9 @@ class NumericDistribution(BaseNumericDistribution):
             """Sum every pair of values in ``arr`` or, if ``len(arr)`` is odd,
             interpolate what the sums of pairs would be if ``len(arr)`` was
             even."""
-            return arr.reshape(-1, 2).sum(axis=1)
-            # half_indexes = np.linspace(1, len(arr) - 1, len(arr) // 2)
-            # return np.diff(np.concatenate(([0], interpolate_indexes(half_indexes, np.cumsum(arr)))))
+            # return arr.reshape(-1, 2).sum(axis=1)
+            half_indexes = np.linspace(1, len(arr) - 1, len(arr) // 2)
+            return np.diff(np.concatenate(([0], interpolate_indexes(half_indexes, np.cumsum(arr)))))
 
         res_bin_sizing = None
         # Empirically, BinSizing.ev error shrinks ~linearly with num_bins and
@@ -1790,33 +1789,25 @@ class NumericDistribution(BaseNumericDistribution):
         )
         half_res = operation(halfx, halfy)
 
-        # _resize_bins might add an extra bin or two at zero_bin_index, which
-        # makes the arrays not line up. If that happens, delete the extra
-        # bins.
-        # TODO: I think this gets really inaccurate after a lot of operations (~256)
-        # half_res.masses = np.delete(
-        #     half_res.masses,
-        #     range(
-        #         half_res.zero_bin_index,
-        #         half_res.zero_bin_index + max(0, len(half_res.masses) - len(paired_full_masses)),
-        #     ),
-        # )
-
         full_res = operation(x, y)
-        paired_full_masses = full_res.masses.reshape(-1, 2).sum(axis=1)
+        # paired_full_masses = full_res.masses.reshape(-1, 2).sum(axis=1)
 
         # TODO: linear interpolation lmao
-        # cum_full_masses = np.cumsum(full_res.masses)
-        # every_2nd_index = np.linspace(0, len(cum_full_masses) - 1, 2 * len(half_res))[1::2]
-        # interp_full_masses = interpolate_indexes(every_2nd_index, cum_full_masses)
+        cum_full_masses = np.cumsum(full_res.masses)
+        every_2nd_index = np.linspace(0, len(cum_full_masses) - 1, 2 * len(half_res))[1::2]
+        interp_full_masses = np.diff(np.concatenate(([0], interpolate_indexes(every_2nd_index, cum_full_masses))))
 
-        richardson_masses = (2**r * paired_full_masses - half_res.masses) / (2**r - 1)
-        richardson_adjustment = np.repeat(richardson_masses / paired_full_masses, 2)
-        # richardson_masses = (2**r * interp_full_masses - half_res.masses) / (2**r - 1)
-        # richardson_adjustment = interpolate_indexes(
-            # np.linspace(0, len(richardson_masses) - 1, len(full_res)),
-            # richardson_masses / interp_full_masses,
-        # )
+        # richardson_masses = (2**r * paired_full_masses - half_res.masses) / (2**r - 1)
+        # richardson_adjustment = np.repeat(richardson_masses / paired_full_masses, 2)
+        richardson_masses = (2**r * interp_full_masses - half_res.masses) / (2**r - 1)
+        exact_richardson_adjustment = np.repeat(
+            np.where(interp_full_masses == 0, 1, richardson_masses / interp_full_masses),
+            2
+        )
+        # TODO: this doesn't work very well
+        # richardson_adjustment = exact_richardson_adjustment[np.floor(np.arange(len(full_res)) * len(exact_richardson_adjustment) / len(full_res)).astype(int)]
+        richardson_adjustment = interpolate_indexes(np.linspace(0, len(exact_richardson_adjustment) - 1, len(full_res)), exact_richardson_adjustment)
+
         full_res.masses *= richardson_adjustment
         full_res.values /= richardson_adjustment
         full_res.bin_sizing = res_bin_sizing
