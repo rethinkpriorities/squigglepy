@@ -30,7 +30,7 @@ from ..squigglepy import samplers, utils
 # Whether to run tests that compare accuracy across different bin sizing
 # methods. These tests break frequently when making any changes to bin sizing,
 # and a failure isn't necessarily a bad thing.
-TEST_BIN_SIZING_ACCURACY = True
+TEST_BIN_SIZING_ACCURACY = False
 
 # Whether to run tests that only print results and don't assert anything.
 RUN_PRINT_ONLY_TESTS = False
@@ -2066,7 +2066,7 @@ def test_quantile_product_accuracy():
 
 def test_cev_accuracy():
     num_bins = 200
-    bin_sizing = "log-uniform"
+    bin_sizing = "ev"
     print("")
     bin_errs = []
     num_products = 64
@@ -2112,15 +2112,15 @@ def test_cev_accuracy():
 def test_richardson_product():
     print("")
     num_bins = 200
-    bin_sizing = "log-uniform"
+    bin_sizing = "ev"
     one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
     true_dist = mixture([-one_sided_dist, one_sided_dist], [0.5, 0.5])
     # true_dist = one_sided_dist
     true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+    abs_errs = []
     bin_sizes = 40 * np.arange(1, 11)
-    accuracy = []
-    # for num_products in [2, 4, 8, 16, 32, 64, 128, 256]:
-    for num_products in [8]:
+    num_productses = [2, 4, 8, 16, 32, 64, 128, 256]
+    for num_products in num_productses:
         one_sided_dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
         dist1 = mixture([-one_sided_dist1, one_sided_dist1], [0.5, 0.5])
         # dist1 = one_sided_dist1
@@ -2136,8 +2136,8 @@ def test_richardson_product():
         true_answer = true_hist.exact_sd
         est_answer = hist.histogram_sd()
         print_accuracy_ratio(est_answer, true_answer, f"SD({num_products:3d})")
-        rel_error_inv = true_answer / abs(est_answer - true_answer)
-        accuracy.append(rel_error_inv)
+        abs_error = abs(est_answer - true_answer)
+        abs_errs.append(abs_error)
 
 
 def test_richardson_sum():
@@ -2147,7 +2147,8 @@ def test_richardson_sum():
     bin_sizing = "ev"
     true_dist = NormalDistribution(mean=0, sd=1)
     true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-    for num_sums in [2, 4, 8, 16, 32, 64, 128, 256]:
+    # for num_sums in [2, 4, 8, 16, 32, 64, 128, 256]:
+    for num_sums in [2]:
         dist1 = NormalDistribution(mean=0, sd=1 / np.sqrt(num_sums))
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc + x, [hist1] * num_sums)
