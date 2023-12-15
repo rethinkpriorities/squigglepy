@@ -72,6 +72,12 @@ class BinSizing(Enum):
     """
 
 
+def interp_indexes(indexes, arr):
+    """Use interpolation to find the values of ``arr`` at the given
+    ``indexes``, which do not need to be whole numbers."""
+    return np.interp(indexes, np.arange(len(arr)), arr)
+
+
 def _support_for_bin_sizing(dist, bin_sizing, num_bins):
     """Return where to set the bounds for a bin sizing method with fixed
     bounds, or None if the given dist/bin sizing does not require finite
@@ -637,7 +643,6 @@ class NumericDistribution(BaseNumericDistribution):
                 messages.append(
                     f"{len(ev_zeros)} bins had zero expected value, most likely because they were too small"
                 )
-
             if len(non_monotonic) > 0:
                 messages.append(f"{len(non_monotonic) + 1} neighboring values were non-monotonic")
             joint_message = "; and".join(messages)
@@ -698,6 +703,9 @@ class NumericDistribution(BaseNumericDistribution):
         # Handle special distributions
         # ----------------------------
 
+        if bin_sizing is not None:
+            bin_sizing = BinSizing(bin_sizing)
+
         if isinstance(dist, BaseNumericDistribution):
             return dist
         if isinstance(dist, ConstantDistribution) or isinstance(dist, Real):
@@ -710,6 +718,7 @@ class NumericDistribution(BaseNumericDistribution):
                 pos_ev_contribution=x if x >= 0 else 0,
                 exact_mean=x,
                 exact_sd=0,
+                bin_sizing=bin_sizing,
             )
         if isinstance(dist, BernoulliDistribution):
             return cls.from_distribution(1, num_bins, bin_sizing, warn).condition_on_success(
@@ -1053,9 +1062,10 @@ class NumericDistribution(BaseNumericDistribution):
             num_bins=num_bins or mixture_num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
-            bin_sizing=BinSizing.ev,
+            # bin_sizing=BinSizing.ev,
             is_sorted=True,
         )
+        mixture.bin_sizing = bin_sizing
         if all(d.exact_mean is not None for d in dists):
             mixture.exact_mean = sum(d.exact_mean * w for d, w in zip(dists, weights))
         if all(d.exact_sd is not None and d.exact_mean is not None for d in dists):
@@ -1195,6 +1205,7 @@ class NumericDistribution(BaseNumericDistribution):
                 pos_ev_contribution=self.pos_ev_contribution,
                 exact_mean=self.exact_mean,
                 exact_sd=self.exact_sd,
+                bin_sizing=self.bin_sizing,
             )
 
         if lclip is None:
@@ -1225,6 +1236,7 @@ class NumericDistribution(BaseNumericDistribution):
             pos_ev_contribution=pos_ev_contribution,
             exact_mean=None,
             exact_sd=None,
+            bin_sizing=self.bin_sizing,
         )
 
     def sample(self, n=1):
@@ -1368,25 +1380,14 @@ class NumericDistribution(BaseNumericDistribution):
             The probability masses of the bins.
 
         """
+        # TODO: This whole method is messy, it could use a refactoring
         if num_bins == 0:
             return (np.array([]), np.array([]))
 
-        # TODO: experimental
-        # bin_sizing = BinSizing.log_uniform
-
         if bin_sizing == BinSizing.bin_count:
-            items_per_bin = len(extended_values) // num_bins
-            if len(extended_masses) % num_bins > 0:
-                # Increase the number of bins such that we can fit
-                # extended_masses into them at items_per_bin each
-                num_bins = int(np.ceil(len(extended_masses) / items_per_bin))
-
-                # Fill any empty space with zeros
-                extra_zeros = np.zeros(num_bins * items_per_bin - len(extended_masses))
-                import ipdb; ipdb.set_trace()
-                extended_values = np.concatenate((extra_zeros, extended_values))
-                extended_masses = np.concatenate((extra_zeros, extended_masses))
-            boundary_indexes = np.arange(0, num_bins + 1) * items_per_bin
+            if len(extended_values) < num_bins:
+                raise ValueError(f"_resize_pos_bins: Cannot resize {len(extended_values)} extended bins into {num_bins} compressed bins. The extended bin count cannot be smaller")
+            boundary_indexes = np.round(np.linspace(0, len(extended_values), num_bins + 1)).astype(int)
 
             if not is_sorted:
                 # Partition such that the values in one bin are all less than
@@ -1397,11 +1398,24 @@ class NumericDistribution(BaseNumericDistribution):
                 extended_values = extended_values[partitioned_indexes]
                 extended_masses = extended_masses[partitioned_indexes]
 
-            # Take advantage of the fact that all bins contain the same number
-            # of elements.
             extended_evs = extended_values * extended_masses
-            masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
-            bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
+            if len(extended_masses) % num_bins == 0:
+                # Vectorize when possible for better performance
+                bin_evs = extended_evs.reshape((num_bins, -1)).sum(axis=1)
+                masses = extended_masses.reshape((num_bins, -1)).sum(axis=1)
+            else:
+                bin_evs = np.array(
+                    [
+                        np.sum(extended_evs[i:j])
+                        for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
+                    ]
+                )
+                masses = np.array(
+                    [
+                        np.sum(extended_masses[i:j])
+                        for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
+                    ]
+                )
 
         elif bin_sizing == BinSizing.ev:
             if not is_sorted:
@@ -1727,38 +1741,28 @@ class NumericDistribution(BaseNumericDistribution):
             applying Richardson extrapolation.
 
         """
-        def interpolate_indexes(indexes, arr):
-            """Use interpolation to find the values of ``arr`` at the given
-            ``indexes``, which do not need to be whole numbers."""
-            return np.interp(indexes, np.arange(len(arr)), arr)
-
+        return operation(x, y)  # TODO: delete me
         def sum_pairs(arr):
             """Sum every pair of values in ``arr`` or, if ``len(arr)`` is odd,
             interpolate what the sums of pairs would be if ``len(arr)`` was
             even."""
             return arr.reshape(-1, 2).sum(axis=1)
             # half_indexes = np.linspace(1, len(arr) - 1, len(arr) // 2)
-            # return np.diff(np.concatenate(([0], interpolate_indexes(half_indexes, np.cumsum(arr)))))
+            # return np.diff(np.concatenate(([0], interp_indexes(half_indexes, np.cumsum(arr)))))
 
         res_bin_sizing = None
-        # Empirically, BinSizing.ev error shrinks ~linearly with num_bins and
-        # BinSizing.log_uniform shrinks ~quadratically, but r=1.5 and r=3.5
-        # (respectively) seem to work better, I don't know why. These numbers
-        # are exact-ish: 1.5 works better than 1.4 or 1.6. (Less clear for
-        # 3.5.)
-        #
-        # to be precise, the best-fit curve
+        # Empirically, BinSizing.ev error shrinks with r=1.5 for all bins
+        # (except for the outermost bins, which are more unpredictable).
+        # BinSizing.log_uniform error growth rate is lower near the middle bins
+        # and higher near the outer bins, so a uniform r doesn't work as well.
+        # TODO: numbers are out of date
         if res_bin_sizing is not None:
             pass
         elif x.bin_sizing == BinSizing.ev and y.bin_sizing == BinSizing.ev:
             r = 1.5
-            # r = np.full(len(x.masses) // 2, 1.5)
             res_bin_sizing = BinSizing.ev
         elif x.bin_sizing == BinSizing.log_uniform and y.bin_sizing == BinSizing.log_uniform:
             r = 3.5
-            # indexes = np.arange(len(x.masses)).astype(float)
-            # indexes /= indexes[-1]
-            # r = 1.6885682 - 0.22088454*indexes + 2.62320697*indexes**2
             res_bin_sizing = BinSizing.log_uniform
         else:
             r = 2
@@ -1775,6 +1779,7 @@ class NumericDistribution(BaseNumericDistribution):
             pos_ev_contribution=x.pos_ev_contribution,
             exact_mean=x.exact_mean,
             exact_sd=x.exact_sd,
+            bin_sizing=x.bin_sizing,
         )
         halfy_masses = sum_pairs(y.masses)
         halfy_evs = sum_pairs(y.values * y.masses)
@@ -1787,36 +1792,14 @@ class NumericDistribution(BaseNumericDistribution):
             pos_ev_contribution=y.pos_ev_contribution,
             exact_mean=y.exact_mean,
             exact_sd=y.exact_sd,
+            bin_sizing=y.bin_sizing,
         )
+
         half_res = operation(halfx, halfy)
-
-        # _resize_bins might add an extra bin or two at zero_bin_index, which
-        # makes the arrays not line up. If that happens, delete the extra
-        # bins.
-        # TODO: I think this gets really inaccurate after a lot of operations (~256)
-        # half_res.masses = np.delete(
-        #     half_res.masses,
-        #     range(
-        #         half_res.zero_bin_index,
-        #         half_res.zero_bin_index + max(0, len(half_res.masses) - len(paired_full_masses)),
-        #     ),
-        # )
-
         full_res = operation(x, y)
         paired_full_masses = full_res.masses.reshape(-1, 2).sum(axis=1)
-
-        # TODO: linear interpolation lmao
-        # cum_full_masses = np.cumsum(full_res.masses)
-        # every_2nd_index = np.linspace(0, len(cum_full_masses) - 1, 2 * len(half_res))[1::2]
-        # interp_full_masses = interpolate_indexes(every_2nd_index, cum_full_masses)
-
-        richardson_masses = (2**r * paired_full_masses - half_res.masses) / (2**r - 1)
+        richardson_masses = (2**(-r) * half_res.masses - paired_full_masses) / (2**(-r) - 1)
         richardson_adjustment = np.repeat(richardson_masses / paired_full_masses, 2)
-        # richardson_masses = (2**r * interp_full_masses - half_res.masses) / (2**r - 1)
-        # richardson_adjustment = interpolate_indexes(
-            # np.linspace(0, len(richardson_masses) - 1, len(full_res)),
-            # richardson_masses / interp_full_masses,
-        # )
         full_res.masses *= richardson_adjustment
         full_res.values /= richardson_adjustment
         full_res.bin_sizing = res_bin_sizing
@@ -1831,7 +1814,6 @@ class NumericDistribution(BaseNumericDistribution):
             raise TypeError(f"Cannot add types {type(x)} and {type(y)}")
 
         return x._apply_richardson(y, x._inner_mul)
-        # return x._inner_mul(x, y)
 
     @classmethod
     def _inner_mul(cls, x, y):

@@ -8,7 +8,7 @@ from numpy import exp, log, pi, sqrt
 import operator
 import scipy.stats
 from scipy import special
-from scipy.special import erf, erfinv
+from scipy.special import erf, erfc, erfinv
 import warnings
 
 from typing import Optional, Union
@@ -1080,8 +1080,7 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
             )
             self.norm_sd = sqrt(log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
 
-        # Cached values for calculating ``contribution_to_ev``
-        self._EV_SCALE = -1 / 2 * exp(self.norm_mean + self.norm_sd**2 / 2)
+        # Cached value for calculating ``contribution_to_ev``
         self._EV_DENOM = sqrt(2) * self.norm_sd
 
     def __str__(self):
@@ -1103,12 +1102,14 @@ class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         x = np.asarray(x)
         mu = self.norm_mean
         sigma = self.norm_sd
-        left_bound = self._EV_SCALE  # at x=0
 
         with np.errstate(divide="ignore"):
-            right_bound = self._EV_SCALE * erf((-log(x) + mu + sigma**2) / self._EV_DENOM)
+            # Note: erf can have floating point rounding errors when x is very
+            # small because erf(inf) = 1. erfc is better because erfc(inf) =
+            # 0 so floats can represent the result with more significant digits.
+            inner = -erfc((-log(x) + mu + sigma**2) / self._EV_DENOM)
 
-        return np.squeeze(right_bound - left_bound) / (self.lognorm_mean if normalized else 1)
+        return -0.5 * np.squeeze(inner) * (1 if normalized else self.lognorm_mean)
 
     def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
         """For a given fraction of expected value, find the number such that

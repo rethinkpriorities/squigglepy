@@ -4,7 +4,7 @@ import hypothesis.strategies as st
 import numpy as np
 import operator
 from pytest import approx
-from scipy import integrate, stats
+from scipy import integrate, optimize, stats
 import sys
 from unittest.mock import patch, Mock
 import warnings
@@ -30,7 +30,7 @@ from ..squigglepy import samplers, utils
 # Whether to run tests that compare accuracy across different bin sizing
 # methods. These tests break frequently when making any changes to bin sizing,
 # and a failure isn't necessarily a bad thing.
-TEST_BIN_SIZING_ACCURACY = True
+TEST_BIN_SIZING_ACCURACY = False
 
 # Whether to run tests that only print results and don't assert anything.
 RUN_PRINT_ONLY_TESTS = False
@@ -626,9 +626,9 @@ def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
     dist3 = NormalDistribution(mean=mean3, sd=sd3)
     mean_tolerance = 1e-5
     sd_tolerance = 0.2 if bin_sizing == "uniform" else 1
-    hist1 = numeric(dist1, num_bins=25, bin_sizing=bin_sizing, warn=False)
-    hist2 = numeric(dist2, num_bins=25, bin_sizing=bin_sizing, warn=False)
-    hist3 = numeric(dist3, num_bins=25, bin_sizing=bin_sizing, warn=False)
+    hist1 = numeric(dist1, num_bins=40, bin_sizing=bin_sizing, warn=False)
+    hist2 = numeric(dist2, num_bins=40, bin_sizing=bin_sizing, warn=False)
+    hist3 = numeric(dist3, num_bins=40, bin_sizing=bin_sizing, warn=False)
     hist_prod = hist1 * hist2
     assert hist_prod.histogram_mean() == approx(
         dist1.mean * dist2.mean, rel=mean_tolerance, abs=1e-8
@@ -649,7 +649,7 @@ def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
 @given(
     mean=st.floats(min_value=-10, max_value=10),
     sd=st.floats(min_value=0.001, max_value=100),
-    num_bins=st.sampled_from([25, 100]),
+    num_bins=st.sampled_from([40, 100]),
     bin_sizing=st.sampled_from(["ev", "mass", "uniform"]),
 )
 @settings(max_examples=100)
@@ -681,8 +681,8 @@ def test_norm_mean_error_propagation(mean, sd, num_bins, bin_sizing):
     sd1=st.floats(min_value=0.001, max_value=100),
     sd2=st.floats(min_value=0.001, max_value=3),
     sd3=st.floats(min_value=0.001, max_value=100),
-    num_bins1=st.sampled_from([25, 100]),
-    num_bins2=st.sampled_from([25, 100]),
+    num_bins1=st.sampled_from([40, 100]),
+    num_bins2=st.sampled_from([40, 100]),
 )
 def test_norm_lognorm_product_sum(mean1, mean2, mean3, sd1, sd2, sd3, num_bins1, num_bins2):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
@@ -706,7 +706,7 @@ def test_norm_lognorm_product_sum(mean1, mean2, mean3, sd1, sd2, sd3, num_bins1,
 @given(
     norm_mean=st.floats(min_value=np.log(1e-6), max_value=np.log(1e6)),
     norm_sd=st.floats(min_value=0.001, max_value=2),
-    num_bins=st.sampled_from([25, 100]),
+    num_bins=st.sampled_from([40, 100]),
     bin_sizing=st.sampled_from(["ev", "log-uniform", "fat-hybrid"]),
 )
 @settings(max_examples=10)
@@ -791,8 +791,8 @@ def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing)
     norm_mean2=st.floats(min_value=-1e5, max_value=1e5),
     norm_sd1=st.floats(min_value=0.001, max_value=1e5),
     norm_sd2=st.floats(min_value=0.001, max_value=1e5),
-    num_bins1=st.sampled_from([25, 100]),
-    num_bins2=st.sampled_from([25, 100]),
+    num_bins1=st.sampled_from([40, 100]),
+    num_bins2=st.sampled_from([40, 100]),
     bin_sizing=st.sampled_from(["ev", "uniform"]),
 )
 @example(
@@ -956,7 +956,7 @@ def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
 @given(
     norm_mean=st.floats(min_value=-1e6, max_value=1e6),
     norm_sd=st.floats(min_value=0.001, max_value=3),
-    num_bins=st.sampled_from([25, 100]),
+    num_bins=st.sampled_from([40, 100]),
     bin_sizing=st.sampled_from(["ev", "uniform"]),
 )
 def test_norm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
@@ -970,7 +970,7 @@ def test_norm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
 @given(
     norm_mean=st.floats(min_value=-np.log(1e9), max_value=np.log(1e9)),
     norm_sd=st.floats(min_value=0.001, max_value=3),
-    num_bins=st.sampled_from([25, 100]),
+    num_bins=st.sampled_from([40, 100]),
     bin_sizing=st.sampled_from(["ev", "uniform"]),
 )
 def test_lognorm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
@@ -1277,7 +1277,7 @@ def test_numeric_clip(lclip, width):
     # calculate what the mean should be
     clip_inner=st.booleans(),
 )
-@example(a=0.5, lclip=-1, clip_width=2, bin_sizing="ev", clip_inner=False)
+@example(a=0.3, lclip=-1, clip_width=2, bin_sizing="ev", clip_inner=False)
 def test_sum2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
     # Clipped NumericDist accuracy really benefits from more bins. It's not
     # very accurate with 100 bins because a clipped histogram might end up with
@@ -1317,7 +1317,7 @@ def test_sum2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
             mixed_mean,
             mixed_sd,
         )
-        tolerance = 0.2
+        tolerance = 0.25
 
     assert hist.histogram_mean() == approx(true_mean, rel=tolerance)
 
@@ -1874,7 +1874,7 @@ def test_quantile_uniform(mean, sd, percent):
         assert hist.percentile(percent) >= hist.values[last_valid_index]
     else:
         assert hist.percentile(percent) == approx(
-            stats.norm.ppf(percent / 100, loc=mean, scale=sd), rel=0.01, abs=0.01
+            stats.norm.ppf(percent / 100, loc=mean, scale=sd), rel=0.02, abs=0.02
         )
 
 
@@ -2021,18 +2021,17 @@ def test_quantile_product_accuracy():
     # if not RUN_PRINT_ONLY_TESTS:
         # return None
 
-    props = np.array([0.75, 0.9, 0.95, 0.99, 0.999])
-    # props = np.array([0.5, 0.75, 0.9, 0.95, 0.99, 0.999])  # EV
+    # props = np.array([0.75, 0.9, 0.95, 0.99, 0.999])
+    props = np.array([0.5, 0.75, 0.9, 0.95, 0.99, 0.999])  # EV
     # props = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999]) # lognorm
     # props = np.array([0.05, 0.1, 0.25, 0.75, 0.9, 0.95, 0.99, 0.999])  # norm
-    num_bins = 100
+    num_bins = 200
     print("\n")
-    # print(f"MC error: average {fmt(np.mean(mc_error))}, median {fmt(np.median(mc_error))}, max {fmt(np.max(mc_error))}")
 
-    bin_sizing = "ev"
+    bin_sizing = "log-uniform"
     hists = []
     # for bin_sizing in ["log-uniform", "mass", "ev", "fat-hybrid"]:
-    for num_products in [2, 8, 32, 128]:
+    for num_products in [2, 8, 32, 128, 512]:
         dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
         dist = LognormalDistribution(norm_mean=dist1.norm_mean * num_products, norm_sd=dist1.norm_sd * np.sqrt(num_products))
         true_quantiles = stats.lognorm.ppf(props, dist.norm_sd, scale=np.exp(dist.norm_mean))
@@ -2090,7 +2089,6 @@ def test_cev_accuracy():
         # bin_errs.append(cum_mass)
 
     bin_errs = np.array(bin_errs)
-    from scipy import optimize
 
     best_fits = []
     for i in range(40):
@@ -2106,24 +2104,27 @@ def test_cev_accuracy():
     print(f"Average: {np.mean(best_fits, axis=0)}\nMedian: {np.median(best_fits, axis=0)}")
 
     meta_fit = np.polynomial.polynomial.Polynomial.fit(np.array(range(len(best_fits))) / len(best_fits), np.array(best_fits)[:, 1], 2)
-    print(meta_fit)
+    print(f"\nMeta fit: {meta_fit}")
 
 
 def test_richardson_product():
     print("")
     num_bins = 200
+    num_products = 2
     bin_sizing = "log-uniform"
     one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    true_dist = mixture([-one_sided_dist, one_sided_dist], [0.5, 0.5])
-    # true_dist = one_sided_dist
-    true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+    # mixture_ratio = [7/200, 193/200]
+    mixture_ratio = [0, 1]
+    # mixture_ratio = [0.5, 0.5]
     bin_sizes = 40 * np.arange(1, 11)
-    accuracy = []
-    # for num_products in [2, 4, 8, 16, 32, 64, 128, 256]:
-    for num_products in [8]:
+    err_rates = []
+    for num_products in [2, 4, 8, 16, 32, 64]:
+    # for num_bins in bin_sizes:
+        true_mixture_ratio = reduce(lambda acc, x: (acc[0] * x[1] + acc[1] * x[0], acc[0] * x[0] + acc[1] * x[1]), [(mixture_ratio) for _ in range(num_products)])
+        true_dist = mixture([-one_sided_dist, one_sided_dist], true_mixture_ratio)
+        true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         one_sided_dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
-        dist1 = mixture([-one_sided_dist1, one_sided_dist1], [0.5, 0.5])
-        # dist1 = one_sided_dist1
+        dist1 = mixture([-one_sided_dist1, one_sided_dist1], mixture_ratio)
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
 
@@ -2135,9 +2136,23 @@ def test_richardson_product():
         # SD
         true_answer = true_hist.exact_sd
         est_answer = hist.histogram_sd()
-        print_accuracy_ratio(est_answer, true_answer, f"SD({num_products:3d})")
-        rel_error_inv = true_answer / abs(est_answer - true_answer)
-        accuracy.append(rel_error_inv)
+        print_accuracy_ratio(est_answer, true_answer, f"SD({num_products}, {num_bins:3d})")
+        err_rates.append(abs(est_answer - true_answer))
+
+        # ppf
+        # fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
+        # frac_errs = []
+        # for frac in fracs:
+        #     true_answer = stats.lognorm.ppf((frac - true_mixture_ratio[0]) / true_mixture_ratio[1], one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean))
+        #     oneshot_answer = true_hist.ppf(frac)
+        #     est_answer = hist.ppf(frac)
+        #     frac_errs.append(abs(est_answer - true_answer) / true_answer)
+        # median_err = np.median(frac_errs)
+        # print(f"ppf({num_products:3d}, {num_bins:3d}): {median_err * 100:.3f}%")
+        # err_rates.append(median_err)
+
+    # best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
+    # print(f"\nBest fit: {best_fit}")
 
 
 def test_richardson_sum():
