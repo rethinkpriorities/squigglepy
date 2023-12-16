@@ -1,5 +1,5 @@
 from functools import reduce
-from hypothesis import assume, example, given, settings
+from hypothesis import assume, example, given, settings, Phase
 import hypothesis.strategies as st
 import numpy as np
 import operator
@@ -278,7 +278,6 @@ def test_lognorm_clip_and_sum(norm_mean, norm_sd, clip_zscore):
     assert sum_exact_mean == approx(true_mean, rel=1e-3, abs=1e-6)
     assert sum_hist_mean == approx(true_mean, rel=1e-3, abs=1e-6)
 
-
 @given(
     mean1=st.floats(min_value=-1000, max_value=0.01),
     mean2=st.floats(min_value=0.01, max_value=1000),
@@ -288,7 +287,8 @@ def test_lognorm_clip_and_sum(norm_mean, norm_sd, clip_zscore):
     sd3=st.floats(min_value=0.1, max_value=10),
     bin_sizing=st.sampled_from(["ev", "mass", "uniform"]),
 )
-@example(mean1=0, mean2=1000, mean3=617, sd1=1.5, sd2=1.5, sd3=1, bin_sizing="ev")
+@example(mean1=0.00390625, mean2=1.0, mean3=1.0, sd1=0.109375, sd2=1.126953125, sd3=1.0, bin_sizing="mass")
+@example(mean1=-8, mean2=1, mean3=1, sd1=1, sd2=0.1, sd3=1, bin_sizing="mass")
 def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
     dist1 = NormalDistribution(mean=mean1, sd=sd1)
     dist2 = NormalDistribution(mean=mean2, sd=sd2)
@@ -728,16 +728,33 @@ def test_lognorm_quotient(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing
 
 @given(
     mean=st.floats(min_value=-20, max_value=20),
-    sd=st.floats(min_value=0.1, max_value=3),
+    sd=st.floats(min_value=0.1, max_value=2),
 )
 def test_norm_exp(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
-    hist = numeric(dist, warn=False)
+    hist = numeric(dist)
     exp_hist = hist.exp()
     true_exp_dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
-    true_exp_hist = numeric(true_exp_dist, warn=False)
-    assert exp_hist.histogram_mean() == approx(true_exp_hist.exact_mean, rel=0.005)
-    assert exp_hist.histogram_sd() == approx(true_exp_hist.exact_sd, rel=0.2)
+    assert exp_hist.histogram_mean() == approx(true_exp_dist.lognorm_mean, rel=0.005)
+    assert exp_hist.histogram_sd() == approx(true_exp_dist.lognorm_sd, rel=0.1)
+
+
+@given(
+    mean=st.floats(min_value=-20, max_value=20),
+    sd=st.floats(min_value=0.1, max_value=2),
+)
+@settings(phases=(Phase.explicit,))
+@example(mean=0, sd=1)
+@example(mean=10, sd=1)
+@example(mean=0, sd=2)
+@example(mean=-1, sd=2)
+def test_norm_exp_basic(mean, sd):
+    dist = NormalDistribution(mean=mean, sd=sd)
+    hist = numeric(dist, bin_sizing="uniform")
+    exp_hist = hist.exp()
+    true_exp_dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
+    frac = 0.9614
+    print(f"({mean:2d}, {sd:d}): mean -> {relative_error(exp_hist.mean(), stats.lognorm.mean(sd, scale=np.exp(mean))) * 100:.2f}%, ppf({frac}) -> {relative_error(exp_hist.ppf(frac), stats.lognorm.ppf(frac, sd, scale=np.exp(mean))) * 100:.2f}%, sd -> {relative_error(exp_hist.histogram_sd(), true_exp_dist.lognorm_sd) * 100:.2f}%")
 
 
 @given(

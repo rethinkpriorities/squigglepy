@@ -2,7 +2,6 @@ from functools import reduce
 from hypothesis import assume, example, given, settings
 import hypothesis.strategies as st
 import numpy as np
-import operator
 from pytest import approx
 from scipy import integrate, optimize, stats
 import sys
@@ -481,34 +480,27 @@ def test_quantile_product_accuracy():
 
 def test_cev_accuracy():
     num_bins = 200
-    bin_sizing = "ev"
+    bin_sizing = "mass"
     print("")
     bin_errs = []
     num_products = 64
     bin_sizes = 40 * np.arange(1, 11)
-    one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-    mixture_ratio = [7/200, 193/200]
-    # for num_products in [2, 4, 8, 16, 32, 64, 128, 256]:
     for num_bins in bin_sizes:
-        true_mixture_ratio = reduce(lambda acc, x: (acc[0] * x[1] + acc[1] * x[0], acc[0] * x[0] + acc[1] * x[1]), [(mixture_ratio) for _ in range(num_products)])
-        true_dist = mixture([-one_sided_dist, one_sided_dist], true_mixture_ratio)
+        true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+        dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
         true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-        one_sided_dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
-        dist1 = mixture([-one_sided_dist1, one_sided_dist1], mixture_ratio)
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
 
-        true_neg_cev = stats.lognorm.mean(0, 1)
-
         cum_mass = np.cumsum(hist.masses)
         cum_cev = np.cumsum(hist.masses * abs(hist.values))
-        expected_cum_mass = stats.lognorm.cdf(dist.inv_contribution_to_ev(cum_cev / cum_cev[-1]), dist.norm_sd, scale=np.exp(dist.norm_mean))
+        cum_cev_frac = cum_cev / cum_cev[-1]
+        expected_cum_mass = stats.lognorm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
 
         # Take only every nth value where n = num_bins/40
         cum_mass = cum_mass[::num_bins // 40]
         expected_cum_mass = expected_cum_mass[::num_bins // 40]
         bin_errs.append(abs(cum_mass - expected_cum_mass))
-        # bin_errs.append(cum_mass)
 
     bin_errs = np.array(bin_errs)
 
@@ -533,14 +525,13 @@ def test_richardson_product():
     print("")
     num_bins = 200
     num_products = 16
-    bin_sizing = "ev"
-    # mixture_ratio = [7/200, 193/200]
-    mixture_ratio = [0, 1]
+    bin_sizing = "mass"
+    mixture_ratio = [7/200, 193/200]
+    # mixture_ratio = [0, 1]
     # mixture_ratio = [0.3, 0.7]
     bin_sizes = 40 * np.arange(1, 11)
     err_rates = []
     for num_products in [2, 4, 8, 16, 32, 64]:
-    # for num_products in [2]:
     # for num_bins in bin_sizes:
         true_mixture_ratio = reduce(lambda acc, x: (acc[0] * x[1] + acc[1] * x[0], acc[0] * x[0] + acc[1] * x[1]), [(mixture_ratio) for _ in range(num_products)])
         one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
@@ -581,13 +572,12 @@ def test_richardson_product():
 
 
 def test_richardson_sum():
-    # TODO
     print("")
     num_bins = 200
-    bin_sizing = "ev"
+    bin_sizing = "uniform"
     true_dist = NormalDistribution(mean=0, sd=1)
     true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-    for num_sums in [2, 4, 8, 16, 32, 64, 128, 256]:
+    for num_sums in [2, 4, 8, 16, 32, 64]:
         dist1 = NormalDistribution(mean=0, sd=1 / np.sqrt(num_sums))
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc + x, [hist1] * num_sums)

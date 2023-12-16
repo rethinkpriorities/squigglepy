@@ -908,8 +908,8 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         sigma = self.sd
         tolerance = 1e-8
 
-        if any(fraction <= 0) or any(fraction >= 1):
-            raise ValueError(f"fraction must be > 0 and < 1, not {fraction}")
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
 
         # Approximate using Newton's method. Sometimes this has trouble
         # converging b/c it diverges or gets caught in a cycle, so use binary

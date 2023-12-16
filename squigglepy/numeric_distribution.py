@@ -27,7 +27,7 @@ from .distributions import (
 from .version import __version__
 
 
-class BinSizing(Enum):
+class BinSizing(str, Enum):
     """An enum for the different methods of sizing histogram bins. A histogram
     with finitely many bins can only contain so much information about the
     shape of a distribution; the choice of bin sizing changes what information
@@ -41,12 +41,12 @@ class BinSizing(Enum):
     error and error due to the excluded tails."""
 
     log_uniform = "log-uniform"
-    """Divides the distribution into bins with exponentially increasing width.
-    Or, equivalently, divides the logarithm of the distribution into bins
-    of equal width. For example, if you generated a NumericDistribution
-    from a log-normal distribution with log-uniform bin sizing, and then
-    took the log of each bin, you'd get a normal distribution with uniform
-    bin sizing."""
+    """Divides the distribution into bins with exponentially increasing width,
+     so that the logarithms of the bin edges are uniformly spaced. For example,
+     if you generated a NumericDistribution from a log-normal distribution with
+     log-uniform bin sizing, and then took the log of each bin, you'd get a
+     normal distribution with uniform bin sizing.
+    """
 
     ev = "ev"
     """Divides the distribution into bins such that each bin has equal
@@ -125,8 +125,8 @@ DEFAULT_BIN_SIZING = {
     ChiSquareDistribution: BinSizing.ev,
     ExponentialDistribution: BinSizing.ev,
     GammaDistribution: BinSizing.ev,
-    LognormalDistribution: BinSizing.fat_hybrid,
-    NormalDistribution: BinSizing.uniform,
+    LognormalDistribution: BinSizing.ev,
+    NormalDistribution: BinSizing.ev,
     ParetoDistribution: BinSizing.ev,
     PERTDistribution: BinSizing.mass,
     UniformDistribution: BinSizing.uniform,
@@ -369,6 +369,7 @@ class NumericDistribution(BaseNumericDistribution):
         exact_mean: Optional[float],
         exact_sd: Optional[float],
         bin_sizing: Optional[BinSizing] = None,
+        richardson_extrapolation_enabled: Optional[bool] = True,
     ):
         """Create a probability mass histogram. You should usually not call
         this constructor directly; instead, use :func:`from_distribution`.
@@ -393,7 +394,9 @@ class NumericDistribution(BaseNumericDistribution):
             The exact standard deviation of the distribution, if known.
         bin_sizing : Optional[BinSizing]
             The bin sizing method used to construct the distribution, if any.
-
+        richardson_extrapolation_enabled : Optional[bool] = True
+            If True, use Richardson extrapolation over the number of bins to
+            improve the accuracy of unary and binary operations.
         """
         assert len(values) == len(masses)
         self._version = __version__
@@ -406,6 +409,7 @@ class NumericDistribution(BaseNumericDistribution):
         self.exact_mean = exact_mean
         self.exact_sd = exact_sd
         self.bin_sizing = bin_sizing
+        self.richardson_extrapolation_enabled = richardson_extrapolation_enabled
 
         # These are computed lazily
         self.interpolate_cdf = None
@@ -627,12 +631,13 @@ class NumericDistribution(BaseNumericDistribution):
         bad_indexes = set(mass_zeros + ev_zeros + non_monotonic)
 
         if len(bad_indexes) > 0:
+            # TODO: Experimental: Don't remove the bad values.
             good_indexes = [i for i in range(num_bins) if i not in set(bad_indexes)]
             bin_ev_contributions = bin_ev_contributions[good_indexes]
             masses = masses[good_indexes]
             values = bin_ev_contributions / masses
-            messages = []
 
+            messages = []
             if len(mass_zeros) > 0:
                 messages.append(f"{len(mass_zeros) + 1} neighboring values had equal CDFs")
             if len(ev_zeros) == 1:
@@ -971,9 +976,7 @@ class NumericDistribution(BaseNumericDistribution):
         # Divide up bins such that each bin has as close as possible to equal
         # contribution. If one side has very small but nonzero contribution,
         # still give it one bin.
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-            num_bins, neg_prop, pos_prop, allowance=0
-        )
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(num_bins, neg_prop, pos_prop)
         neg_masses, neg_values = cls._construct_bins(
             num_neg_bins,
             (support[0], min(0, support[1])),
@@ -1282,8 +1285,130 @@ class NumericDistribution(BaseNumericDistribution):
         plt.savefig("/tmp/plot.png")
         plt.show()
 
+    def richardson(r: float, correct_ev: bool = True):
+        """A decorator that applies Richardson extrapolation to a
+        NumericDistribution method to improve its accuracy.
+
+        TODO: rewrite docstring
+
+        This decorator uses the following procedure (this procedure assumes a
+        binary operation, but it works the same for any number of arguments):
+
+        1. Evaluate ``z = func(x, y)`` where ``x`` and ``y`` are
+           ``NumericDistribution`` objects.
+        2. Construct a new ``x2`` and ``y2`` which are identical to ``x``
+           and ``y`` except that they use half as many bins.
+        3. Evaluate ``z2 = func(x2, y2)``.
+        4. Apply Richardson extrapolation: ``res = (2^r * z - z2) / (2^r - 1)``
+           for some constant exponent ``r``, chosen to maximize accuracy.
+
+        Parameters
+        ----------
+        r : float
+            The exponent to use in Richardson extrapolation. This should equal
+            the rate at which the error shrinks as the number of bins
+            increases.
+        correct_ev : bool = True
+            If True, adjust the negative and positive EV contributions to be
+            exactly correct.
+
+        Returns
+        -------
+        res : Callable
+            A decorator function that takes a function ``func`` and returns a
+            new function that applies Richardson extrapolation to ``func``.
+
+        """
+
+        def sum_pairs(arr):
+            """Sum every pair of values in ``arr``"""
+            return arr.reshape(-1, 2).sum(axis=1)
+
+        def decorator(func):
+            def inner(*hists):
+                if not hists[0].richardson_extrapolation_enabled:
+                    return func(*hists)
+
+                # Empirically, BinSizing.ev and BinSizing.mass error shrinks at
+                # a consistent rate r for all bins (except for the outermost
+                # bins, which are more unpredictable). BinSizing.log_uniform
+                # and BinSizing.uniform error growth rate isn't consistent
+                # across bins, so Richardson extrapolation doesn't work well
+                # (and often makes the result worse).
+                if all(x.bin_sizing in [BinSizing.uniform] for x in hists):
+                    pass
+                elif not all(x.bin_sizing in [BinSizing.ev, BinSizing.mass] for x in hists):
+                    return func(*hists)
+
+                # Construct half_hists as identical to hists but with half as
+                # many bins
+                half_hists = []
+                for x in hists:
+                    halfx_masses = sum_pairs(x.masses)
+                    halfx_evs = sum_pairs(x.values * x.masses)
+                    halfx_values = halfx_evs / halfx_masses
+                    halfx = NumericDistribution(
+                        values=halfx_values,
+                        masses=halfx_masses,
+                        zero_bin_index=np.searchsorted(halfx_values, 0),
+                        neg_ev_contribution=x.neg_ev_contribution,
+                        pos_ev_contribution=x.pos_ev_contribution,
+                        exact_mean=x.exact_mean,
+                        exact_sd=x.exact_sd,
+                        bin_sizing=x.bin_sizing,
+                    )
+                    half_hists.append(halfx)
+
+                half_res = func(*half_hists)
+                full_res = func(*hists)
+                paired_full_masses = sum_pairs(full_res.masses)
+                paired_full_values = (
+                    sum_pairs(full_res.values * full_res.masses) / paired_full_masses
+                )
+                richardson_masses = (2 ** (-r) * half_res.masses - paired_full_masses) / (
+                    2 ** (-r) - 1
+                )
+                richardson_values = (2 ** (-r) * half_res.values - paired_full_values) / (
+                    2 ** (-r) - 1
+                )
+                mass_adjustment = np.repeat(richardson_masses / paired_full_masses, 2)
+                value_adjustment = np.repeat(richardson_values / paired_full_values, 2)
+                new_masses = full_res.masses * np.where(
+                    np.isnan(mass_adjustment), 1, mass_adjustment
+                )
+                new_values = full_res.values * np.where(
+                    np.isnan(value_adjustment), 1, value_adjustment
+                )
+                zero_bin_index = np.searchsorted(new_values, 0)
+
+                # Adjust the negative and positive EV contributions to be exactly correct
+                if correct_ev and full_res.zero_bin_index > 0:
+                    new_values[
+                        : zero_bin_index
+                    ] *= -full_res.neg_ev_contribution / np.sum(
+                        new_values[: zero_bin_index]
+                        * new_masses[: zero_bin_index]
+                    )
+                if correct_ev and full_res.zero_bin_index < len(full_res):
+                    new_values[zero_bin_index :] *= full_res.pos_ev_contribution / np.sum(
+                        new_values[zero_bin_index :]
+                        * new_masses[zero_bin_index :]
+                    )
+
+                import ipdb; ipdb.set_trace()
+                full_res.masses = new_masses
+                full_res.values = new_values
+                full_res.zero_bin_index = zero_bin_index
+                if len(np.unique([x.bin_sizing for x in hists])) == 1:
+                    full_res.bin_sizing = hists[0].bin_sizing
+                return full_res
+
+            return inner
+
+        return decorator
+
     @classmethod
-    def _num_bins_per_side(cls, num_bins, neg_contribution, pos_contribution, allowance=0):
+    def _num_bins_per_side(cls, num_bins, neg_contribution, pos_contribution, allowance=0.25):
         """Determine how many bins to allocate to the positive and negative
         sides of the distribution.
 
@@ -1386,8 +1511,12 @@ class NumericDistribution(BaseNumericDistribution):
 
         if bin_sizing == BinSizing.bin_count:
             if len(extended_values) < num_bins:
-                raise ValueError(f"_resize_pos_bins: Cannot resize {len(extended_values)} extended bins into {num_bins} compressed bins. The extended bin count cannot be smaller")
-            boundary_indexes = np.round(np.linspace(0, len(extended_values), num_bins + 1)).astype(int)
+                raise ValueError(
+                    f"_resize_pos_bins: Cannot resize {len(extended_values)} extended bins into {num_bins} compressed bins. The extended bin count cannot be smaller"
+                )
+            boundary_indexes = np.round(np.linspace(0, len(extended_values), num_bins + 1)).astype(
+                int
+            )
 
             if not is_sorted:
                 # Partition such that the values in one bin are all less than
@@ -1609,6 +1738,7 @@ class NumericDistribution(BaseNumericDistribution):
     def __eq__(x, y):
         return x.values == y.values and x.masses == y.masses
 
+    @richardson(r=1.5)
     def __add__(x, y):
         if isinstance(y, Real):
             return x.shift_by(y)
@@ -1617,11 +1747,7 @@ class NumericDistribution(BaseNumericDistribution):
         elif not isinstance(y, NumericDistribution):
             raise TypeError(f"Cannot add types {type(x)} and {type(y)}")
 
-        # return x._inner_add(x, y)
-        return x._apply_richardson(y, x._inner_add)  # TODO
-
-    @classmethod
-    def _inner_add(cls, x, y):
+        cls = x
         num_bins = max(len(x), len(y))
 
         # Add every pair of values and find the joint probabilty mass for every
@@ -1708,112 +1834,7 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=None,
         )
 
-    def _apply_richardson(x, y, operation, r=None):
-        """Use Richardson extrapolation to improve the accuracy of
-        ``operation(x, y)``.
-
-        Use the following procedure:
-
-        1. Evaluate ``z = operation(x, y)``
-        2. Construct a new ``x2`` and ``y2`` which are identical to ``x``
-           and ``y`` except that they use half as many bins.
-        3. Evaluate ``z2 = operation(x2, y2)``.
-        4. Apply Richardson extrapolation: ``res = (2^r * z - z2) / (2^r - 1)``
-           for some constant exponent ``r``, chosen to maximize accuracy.
-
-        Parameters
-        ----------
-        x : NumericDistribution
-            The first distribution.
-        y : NumericDistribution
-            The second distribution.
-        operation : Callable[[NumericDistribution, NumericDistribution], NumericDistribution]
-            The operation to apply to ``x`` and ``y``.
-        r : float
-            The exponent to use in Richardson extrapolation. This should equal
-            the rate at which the error shrinks as the number of bins
-            increases.
-
-        Returns
-        -------
-        res : NumericDistribution
-            The result of applying ``operation`` to ``x`` and ``y`` and then
-            applying Richardson extrapolation.
-
-        """
-        # return operation(x, y)  # TODO: delete me
-        def sum_pairs(arr):
-            """Sum every pair of values in ``arr`` or, if ``len(arr)`` is odd,
-            interpolate what the sums of pairs would be if ``len(arr)`` was
-            even."""
-            return arr.reshape(-1, 2).sum(axis=1)
-            # half_indexes = np.linspace(1, len(arr) - 1, len(arr) // 2)
-            # return np.diff(np.concatenate(([0], interp_indexes(half_indexes, np.cumsum(arr)))))
-
-        res_bin_sizing = None
-        # Empirically, BinSizing.ev error shrinks with r=1.5 for all bins
-        # (except for the outermost bins, which are more unpredictable).
-        # BinSizing.log_uniform error growth rate is lower near the middle bins
-        # and higher near the outer bins, so a uniform r doesn't work as well.
-        if res_bin_sizing is not None:
-            pass
-        elif x.bin_sizing == BinSizing.ev and y.bin_sizing == BinSizing.ev:
-            r = 1.5
-            res_bin_sizing = BinSizing.ev
-        elif x.bin_sizing == BinSizing.log_uniform and y.bin_sizing == BinSizing.log_uniform:
-            r = 3.5
-            res_bin_sizing = BinSizing.log_uniform
-        else:
-            r = 2
-
-        # Construct halfx and halfy from x and y but with half as many bins
-        halfx_masses = sum_pairs(x.masses)
-        halfx_evs = sum_pairs(x.values * x.masses)
-        halfx_values = halfx_evs / halfx_masses
-        halfx = NumericDistribution(
-            values=halfx_values,
-            masses=halfx_masses,
-            zero_bin_index=x.zero_bin_index // 2,
-            neg_ev_contribution=x.neg_ev_contribution,
-            pos_ev_contribution=x.pos_ev_contribution,
-            exact_mean=x.exact_mean,
-            exact_sd=x.exact_sd,
-            bin_sizing=x.bin_sizing,
-        )
-        halfy_masses = sum_pairs(y.masses)
-        halfy_evs = sum_pairs(y.values * y.masses)
-        halfy_values = halfy_evs / halfy_masses
-        halfy = NumericDistribution(
-            values=halfy_values,
-            masses=halfy_masses,
-            zero_bin_index=y.zero_bin_index // 2,
-            neg_ev_contribution=y.neg_ev_contribution,
-            pos_ev_contribution=y.pos_ev_contribution,
-            exact_mean=y.exact_mean,
-            exact_sd=y.exact_sd,
-            bin_sizing=y.bin_sizing,
-        )
-
-        half_res = operation(halfx, halfy)
-        full_res = operation(x, y)
-        paired_full_masses = full_res.masses.reshape(-1, 2).sum(axis=1)
-        paired_full_values = (full_res.values * full_res.masses).reshape(-1, 2).sum(axis=1) / paired_full_masses
-        richardson_masses = (2**(-r) * half_res.masses - paired_full_masses) / (2**(-r) - 1)
-        richardson_values = (2**(-r) * half_res.values - paired_full_values) / (2**(-r) - 1)
-        mass_adjustment  = np.repeat(richardson_masses / paired_full_masses, 2)
-        value_adjustment = np.repeat(richardson_values / paired_full_values, 2)
-        new_masses = full_res.masses * mass_adjustment
-        new_values = full_res.values * value_adjustment
-
-        # Adjust the negative and positive EV contributions to be exactly correct
-        new_values[:full_res.zero_bin_index] *= -full_res.neg_ev_contribution / np.sum(new_values[:full_res.zero_bin_index] * new_masses[:full_res.zero_bin_index])
-        new_values[full_res.zero_bin_index:] *= full_res.pos_ev_contribution / np.sum(new_values[full_res.zero_bin_index:] * new_masses[full_res.zero_bin_index:])
-
-        full_res.masses = new_masses
-        full_res.values = new_values
-        full_res.bin_sizing = res_bin_sizing
-        return full_res
-
+    @richardson(r=1.5)
     def __mul__(x, y):
         if isinstance(y, Real):
             return x.scale_by(y)
@@ -1822,10 +1843,7 @@ class NumericDistribution(BaseNumericDistribution):
         elif not isinstance(y, NumericDistribution):
             raise TypeError(f"Cannot add types {type(x)} and {type(y)}")
 
-        return x._apply_richardson(y, x._inner_mul)
-
-    @classmethod
-    def _inner_mul(cls, x, y):
+        cls = x
         num_bins = max(len(x), len(y))
 
         # If xpos is the positive part of x and xneg is the negative part, then
@@ -1972,6 +1990,7 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=None,
         )
 
+    @richardson(r=1, correct_ev=False)
     def exp(self):
         """Return the exponential of the distribution."""
         # Note: This code naively sets the average value within each bin to
@@ -2011,6 +2030,7 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=None,
         )
 
+    @richardson(r=1, correct_ev=False)
     def log(self):
         """Return the natural log of the distribution."""
         # See :any:`exp`` for some discussion of accuracy. For ``log` on a
