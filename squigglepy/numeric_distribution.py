@@ -1741,7 +1741,7 @@ class NumericDistribution(BaseNumericDistribution):
             applying Richardson extrapolation.
 
         """
-        return operation(x, y)  # TODO: delete me
+        # return operation(x, y)  # TODO: delete me
         def sum_pairs(arr):
             """Sum every pair of values in ``arr`` or, if ``len(arr)`` is odd,
             interpolate what the sums of pairs would be if ``len(arr)`` was
@@ -1755,7 +1755,6 @@ class NumericDistribution(BaseNumericDistribution):
         # (except for the outermost bins, which are more unpredictable).
         # BinSizing.log_uniform error growth rate is lower near the middle bins
         # and higher near the outer bins, so a uniform r doesn't work as well.
-        # TODO: numbers are out of date
         if res_bin_sizing is not None:
             pass
         elif x.bin_sizing == BinSizing.ev and y.bin_sizing == BinSizing.ev:
@@ -1798,10 +1797,20 @@ class NumericDistribution(BaseNumericDistribution):
         half_res = operation(halfx, halfy)
         full_res = operation(x, y)
         paired_full_masses = full_res.masses.reshape(-1, 2).sum(axis=1)
+        paired_full_values = (full_res.values * full_res.masses).reshape(-1, 2).sum(axis=1) / paired_full_masses
         richardson_masses = (2**(-r) * half_res.masses - paired_full_masses) / (2**(-r) - 1)
-        richardson_adjustment = np.repeat(richardson_masses / paired_full_masses, 2)
-        full_res.masses *= richardson_adjustment
-        full_res.values /= richardson_adjustment
+        richardson_values = (2**(-r) * half_res.values - paired_full_values) / (2**(-r) - 1)
+        mass_adjustment  = np.repeat(richardson_masses / paired_full_masses, 2)
+        value_adjustment = np.repeat(richardson_values / paired_full_values, 2)
+        new_masses = full_res.masses * mass_adjustment
+        new_values = full_res.values * value_adjustment
+
+        # Adjust the negative and positive EV contributions to be exactly correct
+        new_values[:full_res.zero_bin_index] *= -full_res.neg_ev_contribution / np.sum(new_values[:full_res.zero_bin_index] * new_masses[:full_res.zero_bin_index])
+        new_values[full_res.zero_bin_index:] *= full_res.pos_ev_contribution / np.sum(new_values[full_res.zero_bin_index:] * new_masses[full_res.zero_bin_index:])
+
+        full_res.masses = new_masses
+        full_res.values = new_values
         full_res.bin_sizing = res_bin_sizing
         return full_res
 
