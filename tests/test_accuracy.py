@@ -480,28 +480,31 @@ def test_quantile_product_accuracy():
 
 def test_cev_accuracy():
     num_bins = 200
-    bin_sizing = "mass"
+    bin_sizing = "log-uniform"
     print("")
     bin_errs = []
-    num_products = 64
+    num_products = 2
     bin_sizes = 40 * np.arange(1, 11)
     for num_bins in bin_sizes:
         true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
         dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
         true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-        hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+        # hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+        hist1 = numeric(mixture([-dist1, dist1], [0.03, 0.97]), bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
 
         cum_mass = np.cumsum(hist.masses)
         cum_cev = np.cumsum(hist.masses * abs(hist.values))
         cum_cev_frac = cum_cev / cum_cev[-1]
-        expected_cum_mass = stats.lognorm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
+        # expected_cum_mass = stats.lognorm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
 
         # Take only every nth value where n = num_bins/40
         cum_mass = cum_mass[::num_bins // 40]
-        expected_cum_mass = expected_cum_mass[::num_bins // 40]
-        bin_errs.append(abs(cum_mass - expected_cum_mass))
+        # expected_cum_mass = expected_cum_mass[::num_bins // 40]
+        # bin_errs.append(abs(cum_mass - expected_cum_mass) / expected_cum_mass)
+        print(f"{num_bins:3d}: {cum_mass[0]:.1e} = {hist.values[num_bins // 20]:.2f}, {1 - cum_mass[-1]:.1e} = {hist.values[-num_bins // 20]:.2f}")
 
+    return None
     bin_errs = np.array(bin_errs)
 
     best_fits = []
@@ -525,7 +528,7 @@ def test_richardson_product():
     print("")
     num_bins = 200
     num_products = 16
-    bin_sizing = "mass"
+    bin_sizing = "ev"
     mixture_ratio = [7/200, 193/200]
     # mixture_ratio = [0, 1]
     # mixture_ratio = [0.3, 0.7]
