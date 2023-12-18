@@ -1,5 +1,6 @@
 ## v0.28
 
+* **[Breaking change]** `sq.pareto` previously sampled from a Lomax distribution due to a complication with numpy. Now it properly samples from a Pareto distribution.
 * **[Breaking change]** lclip / rclip have been removed from triangular distribution because that doesn't make sense.
 * **[Breaking change]** You now can nest mixture and discrete distributions within mixture distributions.
 * Added `pert` distribution.
