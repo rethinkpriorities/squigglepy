@@ -473,7 +473,9 @@ def pareto_sample(shape, samples=1):
     >>> pareto_sample(1)
     10.069666324736094
     """
-    return _simplify(_get_rng().pareto(shape, samples))
+    # Add 1 because Numpy's "pareto" sampler actually samples from a Lomax
+    # distribution
+    return _simplify(_get_rng().pareto(shape, samples) + 1)
 
 
 def uniform_sample(low, high, samples=1):
