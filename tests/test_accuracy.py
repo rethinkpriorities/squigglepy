@@ -66,9 +66,9 @@ def test_norm_sd_bin_sizing_accuracy():
     uniform_hist = numeric(dist, bin_sizing="uniform", warn=False)
 
     sd_errors = [
-        relative_error(uniform_hist.histogram_sd(), dist.sd),
-        relative_error(ev_hist.histogram_sd(), dist.sd),
-        relative_error(mass_hist.histogram_sd(), dist.sd),
+        relative_error(uniform_hist.est_sd(), dist.sd),
+        relative_error(ev_hist.est_sd(), dist.sd),
+        relative_error(mass_hist.est_sd(), dist.sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -85,16 +85,16 @@ def test_norm_product_bin_sizing_accuracy():
     # uniform and log-uniform should have small errors and the others should be
     # pretty much perfect
     mean_errors = np.array([
-        relative_error(mass_hist.histogram_mean(), ev_hist.exact_mean),
-        relative_error(ev_hist.histogram_mean(), ev_hist.exact_mean),
-        relative_error(uniform_hist.histogram_mean(), ev_hist.exact_mean),
+        relative_error(mass_hist.est_mean(), ev_hist.exact_mean),
+        relative_error(ev_hist.est_mean(), ev_hist.exact_mean),
+        relative_error(uniform_hist.est_mean(), ev_hist.exact_mean),
     ])
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
-        relative_error(uniform_hist.histogram_sd(), ev_hist.exact_sd),
-        relative_error(mass_hist.histogram_sd(), ev_hist.exact_sd),
-        relative_error(ev_hist.histogram_sd(), ev_hist.exact_sd),
+        relative_error(uniform_hist.est_sd(), ev_hist.exact_sd),
+        relative_error(mass_hist.est_sd(), ev_hist.exact_sd),
+        relative_error(ev_hist.est_sd(), ev_hist.exact_sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -116,20 +116,20 @@ def test_lognorm_product_bin_sizing_accuracy():
     )
 
     mean_errors = np.array([
-        relative_error(mass_hist.histogram_mean(), dist_prod.lognorm_mean),
-        relative_error(ev_hist.histogram_mean(), dist_prod.lognorm_mean),
-        relative_error(fat_hybrid_hist.histogram_mean(), dist_prod.lognorm_mean),
-        relative_error(uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
-        relative_error(log_uniform_hist.histogram_mean(), dist_prod.lognorm_mean),
+        relative_error(mass_hist.est_mean(), dist_prod.lognorm_mean),
+        relative_error(ev_hist.est_mean(), dist_prod.lognorm_mean),
+        relative_error(fat_hybrid_hist.est_mean(), dist_prod.lognorm_mean),
+        relative_error(uniform_hist.est_mean(), dist_prod.lognorm_mean),
+        relative_error(log_uniform_hist.est_mean(), dist_prod.lognorm_mean),
     ])
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
-        relative_error(fat_hybrid_hist.histogram_sd(), dist_prod.lognorm_sd),
-        relative_error(log_uniform_hist.histogram_sd(), dist_prod.lognorm_sd),
-        relative_error(ev_hist.histogram_sd(), dist_prod.lognorm_sd),
-        relative_error(mass_hist.histogram_sd(), dist_prod.lognorm_sd),
-        relative_error(uniform_hist.histogram_sd(), dist_prod.lognorm_sd),
+        relative_error(fat_hybrid_hist.est_sd(), dist_prod.lognorm_sd),
+        relative_error(log_uniform_hist.est_sd(), dist_prod.lognorm_sd),
+        relative_error(ev_hist.est_sd(), dist_prod.lognorm_sd),
+        relative_error(mass_hist.est_sd(), dist_prod.lognorm_sd),
+        relative_error(uniform_hist.est_sd(), dist_prod.lognorm_sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -197,22 +197,22 @@ def test_lognorm_clip_center_bin_sizing_accuracy():
     )
 
     mean_errors = np.array([
-        relative_error(ev_hist.histogram_mean(), true_mean),
-        relative_error(mass_hist.histogram_mean(), true_mean),
-        relative_error(uniform_hist.histogram_mean(), true_mean),
-        relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
-        relative_error(log_uniform_hist.histogram_mean(), true_mean),
+        relative_error(ev_hist.est_mean(), true_mean),
+        relative_error(mass_hist.est_mean(), true_mean),
+        relative_error(uniform_hist.est_mean(), true_mean),
+        relative_error(fat_hybrid_hist.est_mean(), true_mean),
+        relative_error(log_uniform_hist.est_mean(), true_mean),
     ])
     assert all(mean_errors <= 1e-6)
 
     # Uniform does poorly in general with fat-tailed dists, but it does well
     # with a center clip because most of the mass is in the center
     sd_errors = [
-        relative_error(mass_hist.histogram_mean(), true_mean),
-        relative_error(uniform_hist.histogram_sd(), true_sd),
-        relative_error(ev_hist.histogram_sd(), true_sd),
-        relative_error(fat_hybrid_hist.histogram_sd(), true_sd),
-        relative_error(log_uniform_hist.histogram_sd(), true_sd),
+        relative_error(mass_hist.est_mean(), true_mean),
+        relative_error(uniform_hist.est_sd(), true_sd),
+        relative_error(ev_hist.est_sd(), true_sd),
+        relative_error(fat_hybrid_hist.est_sd(), true_sd),
+        relative_error(log_uniform_hist.est_sd(), true_sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -281,20 +281,20 @@ def test_lognorm_clip_tail_bin_sizing_accuracy():
     )
 
     mean_errors = np.array([
-        relative_error(mass_hist.histogram_mean(), true_mean),
-        relative_error(uniform_hist.histogram_mean(), true_mean),
-        relative_error(ev_hist.histogram_mean(), true_mean),
-        relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
-        relative_error(log_uniform_hist.histogram_mean(), true_mean),
+        relative_error(mass_hist.est_mean(), true_mean),
+        relative_error(uniform_hist.est_mean(), true_mean),
+        relative_error(ev_hist.est_mean(), true_mean),
+        relative_error(fat_hybrid_hist.est_mean(), true_mean),
+        relative_error(log_uniform_hist.est_mean(), true_mean),
     ])
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
-        relative_error(fat_hybrid_hist.histogram_sd(), true_sd),
-        relative_error(log_uniform_hist.histogram_sd(), true_sd),
-        relative_error(ev_hist.histogram_sd(), true_sd),
-        relative_error(uniform_hist.histogram_sd(), true_sd),
-        relative_error(mass_hist.histogram_sd(), true_sd),
+        relative_error(fat_hybrid_hist.est_sd(), true_sd),
+        relative_error(log_uniform_hist.est_sd(), true_sd),
+        relative_error(ev_hist.est_sd(), true_sd),
+        relative_error(uniform_hist.est_sd(), true_sd),
+        relative_error(mass_hist.est_sd(), true_sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -317,20 +317,20 @@ def test_gamma_bin_sizing_accuracy():
     true_sd = uniform_hist.exact_sd
 
     mean_errors = np.array([
-        relative_error(mass_hist.histogram_mean(), true_mean),
-        relative_error(uniform_hist.histogram_mean(), true_mean),
-        relative_error(ev_hist.histogram_mean(), true_mean),
-        relative_error(log_uniform_hist.histogram_mean(), true_mean),
-        relative_error(fat_hybrid_hist.histogram_mean(), true_mean),
+        relative_error(mass_hist.est_mean(), true_mean),
+        relative_error(uniform_hist.est_mean(), true_mean),
+        relative_error(ev_hist.est_mean(), true_mean),
+        relative_error(log_uniform_hist.est_mean(), true_mean),
+        relative_error(fat_hybrid_hist.est_mean(), true_mean),
     ])
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
-        relative_error(uniform_hist.histogram_sd(), true_sd),
-        relative_error(fat_hybrid_hist.histogram_sd(), true_sd),
-        relative_error(ev_hist.histogram_sd(), true_sd),
-        relative_error(log_uniform_hist.histogram_sd(), true_sd),
-        relative_error(mass_hist.histogram_sd(), true_sd),
+        relative_error(uniform_hist.est_sd(), true_sd),
+        relative_error(fat_hybrid_hist.est_sd(), true_sd),
+        relative_error(ev_hist.est_sd(), true_sd),
+        relative_error(log_uniform_hist.est_sd(), true_sd),
+        relative_error(mass_hist.est_sd(), true_sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -349,7 +349,7 @@ def test_norm_product_sd_accuracy_vs_monte_carlo():
     dists = [NormalDistribution(mean=i, sd=0.5 + i / 4) for i in range(9)]
     hists = [numeric(dist, num_bins=num_bins, warn=False) for dist in dists]
     hist = reduce(lambda acc, hist: acc * hist, hists)
-    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+    dist_abs_error = abs(hist.est_sd() - hist.exact_sd)
 
     mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc * mc)
     assert dist_abs_error < mc_abs_error
@@ -363,7 +363,7 @@ def test_lognorm_product_sd_accuracy_vs_monte_carlo():
     dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(9)]
     hists = [numeric(dist, num_bins=num_bins, warn=False) for dist in dists]
     hist = reduce(lambda acc, hist: acc * hist, hists)
-    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+    dist_abs_error = abs(hist.est_sd() - hist.exact_sd)
 
     mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc * mc)
     assert dist_abs_error < mc_abs_error
@@ -383,7 +383,7 @@ def test_norm_sum_sd_accuracy_vs_monte_carlo():
         warnings.simplefilter("ignore")
         hists = [numeric(dist, num_bins=num_bins, bin_sizing="uniform") for dist in dists]
     hist = reduce(lambda acc, hist: acc + hist, hists)
-    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+    dist_abs_error = abs(hist.est_sd() - hist.exact_sd)
 
     mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc + mc)
     assert dist_abs_error < mc_abs_error
@@ -397,7 +397,7 @@ def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
     dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(17)]
     hists = [numeric(dist, num_bins=num_bins, warn=False) for dist in dists]
     hist = reduce(lambda acc, hist: acc + hist, hists)
-    dist_abs_error = abs(hist.histogram_sd() - hist.exact_sd)
+    dist_abs_error = abs(hist.est_sd() - hist.exact_sd)
 
     mc_abs_error = get_mc_accuracy(hist.exact_sd, num_samples, dists, lambda acc, mc: acc + mc)
     assert dist_abs_error < mc_abs_error
@@ -480,7 +480,7 @@ def test_quantile_product_accuracy():
 
 def test_cev_accuracy():
     num_bins = 200
-    bin_sizing = "log-uniform"
+    bin_sizing = "ev"
     print("")
     bin_errs = []
     num_products = 2
@@ -529,8 +529,8 @@ def test_richardson_product():
     num_bins = 200
     num_products = 16
     bin_sizing = "ev"
-    mixture_ratio = [7/200, 193/200]
-    # mixture_ratio = [0, 1]
+    # mixture_ratio = [0.035, 0.965]
+    mixture_ratio = [0, 1]
     # mixture_ratio = [0.3, 0.7]
     bin_sizes = 40 * np.arange(1, 11)
     err_rates = []
@@ -545,29 +545,28 @@ def test_richardson_product():
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
 
-        # CEV
-        # true_answer = one_sided_dist.contribution_to_ev(stats.lognorm.ppf(2 * hist.masses[50:100].sum(), one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean)), False) / 2
-        # est_answer = (hist.masses * abs(hist.values))[50:100].sum()
-        # print_accuracy_ratio(est_answer, true_answer, f"CEV({num_products:3d})")
-
-        # SD
-        # true_answer = true_hist.exact_sd
-        # est_answer = hist.histogram_sd()
-        # print_accuracy_ratio(est_answer, true_answer, f"SD({num_products}, {num_bins:3d})")
-        # err_rates.append(abs(est_answer - true_answer))
-
-        # ppf
-        fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
-        frac_errs = []
-        for frac in fracs:
-            true_answer = stats.lognorm.ppf((frac - true_mixture_ratio[0]) / true_mixture_ratio[1], one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean))
-            oneshot_answer = true_hist.ppf(frac)
-            est_answer = hist.ppf(frac)
-            frac_errs.append(abs(est_answer - true_answer) / true_answer)
-            # frac_errs.append(abs(oneshot_answer - true_answer) / true_answer)
-        median_err = np.median(frac_errs)
-        print(f"ppf ({num_products:3d}, {num_bins:3d}): {median_err * 100:.3f}%")
-        err_rates.append(median_err)
+        test_mode = 'ppf'
+        if test_mode == 'cev':
+            true_answer = one_sided_dist.contribution_to_ev(stats.lognorm.ppf(2 * hist.masses[50:100].sum(), one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean)), False) / 2
+            est_answer = (hist.masses * abs(hist.values))[50:100].sum()
+            print_accuracy_ratio(est_answer, true_answer, f"CEV({num_products:3d})")
+        elif test_mode == 'sd':
+            true_answer = true_hist.exact_sd
+            est_answer = hist.est_sd()
+            print_accuracy_ratio(est_answer, true_answer, f"SD({num_products}, {num_bins:3d})")
+            err_rates.append(abs(est_answer - true_answer))
+        elif test_mode == 'ppf':
+            fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
+            frac_errs = []
+            for frac in fracs:
+                true_answer = stats.lognorm.ppf((frac - true_mixture_ratio[0]) / true_mixture_ratio[1], one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean))
+                oneshot_answer = true_hist.ppf(frac)
+                est_answer = hist.ppf(frac)
+                frac_errs.append(abs(est_answer - true_answer) / true_answer)
+                # frac_errs.append(abs(oneshot_answer - true_answer) / true_answer)
+            median_err = np.median(frac_errs)
+            print(f"ppf ({num_products:3d}, {num_bins:3d}): {median_err * 100:.3f}%")
+            err_rates.append(median_err)
 
     if len(err_rates) == len(bin_sizes):
         best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
@@ -577,7 +576,7 @@ def test_richardson_product():
 def test_richardson_sum():
     print("")
     num_bins = 200
-    bin_sizing = "uniform"
+    bin_sizing = "ev"
     true_dist = NormalDistribution(mean=0, sd=1)
     true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
     for num_sums in [2, 4, 8, 16, 32, 64]:
@@ -587,5 +586,5 @@ def test_richardson_sum():
 
         # SD
         true_answer = true_hist.exact_sd
-        est_answer = hist.histogram_sd()
+        est_answer = hist.est_sd()
         print_accuracy_ratio(est_answer, true_answer, f"SD({num_sums:3d})")

@@ -10,7 +10,7 @@ from unittest.mock import patch, Mock
 import warnings
 
 from ..squigglepy.distributions import *
-from ..squigglepy.numeric_distribution import numeric, NumericDistribution
+from ..squigglepy.numeric_distribution import numeric, NumericDistribution, _bump_indexes
 from ..squigglepy import samplers, utils
 
 # There are a lot of functions testing various combinations of behaviors with
@@ -58,6 +58,7 @@ def fix_ordering(a, b):
     sd1=st.floats(min_value=0.1, max_value=100),
     sd2=st.floats(min_value=0.001, max_value=1000),
 )
+@example(mean1=0, mean2=9, sd1=2, sd2=1)
 @example(mean1=1, mean2=1, sd1=0.5, sd2=0.25)
 def test_sum_exact_summary_stats(mean1, mean2, sd1, sd2):
     """Test that the formulas for exact moments are implemented correctly."""
@@ -111,8 +112,8 @@ def test_lognorm_product_exact_summary_stats(norm_mean1, norm_mean2, norm_sd1, n
 def test_norm_basic(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = numeric(dist, bin_sizing="uniform", warn=False)
-    assert hist.histogram_mean() == approx(mean)
-    assert hist.histogram_sd() == approx(sd, rel=0.01)
+    assert hist.est_mean() == approx(mean)
+    assert hist.est_sd() == approx(sd, rel=0.01)
 
 
 @given(
@@ -130,7 +131,7 @@ def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
         tolerance = 1e-2
     else:
         tolerance = 0.01 if dist.norm_sd < 3 else 0.1
-    assert hist.histogram_mean() == approx(
+    assert hist.est_mean() == approx(
         stats.lognorm.mean(dist.norm_sd, scale=np.exp(dist.norm_mean)),
         rel=tolerance,
     )
@@ -155,7 +156,7 @@ def test_lognorm_sd(norm_mean, norm_sd):
 
     def observed_variance(left, right):
         return np.sum(
-            hist.masses[left:right] * (hist.values[left:right] - hist.histogram_mean()) ** 2
+            hist.masses[left:right] * (hist.values[left:right] - hist.est_mean()) ** 2
         )
 
     if test_edges:
@@ -170,9 +171,9 @@ def test_lognorm_sd(norm_mean, norm_sd):
         print("")
         print_accuracy_ratio(observed_left_variance, expected_left_variance, "Left   ")
         print_accuracy_ratio(observed_right_variance, expected_right_variance, "Right  ")
-        print_accuracy_ratio(hist.histogram_sd(), dist.lognorm_sd, "Overall")
+        print_accuracy_ratio(hist.est_sd(), dist.lognorm_sd, "Overall")
 
-    assert hist.histogram_sd() == approx(dist.lognorm_sd, rel=0.01 + 0.1 * norm_sd)
+    assert hist.est_sd() == approx(dist.lognorm_sd, rel=0.01 + 0.1 * norm_sd)
 
 
 @given(
@@ -189,7 +190,7 @@ def test_norm_one_sided_clip(mean, sd, clip_zscore):
     clip = mean + clip_zscore * sd
     dist = NormalDistribution(mean=mean, sd=sd, lclip=clip)
     hist = numeric(dist, warn=False)
-    assert hist.histogram_mean() == approx(
+    assert hist.est_mean() == approx(
         stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=tolerance, abs=tolerance
     )
 
@@ -201,7 +202,7 @@ def test_norm_one_sided_clip(mean, sd, clip_zscore):
 
     dist = NormalDistribution(mean=mean, sd=sd, rclip=clip)
     hist = numeric(dist, warn=False)
-    assert hist.histogram_mean() == approx(
+    assert hist.est_mean() == approx(
         stats.truncnorm.mean(-np.inf, clip_zscore, loc=mean, scale=sd),
         rel=tolerance,
         abs=tolerance,
@@ -227,10 +228,10 @@ def test_norm_clip(mean, sd, lclip_zscore, rclip_zscore):
     dist = NormalDistribution(mean=mean, sd=sd, lclip=lclip, rclip=rclip)
     hist = numeric(dist, warn=False)
 
-    assert hist.histogram_mean() == approx(
+    assert hist.est_mean() == approx(
         stats.truncnorm.mean(lclip_zscore, rclip_zscore, loc=mean, scale=sd), rel=tolerance
     )
-    assert hist.histogram_mean() == approx(hist.exact_mean, rel=tolerance)
+    assert hist.est_mean() == approx(hist.exact_mean, rel=tolerance)
     assert hist.exact_mean == approx(
         stats.truncnorm.mean(lclip_zscore, rclip_zscore, loc=mean, scale=sd), rel=1e-6, abs=1e-10
     )
@@ -253,8 +254,8 @@ def test_uniform_clip(a, b, lclip, rclip):
     hist = numeric(dist)
     narrow_hist = numeric(narrow_dist)
 
-    assert hist.histogram_mean() == approx(narrow_hist.exact_mean)
-    assert hist.histogram_mean() == approx(narrow_hist.histogram_mean())
+    assert hist.est_mean() == approx(narrow_hist.exact_mean)
+    assert hist.est_mean() == approx(narrow_hist.est_mean())
     assert hist.values[0] == approx(narrow_hist.values[0])
     assert hist.values[-1] == approx(narrow_hist.values[-1])
 
@@ -275,7 +276,7 @@ def test_lognorm_clip_and_sum(norm_mean, norm_sd, clip_zscore):
     true_mean = stats.lognorm.mean(norm_sd, scale=np.exp(norm_mean))
     sum_exact_mean = left_mass * left_hist.exact_mean + right_mass * right_hist.exact_mean
     sum_hist_mean = (
-        left_mass * left_hist.histogram_mean() + right_mass * right_hist.histogram_mean()
+        left_mass * left_hist.est_mean() + right_mass * right_hist.est_mean()
     )
 
     # TODO: the error margin is surprisingly large
@@ -303,10 +304,10 @@ def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
     hist2 = numeric(dist2, num_bins=40, bin_sizing=bin_sizing, warn=False)
     hist3 = numeric(dist3, num_bins=40, bin_sizing=bin_sizing, warn=False)
     hist_prod = hist1 * hist2
-    assert hist_prod.histogram_mean() == approx(
+    assert hist_prod.est_mean() == approx(
         dist1.mean * dist2.mean, rel=mean_tolerance, abs=1e-8
     )
-    assert hist_prod.histogram_sd() == approx(
+    assert hist_prod.est_sd() == approx(
         np.sqrt(
             (dist1.sd**2 + dist1.mean**2) * (dist2.sd**2 + dist2.mean**2)
             - dist1.mean**2 * dist2.mean**2
@@ -314,7 +315,7 @@ def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
         rel=sd_tolerance,
     )
     hist3_prod = hist_prod * hist3
-    assert hist3_prod.histogram_mean() == approx(
+    assert hist3_prod.est_mean() == approx(
         dist1.mean * dist2.mean * dist3.mean, rel=mean_tolerance, abs=1e-8
     )
 
@@ -323,8 +324,7 @@ def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
     mean=st.floats(min_value=-10, max_value=10),
     sd=st.floats(min_value=0.001, max_value=100),
     num_bins=st.sampled_from([40, 100]),
-    # bin_sizing=st.sampled_from(["ev", "mass", "uniform"]),
-    bin_sizing=st.sampled_from(["ev", "mass"]),
+    bin_sizing=st.sampled_from(["ev", "mass", "uniform"]),
 )
 @settings(max_examples=100)
 def test_norm_mean_error_propagation(mean, sd, num_bins, bin_sizing):
@@ -342,7 +342,7 @@ def test_norm_mean_error_propagation(mean, sd, num_bins, bin_sizing):
         true_sd = np.sqrt((dist.sd**2 + dist.mean**2) ** i - dist.mean ** (2 * i))
         if true_sd > 1e15:
             break
-        assert hist.histogram_mean() == approx(
+        assert hist.est_mean() == approx(
             true_mean, abs=tolerance ** (1 / i), rel=tolerance ** (1 / i)
         ), f"On iteration {i}"
         hist = hist * hist_base
@@ -367,14 +367,14 @@ def test_norm_lognorm_product_sum(mean1, mean2, mean3, sd1, sd2, sd3, num_bins1,
     hist3 = numeric(dist3, num_bins=num_bins1, warn=False)
     hist_prod = hist1 * hist2
     assert all(np.diff(hist_prod.values) >= 0)
-    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, abs=1e-5, rel=1e-5)
+    assert hist_prod.est_mean() == approx(hist_prod.exact_mean, abs=1e-5, rel=1e-5)
 
     # SD is pretty inaccurate
     sd_tolerance = 1 if num_bins1 == 100 and num_bins2 == 100 else 2
-    assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=sd_tolerance)
+    assert hist_prod.est_sd() == approx(hist_prod.exact_sd, rel=sd_tolerance)
 
     hist_sum = hist_prod + hist3
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, abs=1e-5, rel=1e-5)
+    assert hist_sum.est_mean() == approx(hist_sum.exact_mean, abs=1e-5, rel=1e-5)
 
 
 @given(
@@ -396,7 +396,7 @@ def test_lognorm_mean_error_propagation(norm_mean, norm_sd, num_bins, bin_sizing
             # log-uniform can have out-of-order values due to the masses at the
             # end being very small
             assert all(np.diff(hist.values) >= 0), f"On iteration {i}: {hist.values}"
-        assert hist.histogram_mean() == approx(
+        assert hist.est_mean() == approx(
             true_mean, rel=1 - inv_tolerance**i
         ), f"On iteration {i}"
         hist = hist * hist_base
@@ -417,11 +417,11 @@ def test_lognorm_sd_error_propagation(bin_sizing):
         oneshot = numeric(LognormalDistribution(norm_mean=0, norm_sd=0.1 * np.sqrt(i)), num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
         true_mean = stats.lognorm.mean(np.sqrt(i))
         true_sd = hist.exact_sd
-        abs_error.append(abs(hist.histogram_sd() - true_sd))
-        rel_error.append(relative_error(hist.histogram_sd(), true_sd))
+        abs_error.append(abs(hist.est_sd() - true_sd))
+        rel_error.append(relative_error(hist.est_sd(), true_sd))
         if verbose:
             print(f"i={i:2d}: Hist error  : {rel_error[-1] * 100:.4f}%")
-            print(f"i={i:2d}: Hist / 1shot: {(rel_error[-1] / relative_error(oneshot.histogram_sd(), true_sd)) * 100:.0f}%")
+            print(f"i={i:2d}: Hist / 1shot: {(rel_error[-1] / relative_error(oneshot.est_sd(), true_sd)) * 100:.0f}%")
         hist = hist * hist
 
     expected_error_pcts = (
@@ -456,8 +456,8 @@ def test_lognorm_product(norm_mean1, norm_sd1, norm_mean2, norm_sd2, bin_sizing)
     # Lognorm width grows with e**norm_sd**2, so error tolerance grows the same way
     sd_tolerance = 1.05 ** (1 + (norm_sd1 + norm_sd2) ** 2) - 1
     mean_tolerance = 1e-3 if bin_sizing == "log-uniform" else 1e-6
-    assert hist_prod.histogram_mean() == approx(dist_prod.lognorm_mean, rel=mean_tolerance)
-    assert hist_prod.histogram_sd() == approx(dist_prod.lognorm_sd, rel=sd_tolerance)
+    assert hist_prod.est_mean() == approx(dist_prod.lognorm_mean, rel=mean_tolerance)
+    assert hist_prod.est_sd() == approx(dist_prod.lognorm_sd, rel=sd_tolerance)
 
 
 @given(
@@ -491,8 +491,8 @@ def test_norm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, num_bins1, num_bin
     mean_tolerance = 1e-10 + 1e-10 * distance_apart
 
     assert all(np.diff(hist_sum.values) >= 0)
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, abs=mean_tolerance, rel=1e-5)
-    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=sd_tolerance)
+    assert hist_sum.est_mean() == approx(hist_sum.exact_mean, abs=mean_tolerance, rel=1e-5)
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=sd_tolerance)
 
 
 @given(
@@ -510,13 +510,13 @@ def test_lognorm_sum(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing):
     hist_sum = hist1 + hist2
     assert all(np.diff(hist_sum.values) >= 0), hist_sum.values
     mean_tolerance = 1e-3 if bin_sizing == "log-uniform" else 1e-6
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, rel=mean_tolerance)
+    assert hist_sum.est_mean() == approx(hist_sum.exact_mean, rel=mean_tolerance)
 
     # SD is very inaccurate because adding lognormals produces some large but
     # very low-probability values on the right tail and the only approach is to
     # either downweight them or make the histogram much wider.
-    assert hist_sum.histogram_sd() > min(hist1.histogram_sd(), hist2.histogram_sd())
-    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=2)
+    assert hist_sum.est_sd() > min(hist1.est_sd(), hist2.est_sd())
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=2)
 
 
 @given(
@@ -536,10 +536,10 @@ def test_norm_lognorm_sum(mean1, mean2, sd1, sd2, lognorm_bin_sizing):
     mean_tolerance = 0.005 if lognorm_bin_sizing == "log-uniform" else 1e-6
     sd_tolerance = 0.5
     assert all(np.diff(hist_sum.values) >= 0), hist_sum.values
-    assert hist_sum.histogram_mean() == approx(
+    assert hist_sum.est_mean() == approx(
         hist_sum.exact_mean, abs=mean_tolerance, rel=mean_tolerance
     )
-    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=sd_tolerance)
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=sd_tolerance)
 
 
 @given(
@@ -555,8 +555,8 @@ def test_lognorm_to_const_power(norm_mean, norm_sd):
 
     hist_pow = hist**power
     true_dist_pow = LognormalDistribution(norm_mean=power * norm_mean, norm_sd=power * norm_sd)
-    assert hist_pow.histogram_mean() == approx(true_dist_pow.lognorm_mean, rel=0.005)
-    assert hist_pow.histogram_sd() == approx(true_dist_pow.lognorm_sd, rel=0.5)
+    assert hist_pow.est_mean() == approx(true_dist_pow.lognorm_mean, rel=0.005)
+    assert hist_pow.est_sd() == approx(true_dist_pow.lognorm_sd, rel=0.5)
 
 
 @given(
@@ -569,8 +569,8 @@ def test_norm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
     dist = NormalDistribution(mean=0, sd=1)
     hist = numeric(dist, warn=False)
     neg_hist = -hist
-    assert neg_hist.histogram_mean() == approx(-hist.histogram_mean())
-    assert neg_hist.histogram_sd() == approx(hist.histogram_sd())
+    assert neg_hist.est_mean() == approx(-hist.est_mean())
+    assert neg_hist.est_sd() == approx(hist.est_sd())
 
 
 @given(
@@ -583,8 +583,8 @@ def test_lognorm_negate(norm_mean, norm_sd, num_bins, bin_sizing):
     dist = LognormalDistribution(norm_mean=0, norm_sd=1)
     hist = numeric(dist, warn=False)
     neg_hist = -hist
-    assert neg_hist.histogram_mean() == approx(-hist.histogram_mean())
-    assert neg_hist.histogram_sd() == approx(hist.histogram_sd())
+    assert neg_hist.est_mean() == approx(-hist.est_mean())
+    assert neg_hist.est_sd() == approx(hist.est_sd())
 
 
 @given(
@@ -615,14 +615,14 @@ def test_sub(type_and_size, mean1, mean2, sd1, sd2, num_bins):
     backward_diff = hist2 - hist1
     assert not any(np.isnan(hist_diff.values))
     assert all(np.diff(hist_diff.values) >= 0)
-    assert hist_diff.histogram_mean() == approx(-backward_diff.histogram_mean(), rel=0.01)
-    assert hist_diff.histogram_sd() == approx(backward_diff.histogram_sd(), rel=0.05)
+    assert hist_diff.est_mean() == approx(-backward_diff.est_mean(), rel=0.01)
+    assert hist_diff.est_sd() == approx(backward_diff.est_sd(), rel=0.05)
 
     if neg_dist:
         neg_hist = numeric(neg_dist, num_bins=num_bins, bin_sizing=bin_sizing)
         hist_sum = hist1 + neg_hist
-        assert hist_diff.histogram_mean() == approx(hist_sum.histogram_mean(), rel=0.01)
-        assert hist_diff.histogram_sd() == approx(hist_sum.histogram_sd(), rel=0.05)
+        assert hist_diff.est_mean() == approx(hist_sum.est_mean(), rel=0.01)
+        assert hist_diff.est_sd() == approx(hist_sum.est_sd(), rel=0.05)
 
 
 def test_lognorm_sub():
@@ -631,8 +631,8 @@ def test_lognorm_sub():
     hist_diff = 0.97 * hist - 0.03 * hist
     assert not any(np.isnan(hist_diff.values))
     assert all(np.diff(hist_diff.values) >= 0)
-    assert hist_diff.histogram_mean() == approx(0.94 * dist.lognorm_mean, rel=0.001)
-    assert hist_diff.histogram_sd() == approx(hist_diff.exact_sd, rel=0.05)
+    assert hist_diff.est_mean() == approx(0.94 * dist.lognorm_mean, rel=0.001)
+    assert hist_diff.est_sd() == approx(hist_diff.exact_sd, rel=0.05)
 
 
 @given(
@@ -645,11 +645,11 @@ def test_scale(mean, sd, scalar):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = numeric(dist, warn=False)
     scaled_hist = scalar * hist
-    assert scaled_hist.histogram_mean() == approx(
-        scalar * hist.histogram_mean(), abs=1e-6, rel=1e-6
+    assert scaled_hist.est_mean() == approx(
+        scalar * hist.est_mean(), abs=1e-6, rel=1e-6
     )
-    assert scaled_hist.histogram_sd() == approx(
-        abs(scalar) * hist.histogram_sd(), abs=1e-6, rel=1e-6
+    assert scaled_hist.est_sd() == approx(
+        abs(scalar) * hist.est_sd(), abs=1e-6, rel=1e-6
     )
     assert scaled_hist.exact_mean == approx(scalar * hist.exact_mean)
     assert scaled_hist.exact_sd == approx(abs(scalar) * hist.exact_sd)
@@ -664,10 +664,10 @@ def test_shift_by(mean, sd, scalar):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = numeric(dist, warn=False)
     shifted_hist = hist + scalar
-    assert shifted_hist.histogram_mean() == approx(
-        hist.histogram_mean() + scalar, abs=1e-6, rel=1e-6
+    assert shifted_hist.est_mean() == approx(
+        hist.est_mean() + scalar, abs=1e-6, rel=1e-6
     )
-    assert shifted_hist.histogram_sd() == approx(hist.histogram_sd(), abs=1e-6, rel=1e-6)
+    assert shifted_hist.est_sd() == approx(hist.est_sd(), abs=1e-6, rel=1e-6)
     assert shifted_hist.exact_mean == approx(hist.exact_mean + scalar)
     assert shifted_hist.exact_sd == approx(hist.exact_sd)
     assert shifted_hist.pos_ev_contribution - shifted_hist.neg_ev_contribution == approx(
@@ -695,8 +695,8 @@ def test_lognorm_reciprocal(norm_mean, norm_sd):
     # different. Could improve accuracy by writing
     # reciprocal_contribution_to_ev functions for every distribution type, but
     # that's probably not worth it.
-    assert reciprocal_hist.histogram_mean() == approx(reciprocal_dist.lognorm_mean, rel=0.05)
-    assert reciprocal_hist.histogram_sd() == approx(reciprocal_dist.lognorm_sd, rel=0.2)
+    assert reciprocal_hist.est_mean() == approx(reciprocal_dist.lognorm_mean, rel=0.05)
+    assert reciprocal_hist.est_sd() == approx(reciprocal_dist.lognorm_sd, rel=0.2)
     assert reciprocal_hist.neg_ev_contribution == 0
     assert reciprocal_hist.pos_ev_contribution == approx(
         true_reciprocal_hist.pos_ev_contribution, rel=0.05
@@ -721,8 +721,8 @@ def test_lognorm_quotient(norm_mean1, norm_mean2, norm_sd1, norm_sd2, bin_sizing
     )
     true_quotient_hist = numeric(true_quotient_dist, bin_sizing="log-uniform", warn=False)
 
-    assert quotient_hist.histogram_mean() == approx(true_quotient_hist.histogram_mean(), rel=0.05)
-    assert quotient_hist.histogram_sd() == approx(true_quotient_hist.histogram_sd(), rel=0.2)
+    assert quotient_hist.est_mean() == approx(true_quotient_hist.est_mean(), rel=0.05)
+    assert quotient_hist.est_sd() == approx(true_quotient_hist.est_sd(), rel=0.2)
     assert quotient_hist.neg_ev_contribution == approx(
         true_quotient_hist.neg_ev_contribution, rel=0.01
     )
@@ -740,8 +740,8 @@ def test_norm_exp(mean, sd):
     hist = numeric(dist)
     exp_hist = hist.exp()
     true_exp_dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
-    assert exp_hist.histogram_mean() == approx(true_exp_dist.lognorm_mean, rel=0.005)
-    assert exp_hist.histogram_sd() == approx(true_exp_dist.lognorm_sd, rel=0.1)
+    assert exp_hist.est_mean() == approx(true_exp_dist.lognorm_mean, rel=0.005)
+    assert exp_hist.est_sd() == approx(true_exp_dist.lognorm_sd, rel=0.1)
 
 
 @given(
@@ -759,7 +759,7 @@ def test_norm_exp_basic(mean, sd):
     exp_hist = hist.exp()
     true_exp_dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
     frac = 0.9614
-    print(f"({mean:2d}, {sd:d}): mean -> {relative_error(exp_hist.mean(), stats.lognorm.mean(sd, scale=np.exp(mean))) * 100:.2f}%, ppf({frac}) -> {relative_error(exp_hist.ppf(frac), stats.lognorm.ppf(frac, sd, scale=np.exp(mean))) * 100:.2f}%, sd -> {relative_error(exp_hist.histogram_sd(), true_exp_dist.lognorm_sd) * 100:.2f}%")
+    print(f"({mean:2d}, {sd:d}): mean -> {relative_error(exp_hist.mean(), stats.lognorm.mean(sd, scale=np.exp(mean))) * 100:.2f}%, ppf({frac}) -> {relative_error(exp_hist.ppf(frac), stats.lognorm.ppf(frac, sd, scale=np.exp(mean))) * 100:.2f}%, sd -> {relative_error(exp_hist.est_sd(), true_exp_dist.lognorm_sd) * 100:.2f}%")
 
 
 @given(
@@ -779,10 +779,10 @@ def test_uniform_exp(loga, logb):
     b = np.exp(logb)
     true_mean = (b - a) / np.log(b / a)
     true_sd = np.sqrt((b**2 - a**2) / (2 * np.log(b / a)) - ((b - a) / (np.log(b / a)))**2)
-    assert exp_hist.histogram_mean() == approx(true_mean, rel=0.01)
+    assert exp_hist.est_mean() == approx(true_mean, rel=0.01)
     if not np.isnan(true_sd):
         # variance can be slightly negative due to rounding errors
-        assert exp_hist.histogram_sd() == approx(true_sd, rel=0.2, abs=1e-5)
+        assert exp_hist.est_sd() == approx(true_sd, rel=0.2, abs=1e-5)
 
 
 @given(
@@ -795,8 +795,8 @@ def test_lognorm_log(mean, sd):
     log_hist = hist.log()
     true_log_dist = NormalDistribution(mean=mean, sd=sd)
     true_log_hist = numeric(true_log_dist, warn=False)
-    assert log_hist.histogram_mean() == approx(true_log_hist.exact_mean, rel=0.005, abs=0.005)
-    assert log_hist.histogram_sd() == approx(true_log_hist.exact_sd, rel=0.1)
+    assert log_hist.est_mean() == approx(true_log_hist.exact_mean, rel=0.005, abs=0.005)
+    assert log_hist.est_sd() == approx(true_log_hist.exact_sd, rel=0.1)
 
 
 @given(
@@ -811,8 +811,8 @@ def test_norm_abs(mean, sd):
     scale = sd
     true_mean = stats.foldnorm.mean(shape, loc=0, scale=scale)
     true_sd = stats.foldnorm.std(shape, loc=0, scale=scale)
-    assert hist.histogram_mean() == approx(true_mean, rel=0.001)
-    assert hist.histogram_sd() == approx(true_sd, rel=0.01)
+    assert hist.est_mean() == approx(true_mean, rel=0.001)
+    assert hist.est_sd() == approx(true_sd, rel=0.01)
 
 
 @given(
@@ -830,8 +830,8 @@ def test_given_value_satisfies(mean, sd, left_zscore, zscore_width):
     hist = numeric(dist).given_value_satisfies(lambda x: x >= left and x <= right)
     true_mean = stats.truncnorm.mean(left_zscore, right_zscore, loc=mean, scale=sd)
     true_sd = stats.truncnorm.std(left_zscore, right_zscore, loc=mean, scale=sd)
-    assert hist.histogram_mean() == approx(true_mean, rel=0.1, abs=0.05)
-    assert hist.histogram_sd() == approx(true_sd, rel=0.1, abs=0.05)
+    assert hist.est_mean() == approx(true_mean, rel=0.1, abs=0.05)
+    assert hist.est_sd() == approx(true_sd, rel=0.1, abs=0.05)
 
 
 def test_probability_value_satisfies():
@@ -859,7 +859,7 @@ def test_mixture(a, b):
     dist3 = NormalDistribution(mean=-1, sd=1)
     mixture = MixtureDistribution([dist1, dist2, dist3], [a, b, c])
     hist = numeric(mixture, bin_sizing="uniform")
-    assert hist.histogram_mean() == approx(
+    assert hist.est_mean() == approx(
         a * dist1.mean + b * dist2.mean + c * dist3.mean, rel=1e-4
     )
     assert hist.values[0] < 0
@@ -870,7 +870,7 @@ def test_disjoint_mixture():
     hist1 = numeric(dist)
     hist2 = -numeric(dist)
     mixture = NumericDistribution.mixture([hist1, hist2], [0.97, 0.03], warn=False)
-    assert mixture.histogram_mean() == approx(0.94 * dist.lognorm_mean, rel=0.001)
+    assert mixture.est_mean() == approx(0.94 * dist.lognorm_mean, rel=0.001)
     assert mixture.values[0] < 0
     assert mixture.values[1] < 0
     assert mixture.values[-1] > 0
@@ -885,8 +885,8 @@ def test_mixture_distributivity():
 
     assert product_of_mixture.exact_mean == approx(mixture_of_products.exact_mean, rel=1e-5)
     assert product_of_mixture.exact_sd == approx(mixture_of_products.exact_sd, rel=1e-5)
-    assert product_of_mixture.histogram_mean() == approx(mixture_of_products.histogram_mean(), rel=1e-5)
-    assert product_of_mixture.histogram_sd() == approx(mixture_of_products.histogram_sd(), rel=1e-3)
+    assert product_of_mixture.est_mean() == approx(mixture_of_products.est_mean(), rel=1e-5)
+    assert product_of_mixture.est_sd() == approx(mixture_of_products.est_sd(), rel=1e-3)
     assert product_of_mixture.ppf(0.5) == approx(mixture_of_products.ppf(0.5), rel=1e-3)
 
 
@@ -897,9 +897,9 @@ def test_numeric_clip(lclip, width):
     dist = NormalDistribution(mean=0, sd=1)
     full_hist = numeric(dist, num_bins=200, warn=False)
     clipped_hist = full_hist.clip(lclip, rclip)
-    assert clipped_hist.histogram_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.1)
+    assert clipped_hist.est_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.1)
     hist_sum = clipped_hist + full_hist
-    assert hist_sum.histogram_mean() == approx(
+    assert hist_sum.est_mean() == approx(
         stats.truncnorm.mean(lclip, rclip) + stats.norm.mean(), rel=0.1
     )
 
@@ -955,7 +955,7 @@ def test_sum2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
         )
         tolerance = 0.25
 
-    assert hist.histogram_mean() == approx(true_mean, rel=tolerance)
+    assert hist.est_mean() == approx(true_mean, rel=tolerance)
 
 
 @given(
@@ -1012,7 +1012,7 @@ def test_sum3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
             mixed_sd,
         )
         tolerance = 0.1
-    assert hist.histogram_mean() == approx(true_mean, rel=tolerance, abs=tolerance / 10)
+    assert hist.est_mean() == approx(true_mean, rel=tolerance, abs=tolerance / 10)
 
 
 def test_sum_with_zeros():
@@ -1022,11 +1022,11 @@ def test_sum_with_zeros():
     hist2 = numeric(dist2)
     hist2 = hist2.condition_on_success(0.75)
     assert hist2.exact_mean == approx(1.5)
-    assert hist2.histogram_mean() == approx(1.5, rel=1e-5)
-    assert hist2.histogram_sd() == approx(hist2.exact_sd, rel=1e-3)
+    assert hist2.est_mean() == approx(1.5, rel=1e-5)
+    assert hist2.est_sd() == approx(hist2.exact_sd, rel=1e-3)
     hist_sum = hist1 + hist2
     assert hist_sum.exact_mean == approx(4.5)
-    assert hist_sum.histogram_mean() == approx(4.5, rel=1e-5)
+    assert hist_sum.est_mean() == approx(4.5, rel=1e-5)
 
 
 def test_product_with_zeros():
@@ -1037,11 +1037,11 @@ def test_product_with_zeros():
     hist1 = hist1.condition_on_success(2 / 3)
     hist2 = hist2.condition_on_success(0.5)
     assert hist2.exact_mean == approx(dist2.lognorm_mean / 2)
-    assert hist2.histogram_mean() == approx(dist2.lognorm_mean / 2, rel=1e-5)
+    assert hist2.est_mean() == approx(dist2.lognorm_mean / 2, rel=1e-5)
     hist_prod = hist1 * hist2
     dist_prod = LognormalDistribution(norm_mean=3, norm_sd=np.sqrt(2))
     assert hist_prod.exact_mean == approx(dist_prod.lognorm_mean / 3)
-    assert hist_prod.histogram_mean() == approx(dist_prod.lognorm_mean / 3, rel=1e-5)
+    assert hist_prod.est_mean() == approx(dist_prod.lognorm_mean / 3, rel=1e-5)
 
 
 def test_shift_with_zeros():
@@ -1050,10 +1050,10 @@ def test_shift_with_zeros():
     hist = wrapped_hist.condition_on_success(0.5)
     shifted_hist = hist + 2
     assert shifted_hist.exact_mean == approx(2.5)
-    assert shifted_hist.histogram_mean() == approx(2.5, rel=1e-5)
+    assert shifted_hist.est_mean() == approx(2.5, rel=1e-5)
     assert shifted_hist.masses[np.searchsorted(shifted_hist.values, 2)] == approx(0.5)
-    assert shifted_hist.histogram_sd() == approx(hist.histogram_sd(), rel=1e-3)
-    assert shifted_hist.histogram_sd() == approx(shifted_hist.exact_sd, rel=1e-3)
+    assert shifted_hist.est_sd() == approx(hist.est_sd(), rel=1e-3)
+    assert shifted_hist.est_sd() == approx(shifted_hist.exact_sd, rel=1e-3)
 
 
 def test_abs_with_zeros():
@@ -1062,7 +1062,7 @@ def test_abs_with_zeros():
     hist = wrapped_hist.condition_on_success(0.5)
     abs_hist = abs(hist)
     true_mean = stats.foldnorm.mean(1 / 2, loc=0, scale=2)
-    assert abs_hist.histogram_mean() == approx(0.5 * true_mean, rel=0.001)
+    assert abs_hist.est_mean() == approx(0.5 * true_mean, rel=0.001)
 
 
 def test_condition_on_success():
@@ -1121,8 +1121,8 @@ def test_uniform_basic(a, b):
         # generates warnings about EV contributions being 0.
         warnings.simplefilter("ignore")
         hist = numeric(dist)
-    assert hist.histogram_mean() == approx((a + b) / 2, 1e-6)
-    assert hist.histogram_sd() == approx(np.sqrt(1 / 12 * (b - a) ** 2), rel=1e-3)
+    assert hist.est_mean() == approx((a + b) / 2, 1e-6)
+    assert hist.est_sd() == approx(np.sqrt(1 / 12 * (b - a) ** 2), rel=1e-3)
 
 
 def test_uniform_sum_basic():
@@ -1135,14 +1135,14 @@ def test_uniform_sum_basic():
     hist_sum += hist1
     assert hist_sum.exact_mean == approx(1)
     assert hist_sum.exact_sd == approx(np.sqrt(2 / 12))
-    assert hist_sum.histogram_mean() == approx(1)
-    assert hist_sum.histogram_sd() == approx(np.sqrt(2 / 12), rel=0.005)
+    assert hist_sum.est_mean() == approx(1)
+    assert hist_sum.est_sd() == approx(np.sqrt(2 / 12), rel=0.005)
     hist_sum += hist1
-    assert hist_sum.histogram_mean() == approx(1.5)
-    assert hist_sum.histogram_sd() == approx(np.sqrt(3 / 12), rel=0.005)
+    assert hist_sum.est_mean() == approx(1.5)
+    assert hist_sum.est_sd() == approx(np.sqrt(3 / 12), rel=0.005)
     hist_sum += hist1
-    assert hist_sum.histogram_mean() == approx(2)
-    assert hist_sum.histogram_sd() == approx(np.sqrt(4 / 12), rel=0.005)
+    assert hist_sum.est_mean() == approx(2)
+    assert hist_sum.est_sd() == approx(np.sqrt(4 / 12), rel=0.005)
 
 
 @given(
@@ -1171,8 +1171,8 @@ def test_uniform_sum(a1, b1, a2, b2, flip2):
         hist2 = numeric(dist2)
 
     hist_sum = hist1 + hist2
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean)
-    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=0.01)
+    assert hist_sum.est_mean() == approx(hist_sum.exact_mean)
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=0.01)
 
 
 @given(
@@ -1195,8 +1195,8 @@ def test_uniform_prod(a1, b1, a2, b2, flip2):
         hist1 = numeric(dist1)
         hist2 = numeric(dist2)
     hist_prod = hist1 * hist2
-    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, abs=1e-6, rel=1e-6)
-    assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.01)
+    assert hist_prod.est_mean() == approx(hist_prod.exact_mean, abs=1e-6, rel=1e-6)
+    assert hist_prod.est_sd() == approx(hist_prod.exact_sd, rel=0.01)
 
 
 @given(
@@ -1213,8 +1213,8 @@ def test_uniform_lognorm_prod(a, b, norm_mean, norm_sd):
     hist1 = numeric(dist1)
     hist2 = numeric(dist2, warn=False)
     hist_prod = hist1 * hist2
-    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.1)
+    assert hist_prod.est_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
+    assert hist_prod.est_sd() == approx(hist_prod.exact_sd, rel=0.1)
 
 
 @given(
@@ -1227,8 +1227,8 @@ def test_beta_basic(a, b):
     hist = numeric(dist)
     assert hist.exact_mean == approx(a / (a + b))
     assert hist.exact_sd == approx(np.sqrt(a * b / ((a + b) ** 2 * (a + b + 1))))
-    assert hist.histogram_mean() == approx(hist.exact_mean)
-    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.02)
+    assert hist.est_mean() == approx(hist.exact_mean)
+    assert hist.est_sd() == approx(hist.exact_sd, rel=0.02)
 
 
 @given(
@@ -1244,8 +1244,8 @@ def test_beta_sum(a, b, mean, sd):
     hist1 = numeric(dist1)
     hist2 = numeric(dist2)
     hist_sum = hist1 + hist2
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=0.01)
+    assert hist_sum.est_mean() == approx(hist_sum.exact_mean, rel=1e-7, abs=1e-7)
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=0.01)
 
 
 @given(
@@ -1261,8 +1261,8 @@ def test_beta_prod(a, b, norm_mean, norm_sd):
     hist1 = numeric(dist1)
     hist2 = numeric(dist2)
     hist_prod = hist1 * hist2
-    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.02)
+    assert hist_prod.est_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
+    assert hist_prod.est_sd() == approx(hist_prod.exact_sd, rel=0.02)
 
 
 @given(
@@ -1279,9 +1279,9 @@ def test_pert_basic(left, right, mode):
     dist = PERTDistribution(left=left, right=right, mode=mode)
     hist = numeric(dist)
     assert hist.exact_mean == approx((left + 4 * mode + right) / 6)
-    assert hist.histogram_mean() == approx(hist.exact_mean)
+    assert hist.est_mean() == approx(hist.exact_mean)
     assert hist.exact_sd == approx((np.sqrt((hist.exact_mean - left) * (right - hist.exact_mean) / 7)))
-    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.001)
+    assert hist.est_sd() == approx(hist.exact_sd, rel=0.001)
 
 
 @given(
@@ -1301,11 +1301,11 @@ def test_pert_with_lambda(left, right, mode, lam):
     true_mean = (left + lam * mode + right) / (lam + 2)
     true_sd_lam4 = np.sqrt((hist.exact_mean - left) * (right - hist.exact_mean) / 7)
     assert hist.exact_mean == approx(true_mean)
-    assert hist.histogram_mean() == approx(true_mean)
+    assert hist.est_mean() == approx(true_mean)
     if lam < 3.9:
-        assert hist.histogram_sd() > true_sd_lam4
+        assert hist.est_sd() > true_sd_lam4
     elif lam > 4.1:
-        assert hist.histogram_sd() < true_sd_lam4
+        assert hist.est_sd() < true_sd_lam4
 
 
 @given(
@@ -1321,8 +1321,8 @@ def test_pert_equals_beta(mode):
     pert_hist = numeric(pert_dist)
     assert beta_hist.exact_mean == approx(pert_hist.exact_mean)
     assert beta_hist.exact_sd == approx(pert_hist.exact_sd)
-    assert beta_hist.histogram_mean() == approx(pert_hist.histogram_mean())
-    assert beta_hist.histogram_sd() == approx(pert_hist.histogram_sd(), rel=0.01)
+    assert beta_hist.est_mean() == approx(pert_hist.est_mean())
+    assert beta_hist.est_sd() == approx(pert_hist.est_sd(), rel=0.01)
 
 
 @given(
@@ -1335,8 +1335,8 @@ def test_gamma_basic(shape, scale, bin_sizing):
     hist = numeric(dist, bin_sizing=bin_sizing, warn=False)
     assert hist.exact_mean == approx(shape * scale)
     assert hist.exact_sd == approx(np.sqrt(shape) * scale)
-    assert hist.histogram_mean() == approx(hist.exact_mean)
-    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.1)
+    assert hist.est_mean() == approx(hist.exact_mean)
+    assert hist.est_sd() == approx(hist.exact_sd, rel=0.1)
 
 
 @given(
@@ -1351,8 +1351,8 @@ def test_gamma_sum(shape, scale, mean, sd):
     hist1 = numeric(dist1)
     hist2 = numeric(dist2)
     hist_sum = hist1 + hist2
-    assert hist_sum.histogram_mean() == approx(hist_sum.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_sum.histogram_sd() == approx(hist_sum.exact_sd, rel=0.01)
+    assert hist_sum.est_mean() == approx(hist_sum.exact_mean, rel=1e-7, abs=1e-7)
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=0.01)
 
 
 @given(
@@ -1367,8 +1367,8 @@ def test_gamma_product(shape, scale, mean, sd):
     hist1 = numeric(dist1)
     hist2 = numeric(dist2)
     hist_prod = hist1 * hist2
-    assert hist_prod.histogram_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_prod.histogram_sd() == approx(hist_prod.exact_sd, rel=0.01)
+    assert hist_prod.est_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
+    assert hist_prod.est_sd() == approx(hist_prod.exact_sd, rel=0.01)
 
 
 @given(
@@ -1379,8 +1379,8 @@ def test_chi_square(df):
     hist = numeric(dist)
     assert hist.exact_mean == approx(df)
     assert hist.exact_sd == approx(np.sqrt(2 * df))
-    assert hist.histogram_mean() == approx(hist.exact_mean)
-    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.01)
+    assert hist.est_mean() == approx(hist.exact_mean)
+    assert hist.est_sd() == approx(hist.exact_sd, rel=0.01)
 
 
 @given(
@@ -1391,8 +1391,8 @@ def test_exponential_dist(scale):
     hist = numeric(dist)
     assert hist.exact_mean == approx(scale)
     assert hist.exact_sd == approx(scale)
-    assert hist.histogram_mean() == approx(hist.exact_mean)
-    assert hist.histogram_sd() == approx(hist.exact_sd, rel=0.01)
+    assert hist.est_mean() == approx(hist.exact_mean)
+    assert hist.est_sd() == approx(hist.exact_sd, rel=0.01)
 
 
 @given(
@@ -1402,11 +1402,11 @@ def test_pareto_dist(shape):
     dist = ParetoDistribution(shape)
     hist = numeric(dist, warn=shape >= 2)
     assert hist.exact_mean == approx(shape / (shape - 1))
-    assert hist.histogram_mean() == approx(hist.exact_mean, rel=0.01 / (shape - 1))
+    assert hist.est_mean() == approx(hist.exact_mean, rel=0.01 / (shape - 1))
     if shape <= 2:
         assert hist.exact_sd == approx(np.inf)
     else:
-        assert hist.histogram_sd() == approx(
+        assert hist.est_sd() == approx(
             hist.exact_sd, rel=max(0.01, 0.1 / (shape - 2))
         )
 
@@ -1425,9 +1425,9 @@ def test_constant_dist(x, wrap_in_dist):
     hist2 = numeric(dist2, warn=False)
     hist_sum = hist1 + hist2
     assert hist_sum.exact_mean == approx(1 + x)
-    assert hist_sum.histogram_mean() == approx(1 + x, rel=1e-6)
+    assert hist_sum.est_mean() == approx(1 + x, rel=1e-6)
     assert hist_sum.exact_sd == approx(1)
-    assert hist_sum.histogram_sd() == approx(hist1.histogram_sd(), rel=1e-6)
+    assert hist_sum.est_sd() == approx(hist1.est_sd(), rel=1e-6)
 
 
 @given(
@@ -1437,9 +1437,9 @@ def test_bernoulli_dist(p):
     dist = BernoulliDistribution(p=p)
     hist = numeric(dist, warn=False)
     assert hist.exact_mean == approx(p)
-    assert hist.histogram_mean() == approx(p, rel=1e-6)
+    assert hist.est_mean() == approx(p, rel=1e-6)
     assert hist.exact_sd == approx(np.sqrt(p * (1 - p)))
-    assert hist.histogram_sd() == approx(hist.exact_sd, rel=1e-6)
+    assert hist.est_sd() == approx(hist.exact_sd, rel=1e-6)
 
 
 def test_complex_dist():
@@ -1448,7 +1448,7 @@ def test_complex_dist():
     dist = ComplexDistribution(left, right, operator.add)
     hist = numeric(dist, warn=False)
     assert hist.exact_mean == approx(1)
-    assert hist.histogram_mean() == approx(1, rel=1e-6)
+    assert hist.est_mean() == approx(1, rel=1e-6)
 
 
 def test_complex_dist_with_float():
@@ -1457,7 +1457,7 @@ def test_complex_dist_with_float():
     dist = ComplexDistribution(left, right, operator.mul)
     hist = numeric(dist, warn=False)
     assert hist.exact_mean == approx(2)
-    assert hist.histogram_mean() == approx(2, rel=1e-6)
+    assert hist.est_mean() == approx(2, rel=1e-6)
 
 
 @given(
@@ -1632,6 +1632,15 @@ def test_utils_get_percentiles_basic():
     assert utils.get_percentiles(hist, 1) == hist.percentile(1)
     assert utils.get_percentiles(hist, [5]) == hist.percentile([5])
     assert all(utils.get_percentiles(hist, np.array([10, 20])) == hist.percentile([10, 20]))
+
+
+def test_bump_indexes():
+    assert _bump_indexes([2, 2, 2, 2], 4) == [0, 1, 2, 3]
+    assert _bump_indexes([2, 2, 2, 2], 6) == [2, 3, 4, 5]
+    assert _bump_indexes([2, 2, 2, 2], 8) == [2, 3, 4, 5]
+    assert _bump_indexes([1, 2, 2, 5, 7, 7, 8, 8, 8], 9) == list(range(9))
+    assert _bump_indexes([0, 0, 0, 6], 8) == [0, 1, 2, 6]
+    assert _bump_indexes([0, 0, 0, 9, 9, 9], 11) == [0, 1, 2, 8, 9, 10]
 
 
 def test_plot():

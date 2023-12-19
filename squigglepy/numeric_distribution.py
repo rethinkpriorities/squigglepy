@@ -72,10 +72,23 @@ class BinSizing(str, Enum):
     """
 
 
-def interp_indexes(indexes, arr):
-    """Use interpolation to find the values of ``arr`` at the given
-    ``indexes``, which do not need to be whole numbers."""
-    return np.interp(indexes, np.arange(len(arr)), arr)
+def _bump_indexes(indexes, length):
+    """Given an ordered list of indexes, ensure that every index is unique. If
+    any index is not unique, increment or decrement it until it's unique.
+
+    This function does not guarantee that every index gets moved to the closest
+    unique index, but it does guarantee that every index gets moved to the
+    closest unique index in a certain direction.
+    """
+    for i in range(1, len(indexes)):
+        if indexes[i] <= indexes[i-1]:
+            indexes[i] = min(length - 1, indexes[i-1] + 1)
+
+    for i in reversed(range(len(indexes) - 1)):
+        if indexes[i] >= indexes[i+1]:
+            indexes[i] = max(0, indexes[i+1] - 1)
+
+    return indexes
 
 
 def _support_for_bin_sizing(dist, bin_sizing, num_bins):
@@ -220,14 +233,14 @@ class BaseNumericDistribution(ABC):
         """
         if self.exact_mean is not None:
             return self.exact_mean
-        return self.histogram_mean()
+        return self.est_mean()
 
     def sd(self):
         """Standard deviation of the distribution. May be calculated using a
         stored exact value or the histogram data."""
         if self.exact_sd is not None:
             return self.exact_sd
-        return self.histogram_sd()
+        return self.est_sd()
 
     def std(self, axis=None, dtype=None, out=None):
         """Standard deviation of the distribution. May be calculated using a
@@ -709,9 +722,6 @@ class NumericDistribution(BaseNumericDistribution):
         # Handle special distributions
         # ----------------------------
 
-        if bin_sizing is not None:
-            bin_sizing = BinSizing(bin_sizing)
-
         if isinstance(dist, BaseNumericDistribution):
             return dist
         if isinstance(dist, ConstantDistribution) or isinstance(dist, Real):
@@ -1033,12 +1043,12 @@ class NumericDistribution(BaseNumericDistribution):
     def mixture(
         cls, dists, weights, lclip=None, rclip=None, num_bins=None, bin_sizing=None, warn=True
     ):
+        # This function replicates how MixtureDistribution handles lclip/rclip:
+        # it clips the sub-distributions based on their own lclip/rclip, then
+        # takes the mixture sample, then clips the mixture sample based on the
+        # mixture lclip/rclip.
         if num_bins is None:
             mixture_num_bins = DEFAULT_NUM_BINS[MixtureDistribution]
-        # This replicates how MixtureDistribution handles lclip/rclip: it
-        # clips the sub-distributions based on their own lclip/rclip, then
-        # takes the mixture sample, then clips the mixture sample based on
-        # the mixture lclip/rclip.
         dists = [d for d in dists]  # create new list to avoid mutating
 
         # Convert any Squigglepy dists into NumericDistributions
@@ -1054,9 +1064,8 @@ class NumericDistribution(BaseNumericDistribution):
         extended_values = extended_values[sorted_indexes]
         extended_masses = extended_masses[sorted_indexes]
         zero_index = np.searchsorted(extended_values, 0)
-
-        neg_ev_contribution = -np.sum(extended_masses[:zero_index] * extended_values[:zero_index])
-        pos_ev_contribution = np.sum(extended_masses[zero_index:] * extended_values[zero_index:])
+        neg_ev_contribution = sum(d.neg_ev_contribution * w for d, w in zip(dists, weights))
+        pos_ev_contribution = sum(d.pos_ev_contribution * w for d, w in zip(dists, weights))
 
         mixture = cls._resize_bins(
             extended_neg_values=extended_values[:zero_index],
@@ -1066,7 +1075,7 @@ class NumericDistribution(BaseNumericDistribution):
             num_bins=num_bins or mixture_num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
-            # bin_sizing=BinSizing.ev,
+            bin_sizing=BinSizing.ev,
             is_sorted=True,
         )
         mixture.bin_sizing = bin_sizing
@@ -1138,12 +1147,12 @@ class NumericDistribution(BaseNumericDistribution):
         """Return the number of bins containing negative values."""
         return self.zero_bin_index
 
-    def histogram_mean(self):
+    def est_mean(self):
         """Mean of the distribution, calculated using the histogram data (even
         if the exact mean is known)."""
         return np.sum(self.masses * self.values)
 
-    def histogram_sd(self):
+    def est_sd(self):
         """Standard deviation of the distribution, calculated using the
         histogram data (even if the exact SD is known)."""
         mean = self.mean()
@@ -1304,9 +1313,9 @@ class NumericDistribution(BaseNumericDistribution):
         Parameters
         ----------
         r : float
-            The exponent to use in Richardson extrapolation. This should equal
-            the rate at which the error shrinks as the number of bins
-            increases.
+            The (positive) exponent to use in Richardson extrapolation. This
+            should equal the rate at which the error shrinks as the number of
+            bins increases. A higher ``r`` results in slower extrapolation.
         correct_ev : bool = True
             If True, adjust the negative and positive EV contributions to be
             exactly correct.
@@ -1319,29 +1328,9 @@ class NumericDistribution(BaseNumericDistribution):
 
         """
 
-        def sum_pairs(arr, single_side):
+        def sum_pairs(arr):
             """Sum every pair of values in ``arr``."""
-            if single_side not in [-1, 1]:
-                raise ValueError("single_side must be -1 or 1")
             return arr.reshape(-1, 2).sum(axis=1)
-            if len(arr) == 1:
-                return arr
-            if len(arr) % 2 == 0:
-                return arr.reshape(-1, 2).sum(axis=1)
-            if single_side == -1:
-                return np.concatenate(
-                    (
-                        arr[:1],
-                        arr[1:].reshape(-1, 2).sum(axis=1),
-                    )
-                )
-            if single_side == 1:
-                return np.concatenate(
-                    (
-                        arr[:-1].reshape(-1, 2).sum(axis=1),
-                        arr[-1:],
-                    )
-                )
 
         def decorator(func):
             def inner(*hists):
@@ -1361,21 +1350,9 @@ class NumericDistribution(BaseNumericDistribution):
                 # many bins
                 half_hists = []
                 for x in hists:
-                    halfx_neg_masses = sum_pairs(x.masses[: x.zero_bin_index], -1)
-                    halfx_pos_masses = sum_pairs(x.masses[x.zero_bin_index :], 1)
-                    halfx_neg_evs = sum_pairs(
-                        x.values[: x.zero_bin_index] * x.masses[: x.zero_bin_index], -1
-                    )
-                    halfx_pos_evs = sum_pairs(
-                        x.values[x.zero_bin_index :] * x.masses[x.zero_bin_index :], 1
-                    )
-                    halfx_neg_values = halfx_neg_evs / halfx_neg_masses
-                    halfx_pos_values = halfx_pos_evs / halfx_pos_masses
-                    halfx_masses = np.concatenate((halfx_neg_masses, halfx_pos_masses))
-                    halfx_values = np.concatenate((halfx_neg_values, halfx_pos_values))
-                    # halfx_masses = sum_pairs(x.masses)
-                    # halfx_evs = sum_pairs(x.values * x.masses)
-                    # halfx_values = halfx_evs / halfx_masses
+                    halfx_masses = sum_pairs(x.masses)
+                    halfx_evs = sum_pairs(x.values * x.masses)
+                    halfx_values = halfx_evs / halfx_masses
                     zero_bin_index = np.searchsorted(halfx_values, 0)
                     halfx = NumericDistribution(
                         values=halfx_values,
@@ -1395,69 +1372,31 @@ class NumericDistribution(BaseNumericDistribution):
 
                 half_res = func(*half_hists)
                 full_res = func(*hists)
-                paired_full_neg_masses = sum_pairs(full_res.masses[: full_res.zero_bin_index], -1)
-                paired_full_pos_masses = sum_pairs(
-                    full_res.masses[full_res.zero_bin_index :], 1
-                )
-                paired_full_neg_evs = sum_pairs(
-                    full_res.values[: full_res.zero_bin_index] * full_res.masses[
-                        : full_res.zero_bin_index
-                    ],
-                    -1,
-                )
-                paired_full_pos_evs = sum_pairs(
-                    full_res.values[full_res.zero_bin_index :] * full_res.masses[
-                        full_res.zero_bin_index :
-                    ],
-                    1,
-                )
-                paired_full_masses = np.concatenate(
-                    (paired_full_neg_masses, paired_full_pos_masses)
-                )
-                paired_full_evs = np.concatenate(
-                    (paired_full_neg_evs, paired_full_pos_evs)
-                )
+                paired_full_masses = sum_pairs(full_res.masses)
+                paired_full_evs = sum_pairs(full_res.values * full_res.masses)
                 paired_full_values = paired_full_evs / paired_full_masses
-                # paired_full_masses = sum_pairs(full_res.masses)
-                # paired_full_values = (
-                    # sum_pairs(full_res.values * full_res.masses) / paired_full_masses
-                # )
-                richardson_masses = (2 ** (-r) * half_res.masses - paired_full_masses) / (
-                    2 ** (-r) - 1
-                )
-                richardson_values = (2 ** (-r) * half_res.values - paired_full_values) / (
-                    2 ** (-r) - 1
-                )
+                k = 2 ** (-r)
+                richardson_masses = (k * half_res.masses - paired_full_masses) / (k - 1)
                 if any(richardson_masses < 0):
-                    # TODO: make the error more informative
+                    # TODO: delete me when you're confident that this doesn't
+                    # happen anymore
                     import ipdb; ipdb.set_trace()
-                mass_adjustment = np.repeat(richardson_masses / paired_full_masses, 2)[
-                    : len(full_res)
-                ]
-                value_adjustment = np.repeat(richardson_values / paired_full_values, 2)[
-                    : len(full_res)
-                ]
+
+                mass_adjustment = np.repeat(richardson_masses / paired_full_masses, 2)
                 new_masses = full_res.masses * np.where(
                     np.isnan(mass_adjustment), 1, mass_adjustment
                 )
-                new_values = full_res.values * np.where(
-                    np.isnan(value_adjustment), 1, value_adjustment
-                )
-                zero_bin_index = np.searchsorted(new_values, 0)
 
-                # Adjust the negative and positive EV contributions to be exactly correct
-                if correct_ev and full_res.zero_bin_index > 0:
-                    new_values[:zero_bin_index] *= -full_res.neg_ev_contribution / np.sum(
-                        new_values[:zero_bin_index] * new_masses[:zero_bin_index]
-                    )
-                if correct_ev and full_res.zero_bin_index < len(full_res):
-                    new_values[zero_bin_index:] *= full_res.pos_ev_contribution / np.sum(
-                        new_values[zero_bin_index:] * new_masses[zero_bin_index:]
-                    )
+                full_evs = full_res.values * full_res.masses
+                half_evs = half_res.values * half_res.masses
+                richardson_evs = (k * half_evs - paired_full_evs) / (k - 1)
+                ev_adjustment = np.repeat(richardson_evs / paired_full_evs, 2)
+                new_evs = full_evs * np.where(np.isnan(ev_adjustment), 1, ev_adjustment)
+                new_values = new_evs / new_masses
 
                 full_res.masses = new_masses
                 full_res.values = new_values
-                full_res.zero_bin_index = zero_bin_index
+                full_res.zero_bin_index = np.searchsorted(new_values, 0)
                 if len(np.unique([x.bin_sizing for x in hists])) == 1:
                     full_res.bin_sizing = hists[0].bin_sizing
                 return full_res
@@ -1571,7 +1510,10 @@ class NumericDistribution(BaseNumericDistribution):
             return (np.array([]), np.array([]))
 
         if bin_sizing == BinSizing.bin_count:
-            if len(extended_values) < num_bins:
+            if len(extended_values) == 1 and num_bins == 2:
+                extended_values = np.repeat(extended_values, 2)
+                extended_masses = np.repeat(extended_masses, 2) / 2
+            elif len(extended_values) < num_bins:
                 raise ValueError(
                     f"_resize_pos_bins: Cannot resize {len(extended_values)} extended bins into {num_bins} compressed bins. The extended bin count cannot be smaller"
                 )
@@ -1596,13 +1538,13 @@ class NumericDistribution(BaseNumericDistribution):
             else:
                 bin_evs = np.array(
                     [
-                        np.sum(extended_evs[i:j])
+                        extended_evs[i:j].sum()
                         for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
                     ]
                 )
                 masses = np.array(
                     [
-                        np.sum(extended_masses[i:j])
+                        extended_masses[i:j].sum()
                         for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
                     ]
                 )
@@ -1615,13 +1557,20 @@ class NumericDistribution(BaseNumericDistribution):
 
             extended_evs = extended_values * extended_masses
             cumulative_evs = np.concatenate(([0], np.cumsum(extended_evs)))
-            boundary_values = np.linspace(0, cumulative_evs[-1], num_bins + 1)
-            boundary_indexes = np.searchsorted(cumulative_evs, boundary_values, side="right") - 1
-            # Remove bin boundaries where boundary[i] == boundary[i+1]
-            boundary_indexes = np.concatenate(
-                (boundary_indexes[:-1][np.diff(boundary_indexes) > 0], [boundary_indexes[-1]])
-            )
-            # Calculate the expected value of each bin
+
+            # Using cumulative_evs[-1] as the upper bound can create rounding
+            # errors. For example, if there are 100 bins with equal EV,
+            # boundary_evs will be slightly smaller than cumulative_evs until
+            # near the end, which will duplicate the first bin and skip a bin
+            # near the end. Slightly increasing the upper bound fixes this.
+            upper_bound = cumulative_evs[-1] * (1 + 1e-6)
+
+            boundary_evs = np.linspace(0, upper_bound, num_bins + 1)
+            boundary_indexes = np.searchsorted(cumulative_evs, boundary_evs, side="right") - 1
+            # Fix bin boundaries where boundary[i] == boundary[i+1]
+            if any(boundary_indexes[:-1] == boundary_indexes[1:]):
+                boundary_indexes = _bump_indexes(boundary_indexes, len(extended_values))
+
             bin_evs = np.diff(cumulative_evs[boundary_indexes])
             cumulative_masses = np.concatenate(([0], np.cumsum(extended_masses)))
             masses = np.diff(cumulative_masses[boundary_indexes])
@@ -1737,7 +1686,13 @@ class NumericDistribution(BaseNumericDistribution):
             The probability masses of the bins.
 
         """
-        if bin_sizing == BinSizing.bin_count:
+        if True:
+            # TODO: Lol
+            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
+                num_bins, neg_ev_contribution, pos_ev_contribution,
+                min_bins_per_side
+            )
+        elif bin_sizing == BinSizing.bin_count:
             num_neg_bins, num_pos_bins = cls._num_bins_per_side(
                 num_bins, len(extended_neg_masses), len(extended_pos_masses),
                 min_bins_per_side
@@ -2181,10 +2136,10 @@ class ZeroNumericDistribution(BaseNumericDistribution):
             + condition(0) * self.zero_mass
         )
 
-    def histogram_mean(self):
-        return self.dist.histogram_mean() * self.nonzero_mass
+    def est_mean(self):
+        return self.dist.est_mean() * self.nonzero_mass
 
-    def histogram_sd(self):
+    def est_sd(self):
         mean = self.mean()
         nonzero_variance = (
             np.sum(self.dist.masses * (self.dist.values - mean) ** 2) * self.nonzero_mass
