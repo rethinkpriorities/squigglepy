@@ -376,6 +376,7 @@ class NumericDistribution(BaseNumericDistribution):
         self,
         values: np.ndarray,
         masses: np.ndarray,
+        ev_contributions: np.ndarray,
         zero_bin_index: int,
         neg_ev_contribution: float,
         pos_ev_contribution: float,
@@ -416,6 +417,7 @@ class NumericDistribution(BaseNumericDistribution):
         self._version = __version__
         self.values = values
         self.masses = masses
+        self.ev_contributions = ev_contributions
         self.num_bins = len(values)
         self.zero_bin_index = zero_bin_index
         self.neg_ev_contribution = neg_ev_contribution
@@ -618,6 +620,19 @@ class NumericDistribution(BaseNumericDistribution):
         edge_ev_contributions = dist.contribution_to_ev(edge_values, normalized=False)
         bin_ev_contributions = np.diff(edge_ev_contributions)
 
+        bin_evs = bin_ev_contributions * np.sign(edge_values[:-1])
+        zero_index = np.searchsorted(edge_values, 0)
+        zero_contribution = dist.contribution_to_ev(0, normalized=False)
+        if zero_index < len(edge_values):
+            # Set correct EV for the bin that straddles zero
+            bin_evs[zero_index] = (
+                dist.contribution_to_ev(edge_values[zero_index + 1], normalized=False)
+                - zero_contribution
+            ) - (
+                zero_contribution
+                - dist.contribution_to_ev(edge_values[zero_index], normalized=False)
+            )
+
         # For sufficiently large edge values, CDF rounds to 1 which makes the
         # mass 0. Values can also be 0 due to floating point rounding if
         # support is very small. Remove any 0s.
@@ -628,7 +643,7 @@ class NumericDistribution(BaseNumericDistribution):
         if len(mass_zeros) == 0:
             # Set the value of each bin to equal the average value within the
             # bin.
-            values = bin_ev_contributions / masses
+            values = bin_evs / masses
 
             # Values can be non-monotonic if there are rounding errors when
             # calculating EV contribution. Look at the bottom and top separately
@@ -647,9 +662,9 @@ class NumericDistribution(BaseNumericDistribution):
 
         if len(bad_indexes) > 0:
             good_indexes = [i for i in range(num_bins) if i not in set(bad_indexes)]
-            bin_ev_contributions = bin_ev_contributions[good_indexes]
+            bin_evs = bin_evs[good_indexes]
             masses = masses[good_indexes]
-            values = bin_ev_contributions / masses
+            values = bin_evs / masses
 
             messages = []
             if len(mass_zeros) > 0:
@@ -672,7 +687,7 @@ class NumericDistribution(BaseNumericDistribution):
                     RuntimeWarning,
                 )
 
-        return (masses, values)
+        return (masses, values, bin_ev_contributions)
 
     @classmethod
     def from_distribution(
@@ -955,43 +970,13 @@ class NumericDistribution(BaseNumericDistribution):
         )
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
-        if bin_sizing == BinSizing.uniform:
-            if support[0] > 0:
-                neg_prop = 0
-                pos_prop = 1
-            elif support[1] < 0:
-                neg_prop = 1
-                pos_prop = 0
-            else:
-                width = support[1] - support[0]
-                neg_prop = -support[0] / width
-                pos_prop = support[1] / width
-        elif bin_sizing == BinSizing.log_uniform:
-            neg_prop = 0
-            pos_prop = 1
-        elif bin_sizing == BinSizing.ev:
-            neg_prop = neg_ev_contribution / total_ev_contribution
-            pos_prop = pos_ev_contribution / total_ev_contribution
-        elif bin_sizing == BinSizing.mass:
-            neg_mass = max(0, cdf(0) - cdf(support[0]))
-            pos_mass = max(0, cdf(support[1]) - cdf(0))
-            total_mass = neg_mass + pos_mass
-            neg_prop = neg_mass / total_mass
-            pos_prop = pos_mass / total_mass
-        elif bin_sizing == BinSizing.fat_hybrid:
-            neg_prop = 0
-            pos_prop = 1
-        else:
-            raise ValueError(f"Unsupported bin sizing method: {bin_sizing}")
-
         # Divide up bins such that each bin has as close as possible to equal
         # contribution. If one side has very small but nonzero contribution,
         # still give it two bins.
-        num_neg_bins, num_pos_bins = cls._num_bins_per_side(num_bins, neg_prop, pos_prop, 2)
-        neg_masses, neg_values = cls._construct_bins(
-            num_neg_bins,
-            (support[0], min(0, support[1])),
-            (max_support[0], min(0, max_support[1])),
+        masses, values, ev_contributions = cls._construct_bins(
+            num_bins,
+            (support[0], support[1]),
+            (max_support[0], max_support[1]),
             dist,
             cdf,
             ppf,
@@ -999,29 +984,9 @@ class NumericDistribution(BaseNumericDistribution):
             warn,
             is_reversed=True,
         )
-        neg_values = -neg_values
-        pos_masses, pos_values = cls._construct_bins(
-            num_pos_bins,
-            (max(0, support[0]), support[1]),
-            (max(0, max_support[0]), max_support[1]),
-            dist,
-            cdf,
-            ppf,
-            bin_sizing,
-            warn,
-            is_reversed=False,
-        )
 
         # Resize in case some bins got removed due to having zero mass/EV
-        if len(neg_values) < num_neg_bins:
-            neg_ev_contribution = abs(np.sum(neg_masses * neg_values))
-            num_neg_bins = len(neg_values)
-        if len(pos_values) < num_pos_bins:
-            pos_ev_contribution = np.sum(pos_masses * pos_values)
-            num_pos_bins = len(pos_values)
-
-        masses = np.concatenate((neg_masses, pos_masses))
-        values = np.concatenate((neg_values, pos_values))
+        num_bins = len(masses)
 
         # Normalize masses to sum to 1 in case the distribution is clipped, but
         # don't do this until after setting values because values depend on the
@@ -1031,7 +996,8 @@ class NumericDistribution(BaseNumericDistribution):
         return cls(
             values=np.array(values),
             masses=np.array(masses),
-            zero_bin_index=num_neg_bins,
+            ev_contributions=np.array(ev_contributions),
+            zero_bin_index=np.searchsorted(values, 0),
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
             exact_mean=exact_mean,
@@ -1057,21 +1023,23 @@ class NumericDistribution(BaseNumericDistribution):
 
         value_vectors = [d.values for d in dists]
         weighted_mass_vectors = [d.masses * w for d, w in zip(dists, weights)]
+        weighted_cev_vectors = [d.ev_contributions * w for d, w in zip(dists, weights)]
         extended_values = np.concatenate(value_vectors)
         extended_masses = np.concatenate(weighted_mass_vectors)
+        extended_cevs = np.concatenate(weighted_cev_vectors)
 
         sorted_indexes = np.argsort(extended_values, kind="mergesort")
         extended_values = extended_values[sorted_indexes]
         extended_masses = extended_masses[sorted_indexes]
+        extended_cevs   = extended_cevs[sorted_indexes]
         zero_index = np.searchsorted(extended_values, 0)
         neg_ev_contribution = sum(d.neg_ev_contribution * w for d, w in zip(dists, weights))
         pos_ev_contribution = sum(d.pos_ev_contribution * w for d, w in zip(dists, weights))
 
         mixture = cls._resize_bins(
-            extended_neg_values=extended_values[:zero_index],
-            extended_neg_masses=extended_masses[:zero_index],
-            extended_pos_values=extended_values[zero_index:],
-            extended_pos_masses=extended_masses[zero_index:],
+            extended_values=extended_values,
+            extended_masses=extended_masses,
+            extended_cevs=extended_cevs,
             num_bins=num_bins or mixture_num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
@@ -1100,13 +1068,16 @@ class NumericDistribution(BaseNumericDistribution):
         good_indexes = np.where(np.vectorize(condition)(self.values))
         values = self.values[good_indexes]
         masses = self.masses[good_indexes]
+        cevs   = self.ev_contributions[good_indexes]
         masses /= np.sum(masses)
+        cevs /= np.sum(masses)
         zero_bin_index = np.searchsorted(values, 0, side="left")
         neg_ev_contribution = -np.sum(masses[:zero_bin_index] * values[:zero_bin_index])
         pos_ev_contribution = np.sum(masses[zero_bin_index:] * values[zero_bin_index:])
         return NumericDistribution(
             values=values,
             masses=masses,
+            ev_contributions=cevs,
             zero_bin_index=zero_bin_index,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
@@ -1213,6 +1184,7 @@ class NumericDistribution(BaseNumericDistribution):
             return NumericDistribution(
                 values=self.values,
                 masses=self.masses,
+                ev_contributions=self.ev_contributions,
                 zero_bin_index=self.zero_bin_index,
                 neg_ev_contribution=self.neg_ev_contribution,
                 pos_ev_contribution=self.pos_ev_contribution,
@@ -1235,8 +1207,10 @@ class NumericDistribution(BaseNumericDistribution):
 
         new_values = np.array(self.values[start_index:end_index])
         new_masses = np.array(self.masses[start_index:end_index])
+        new_cevs   = np.array(self.ev_contributions[start_index:end_index])
         clipped_mass = np.sum(new_masses)
         new_masses /= clipped_mass
+        new_cevs /= clipped_mass
         zero_bin_index = max(0, self.zero_bin_index - start_index)
         neg_ev_contribution = -np.sum(new_masses[:zero_bin_index] * new_values[:zero_bin_index])
         pos_ev_contribution = np.sum(new_masses[zero_bin_index:] * new_values[zero_bin_index:])
@@ -1244,6 +1218,7 @@ class NumericDistribution(BaseNumericDistribution):
         return NumericDistribution(
             values=new_values,
             masses=new_masses,
+            ev_contributions=new_cevs,
             zero_bin_index=zero_bin_index,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
@@ -1258,8 +1233,7 @@ class NumericDistribution(BaseNumericDistribution):
 
     def contribution_to_ev(self, x: Union[np.ndarray, float]):
         if self.interpolate_cev is None:
-            bin_evs = self.masses * abs(self.values)
-            fractions_of_ev = (np.cumsum(bin_evs) - 0.5 * bin_evs) / np.sum(bin_evs)
+            fractions_of_ev = (np.cumsum(self.ev_contributions) - 0.5 * self.ev_contributions) / np.sum(self.ev_contributions)
             self.interpolate_cev = PchipInterpolator(self.values, fractions_of_ev)
         return self.interpolate_cev(x)
 
@@ -1268,8 +1242,7 @@ class NumericDistribution(BaseNumericDistribution):
         expected value lies to the left of that value.
         """
         if self.interpolate_inv_cev is None:
-            bin_evs = self.masses * abs(self.values)
-            fractions_of_ev = (np.cumsum(bin_evs) - 0.5 * bin_evs) / np.sum(bin_evs)
+            fractions_of_ev = (np.cumsum(self.ev_contributions) - 0.5 * self.ev_contributions) / np.sum(self.ev_contributions)
             self.interpolate_inv_cev = PchipInterpolator(fractions_of_ev, self.values)
         return self.interpolate_inv_cev(fraction)
 
@@ -1351,17 +1324,19 @@ class NumericDistribution(BaseNumericDistribution):
                 half_hists = []
                 for x in hists:
                     halfx_masses = sum_pairs(x.masses)
+                    halfx_absevs = sum_pairs(x.absevs)
                     halfx_evs = sum_pairs(x.values * x.masses)
                     halfx_values = halfx_evs / halfx_masses
                     zero_bin_index = np.searchsorted(halfx_values, 0)
                     halfx = NumericDistribution(
                         values=halfx_values,
                         masses=halfx_masses,
+                        absevs=halfx.absevs,
                         zero_bin_index=zero_bin_index,
-                        neg_ev_contribution=np.sum(
+                        neg_absev=np.sum(
                             halfx_masses[:zero_bin_index] * -halfx_values[:zero_bin_index]
                         ),
-                        pos_ev_contribution=np.sum(
+                        pos_absev=np.sum(
                             halfx_masses[zero_bin_index:] * halfx_values[zero_bin_index:]
                         ),
                         exact_mean=x.exact_mean,
@@ -1373,6 +1348,7 @@ class NumericDistribution(BaseNumericDistribution):
                 half_res = func(*half_hists)
                 full_res = func(*hists)
                 paired_full_masses = sum_pairs(full_res.masses)
+                paired_full_absevs = sum_pairs(full_res.absevs)
                 paired_full_evs = sum_pairs(full_res.values * full_res.masses)
                 paired_full_values = paired_full_evs / paired_full_masses
                 k = 2 ** (-r)
@@ -1394,8 +1370,15 @@ class NumericDistribution(BaseNumericDistribution):
                 new_evs = full_evs * np.where(np.isnan(ev_adjustment), 1, ev_adjustment)
                 new_values = new_evs / new_masses
 
+                richardson_absevs = (k * half_res.absevs - paired_full_absevs) / (k - 1)
+                absev_adjustment = np.repeat(richardson_absevs / paired_full_absevs, 2)
+                new_absevs = full_res.absevs * np.where(
+                    np.isnan(absev_adjustment), 1, absev_adjustment
+                )
+
                 full_res.masses = new_masses
                 full_res.values = new_values
+                full_res.absevs = new_absevs
                 full_res.zero_bin_index = np.searchsorted(new_values, 0)
                 if len(np.unique([x.bin_sizing for x in hists])) == 1:
                     full_res.bin_sizing = hists[0].bin_sizing
@@ -1472,6 +1455,7 @@ class NumericDistribution(BaseNumericDistribution):
         cls,
         extended_values,
         extended_masses,
+        extended_absevs,
         num_bins,
         ev,
         bin_sizing=BinSizing.bin_count,
@@ -1529,6 +1513,7 @@ class NumericDistribution(BaseNumericDistribution):
                 partitioned_indexes = extended_values.argpartition(boundary_indexes[1:-1])
                 extended_values = extended_values[partitioned_indexes]
                 extended_masses = extended_masses[partitioned_indexes]
+                extended_absevs = extended_absevs[partitioned_indexes]
 
             extended_evs = extended_values * extended_masses
             if len(extended_masses) % num_bins == 0:
@@ -1539,6 +1524,12 @@ class NumericDistribution(BaseNumericDistribution):
                 bin_evs = np.array(
                     [
                         extended_evs[i:j].sum()
+                        for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
+                    ]
+                )
+                absevs = np.array(
+                    [
+                        absevs[i:j].sum()
                         for (i, j) in zip(boundary_indexes[:-1], boundary_indexes[1:])
                     ]
                 )
@@ -1554,26 +1545,29 @@ class NumericDistribution(BaseNumericDistribution):
                 sorted_indexes = extended_values.argsort(kind="mergesort")
                 extended_values = extended_values[sorted_indexes]
                 extended_masses = extended_masses[sorted_indexes]
+                extended_absevs = extended_absevs[sorted_indexes]
 
-            extended_evs = extended_values * extended_masses
-            cumulative_evs = np.concatenate(([0], np.cumsum(extended_evs)))
+            cumulative_absevs = np.concatenate(([0], np.cumsum(extended_absevs)))
 
             # Using cumulative_evs[-1] as the upper bound can create rounding
             # errors. For example, if there are 100 bins with equal EV,
             # boundary_evs will be slightly smaller than cumulative_evs until
             # near the end, which will duplicate the first bin and skip a bin
             # near the end. Slightly increasing the upper bound fixes this.
-            upper_bound = cumulative_evs[-1] * (1 + 1e-6)
+            upper_bound = cumulative_absevs[-1] * (1 + 1e-6)
 
-            boundary_evs = np.linspace(0, upper_bound, num_bins + 1)
-            boundary_indexes = np.searchsorted(cumulative_evs, boundary_evs, side="right") - 1
+            boundary_absevs = np.linspace(0, upper_bound, num_bins + 1)
+            boundary_indexes = np.searchsorted(cumulative_absevs, boundary_absevs, side="right") - 1
             # Fix bin boundaries where boundary[i] == boundary[i+1]
             if any(boundary_indexes[:-1] == boundary_indexes[1:]):
                 boundary_indexes = _bump_indexes(boundary_indexes, len(extended_values))
 
+            extended_evs = extended_values * extended_masses
+            cumulative_evs = np.concatenate(([0], np.cumsum(extended_evs)))
             bin_evs = np.diff(cumulative_evs[boundary_indexes])
             cumulative_masses = np.concatenate(([0], np.cumsum(extended_masses)))
             masses = np.diff(cumulative_masses[boundary_indexes])
+            absevs = np.diff(cumulative_absevs[boundary_indexes])
 
         elif bin_sizing == BinSizing.log_uniform:
             # ``bin_count`` puts too much mass in the bins on the left and
@@ -1634,15 +1628,14 @@ class NumericDistribution(BaseNumericDistribution):
             raise ValueError(f"resize_pos_bins: Unsupported bin sizing method: {bin_sizing}")
 
         values = bin_evs / masses
-        return (values, masses)
+        return (values, masses, absevs)
 
     @classmethod
     def _resize_bins(
         cls,
-        extended_neg_values: np.ndarray,
-        extended_neg_masses: np.ndarray,
-        extended_pos_values: np.ndarray,
-        extended_pos_masses: np.ndarray,
+        extended_values: np.ndarray,
+        extended_masses: np.ndarray,
+        extended_absevs: np.ndarray,
         num_bins: int,
         neg_ev_contribution: float,
         pos_ev_contribution: float,
@@ -1686,64 +1679,20 @@ class NumericDistribution(BaseNumericDistribution):
             The probability masses of the bins.
 
         """
-        if True:
-            # TODO: Lol
-            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-                num_bins, neg_ev_contribution, pos_ev_contribution,
-                min_bins_per_side
-            )
-        elif bin_sizing == BinSizing.bin_count:
-            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-                num_bins, len(extended_neg_masses), len(extended_pos_masses),
-                min_bins_per_side
-            )
-        elif bin_sizing == BinSizing.ev:
-            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-                num_bins, neg_ev_contribution, pos_ev_contribution,
-                min_bins_per_side
-            )
-        else:
-            raise ValueError(f"resize_bins: Unsupported bin sizing method: {bin_sizing}")
-
-        total_ev = pos_ev_contribution - neg_ev_contribution
-        if num_neg_bins == 0:
-            neg_ev_contribution = 0
-            pos_ev_contribution = total_ev
-        if num_pos_bins == 0:
-            neg_ev_contribution = -total_ev
-            pos_ev_contribution = 0
-
         # Collect extended_values and extended_masses into the correct number
         # of bins. Make ``extended_values`` positive because ``_resize_bins``
         # can only operate on non-negative values. Making them positive means
         # they're now reverse-sorted, so reverse them.
-        neg_values, neg_masses = cls._resize_pos_bins(
-            extended_values=np.flip(-extended_neg_values),
-            extended_masses=np.flip(extended_neg_masses),
+        values, masses, absevs = cls._resize_pos_bins(
+            extended_values=extended_values,
+            extended_masses=extended_masses,
+            extended_absevs=extended_absevs,
             num_bins=num_neg_bins,
             ev=neg_ev_contribution,
             bin_sizing=bin_sizing,
             is_sorted=is_sorted,
         )
 
-        # ``_resize_bins`` returns positive values, so negate and reverse them.
-        neg_values = np.flip(-neg_values)
-        neg_masses = np.flip(neg_masses)
-
-        # Collect extended_values and extended_masses into the correct number
-        # of bins, for the positive values this time.
-        pos_values, pos_masses = cls._resize_pos_bins(
-            extended_values=extended_pos_values,
-            extended_masses=extended_pos_masses,
-            num_bins=num_pos_bins,
-            ev=pos_ev_contribution,
-            bin_sizing=bin_sizing,
-            is_sorted=is_sorted,
-        )
-
-        # Construct the resulting ``NumericDistribution`` object.
-        values = np.concatenate((neg_values, pos_values))
-        masses = np.concatenate((neg_masses, pos_masses))
         return NumericDistribution(
             values=values,
             masses=masses,
@@ -1773,6 +1722,7 @@ class NumericDistribution(BaseNumericDistribution):
         # sum.
         extended_values = np.add.outer(x.values, y.values).reshape(-1)
         extended_masses = np.outer(x.masses, y.masses).reshape(-1)
+        extended_absevs = ???
 
         # Sort so we can split the values into positive and negative sides.
         # Use timsort (called 'mergesort' by the numpy API) because
@@ -1781,9 +1731,9 @@ class NumericDistribution(BaseNumericDistribution):
         sorted_indexes = extended_values.argsort(kind="mergesort")
         extended_values = extended_values[sorted_indexes]
         extended_masses = extended_masses[sorted_indexes]
+        extended_absevs = extended_absevs[sorted_indexes]
         zero_index = np.searchsorted(extended_values, 0)
         is_sorted = True
-
         # Find how much of the EV contribution is on the negative side vs. the
         # positive side.
         neg_ev_contribution = -np.sum(extended_values[:zero_index] * extended_masses[:zero_index])
@@ -1796,10 +1746,9 @@ class NumericDistribution(BaseNumericDistribution):
         pos_ev_contribution = max(0, sum_mean + neg_ev_contribution)
 
         res = cls._resize_bins(
-            extended_neg_values=extended_values[:zero_index],
-            extended_neg_masses=extended_masses[:zero_index],
-            extended_pos_values=extended_values[zero_index:],
-            extended_pos_masses=extended_masses[zero_index:],
+            extended_values=extended_values,
+            extended_masses=extended_masses,
+            extended_absevs=extended_absevs,
             num_bins=num_bins,
             neg_ev_contribution=neg_ev_contribution,
             pos_ev_contribution=pos_ev_contribution,
