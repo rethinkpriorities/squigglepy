@@ -478,7 +478,7 @@ def test_quantile_product_accuracy():
     diffs = np.diff(selected, axis=0)
 
 
-def test_cev_accuracy():
+def test_individual_bin_accuracy():
     num_bins = 200
     bin_sizing = "ev"
     print("")
@@ -486,25 +486,42 @@ def test_cev_accuracy():
     num_products = 2
     bin_sizes = 40 * np.arange(1, 11)
     for num_bins in bin_sizes:
-        true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-        dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
-        true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-        # hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-        hist1 = numeric(mixture([-dist1, dist1], [0.03, 0.97]), bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-        hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
+        operation = "exp"
+        if operation == "mul":
+            true_dist_type = 'lognorm'
+            true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+            dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
+            true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+            hist1 = numeric(mixture([-dist1, dist1], [0.03, 0.97]), bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+            hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
+        elif operation == "add":
+            true_dist_type = 'norm'
+            true_dist = NormalDistribution(mean=0, sd=1)
+            dist1 = NormalDistribution(mean=0, sd=1 / np.sqrt(num_products))
+            true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+            hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+            hist = reduce(lambda acc, x: acc + x, [hist1] * num_products)
+        elif operation == "exp":
+            true_dist_type = 'lognorm'
+            true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+            true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+            dist1 = NormalDistribution(mean=0, sd=1)
+            hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+            hist = hist1.exp()
 
         cum_mass = np.cumsum(hist.masses)
         cum_cev = np.cumsum(hist.masses * abs(hist.values))
         cum_cev_frac = cum_cev / cum_cev[-1]
-        # expected_cum_mass = stats.lognorm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
+        if true_dist_type == 'lognorm':
+            expected_cum_mass = stats.lognorm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
+        elif true_dist_type == 'norm':
+            expected_cum_mass = stats.norm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.mean, true_dist.sd)
 
         # Take only every nth value where n = num_bins/40
         cum_mass = cum_mass[::num_bins // 40]
-        # expected_cum_mass = expected_cum_mass[::num_bins // 40]
-        # bin_errs.append(abs(cum_mass - expected_cum_mass) / expected_cum_mass)
-        print(f"{num_bins:3d}: {cum_mass[0]:.1e} = {hist.values[num_bins // 20]:.2f}, {1 - cum_mass[-1]:.1e} = {hist.values[-num_bins // 20]:.2f}")
+        expected_cum_mass = expected_cum_mass[::num_bins // 40]
+        bin_errs.append(abs(cum_mass - expected_cum_mass) / expected_cum_mass)
 
-    return None
     bin_errs = np.array(bin_errs)
 
     best_fits = []
@@ -512,7 +529,7 @@ def test_cev_accuracy():
         try:
             best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, bin_errs[:, i], p0=[1, 2])[0]
             best_fits.append(best_fit)
-            print(f"{i:2d} {best_fit[0]:9.3f} {best_fit[1]:.3f}")
+            print(f"{i:2d} {best_fit[0]:9.3f} * x ^ {best_fit[1]:.3f}")
         except RuntimeError:
             # optimal parameters not found
             print(f"{i:2d} ? ?")
@@ -527,15 +544,15 @@ def test_cev_accuracy():
 def test_richardson_product():
     print("")
     num_bins = 200
-    num_products = 16
+    num_products = 2
     bin_sizing = "ev"
-    # mixture_ratio = [0.035, 0.965]
-    mixture_ratio = [0, 1]
+    mixture_ratio = [0.035, 0.965]
+    # mixture_ratio = [0, 1]
     # mixture_ratio = [0.3, 0.7]
-    bin_sizes = 40 * np.arange(1, 11)
+    bin_sizes = 40 * np.arange(3, 11)
     err_rates = []
-    for num_products in [2, 4, 8, 16, 32, 64]:
-    # for num_bins in bin_sizes:
+    # for num_products in [2, 4, 8, 16, 32, 64]:
+    for num_bins in bin_sizes:
         true_mixture_ratio = reduce(lambda acc, x: (acc[0] * x[1] + acc[1] * x[0], acc[0] * x[0] + acc[1] * x[1]), [(mixture_ratio) for _ in range(num_products)])
         one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
         true_dist = mixture([-one_sided_dist, one_sided_dist], true_mixture_ratio)
@@ -576,15 +593,77 @@ def test_richardson_product():
 def test_richardson_sum():
     print("")
     num_bins = 200
+    num_sums = 2
     bin_sizing = "ev"
-    true_dist = NormalDistribution(mean=0, sd=1)
-    true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-    for num_sums in [2, 4, 8, 16, 32, 64]:
+    bin_sizes = 40 * np.arange(1, 11)
+    err_rates = []
+    # for num_sums in [2, 4, 8, 16, 32, 64]:
+    for num_bins in bin_sizes:
+        true_dist = NormalDistribution(mean=0, sd=1)
+        true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         dist1 = NormalDistribution(mean=0, sd=1 / np.sqrt(num_sums))
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc + x, [hist1] * num_sums)
 
-        # SD
-        true_answer = true_hist.exact_sd
-        est_answer = hist.est_sd()
-        print_accuracy_ratio(est_answer, true_answer, f"SD({num_sums:3d})")
+        test_mode = 'ppf'
+        if test_mode == 'cev':
+            true_answer = one_sided_dist.contribution_to_ev(stats.lognorm.ppf(2 * hist.masses[50:100].sum(), one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean)), False) / 2
+            est_answer = (hist.masses * abs(hist.values))[50:100].sum()
+            print_accuracy_ratio(est_answer, true_answer, f"CEV({num_sums:3d})")
+        elif test_mode == 'sd':
+            true_answer = true_hist.exact_sd
+            est_answer = hist.est_sd()
+            print_accuracy_ratio(est_answer, true_answer, f"SD({num_sums}, {num_bins:3d})")
+            err_rates.append(abs(est_answer - true_answer))
+        elif test_mode == 'ppf':
+            fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
+            frac_errs = []
+            for frac in fracs:
+                true_answer = stats.norm.ppf(frac, true_dist.mean, true_dist.sd)
+                est_answer = hist.ppf(frac)
+                frac_errs.append(abs(est_answer - true_answer) / true_answer)
+            median_err = np.median(frac_errs)
+            print(f"ppf ({num_sums:3d}, {num_bins:3d}): {median_err * 100:.3f}%")
+            err_rates.append(median_err)
+
+    if len(err_rates) == len(bin_sizes):
+        best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
+        print(f"\nBest fit: {best_fit}")
+
+
+def test_richardson_exp():
+    print("")
+    bin_sizing = "ev"
+    bin_sizes = 40 * np.arange(1, 11)
+    err_rates = []
+    for num_bins in bin_sizes:
+        true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
+        true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+        dist1 = NormalDistribution(mean=0, sd=1)
+        hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+        hist = hist1.exp()
+
+        test_mode = 'sd'
+        if test_mode == 'cev':
+            true_answer = one_sided_dist.contribution_to_ev(stats.lognorm.ppf(2 * hist.masses[50:100].sum(), one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean)), False) / 2
+            est_answer = (hist.masses * abs(hist.values))[50:100].sum()
+            print_accuracy_ratio(est_answer, true_answer, f"CEV({num_bins:3d})")
+        elif test_mode == 'sd':
+            true_answer = true_hist.exact_sd
+            est_answer = hist.est_sd()
+            print_accuracy_ratio(est_answer, true_answer, f"SD({num_bins:3d})")
+            err_rates.append(abs(est_answer - true_answer))
+        elif test_mode == 'ppf':
+            fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
+            frac_errs = []
+            for frac in fracs:
+                true_answer = stats.norm.ppf(frac, true_dist.lognorm_mean, true_dist.lognorm_sd)
+                est_answer = hist.ppf(frac)
+                frac_errs.append(abs(est_answer - true_answer) / true_answer)
+            median_err = np.median(frac_errs)
+            print(f"ppf ({num_bins:3d}): {median_err * 100:.3f}%")
+            err_rates.append(median_err)
+
+    if len(err_rates) == len(bin_sizes):
+        best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
+        print(f"\nBest fit: {best_fit}")
