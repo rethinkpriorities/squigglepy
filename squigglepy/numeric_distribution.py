@@ -1321,7 +1321,9 @@ class NumericDistribution(BaseNumericDistribution):
             bins increases. A higher ``r`` results in slower extrapolation.
         correct_ev : bool = True
             If True, adjust the negative and positive EV contributions to be
-            exactly correct.
+            exactly correct. The caller should set ``correct_ev`` to False if
+            the function being decorated does produce exactly correct values
+            for ``(neg|pos)_contribution_to_ev``.
 
         Returns
         -------
@@ -2044,6 +2046,7 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=None,
         )
 
+    @richardson(r=0.66, correct_ev=False)
     def exp(self):
         """Return the exponential of the distribution."""
         # Note: This code naively sets the average value within each bin to
@@ -2083,6 +2086,7 @@ class NumericDistribution(BaseNumericDistribution):
             exact_sd=None,
         )
 
+    @richardson(r=0.66, correct_ev=False)
     def log(self):
         """Return the natural log of the distribution."""
         # See :any:`exp`` for some discussion of accuracy. For ``log` on a

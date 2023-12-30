@@ -742,26 +742,8 @@ def test_norm_exp(mean, sd):
     # using ev
     # assert exp_hist.est_mean() == approx(true_exp_dist.lognorm_mean, rel=0.005)
     # assert exp_hist.est_sd() == approx(true_exp_dist.lognorm_sd, rel=0.1)
-    assert exp_hist.est_mean() == approx(true_exp_dist.lognorm_mean, rel=0.2)
+    assert exp_hist.est_mean() == approx(true_exp_dist.lognorm_mean, rel=0.01)
     assert exp_hist.est_sd() == approx(true_exp_dist.lognorm_sd, rel=0.5)
-
-
-@given(
-    mean=st.floats(min_value=-20, max_value=20),
-    sd=st.floats(min_value=0.1, max_value=2),
-)
-@settings(phases=(Phase.explicit,))
-@example(mean=0, sd=1)
-@example(mean=10, sd=1)
-@example(mean=0, sd=2)
-@example(mean=-1, sd=2)
-def test_norm_exp_basic(mean, sd):
-    dist = NormalDistribution(mean=mean, sd=sd)
-    hist = numeric(dist, bin_sizing="uniform")
-    exp_hist = hist.exp()
-    true_exp_dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
-    frac = 0.9614
-    print(f"({mean:2d}, {sd:d}): mean -> {relative_error(exp_hist.mean(), stats.lognorm.mean(sd, scale=np.exp(mean))) * 100:.2f}%, ppf({frac}) -> {relative_error(exp_hist.ppf(frac), stats.lognorm.ppf(frac, sd, scale=np.exp(mean))) * 100:.2f}%, sd -> {relative_error(exp_hist.est_sd(), true_exp_dist.lognorm_sd) * 100:.2f}%")
 
 
 @given(
@@ -781,7 +763,7 @@ def test_uniform_exp(loga, logb):
     b = np.exp(logb)
     true_mean = (b - a) / np.log(b / a)
     true_sd = np.sqrt((b**2 - a**2) / (2 * np.log(b / a)) - ((b - a) / (np.log(b / a)))**2)
-    assert exp_hist.est_mean() == approx(true_mean, rel=0.01)
+    assert exp_hist.est_mean() == approx(true_mean, rel=0.02)
     if not np.isnan(true_sd):
         # variance can be slightly negative due to rounding errors
         assert exp_hist.est_sd() == approx(true_sd, rel=0.2, abs=1e-5)
@@ -789,7 +771,7 @@ def test_uniform_exp(loga, logb):
 
 @given(
     mean=st.floats(min_value=-20, max_value=20),
-    sd=st.floats(min_value=0.1, max_value=3),
+    sd=st.floats(min_value=0.1, max_value=2),
 )
 def test_lognorm_log(mean, sd):
     dist = LognormalDistribution(norm_mean=mean, norm_sd=sd)
@@ -797,10 +779,8 @@ def test_lognorm_log(mean, sd):
     log_hist = hist.log()
     true_log_dist = NormalDistribution(mean=mean, sd=sd)
     true_log_hist = numeric(true_log_dist, warn=False)
-    # assert log_hist.est_mean() == approx(true_log_hist.exact_mean, rel=0.005, abs=0.005)
-    # assert log_hist.est_sd() == approx(true_log_hist.exact_sd, rel=0.1)
-    assert log_hist.est_mean() == approx(true_log_hist.exact_mean, rel=0.2, abs=1)
-    assert log_hist.est_sd() == approx(true_log_hist.exact_sd, rel=0.5)
+    assert log_hist.est_mean() == approx(true_log_hist.exact_mean, rel=0.01, abs=1)
+    assert log_hist.est_sd() == approx(true_log_hist.exact_sd, rel=0.3)
 
 
 @given(

@@ -634,7 +634,7 @@ def test_richardson_sum():
 def test_richardson_exp():
     print("")
     bin_sizing = "ev"
-    bin_sizes = 40 * np.arange(1, 11)
+    bin_sizes = 200 * np.arange(1, 11)
     err_rates = []
     for num_bins in bin_sizes:
         true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
@@ -644,24 +644,20 @@ def test_richardson_exp():
         hist = hist1.exp()
 
         test_mode = 'sd'
-        if test_mode == 'cev':
-            true_answer = one_sided_dist.contribution_to_ev(stats.lognorm.ppf(2 * hist.masses[50:100].sum(), one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean)), False) / 2
-            est_answer = (hist.masses * abs(hist.values))[50:100].sum()
-            print_accuracy_ratio(est_answer, true_answer, f"CEV({num_bins:3d})")
-        elif test_mode == 'sd':
+        if test_mode == 'sd':
             true_answer = true_hist.exact_sd
             est_answer = hist.est_sd()
             print_accuracy_ratio(est_answer, true_answer, f"SD({num_bins:3d})")
             err_rates.append(abs(est_answer - true_answer))
         elif test_mode == 'ppf':
-            fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
+            fracs = [0.5, 0.75, 0.9, 0.97, 0.99]
             frac_errs = []
             for frac in fracs:
-                true_answer = stats.norm.ppf(frac, true_dist.lognorm_mean, true_dist.lognorm_sd)
+                true_answer = stats.lognorm.ppf(frac, true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
                 est_answer = hist.ppf(frac)
                 frac_errs.append(abs(est_answer - true_answer) / true_answer)
             median_err = np.median(frac_errs)
-            print(f"ppf ({num_bins:3d}): {median_err * 100:.3f}%")
+            print(f"ppf ({num_bins:4d}): {median_err * 100:.5f}%")
             err_rates.append(median_err)
 
     if len(err_rates) == len(bin_sizes):
