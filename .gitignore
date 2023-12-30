@@ -1,5 +1,6 @@
 build/*
 dist/*
+doc/build/*
 *.egg-info
 __pycache__
 .ruff_cache

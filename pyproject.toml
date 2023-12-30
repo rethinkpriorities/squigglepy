@@ -23,6 +23,7 @@ pathos = "^0.3.0"
 msgspec = "^0.15.1"
 matplotlib = { version = "^3.7.1", optional = true }
 pandas = { version = "^2.0.2", optional = true }
+pydata-sphinx-theme = "^0.14.3"
 
 
 [tool.poetry.group.dev.dependencies]
