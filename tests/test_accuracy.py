@@ -483,16 +483,16 @@ def test_individual_bin_accuracy():
     bin_sizing = "ev"
     print("")
     bin_errs = []
-    num_products = 2
+    num_products = 16
     bin_sizes = 40 * np.arange(1, 11)
     for num_bins in bin_sizes:
-        operation = "exp"
+        operation = "mul"
         if operation == "mul":
             true_dist_type = 'lognorm'
             true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
             dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
             true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
-            hist1 = numeric(mixture([-dist1, dist1], [0.03, 0.97]), bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
+            hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
             hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
         elif operation == "add":
             true_dist_type = 'norm'
@@ -546,13 +546,14 @@ def test_richardson_product():
     num_bins = 200
     num_products = 2
     bin_sizing = "ev"
-    mixture_ratio = [0.035, 0.965]
-    # mixture_ratio = [0, 1]
+    # mixture_ratio = [0.035, 0.965]
+    mixture_ratio = [0, 1]
     # mixture_ratio = [0.3, 0.7]
-    bin_sizes = 40 * np.arange(3, 11)
+    bin_sizes = 40 * np.arange(1, 11)
+    product_nums = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
     err_rates = []
-    # for num_products in [2, 4, 8, 16, 32, 64]:
-    for num_bins in bin_sizes:
+    for num_products in product_nums:
+    # for num_bins in bin_sizes:
         true_mixture_ratio = reduce(lambda acc, x: (acc[0] * x[1] + acc[1] * x[0], acc[0] * x[0] + acc[1] * x[1]), [(mixture_ratio) for _ in range(num_products)])
         one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
         true_dist = mixture([-one_sided_dist, one_sided_dist], true_mixture_ratio)
@@ -568,25 +569,32 @@ def test_richardson_product():
             est_answer = (hist.masses * abs(hist.values))[50:100].sum()
             print_accuracy_ratio(est_answer, true_answer, f"CEV({num_products:3d})")
         elif test_mode == 'sd':
+            mcs = [samplers.sample(dist, num_bins**2) for dist in [dist1] * num_products]
+            mc = reduce(lambda acc, x: acc * x, mcs)
             true_answer = true_hist.exact_sd
             est_answer = hist.est_sd()
-            print_accuracy_ratio(est_answer, true_answer, f"SD({num_products}, {num_bins:3d})")
+            mc_answer = np.std(mc)
+            print_accuracy_ratio(est_answer, true_answer, f"SD({num_products:3d}, {num_bins:3d})")
+            # print_accuracy_ratio(mc_answer, true_answer, f"MC({num_products:3d}, {num_bins:3d})")
             err_rates.append(abs(est_answer - true_answer))
         elif test_mode == 'ppf':
-            fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
+            fracs = [0.5, 0.75, 0.9, 0.97, 0.99]
             frac_errs = []
+            # mc_errs = []
             for frac in fracs:
                 true_answer = stats.lognorm.ppf((frac - true_mixture_ratio[0]) / true_mixture_ratio[1], one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean))
                 oneshot_answer = true_hist.ppf(frac)
                 est_answer = hist.ppf(frac)
                 frac_errs.append(abs(est_answer - true_answer) / true_answer)
-                # frac_errs.append(abs(oneshot_answer - true_answer) / true_answer)
             median_err = np.median(frac_errs)
             print(f"ppf ({num_products:3d}, {num_bins:3d}): {median_err * 100:.3f}%")
             err_rates.append(median_err)
 
-    if len(err_rates) == len(bin_sizes):
+    if num_bins == bin_sizes[-1]:
         best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
+        print(f"\nBest fit: {best_fit}")
+    else:
+        best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, product_nums, err_rates, p0=[1, 2])[0]
         print(f"\nBest fit: {best_fit}")
 
 

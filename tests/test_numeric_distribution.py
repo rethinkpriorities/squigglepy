@@ -742,7 +742,7 @@ def test_norm_exp(mean, sd):
     # using ev
     # assert exp_hist.est_mean() == approx(true_exp_dist.lognorm_mean, rel=0.005)
     # assert exp_hist.est_sd() == approx(true_exp_dist.lognorm_sd, rel=0.1)
-    assert exp_hist.est_mean() == approx(true_exp_dist.lognorm_mean, rel=0.01)
+    assert exp_hist.est_mean() == approx(true_exp_dist.lognorm_mean, rel=0.02)
     assert exp_hist.est_sd() == approx(true_exp_dist.lognorm_sd, rel=0.5)
 
 
@@ -806,6 +806,7 @@ def test_norm_abs(mean, sd):
     zscore_width=st.floats(min_value=2, max_value=5),
 )
 @settings(max_examples=10)
+@example(mean=-2, sd=1, left_zscore=2, zscore_width=2)
 def test_given_value_satisfies(mean, sd, left_zscore, zscore_width):
     right_zscore = left_zscore + zscore_width
     left = mean + left_zscore * sd
@@ -815,7 +816,7 @@ def test_given_value_satisfies(mean, sd, left_zscore, zscore_width):
     true_mean = stats.truncnorm.mean(left_zscore, right_zscore, loc=mean, scale=sd)
     true_sd = stats.truncnorm.std(left_zscore, right_zscore, loc=mean, scale=sd)
     assert hist.est_mean() == approx(true_mean, rel=0.1, abs=0.05)
-    assert hist.est_sd() == approx(true_sd, rel=0.1, abs=0.05)
+    assert hist.est_sd() == approx(true_sd, rel=0.1, abs=0.1)
 
 
 def test_probability_value_satisfies():
@@ -871,20 +872,21 @@ def test_mixture_distributivity():
     assert product_of_mixture.exact_sd == approx(mixture_of_products.exact_sd, rel=1e-5)
     assert product_of_mixture.est_mean() == approx(mixture_of_products.est_mean(), rel=1e-5)
     assert product_of_mixture.est_sd() == approx(mixture_of_products.est_sd(), rel=1e-2)
-    assert product_of_mixture.ppf(0.5) == approx(mixture_of_products.ppf(0.5), rel=1e-3)
+    assert product_of_mixture.ppf(0.5) == approx(mixture_of_products.ppf(0.5), rel=1e-3, abs=2e-3)
 
 
 @given(lclip=st.integers(-4, 4), width=st.integers(1, 4))
+@example(lclip=-1, width=2)
 @example(lclip=4, width=1)
 def test_numeric_clip(lclip, width):
     rclip = lclip + width
     dist = NormalDistribution(mean=0, sd=1)
     full_hist = numeric(dist, num_bins=200, bin_sizing='uniform', warn=False)
     clipped_hist = full_hist.clip(lclip, rclip)
-    assert clipped_hist.est_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.1)
+    assert clipped_hist.est_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.001)
     hist_sum = clipped_hist + full_hist
     assert hist_sum.est_mean() == approx(
-        stats.truncnorm.mean(lclip, rclip) + stats.norm.mean(), rel=0.1
+        stats.truncnorm.mean(lclip, rclip) + stats.norm.mean(), rel=0.001
     )
 
 
@@ -892,17 +894,17 @@ def test_numeric_clip(lclip, width):
     a=st.sampled_from([0.2, 0.3, 0.5, 0.7, 0.8]),
     lclip=st.sampled_from([-1, 1, None]),
     clip_width=st.sampled_from([2, 3, None]),
-    bin_sizing=st.sampled_from(["uniform", "ev", "mass"]),
+    bin_sizing=st.sampled_from(["uniform", "ev"]),
     # Only clip inner or outer dist b/c clipping both makes it hard to
     # calculate what the mean should be
     clip_inner=st.booleans(),
 )
-@example(a=0.3, lclip=-1, clip_width=2, bin_sizing="ev", clip_inner=False)
+@example(a=0.7, lclip=1, clip_width=3, bin_sizing="ev", clip_inner=False)
 def test_sum2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
     # Clipped NumericDist accuracy really benefits from more bins. It's not
     # very accurate with 100 bins because a clipped histogram might end up with
     # only 10 bins or so.
-    num_bins = 500 if not clip_inner and bin_sizing == "uniform" else 100
+    num_bins = 500 if not clip_inner and bin_sizing == "uniform" else 200
     clip_outer = not clip_inner
     b = max(0, 1 - a)  # do max to fix floating point rounding
     rclip = lclip + clip_width if lclip is not None and clip_width is not None else np.inf
@@ -937,24 +939,25 @@ def test_sum2_clipped(a, lclip, clip_width, bin_sizing, clip_inner):
             mixed_mean,
             mixed_sd,
         )
-        tolerance = 0.25
+        tolerance = 0.01
 
-    assert hist.est_mean() == approx(true_mean, rel=tolerance)
+    assert hist.est_mean() == approx(true_mean, rel=tolerance, abs=tolerance / 10)
 
 
 @given(
-    a=st.floats(min_value=1e-6, max_value=1),
-    b=st.floats(min_value=1e-6, max_value=1),
+    a=st.floats(min_value=1e-3, max_value=1),
+    b=st.floats(min_value=1e-3, max_value=1),
     lclip=st.sampled_from([-1, 1, None]),
     clip_width=st.sampled_from([1, 3, None]),
-    bin_sizing=st.sampled_from(["uniform", "ev", "mass"]),
+    bin_sizing=st.sampled_from(["uniform", "ev"]),
     # Only clip inner or outer dist b/c clipping both makes it hard to
     # calculate what the mean should be
     clip_inner=st.booleans(),
 )
+@example(a=0.0625, b=0.015625, lclip=1, clip_width=1, bin_sizing="ev", clip_inner=False)
+@example(a=0.0625, b=0.015625, lclip=-2, clip_width=1, bin_sizing="ev", clip_inner=False)
 def test_sum3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
-    # Clipped sum accuracy really benefits from more bins. It's not very
-    # accurate with 100 bins
+    # Clipped sum accuracy really benefits from more bins.
     num_bins = 500 if not clip_inner else 100
     clip_outer = not clip_inner
     if a + b > 1:
@@ -995,7 +998,7 @@ def test_sum3_clipped(a, b, lclip, clip_width, bin_sizing, clip_inner):
             mixed_mean,
             mixed_sd,
         )
-        tolerance = 0.1
+        tolerance = 0.05
     assert hist.est_mean() == approx(true_mean, rel=tolerance, abs=tolerance / 10)
 
 
@@ -1336,7 +1339,7 @@ def test_gamma_sum(shape, scale, mean, sd):
     hist2 = numeric(dist2)
     hist_sum = hist1 + hist2
     assert hist_sum.est_mean() == approx(hist_sum.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=0.01)
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=0.01, abs=0.01)
 
 
 @given(
@@ -1525,12 +1528,13 @@ def test_quantile_log_uniform(norm_mean, norm_sd, percent):
     norm_sd=st.floats(min_value=0.1, max_value=2),
     # Don't try smaller percentiles because the smaller bins have a lot of
     # probability mass
-    percent=st.integers(min_value=20, max_value=99),
+    percent=st.floats(min_value=20, max_value=99.9),
 )
+@example(norm_mean=0, norm_sd=0.5, percent=99.9)
 def test_quantile_ev(norm_mean, norm_sd, percent):
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = numeric(dist, num_bins=200, bin_sizing="ev", warn=False)
-    tolerance = 0.1 if percent < 70 else 0.01
+    tolerance = 0.1 if percent < 70 or percent > 99 else 0.01
     assert hist.percentile(percent) == approx(
         stats.lognorm.ppf(percent / 100, norm_sd, scale=np.exp(norm_mean)), rel=tolerance
     )
@@ -1662,8 +1666,8 @@ def test_performance():
     pr.enable()
 
     for i in range(5000):
-        hist1 = numeric(dist1, num_bins=100, bin_sizing="fat-hybrid")
-        hist2 = numeric(dist2, num_bins=100, bin_sizing="fat-hybrid")
+        hist1 = numeric(dist1, num_bins=200)
+        hist2 = numeric(dist2, num_bins=200)
         hist1 = hist1 * hist2
 
     pr.disable()

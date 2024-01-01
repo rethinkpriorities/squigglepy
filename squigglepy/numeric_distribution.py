@@ -4,8 +4,8 @@ from functools import reduce
 from numbers import Real
 import numpy as np
 from scipy import optimize, stats
-from scipy.interpolate import PchipInterpolator
-from typing import Callable, Literal, Optional, Tuple, Union
+from scipy.interpolate import CubicSpline, PchipInterpolator
+from typing import Callable, List, Literal, Optional, Tuple, Union
 import warnings
 
 from .distributions import (
@@ -30,40 +30,47 @@ from .version import __version__
 class BinSizing(str, Enum):
     """An enum for the different methods of sizing histogram bins. A histogram
     with finitely many bins can only contain so much information about the
-    shape of a distribution; the choice of bin sizing changes what information
-    NumericDistribution prioritizes.
+    shape of a distribution; the choice of bin sizing determines what
+    information to prioritize.
     """
 
     uniform = "uniform"
     """Divides the distribution into bins of equal width. For distributions
-    with infinite support (such as normal distributions), it chooses a
-    total width to roughly minimize total error, considering both intra-bin
-    error and error due to the excluded tails."""
+    with infinite support (such as normal distributions), it chooses a total
+    width to roughly minimize total error, considering both intra-bin error and
+    error due to the excluded tails.
+    """
 
     log_uniform = "log-uniform"
     """Divides the distribution into bins with exponentially increasing width,
-     so that the logarithms of the bin edges are uniformly spaced. For example,
-     if you generated a NumericDistribution from a log-normal distribution with
-     log-uniform bin sizing, and then took the log of each bin, you'd get a
-     normal distribution with uniform bin sizing.
+     so that the logarithms of the bin edges are uniformly spaced.
+
+     Log-uniform bin sizing is to uniform bin sizing as a log-normal
+     distribution is to a normal distribution. That is, if you generated a
+     NumericDistribution from a log-normal distribution with log-uniform bin
+     sizing, and then took the log of each bin, you'd get a normal distribution
+     with uniform bin sizing.
     """
 
     ev = "ev"
     """Divides the distribution into bins such that each bin has equal
     contribution to expected value (see
-    :any:`IntegrableEVDistribution.contribution_to_ev`)."""
+    :any:`IntegrableEVDistribution.contribution_to_ev`).
+    """
 
     mass = "mass"
     """Divides the distribution into bins such that each bin has equal
-    probability mass. This method is generally not recommended
-    because it puts too much probability mass near the center of the
-    distribution, where precision is the least useful."""
+    probability mass. This method is generally not recommended because it puts
+    too much probability mass near the center of the distribution, where
+    precision is the least useful.
+    """
 
     fat_hybrid = "fat-hybrid"
     """A hybrid method designed for fat-tailed distributions. Uses mass bin
-    sizing close to the center and log-uniform bin siding on the right
-    tail. Empirically, this combination provides the best balance for the
-    accuracy of fat-tailed distributions at the center and at the tails."""
+    sizing close to the center and log-uniform bin siding on the right tail.
+    Empirically, this combination provides a good balance for the accuracy of
+    fat-tailed distributions at the center and at the tails.
+    """
 
     bin_count = "bin-count"
     """Shortens a vector of bins by merging every ``len(vec)/num_bins`` bins
@@ -1044,19 +1051,55 @@ class NumericDistribution(BaseNumericDistribution):
 
     @classmethod
     def mixture(
-        cls, dists, weights, lclip=None, rclip=None, num_bins=None, bin_sizing=None, warn=True
+        cls,
+        dists: List[Union[BaseDistribution, BaseNumericDistribution]],
+        weights: List[float],
+        lclip: Optional[float] = None,
+        rclip: Optional[float] = None,
+        num_bins: Optional[int] = None,
+        bin_sizing: Optional[BinSizing] = None,
+        warn: bool = True,
     ):
+        """Construct a ``NumericDistribution`` as a mixture of the
+        distributions in ``dists``, weighted by ``weights``.
+
+        Parameters
+        ----------
+        dists : List[BaseDistribution | BaseNumericDistribution]
+            The distributions to mix.
+        weights : List[float]
+            The weights of each distribution. Must sum to 1.
+        lclip : Optional[float]
+            The left clip of the resulting mixture distribution. Note that a
+            clip value on an entry in ``dists`` will only clip that entry,
+            while this parameter clips every entry.
+        rclip : Optional[float]
+            The right clip of the resulting mixture distribution. Note that a
+            clip value on an entry in ``dists`` will only clip that entry,
+            while this parameter clips every entry.
+        num_bins : Optional[int] (default = :any:`DEFAULT_NUM_BINS`)
+            The number of bins for each distribution to use. If not given, each
+            distribution will use the default number of bins for its type as
+            given by :any:`DEFAULT_NUM_BINS`.
+        bin_sizing : Optional[BinSizing]
+            The bin sizing method to use. If not given, each distribution will
+            use the default bin sizing method for its type as given by
+            :any:`DEFAULT_BIN_SIZING`.
+        warn : Optional[bool] (default = True)
+            If True, raise warnings about bins with zero mass.
+
+        """
         # This function replicates how MixtureDistribution handles lclip/rclip:
         # it clips the sub-distributions based on their own lclip/rclip, then
         # takes the mixture sample, then clips the mixture sample based on the
         # mixture lclip/rclip.
         if num_bins is None:
             mixture_num_bins = DEFAULT_NUM_BINS[MixtureDistribution]
-        dists = [d for d in dists]  # create new list to avoid mutating
 
         # Convert any Squigglepy dists into NumericDistributions
-        for i in range(len(dists)):
-            dists[i] = NumericDistribution.from_distribution(dists[i], num_bins, bin_sizing)
+        dists = [
+            NumericDistribution.from_distribution(dist, num_bins, bin_sizing) for dist in dists
+        ]
 
         value_vectors = [d.values for d in dists]
         weighted_mass_vectors = [d.masses * w for d, w in zip(dists, weights)]
@@ -1151,13 +1194,14 @@ class NumericDistribution(BaseNumericDistribution):
         return self.zero_bin_index
 
     def est_mean(self):
-        """Mean of the distribution, calculated using the histogram data (even
-        if the exact mean is known)."""
+        """Estimated mean of the distribution, calculated using the histogram
+        data."""
         return np.sum(self.masses * self.values)
 
     def est_sd(self):
-        """Standard deviation of the distribution, calculated using the
-        histogram data (even if the exact SD is known)."""
+        """Estimated standard deviation of the distribution, calculated using
+        the histogram data.
+        """
         mean = self.mean()
         return np.sqrt(np.sum(self.masses * (self.values - mean) ** 2))
 
@@ -1166,7 +1210,7 @@ class NumericDistribution(BaseNumericDistribution):
             # Subtracting 0.5 * masses because eg the first out of 100 values
             # represents the 0.5th percentile, not the 1st percentile
             cum_mass = np.cumsum(self.masses) - 0.5 * self.masses
-            self.interpolate_cdf = PchipInterpolator(self.values, cum_mass, extrapolate=True)
+            self.interpolate_cdf = PchipInterpolator(self.values, cum_mass)
 
     def _init_interpolate_ppf(self):
         if self.interpolate_ppf is None:
@@ -1174,10 +1218,10 @@ class NumericDistribution(BaseNumericDistribution):
 
             # Mass diffs can be 0 if a mass is very small and gets rounded off.
             # The interpolator doesn't like this, so remove these values.
-            nonzero_indexes = [i for (i, d) in enumerate(np.diff(cum_mass)) if d > 0]
+            nonzero_indexes = [0] + [i + 1 for (i, d) in enumerate(np.diff(cum_mass)) if d > 0]
             cum_mass = cum_mass[nonzero_indexes]
             values = self.values[nonzero_indexes]
-            self.interpolate_ppf = PchipInterpolator(cum_mass, values, extrapolate=True)
+            self.interpolate_ppf = PchipInterpolator(cum_mass, values)
 
     def cdf(self, x):
         """Estimate the proportion of the distribution that lies below ``x``."""
@@ -1232,15 +1276,53 @@ class NumericDistribution(BaseNumericDistribution):
         if lclip >= rclip:
             raise ValueError(f"lclip ({lclip}) must be less than rclip ({rclip})")
 
-        # bounds are inclusive
-        start_index = np.searchsorted(self.values, lclip, side="left")
-        end_index = np.searchsorted(self.values, rclip, side="right")
+        indexes = np.array(range(len(self) + 1))
+        cum_mass_at_index = CubicSpline(indexes, np.concatenate(([0], np.cumsum(self.masses))))
+        cum_ev_at_index = CubicSpline(
+            indexes, np.concatenate(([0], np.cumsum(self.masses * self.values)))
+        )
 
-        new_values = np.array(self.values[start_index:end_index])
-        new_masses = np.array(self.masses[start_index:end_index])
+        # If lclip/rclip is outside the bounds of the known values, use linear
+        # interpolation because cubic spline is sometimes non-monotonic.
+        # Otherwise, use cubic spline because it's more accurate. There are
+        # more accurate methods to extrapolate outside known values, but
+        # they're more complicated and this case should be rare.
+        index_of_value = CubicSpline(self.values, indexes[1:] - 0.5, extrapolate=False)
+        linear_indexes = np.interp([lclip, rclip], self.values, indexes[1:] - 0.5)
+        lclip_index = max(
+            0, index_of_value(lclip) if lclip < self.values[0] else linear_indexes[0]
+        )
+        rclip_index = min(
+            len(self.values),
+            index_of_value(rclip) if rclip > self.values[-1] else linear_indexes[1],
+        )
+        new_masses = np.array(self.masses[int(lclip_index) : int(np.ceil(rclip_index))])
+        new_values = np.array(self.values[int(lclip_index) : int(np.ceil(rclip_index))])
+
+        # If a bin is partially clipped, interpolate how much of the bin
+        # remains.
+        if lclip_index != int(lclip_index):
+            # lclip is between two bins
+            left_mass = cum_mass_at_index(int(lclip_index) + 1) - cum_mass_at_index(lclip_index)
+            if left_mass > 0:
+                left_value = (
+                    cum_ev_at_index(int(lclip_index) + 1) - cum_ev_at_index(lclip_index)
+                ) / left_mass
+                new_masses[0] = left_mass
+                new_values[0] = left_value
+        if rclip_index != int(rclip_index):
+            # rclip is between two bins
+            right_mass = cum_mass_at_index(rclip_index) - cum_mass_at_index(int(rclip_index))
+            if right_mass > 0:
+                right_value = (
+                    cum_ev_at_index(rclip_index) - cum_ev_at_index(int(rclip_index))
+                ) / right_mass
+                new_masses[-1] = right_mass
+                new_values[-1] = right_value
+
         clipped_mass = np.sum(new_masses)
         new_masses /= clipped_mass
-        zero_bin_index = max(0, self.zero_bin_index - start_index)
+        zero_bin_index = np.searchsorted(new_values, 0)
         neg_ev_contribution = -np.sum(new_masses[:zero_bin_index] * new_values[:zero_bin_index])
         pos_ev_contribution = np.sum(new_masses[zero_bin_index:] * new_values[zero_bin_index:])
 
@@ -1353,10 +1435,7 @@ class NumericDistribution(BaseNumericDistribution):
                 # and BinSizing.uniform error growth rate isn't consistent
                 # across bins, so Richardson extrapolation doesn't work well
                 # (and often makes the result worse).
-                if not all(
-                    x.bin_sizing in [BinSizing.ev, BinSizing.mass, BinSizing.uniform]
-                    for x in hists
-                ):
+                if not all(x.bin_sizing in [BinSizing.ev, BinSizing.mass] for x in hists):
                     return func(*hists)
 
                 # Construct half_hists as identical to hists but with half as
@@ -1643,10 +1722,6 @@ class NumericDistribution(BaseNumericDistribution):
                 boundary_values = np.exp(log_boundary_values)
 
                 if not is_sorted:
-                    # TODO: log-uniform can maybe avoid sorting. bin edges are
-                    # calculated in advance, so scan once over
-                    # extended_values/masses and add the mass to each bin. but
-                    # need a way to find the right bin in O(1)
                     sorted_indexes = extended_values.argsort(kind="mergesort")
                     extended_values = extended_values[sorted_indexes]
                     extended_masses = extended_masses[sorted_indexes]
@@ -1687,9 +1762,9 @@ class NumericDistribution(BaseNumericDistribution):
         num_bins: int,
         neg_ev_contribution: float,
         pos_ev_contribution: float,
-        bin_sizing: Optional[BinSizing] = BinSizing.bin_count,
-        min_bins_per_side: Optional[int] = 2,
-        is_sorted: Optional[bool] = False,
+        bin_sizing: BinSizing = BinSizing.bin_count,
+        min_bins_per_side: int = 2,
+        is_sorted: bool = False,
     ):
         """Given two arrays of values and masses representing the result of a
         binary operation on two distributions, compress the arrays down to
@@ -1727,21 +1802,9 @@ class NumericDistribution(BaseNumericDistribution):
             The probability masses of the bins.
 
         """
-        if True:
-            # TODO: Lol
-            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-                num_bins, neg_ev_contribution, pos_ev_contribution, min_bins_per_side
-            )
-        elif bin_sizing == BinSizing.bin_count:
-            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-                num_bins, len(extended_neg_masses), len(extended_pos_masses), min_bins_per_side
-            )
-        elif bin_sizing == BinSizing.ev:
-            num_neg_bins, num_pos_bins = cls._num_bins_per_side(
-                num_bins, neg_ev_contribution, pos_ev_contribution, min_bins_per_side
-            )
-        else:
-            raise ValueError(f"resize_bins: Unsupported bin sizing method: {bin_sizing}")
+        num_neg_bins, num_pos_bins = cls._num_bins_per_side(
+            num_bins, neg_ev_contribution, pos_ev_contribution, min_bins_per_side
+        )
 
         total_ev = pos_ev_contribution - neg_ev_contribution
         if num_neg_bins == 0:
@@ -1795,7 +1858,6 @@ class NumericDistribution(BaseNumericDistribution):
     def __eq__(x, y):
         return x.values == y.values and x.masses == y.masses
 
-    # @richardson(r=2)  # TODO
     def __add__(x, y):
         if isinstance(y, Real):
             return x.shift_by(y)
@@ -1896,7 +1958,7 @@ class NumericDistribution(BaseNumericDistribution):
 
         return x._inner_mul(y)
 
-    @richardson(r=1.75)
+    @richardson(r=1.5)
     def _inner_mul(x, y):
         cls = x
         num_bins = max(len(x), len(y))
@@ -2248,7 +2310,7 @@ class ZeroNumericDistribution(BaseNumericDistribution):
         return NotImplementedError
 
     def log(self):
-        raise ValueError("Cannot take the log of a distribution with non-positive values")
+        raise ValueError("Cannot take the logarithm of a distribution with non-positive values")
 
     def __mul__(x, y):
         if isinstance(y, NumericDistribution):
