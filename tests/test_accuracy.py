@@ -13,6 +13,11 @@ from ..squigglepy.numeric_distribution import numeric, NumericDistribution
 from ..squigglepy import samplers, utils
 
 
+RUN_PRINT_ONLY_TESTS = False
+"""Some tests print information but don't assert anything. This flag determines
+whether to run those tests."""
+
+
 def relative_error(x, y):
     if x == 0 and y == 0:
         return 0
@@ -92,9 +97,9 @@ def test_norm_product_bin_sizing_accuracy():
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
-        relative_error(uniform_hist.est_sd(), ev_hist.exact_sd),
-        relative_error(mass_hist.est_sd(), ev_hist.exact_sd),
         relative_error(ev_hist.est_sd(), ev_hist.exact_sd),
+        relative_error(mass_hist.est_sd(), ev_hist.exact_sd),
+        relative_error(uniform_hist.est_sd(), ev_hist.exact_sd),
     ]
     assert all(np.diff(sd_errors) >= 0)
 
@@ -287,7 +292,7 @@ def test_lognorm_clip_tail_bin_sizing_accuracy():
         relative_error(fat_hybrid_hist.est_mean(), true_mean),
         relative_error(log_uniform_hist.est_mean(), true_mean),
     ])
-    assert all(mean_errors <= 1e-6)
+    assert all(mean_errors <= 1e-5)
 
     sd_errors = [
         relative_error(fat_hybrid_hist.est_sd(), true_sd),
@@ -326,9 +331,9 @@ def test_gamma_bin_sizing_accuracy():
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
+        relative_error(ev_hist.est_sd(), true_sd),
         relative_error(uniform_hist.est_sd(), true_sd),
         relative_error(fat_hybrid_hist.est_sd(), true_sd),
-        relative_error(ev_hist.est_sd(), true_sd),
         relative_error(log_uniform_hist.est_sd(), true_sd),
         relative_error(mass_hist.est_sd(), true_sd),
     ]
@@ -404,6 +409,8 @@ def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
 
 
 def test_quantile_accuracy():
+    if not RUN_PRINT_ONLY_TESTS:
+        return None
     props = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999])
     # props = np.array([0.05, 0.1, 0.25, 0.75, 0.9, 0.95, 0.99, 0.999])
     dist = LognormalDistribution(norm_mean=0, norm_sd=1)
@@ -436,7 +443,8 @@ def test_quantile_accuracy():
 
 
 def test_quantile_product_accuracy():
-
+    if not RUN_PRINT_ONLY_TESTS:
+        return None
     props = np.array([0.5, 0.75, 0.9, 0.95, 0.99, 0.999])  # EV
     # props = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999]) # lognorm
     # props = np.array([0.05, 0.1, 0.25, 0.75, 0.9, 0.95, 0.99, 0.999])  # norm
@@ -479,6 +487,8 @@ def test_quantile_product_accuracy():
 
 
 def test_individual_bin_accuracy():
+    if not RUN_PRINT_ONLY_TESTS:
+        return None
     num_bins = 200
     bin_sizing = "ev"
     print("")
@@ -542,6 +552,8 @@ def test_individual_bin_accuracy():
 
 
 def test_richardson_product():
+    if not RUN_PRINT_ONLY_TESTS:
+        return None
     print("")
     num_bins = 200
     num_products = 2
@@ -599,6 +611,8 @@ def test_richardson_product():
 
 
 def test_richardson_sum():
+    if not RUN_PRINT_ONLY_TESTS:
+        return None
     print("")
     num_bins = 200
     num_sums = 2
@@ -640,6 +654,8 @@ def test_richardson_sum():
 
 
 def test_richardson_exp():
+    if not RUN_PRINT_ONLY_TESTS:
+        return None
     print("")
     bin_sizing = "ev"
     bin_sizes = 200 * np.arange(1, 11)

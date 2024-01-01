@@ -273,6 +273,11 @@ class BaseNumericDistribution(ABC):
         will be very inaccurate at lower quantiles in exchange for greater
         accuracy on the right tail.
 
+        The quantile value at the median of a bin will exactly equal the value
+        in the bin. Other quantile values are interpolated using scipy's
+        ``PchipInterpolator``, which fits points to a piecewise cubic function
+        with the restriction that values between points are monotonic.
+
         Parameters
         ----------
         q : number or array_like
@@ -921,7 +926,6 @@ class NumericDistribution(BaseNumericDistribution):
                 if dist.shape <= 2:
                     exact_sd = np.inf
                 else:
-                    # exact_sd = np.sqrt(dist.shape / ((dist.shape - 1) ** 2 * (dist.shape - 2)))  # Lomax
                     exact_sd = np.sqrt(dist.shape / ((dist.shape - 1) ** 2 * (dist.shape - 2)))
             elif isinstance(dist, UniformDistribution):
                 exact_mean = (dist.x + dist.y) / 2
@@ -963,6 +967,10 @@ class NumericDistribution(BaseNumericDistribution):
             dist.contribution_to_ev(max(0, support[0]), normalized=False)
             - dist.contribution_to_ev(support[0], normalized=False),
         )
+        if dist.lclip is not None or dist.rclip is not None:
+            total_mass = cdf(support[1]) - cdf(support[0])
+            total_ev_contribution /= total_mass
+            neg_ev_contribution /= total_mass
         pos_ev_contribution = total_ev_contribution - neg_ev_contribution
 
         if bin_sizing == BinSizing.uniform:

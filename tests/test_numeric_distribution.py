@@ -189,14 +189,14 @@ def test_norm_one_sided_clip(mean, sd, clip_zscore):
     clip = mean + clip_zscore * sd
     dist = NormalDistribution(mean=mean, sd=sd, lclip=clip)
     hist = numeric(dist, warn=False)
-    assert hist.est_mean() == approx(
-        stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=tolerance, abs=tolerance
-    )
-
     # The exact mean can still be a bit off because uniform bin_sizing doesn't
     # cover the full domain
     assert hist.exact_mean == approx(
         stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=1e-5, abs=1e-9
+    )
+
+    assert hist.est_mean() == approx(
+        stats.truncnorm.mean(clip_zscore, np.inf, loc=mean, scale=sd), rel=tolerance, abs=tolerance
     )
 
     dist = NormalDistribution(mean=mean, sd=sd, rclip=clip)

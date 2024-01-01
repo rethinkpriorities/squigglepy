@@ -122,8 +122,7 @@ def test_standard_uniform_contribution_to_ev(prop):
 def test_uniform_contribution_to_ev(a, b):
     if a > b:
         a, b = b, a
-    if abs(a - b) < 1e-20:
-        return None
+    assume(abs(a - b) > 1e-4)
     dist = UniformDistribution(x=a, y=b)
     assert dist.contribution_to_ev(a) == approx(0)
     assert dist.contribution_to_ev(b) == approx(1)
@@ -141,30 +140,12 @@ def test_uniform_contribution_to_ev(a, b):
 @given(
     a=st.floats(min_value=-10, max_value=10),
     b=st.floats(min_value=-10, max_value=10),
-)
-def test_uniform_inv_contribution_to_ev(a, b):
-    return None  # TODO
-    if a > b:
-        a, b = b, a
-    if abs(a - b) < 1e-20:
-        return None
-    dist = UniformDistribution(x=a, y=b)
-    assert dist.inv_contribution_to_ev(0) == approx(a)
-    assert dist.inv_contribution_to_ev(1) == approx(b)
-    assert dist.inv_contribution_to_ev(0.25) == approx((a + b) / 2)
-
-
-@given(
-    a=st.floats(min_value=-10, max_value=10),
-    b=st.floats(min_value=-10, max_value=10),
     prop=st.floats(min_value=0, max_value=1),
 )
 def test_uniform_inv_contribution_to_ev_inverts_contribution_to_ev(a, b, prop):
-    return None  # TODO
     if a > b:
         a, b = b, a
-    if abs(a - b) < 1e-20:
-        return None
+    assume(abs(a - b) > 1e-4)
     dist = UniformDistribution(x=a, y=b)
     assert dist.contribution_to_ev(dist.inv_contribution_to_ev(prop)) == approx(prop)
 

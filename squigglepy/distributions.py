@@ -767,8 +767,6 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
         return fraction / normalizer
 
     def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
-        # TODO: rewrite this
-        raise NotImplementedError
         if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
 
@@ -778,15 +776,15 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
         a = self.x
         b = self.y
 
-        pos_sol = (
-            1
-            / np.sqrt(fraction)
-            * np.sqrt(b**2 * np.sign(b) - (1 - fraction) * a**2 * np.sign(a))
+        pos_sol = np.sqrt(
+            np.abs((1 - fraction) * a**2 * np.sign(a) + fraction * b**2 * np.sign(b))
         )
         neg_sol = -pos_sol
 
-        # TODO: There are two solutions to the polynomial, but idk how to tell
-        # which one is correct when a < 0 and b > 0
+        if fraction < self.contribution_to_ev(0):
+            return neg_sol
+        else:
+            return pos_sol
 
 
 def uniform(x, y):
