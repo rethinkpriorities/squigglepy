@@ -2,15 +2,14 @@ squigglepy package
 ==================
 
 .. automodule:: squigglepy
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
 
    squigglepy.bayes
    squigglepy.correlation
@@ -21,3 +20,4 @@ Submodules
    squigglepy.samplers
    squigglepy.utils
    squigglepy.version
+

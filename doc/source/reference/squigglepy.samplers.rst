@@ -2,6 +2,6 @@ squigglepy.samplers module
 ==========================
 
 .. automodule:: squigglepy.samplers
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

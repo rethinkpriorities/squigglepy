@@ -51,7 +51,7 @@ perform better in practice.
 
 We are also interested in the accuracy of the standard deviation. The error of
 ``NumericDistribution``'s estimated standard deviation scales with approximately
-:math:`O(\sqrt[4]{m} / n^1.5)`. The error of Monte Carlo standard deviation
+:math:`O(\sqrt[4]{m} / n^{1.5})`. The error of Monte Carlo standard deviation
 scales with :math:`O(\sqrt{m} / n)`.
 
 Where possible, ``NumericDistribution`` uses `Richardson extrapolation
@@ -154,7 +154,9 @@ E[X]^2`. The EV method correctly estimates :math:`E[X]`, so it also correctly
 estimates :math:`E[X]^2`. However, it systematically underestimates
 :math:`E[X^2]` because :math:`E[X^2]` places more weight on larger values. But
 an alternative method that accurately estimated variance would necessarily
-overestimate :math:`E[X]`.
+overestimate :math:`E[X]`. It's possible to force both mean and variance to be
+exactly correct by adjusting the value of each bin according to its z-score, but
+this could make other summary statistics less accurate.
 
 On bin sizing for two-sided distributions
 -----------------------------------------
