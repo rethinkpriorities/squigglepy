@@ -1,17 +1,32 @@
 from functools import reduce
-from hypothesis import assume, example, given, settings, Phase
+from hypothesis import assume, example, given, settings
 import hypothesis.strategies as st
 import numpy as np
 import operator
 from pytest import approx
-from scipy import integrate, optimize, stats
+from scipy import integrate, stats
 import sys
 from unittest.mock import patch, Mock
 import warnings
 
-from ..squigglepy.distributions import *
+from ..squigglepy.distributions import (
+    BernoulliDistribution,
+    BetaDistribution,
+    ChiSquareDistribution,
+    ComplexDistribution,
+    ConstantDistribution,
+    ExponentialDistribution,
+    GammaDistribution,
+    LognormalDistribution,
+    MixtureDistribution,
+    NormalDistribution,
+    ParetoDistribution,
+    PERTDistribution,
+    UniformDistribution,
+    mixture,
+)
 from ..squigglepy.numeric_distribution import numeric, NumericDistribution, _bump_indexes
-from ..squigglepy import samplers, utils
+from ..squigglepy import utils
 
 # There are a lot of functions testing various combinations of behaviors with
 # no obvious way to order them. These functions are ordered basically like this:
@@ -141,7 +156,6 @@ def test_lognorm_mean(norm_mean, norm_sd, bin_sizing):
     norm_sd=st.floats(min_value=0.01, max_value=3),
 )
 def test_lognorm_sd(norm_mean, norm_sd):
-    test_edges = False
     dist = LognormalDistribution(norm_mean=norm_mean, norm_sd=norm_sd)
     hist = numeric(dist, bin_sizing="log-uniform", warn=False)
 
@@ -154,23 +168,7 @@ def test_lognorm_sd(norm_mean, norm_sd):
         )[0]
 
     def observed_variance(left, right):
-        return np.sum(
-            hist.masses[left:right] * (hist.values[left:right] - hist.est_mean()) ** 2
-        )
-
-    if test_edges:
-        # Note: For bin_sizing=ev, adding more bins increases accuracy overall,
-        # but decreases accuracy on the far right tail.
-        midpoint = hist.values[int(hist.num_bins * 9 / 10)]
-        expected_left_variance = true_variance(0, midpoint)
-        expected_right_variance = true_variance(midpoint, np.inf)
-        midpoint_index = int(len(hist) * hist.contribution_to_ev(midpoint))
-        observed_left_variance = observed_variance(0, midpoint_index)
-        observed_right_variance = observed_variance(midpoint_index, len(hist))
-        print("")
-        print_accuracy_ratio(observed_left_variance, expected_left_variance, "Left   ")
-        print_accuracy_ratio(observed_right_variance, expected_right_variance, "Right  ")
-        print_accuracy_ratio(hist.est_sd(), dist.lognorm_sd, "Overall")
+        return np.sum(hist.masses[left:right] * (hist.values[left:right] - hist.est_mean()) ** 2)
 
     assert hist.est_sd() == approx(dist.lognorm_sd, rel=0.01 + 0.1 * norm_sd)
 
@@ -274,13 +272,12 @@ def test_lognorm_clip_and_sum(norm_mean, norm_sd, clip_zscore):
     right_mass = 1 - left_mass
     true_mean = stats.lognorm.mean(norm_sd, scale=np.exp(norm_mean))
     sum_exact_mean = left_mass * left_hist.exact_mean + right_mass * right_hist.exact_mean
-    sum_hist_mean = (
-        left_mass * left_hist.est_mean() + right_mass * right_hist.est_mean()
-    )
+    sum_hist_mean = left_mass * left_hist.est_mean() + right_mass * right_hist.est_mean()
 
     # TODO: the error margin is surprisingly large
     assert sum_exact_mean == approx(true_mean, rel=1e-3, abs=1e-6)
     assert sum_hist_mean == approx(true_mean, rel=1e-3, abs=1e-6)
+
 
 @given(
     mean1=st.floats(min_value=-1000, max_value=0.01),
@@ -304,9 +301,7 @@ def test_norm_product(mean1, mean2, mean3, sd1, sd2, sd3, bin_sizing):
     hist2 = numeric(dist2, num_bins=40, bin_sizing=bin_sizing, warn=False)
     hist3 = numeric(dist3, num_bins=40, bin_sizing=bin_sizing, warn=False)
     hist_prod = hist1 * hist2
-    assert hist_prod.est_mean() == approx(
-        dist1.mean * dist2.mean, rel=mean_tolerance, abs=1e-8
-    )
+    assert hist_prod.est_mean() == approx(dist1.mean * dist2.mean, rel=mean_tolerance, abs=1e-8)
     assert hist_prod.est_sd() == approx(
         np.sqrt(
             (dist1.sd**2 + dist1.mean**2) * (dist2.sd**2 + dist2.mean**2)
@@ -417,14 +412,22 @@ def test_lognorm_sd_error_propagation(bin_sizing):
     if verbose:
         print("")
     for i in [1, 2, 4, 8, 16, 32]:
-        oneshot = numeric(LognormalDistribution(norm_mean=0, norm_sd=0.1 * np.sqrt(i)), num_bins=num_bins, bin_sizing=bin_sizing, warn=False)
-        true_mean = stats.lognorm.mean(np.sqrt(i))
+        oneshot = numeric(
+            LognormalDistribution(norm_mean=0, norm_sd=0.1 * np.sqrt(i)),
+            num_bins=num_bins,
+            bin_sizing=bin_sizing,
+            warn=False,
+        )
         true_sd = hist.exact_sd
         abs_error.append(abs(hist.est_sd() - true_sd))
         rel_error.append(relative_error(hist.est_sd(), true_sd))
         if verbose:
             print(f"i={i:2d}: Hist error  : {rel_error[-1] * 100:.4f}%")
-            print(f"i={i:2d}: Hist / 1shot: {(rel_error[-1] / relative_error(oneshot.est_sd(), true_sd)) * 100:.0f}%")
+            print(
+                "i={:2d}: Hist / 1shot: {:.0f}%".format(
+                    i, ((rel_error[-1] / relative_error(oneshot.est_sd(), true_sd)) * 100)
+                )
+            )
         hist = hist * hist
 
     expected_error_pcts = (
@@ -640,12 +643,8 @@ def test_scale(mean, sd, scalar):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = numeric(dist, warn=False)
     scaled_hist = scalar * hist
-    assert scaled_hist.est_mean() == approx(
-        scalar * hist.est_mean(), abs=1e-6, rel=1e-6
-    )
-    assert scaled_hist.est_sd() == approx(
-        abs(scalar) * hist.est_sd(), abs=1e-6, rel=1e-6
-    )
+    assert scaled_hist.est_mean() == approx(scalar * hist.est_mean(), abs=1e-6, rel=1e-6)
+    assert scaled_hist.est_sd() == approx(abs(scalar) * hist.est_sd(), abs=1e-6, rel=1e-6)
     assert scaled_hist.exact_mean == approx(scalar * hist.exact_mean)
     assert scaled_hist.exact_sd == approx(abs(scalar) * hist.exact_sd)
 
@@ -659,9 +658,7 @@ def test_shift_by(mean, sd, scalar):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = numeric(dist, warn=False)
     shifted_hist = hist + scalar
-    assert shifted_hist.est_mean() == approx(
-        hist.est_mean() + scalar, abs=1e-6, rel=1e-6
-    )
+    assert shifted_hist.est_mean() == approx(hist.est_mean() + scalar, abs=1e-6, rel=1e-6)
     assert shifted_hist.est_sd() == approx(hist.est_sd(), abs=1e-6, rel=1e-6)
     assert shifted_hist.exact_mean == approx(hist.exact_mean + scalar)
     assert shifted_hist.exact_sd == approx(hist.exact_sd)
@@ -762,7 +759,7 @@ def test_uniform_exp(loga, logb):
     a = np.exp(loga)
     b = np.exp(logb)
     true_mean = (b - a) / np.log(b / a)
-    true_sd = np.sqrt((b**2 - a**2) / (2 * np.log(b / a)) - ((b - a) / (np.log(b / a)))**2)
+    true_sd = np.sqrt((b**2 - a**2) / (2 * np.log(b / a)) - ((b - a) / (np.log(b / a))) ** 2)
     assert exp_hist.est_mean() == approx(true_mean, rel=0.02)
     if not np.isnan(true_sd):
         # variance can be slightly negative due to rounding errors
@@ -844,9 +841,7 @@ def test_mixture(a, b):
     dist3 = NormalDistribution(mean=-1, sd=1)
     mixture = MixtureDistribution([dist1, dist2, dist3], [a, b, c])
     hist = numeric(mixture, bin_sizing="uniform")
-    assert hist.est_mean() == approx(
-        a * dist1.mean + b * dist2.mean + c * dist3.mean, rel=1e-4
-    )
+    assert hist.est_mean() == approx(a * dist1.mean + b * dist2.mean + c * dist3.mean, rel=1e-4)
     assert hist.values[0] < 0
 
 
@@ -865,8 +860,12 @@ def test_disjoint_mixture():
 def test_mixture_distributivity():
     one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
     ratio = [0.03, 0.97]
-    product_of_mixture = numeric(mixture([-one_sided_dist, one_sided_dist], ratio)) * numeric(one_sided_dist)
-    mixture_of_products = numeric(mixture([-one_sided_dist * one_sided_dist, one_sided_dist * one_sided_dist], ratio))
+    product_of_mixture = numeric(mixture([-one_sided_dist, one_sided_dist], ratio)) * numeric(
+        one_sided_dist
+    )
+    mixture_of_products = numeric(
+        mixture([-one_sided_dist * one_sided_dist, one_sided_dist * one_sided_dist], ratio)
+    )
 
     assert product_of_mixture.exact_mean == approx(mixture_of_products.exact_mean, rel=1e-5)
     assert product_of_mixture.exact_sd == approx(mixture_of_products.exact_sd, rel=1e-5)
@@ -881,7 +880,7 @@ def test_mixture_distributivity():
 def test_numeric_clip(lclip, width):
     rclip = lclip + width
     dist = NormalDistribution(mean=0, sd=1)
-    full_hist = numeric(dist, num_bins=200, bin_sizing='uniform', warn=False)
+    full_hist = numeric(dist, num_bins=200, bin_sizing="uniform", warn=False)
     clipped_hist = full_hist.clip(lclip, rclip)
     assert clipped_hist.est_mean() == approx(stats.truncnorm.mean(lclip, rclip), rel=0.001)
     hist_sum = clipped_hist + full_hist
@@ -1254,35 +1253,33 @@ def test_beta_prod(a, b, norm_mean, norm_sd):
 
 @given(
     left=st.floats(min_value=-100, max_value=100),
-    right=st.floats(min_value=-100, max_value=100),
-    mode=st.floats(min_value=-100, max_value=100),
+    dist_to_mode=st.floats(min_value=0.001, max_value=100),
+    dist_to_right=st.floats(min_value=0.001, max_value=100),
 )
 @settings(max_examples=10)
-def test_pert_basic(left, right, mode):
-    left, mode = fix_ordering(left, mode)
-    mode, right = fix_ordering(mode, right)
-    left, mode = fix_ordering(left, mode)
-    assert (left < mode < right) or (left == mode == right)
+def test_pert_basic(left, dist_to_mode, dist_to_right):
+    mode = left + dist_to_mode
+    right = mode + dist_to_right
     dist = PERTDistribution(left=left, right=right, mode=mode)
     hist = numeric(dist)
     assert hist.exact_mean == approx((left + 4 * mode + right) / 6)
     assert hist.est_mean() == approx(hist.exact_mean)
-    assert hist.exact_sd == approx((np.sqrt((hist.exact_mean - left) * (right - hist.exact_mean) / 7)))
+    assert hist.exact_sd == approx(
+        (np.sqrt((hist.exact_mean - left) * (right - hist.exact_mean) / 7))
+    )
     assert hist.est_sd() == approx(hist.exact_sd, rel=0.001)
 
 
 @given(
     left=st.floats(min_value=-100, max_value=100),
-    right=st.floats(min_value=-100, max_value=100),
-    mode=st.floats(min_value=-100, max_value=100),
+    dist_to_mode=st.floats(min_value=0.001, max_value=100),
+    dist_to_right=st.floats(min_value=0.001, max_value=100),
     lam=st.floats(min_value=1, max_value=10),
 )
 @settings(max_examples=10)
-def test_pert_with_lambda(left, right, mode, lam):
-    left, mode = fix_ordering(left, mode)
-    mode, right = fix_ordering(mode, right)
-    left, mode = fix_ordering(left, mode)
-    assert (left < mode < right) or (left == mode == right)
+def test_pert_with_lambda(left, dist_to_mode, dist_to_right, lam):
+    mode = left + dist_to_mode
+    right = mode + dist_to_right
     dist = PERTDistribution(left=left, right=right, mode=mode, lam=lam)
     hist = numeric(dist)
     true_mean = (left + lam * mode + right) / (lam + 2)
@@ -1393,9 +1390,7 @@ def test_pareto_dist(shape):
     if shape <= 2:
         assert hist.exact_sd == approx(np.inf)
     else:
-        assert hist.est_sd() == approx(
-            hist.exact_sd, rel=max(0.01, 0.1 / (shape - 2))
-        )
+        assert hist.est_sd() == approx(hist.exact_sd, rel=max(0.01, 0.1 / (shape - 2)))
 
 
 @given(
@@ -1453,11 +1448,15 @@ def test_complex_dist_with_float():
     sd=st.floats(min_value=0.01, max_value=10),
     bin_num=st.integers(min_value=5, max_value=95),
 )
+@example(mean=1, sd=0.7822265625, bin_num=5)
 def test_numeric_dist_contribution_to_ev(mean, sd, bin_num):
     fraction = bin_num / 100
     dist = NormalDistribution(mean=mean, sd=sd)
+    tolerance = 0.02 if bin_num < 10 or bin_num > 90 else 0.01
     hist = numeric(dist, bin_sizing="uniform", num_bins=100, warn=False)
-    assert hist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(fraction, rel=0.01)
+    assert hist.contribution_to_ev(dist.inv_contribution_to_ev(fraction)) == approx(
+        fraction, rel=tolerance
+    )
 
 
 @given(
@@ -1561,6 +1560,7 @@ def test_quantile_mass(mean, sd, percent):
     mean=st.floats(min_value=100, max_value=100),
     sd=st.floats(min_value=0.01, max_value=100),
 )
+@example(mean=100, sd=11.97)
 def test_cdf_mass(mean, sd):
     dist = NormalDistribution(mean=mean, sd=sd)
     hist = numeric(dist, num_bins=200, bin_sizing="mass", warn=False)

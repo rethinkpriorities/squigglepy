@@ -455,10 +455,7 @@ def get_percentiles(
 
 
 def mean(x):
-    if (
-        type(x).__name__ == "NumericDistribution"
-        or type(x).__name__ == "ZeroNumericDistribution"
-    ):
+    if type(x).__name__ == "NumericDistribution" or type(x).__name__ == "ZeroNumericDistribution":
         return x.mean()
     return np.mean(x)
 

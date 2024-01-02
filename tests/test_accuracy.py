@@ -1,16 +1,16 @@
 from functools import reduce
-from hypothesis import assume, example, given, settings
-import hypothesis.strategies as st
 import numpy as np
-from pytest import approx
-from scipy import integrate, optimize, stats
-import sys
-from unittest.mock import patch, Mock
+from scipy import optimize, stats
 import warnings
 
-from ..squigglepy.distributions import *
-from ..squigglepy.numeric_distribution import numeric, NumericDistribution
-from ..squigglepy import samplers, utils
+from ..squigglepy.distributions import (
+    GammaDistribution,
+    NormalDistribution,
+    LognormalDistribution,
+    mixture,
+)
+from ..squigglepy.numeric_distribution import numeric
+from ..squigglepy import samplers
 
 
 RUN_PRINT_ONLY_TESTS = False
@@ -89,11 +89,13 @@ def test_norm_product_bin_sizing_accuracy():
 
     # uniform and log-uniform should have small errors and the others should be
     # pretty much perfect
-    mean_errors = np.array([
-        relative_error(mass_hist.est_mean(), ev_hist.exact_mean),
-        relative_error(ev_hist.est_mean(), ev_hist.exact_mean),
-        relative_error(uniform_hist.est_mean(), ev_hist.exact_mean),
-    ])
+    mean_errors = np.array(
+        [
+            relative_error(mass_hist.est_mean(), ev_hist.exact_mean),
+            relative_error(ev_hist.est_mean(), ev_hist.exact_mean),
+            relative_error(uniform_hist.est_mean(), ev_hist.exact_mean),
+        ]
+    )
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
@@ -120,13 +122,15 @@ def test_lognorm_product_bin_sizing_accuracy():
         norm_mean=2 * dist.norm_mean, norm_sd=np.sqrt(2) * dist.norm_sd
     )
 
-    mean_errors = np.array([
-        relative_error(mass_hist.est_mean(), dist_prod.lognorm_mean),
-        relative_error(ev_hist.est_mean(), dist_prod.lognorm_mean),
-        relative_error(fat_hybrid_hist.est_mean(), dist_prod.lognorm_mean),
-        relative_error(uniform_hist.est_mean(), dist_prod.lognorm_mean),
-        relative_error(log_uniform_hist.est_mean(), dist_prod.lognorm_mean),
-    ])
+    mean_errors = np.array(
+        [
+            relative_error(mass_hist.est_mean(), dist_prod.lognorm_mean),
+            relative_error(ev_hist.est_mean(), dist_prod.lognorm_mean),
+            relative_error(fat_hybrid_hist.est_mean(), dist_prod.lognorm_mean),
+            relative_error(uniform_hist.est_mean(), dist_prod.lognorm_mean),
+            relative_error(log_uniform_hist.est_mean(), dist_prod.lognorm_mean),
+        ]
+    )
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
@@ -201,13 +205,15 @@ def test_lognorm_clip_center_bin_sizing_accuracy():
         dist2, bin_sizing="fat-hybrid", warn=False
     )
 
-    mean_errors = np.array([
-        relative_error(ev_hist.est_mean(), true_mean),
-        relative_error(mass_hist.est_mean(), true_mean),
-        relative_error(uniform_hist.est_mean(), true_mean),
-        relative_error(fat_hybrid_hist.est_mean(), true_mean),
-        relative_error(log_uniform_hist.est_mean(), true_mean),
-    ])
+    mean_errors = np.array(
+        [
+            relative_error(ev_hist.est_mean(), true_mean),
+            relative_error(mass_hist.est_mean(), true_mean),
+            relative_error(uniform_hist.est_mean(), true_mean),
+            relative_error(fat_hybrid_hist.est_mean(), true_mean),
+            relative_error(log_uniform_hist.est_mean(), true_mean),
+        ]
+    )
     assert all(mean_errors <= 1e-6)
 
     # Uniform does poorly in general with fat-tailed dists, but it does well
@@ -285,13 +291,15 @@ def test_lognorm_clip_tail_bin_sizing_accuracy():
         dist2, bin_sizing="fat-hybrid", warn=False
     )
 
-    mean_errors = np.array([
-        relative_error(mass_hist.est_mean(), true_mean),
-        relative_error(uniform_hist.est_mean(), true_mean),
-        relative_error(ev_hist.est_mean(), true_mean),
-        relative_error(fat_hybrid_hist.est_mean(), true_mean),
-        relative_error(log_uniform_hist.est_mean(), true_mean),
-    ])
+    mean_errors = np.array(
+        [
+            relative_error(mass_hist.est_mean(), true_mean),
+            relative_error(uniform_hist.est_mean(), true_mean),
+            relative_error(ev_hist.est_mean(), true_mean),
+            relative_error(fat_hybrid_hist.est_mean(), true_mean),
+            relative_error(log_uniform_hist.est_mean(), true_mean),
+        ]
+    )
     assert all(mean_errors <= 1e-5)
 
     sd_errors = [
@@ -321,13 +329,15 @@ def test_gamma_bin_sizing_accuracy():
     true_mean = uniform_hist.exact_mean
     true_sd = uniform_hist.exact_sd
 
-    mean_errors = np.array([
-        relative_error(mass_hist.est_mean(), true_mean),
-        relative_error(uniform_hist.est_mean(), true_mean),
-        relative_error(ev_hist.est_mean(), true_mean),
-        relative_error(log_uniform_hist.est_mean(), true_mean),
-        relative_error(fat_hybrid_hist.est_mean(), true_mean),
-    ])
+    mean_errors = np.array(
+        [
+            relative_error(mass_hist.est_mean(), true_mean),
+            relative_error(uniform_hist.est_mean(), true_mean),
+            relative_error(ev_hist.est_mean(), true_mean),
+            relative_error(log_uniform_hist.est_mean(), true_mean),
+            relative_error(fat_hybrid_hist.est_mean(), true_mean),
+        ]
+    )
     assert all(mean_errors <= 1e-6)
 
     sd_errors = [
@@ -423,23 +433,46 @@ def test_quantile_accuracy():
     # Formula from Goodman, "Accuracy and Efficiency of Monte Carlo Method."
     # https://inis.iaea.org/collection/NCLCollectionStore/_Public/19/047/19047359.pdf
     # Figure 20 on page 434.
-    mc_error = np.sqrt(props * (1 - props)) * np.sqrt(2 * np.pi) * dist.norm_sd * np.exp(0.5 * (np.log(true_quantiles) - dist.norm_mean)**2 / dist.norm_sd**2) / np.sqrt(num_mc_samples)
-    # mc_error = np.sqrt(props * (1 - props)) * np.sqrt(2 * np.pi) * np.exp(0.5 * (true_quantiles - dist.mean)**2) / abs(true_quantiles) / np.sqrt(num_mc_samples)
+    mc_error = (
+        np.sqrt(props * (1 - props))
+        * np.sqrt(2 * np.pi)
+        * dist.norm_sd
+        * np.exp(0.5 * (np.log(true_quantiles) - dist.norm_mean) ** 2 / dist.norm_sd**2)
+        / np.sqrt(num_mc_samples)
+    )
 
     print("\n")
-    print(f"MC error: average {fmt(np.mean(mc_error))}, median {fmt(np.median(mc_error))}, max {fmt(np.max(mc_error))}")
+    print(
+        f"MC error: average {fmt(np.mean(mc_error))}, "
+        f"median {fmt(np.median(mc_error))}, "
+        f"max {fmt(np.max(mc_error))}"
+    )
 
     for bin_sizing in ["log-uniform", "mass", "ev", "fat-hybrid"]:
-    # for bin_sizing in ["uniform", "mass", "ev"]:
+        # for bin_sizing in ["uniform", "mass", "ev"]:
         hist = numeric(dist, bin_sizing=bin_sizing, warn=False, num_bins=num_bins)
-        linear_quantiles = np.interp(props, np.cumsum(hist.masses) - 0.5 * hist.masses, hist.values)
+        linear_quantiles = np.interp(
+            props, np.cumsum(hist.masses) - 0.5 * hist.masses, hist.values
+        )
         hist_quantiles = hist.quantile(props)
         linear_error = abs(true_quantiles - linear_quantiles) / abs(true_quantiles)
         hist_error = abs(true_quantiles - hist_quantiles) / abs(true_quantiles)
         print(f"\n{bin_sizing}")
-        print(f"\tLinear error: average {fmt(np.mean(linear_error))}, median {fmt(np.median(linear_error))}, max {fmt(np.max(linear_error))}")
-        print(f"\tHist error  : average {fmt(np.mean(hist_error))}, median {fmt(np.median(hist_error))}, max {fmt(np.max(hist_error))}")
-        print(f"\tHist / MC   : average {fmt(np.mean(hist_error / mc_error))}, median {fmt(np.median(hist_error / mc_error))}, max {fmt(np.max(hist_error / mc_error))}")
+        print(
+            f"\tLinear error: average {fmt(np.mean(linear_error))}, "
+            f"median {fmt(np.median(linear_error))}, "
+            f"max {fmt(np.max(linear_error))}"
+        )
+        print(
+            f"\tHist error  : average {fmt(np.mean(hist_error))}, "
+            f"median {fmt(np.median(hist_error))}, "
+            f"max {fmt(np.max(hist_error))}"
+        )
+        print(
+            f"\tHist / MC   : average {fmt(np.mean(hist_error / mc_error))}, "
+            f"median {fmt(np.median(hist_error / mc_error))}, "
+            f"max {fmt(np.max(hist_error / mc_error))}"
+        )
 
 
 def test_quantile_product_accuracy():
@@ -456,34 +489,46 @@ def test_quantile_product_accuracy():
     # for bin_sizing in ["log-uniform", "mass", "ev", "fat-hybrid"]:
     for num_products in [2, 8, 32, 128, 512]:
         dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
-        dist = LognormalDistribution(norm_mean=dist1.norm_mean * num_products, norm_sd=dist1.norm_sd * np.sqrt(num_products))
+        dist = LognormalDistribution(
+            norm_mean=dist1.norm_mean * num_products, norm_sd=dist1.norm_sd * np.sqrt(num_products)
+        )
         true_quantiles = stats.lognorm.ppf(props, dist.norm_sd, scale=np.exp(dist.norm_mean))
         num_mc_samples = num_bins**2
 
         # I'm not sure how to prove this, but empirically, it looks like the error
         # for MC(x) * MC(y) is the same as the error for MC(x * y).
-        mc_error = np.sqrt(props * (1 - props)) * np.sqrt(2 * np.pi) * dist.norm_sd * np.exp(0.5 * (np.log(true_quantiles) - dist.norm_mean)**2 / dist.norm_sd**2) / np.sqrt(num_mc_samples)
+        mc_error = (
+            np.sqrt(props * (1 - props))
+            * np.sqrt(2 * np.pi)
+            * dist.norm_sd
+            * np.exp(0.5 * (np.log(true_quantiles) - dist.norm_mean) ** 2 / dist.norm_sd**2)
+            / np.sqrt(num_mc_samples)
+        )
 
         hist1 = numeric(dist1, bin_sizing=bin_sizing, warn=False, num_bins=num_bins)
         hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
         oneshot = numeric(dist, bin_sizing=bin_sizing, warn=False, num_bins=num_bins)
-        linear_quantiles = np.interp(props, np.cumsum(hist.masses) - 0.5 * hist.masses, hist.values)
         hist_quantiles = hist.quantile(props)
-        linear_error = abs(true_quantiles - linear_quantiles) / abs(true_quantiles)
         hist_error = abs(true_quantiles - hist_quantiles) / abs(true_quantiles)
         oneshot_error = abs(true_quantiles - oneshot.quantile(props)) / abs(true_quantiles)
         hists.append(hist)
 
-        # print(f"\n{bin_sizing}")
-        # print(f"\tLinear error: average {fmt(np.mean(linear_error))}, median {fmt(np.median(linear_error))}, max {fmt(np.max(linear_error))}")
         print(f"{num_products}")
-        print(f"\tHist error  : average {fmt(np.mean(hist_error))}, median {fmt(np.median(hist_error))}, max {fmt(np.max(hist_error))}")
-        print(f"\tHist / MC   : average {fmt(np.mean(hist_error / mc_error))}, median {fmt(np.median(hist_error / mc_error))}, max {fmt(np.max(hist_error / mc_error))}")
-        print(f"\tHist / 1shot: average {fmt(np.mean(hist_error / oneshot_error))}, median {fmt(np.median(hist_error / oneshot_error))}, max {fmt(np.max(hist_error / oneshot_error))}")
-
-    indexes = [10, 20, 50, 80, 90]
-    selected = np.array([x.values[indexes] for x in hists])
-    diffs = np.diff(selected, axis=0)
+        print(
+            f"\tHist error  : average {fmt(np.mean(hist_error))}, "
+            f"median {fmt(np.median(hist_error))}, "
+            "max {fmt(np.max(hist_error))}"
+        )
+        print(
+            f"\tHist / MC   : average {fmt(np.mean(hist_error / mc_error))}, "
+            f"median {fmt(np.median(hist_error / mc_error))}, "
+            f"max {fmt(np.max(hist_error / mc_error))}"
+        )
+        print(
+            f"\tHist / 1shot: average {fmt(np.mean(hist_error / oneshot_error))}, "
+            f"median {fmt(np.median(hist_error / oneshot_error))}, "
+            f"max {fmt(np.max(hist_error / oneshot_error))}"
+        )
 
 
 def test_individual_bin_accuracy():
@@ -498,23 +543,20 @@ def test_individual_bin_accuracy():
     for num_bins in bin_sizes:
         operation = "mul"
         if operation == "mul":
-            true_dist_type = 'lognorm'
+            true_dist_type = "lognorm"
             true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
             dist1 = LognormalDistribution(norm_mean=0, norm_sd=1 / np.sqrt(num_products))
-            true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
             hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
             hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
         elif operation == "add":
-            true_dist_type = 'norm'
+            true_dist_type = "norm"
             true_dist = NormalDistribution(mean=0, sd=1)
             dist1 = NormalDistribution(mean=0, sd=1 / np.sqrt(num_products))
-            true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
             hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
             hist = reduce(lambda acc, x: acc + x, [hist1] * num_products)
         elif operation == "exp":
-            true_dist_type = 'lognorm'
+            true_dist_type = "lognorm"
             true_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
-            true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
             dist1 = NormalDistribution(mean=0, sd=1)
             hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
             hist = hist1.exp()
@@ -522,14 +564,20 @@ def test_individual_bin_accuracy():
         cum_mass = np.cumsum(hist.masses)
         cum_cev = np.cumsum(hist.masses * abs(hist.values))
         cum_cev_frac = cum_cev / cum_cev[-1]
-        if true_dist_type == 'lognorm':
-            expected_cum_mass = stats.lognorm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
-        elif true_dist_type == 'norm':
-            expected_cum_mass = stats.norm.cdf(true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.mean, true_dist.sd)
+        if true_dist_type == "lognorm":
+            expected_cum_mass = stats.lognorm.cdf(
+                true_dist.inv_contribution_to_ev(cum_cev_frac),
+                true_dist.norm_sd,
+                scale=np.exp(true_dist.norm_mean),
+            )
+        elif true_dist_type == "norm":
+            expected_cum_mass = stats.norm.cdf(
+                true_dist.inv_contribution_to_ev(cum_cev_frac), true_dist.mean, true_dist.sd
+            )
 
         # Take only every nth value where n = num_bins/40
-        cum_mass = cum_mass[::num_bins // 40]
-        expected_cum_mass = expected_cum_mass[::num_bins // 40]
+        cum_mass = cum_mass[:: num_bins // 40]
+        expected_cum_mass = expected_cum_mass[:: num_bins // 40]
         bin_errs.append(abs(cum_mass - expected_cum_mass) / expected_cum_mass)
 
     bin_errs = np.array(bin_errs)
@@ -537,7 +585,9 @@ def test_individual_bin_accuracy():
     best_fits = []
     for i in range(40):
         try:
-            best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, bin_errs[:, i], p0=[1, 2])[0]
+            best_fit = optimize.curve_fit(
+                lambda x, a, r: a * x**r, bin_sizes, bin_errs[:, i], p0=[1, 2]
+            )[0]
             best_fits.append(best_fit)
             print(f"{i:2d} {best_fit[0]:9.3f} * x ^ {best_fit[1]:.3f}")
         except RuntimeError:
@@ -547,7 +597,9 @@ def test_individual_bin_accuracy():
     print("")
     print(f"Average: {np.mean(best_fits, axis=0)}\nMedian: {np.median(best_fits, axis=0)}")
 
-    meta_fit = np.polynomial.polynomial.Polynomial.fit(np.array(range(len(best_fits))) / len(best_fits), np.array(best_fits)[:, 1], 2)
+    meta_fit = np.polynomial.polynomial.Polynomial.fit(
+        np.array(range(len(best_fits))) / len(best_fits), np.array(best_fits)[:, 1], 2
+    )
     print(f"\nMeta fit: {meta_fit}")
 
 
@@ -565,8 +617,11 @@ def test_richardson_product():
     product_nums = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
     err_rates = []
     for num_products in product_nums:
-    # for num_bins in bin_sizes:
-        true_mixture_ratio = reduce(lambda acc, x: (acc[0] * x[1] + acc[1] * x[0], acc[0] * x[0] + acc[1] * x[1]), [(mixture_ratio) for _ in range(num_products)])
+        # for num_bins in bin_sizes:
+        true_mixture_ratio = reduce(
+            lambda acc, x: (acc[0] * x[1] + acc[1] * x[0], acc[0] * x[0] + acc[1] * x[1]),
+            [(mixture_ratio) for _ in range(num_products)],
+        )
         one_sided_dist = LognormalDistribution(norm_mean=0, norm_sd=1)
         true_dist = mixture([-one_sided_dist, one_sided_dist], true_mixture_ratio)
         true_hist = numeric(true_dist, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
@@ -575,27 +630,40 @@ def test_richardson_product():
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc * x, [hist1] * num_products)
 
-        test_mode = 'ppf'
-        if test_mode == 'cev':
-            true_answer = one_sided_dist.contribution_to_ev(stats.lognorm.ppf(2 * hist.masses[50:100].sum(), one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean)), False) / 2
+        test_mode = "ppf"
+        if test_mode == "cev":
+            true_answer = (
+                one_sided_dist.contribution_to_ev(
+                    stats.lognorm.ppf(
+                        2 * hist.masses[50:100].sum(),
+                        one_sided_dist.norm_sd,
+                        scale=np.exp(one_sided_dist.norm_mean),
+                    ),
+                    False,
+                )
+                / 2
+            )
             est_answer = (hist.masses * abs(hist.values))[50:100].sum()
             print_accuracy_ratio(est_answer, true_answer, f"CEV({num_products:3d})")
-        elif test_mode == 'sd':
+        elif test_mode == "sd":
             mcs = [samplers.sample(dist, num_bins**2) for dist in [dist1] * num_products]
-            mc = reduce(lambda acc, x: acc * x, mcs)
             true_answer = true_hist.exact_sd
             est_answer = hist.est_sd()
-            mc_answer = np.std(mc)
             print_accuracy_ratio(est_answer, true_answer, f"SD({num_products:3d}, {num_bins:3d})")
-            # print_accuracy_ratio(mc_answer, true_answer, f"MC({num_products:3d}, {num_bins:3d})")
+            mc = reduce(lambda acc, x: acc * x, mcs)
+            mc_answer = np.std(mc)
+            print_accuracy_ratio(mc_answer, true_answer, f"MC({num_products:3d}, {num_bins:3d})")
             err_rates.append(abs(est_answer - true_answer))
-        elif test_mode == 'ppf':
+        elif test_mode == "ppf":
             fracs = [0.5, 0.75, 0.9, 0.97, 0.99]
             frac_errs = []
             # mc_errs = []
             for frac in fracs:
-                true_answer = stats.lognorm.ppf((frac - true_mixture_ratio[0]) / true_mixture_ratio[1], one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean))
-                oneshot_answer = true_hist.ppf(frac)
+                true_answer = stats.lognorm.ppf(
+                    (frac - true_mixture_ratio[0]) / true_mixture_ratio[1],
+                    one_sided_dist.norm_sd,
+                    scale=np.exp(one_sided_dist.norm_mean),
+                )
                 est_answer = hist.ppf(frac)
                 frac_errs.append(abs(est_answer - true_answer) / true_answer)
             median_err = np.median(frac_errs)
@@ -603,10 +671,14 @@ def test_richardson_product():
             err_rates.append(median_err)
 
     if num_bins == bin_sizes[-1]:
-        best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
+        best_fit = optimize.curve_fit(lambda x, a, r: a * x**r, bin_sizes, err_rates, p0=[1, 2])[
+            0
+        ]
         print(f"\nBest fit: {best_fit}")
     else:
-        best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, product_nums, err_rates, p0=[1, 2])[0]
+        best_fit = optimize.curve_fit(
+            lambda x, a, r: a * x**r, product_nums, err_rates, p0=[1, 2]
+        )[0]
         print(f"\nBest fit: {best_fit}")
 
 
@@ -627,17 +699,27 @@ def test_richardson_sum():
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = reduce(lambda acc, x: acc + x, [hist1] * num_sums)
 
-        test_mode = 'ppf'
-        if test_mode == 'cev':
-            true_answer = one_sided_dist.contribution_to_ev(stats.lognorm.ppf(2 * hist.masses[50:100].sum(), one_sided_dist.norm_sd, scale=np.exp(one_sided_dist.norm_mean)), False) / 2
+        test_mode = "ppf"
+        if test_mode == "cev":
+            true_answer = (
+                true_dist.contribution_to_ev(
+                    stats.lognorm.ppf(
+                        2 * hist.masses[50:100].sum(),
+                        true_dist.norm_sd,
+                        scale=np.exp(true_dist.norm_mean),
+                    ),
+                    False,
+                )
+                / 2
+            )
             est_answer = (hist.masses * abs(hist.values))[50:100].sum()
             print_accuracy_ratio(est_answer, true_answer, f"CEV({num_sums:3d})")
-        elif test_mode == 'sd':
+        elif test_mode == "sd":
             true_answer = true_hist.exact_sd
             est_answer = hist.est_sd()
             print_accuracy_ratio(est_answer, true_answer, f"SD({num_sums}, {num_bins:3d})")
             err_rates.append(abs(est_answer - true_answer))
-        elif test_mode == 'ppf':
+        elif test_mode == "ppf":
             fracs = [0.75, 0.9, 0.95, 0.98, 0.99]
             frac_errs = []
             for frac in fracs:
@@ -649,7 +731,9 @@ def test_richardson_sum():
             err_rates.append(median_err)
 
     if len(err_rates) == len(bin_sizes):
-        best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
+        best_fit = optimize.curve_fit(lambda x, a, r: a * x**r, bin_sizes, err_rates, p0=[1, 2])[
+            0
+        ]
         print(f"\nBest fit: {best_fit}")
 
 
@@ -667,17 +751,19 @@ def test_richardson_exp():
         hist1 = numeric(dist1, bin_sizing=bin_sizing, num_bins=num_bins, warn=False)
         hist = hist1.exp()
 
-        test_mode = 'sd'
-        if test_mode == 'sd':
+        test_mode = "sd"
+        if test_mode == "sd":
             true_answer = true_hist.exact_sd
             est_answer = hist.est_sd()
             print_accuracy_ratio(est_answer, true_answer, f"SD({num_bins:3d})")
             err_rates.append(abs(est_answer - true_answer))
-        elif test_mode == 'ppf':
+        elif test_mode == "ppf":
             fracs = [0.5, 0.75, 0.9, 0.97, 0.99]
             frac_errs = []
             for frac in fracs:
-                true_answer = stats.lognorm.ppf(frac, true_dist.norm_sd, scale=np.exp(true_dist.norm_mean))
+                true_answer = stats.lognorm.ppf(
+                    frac, true_dist.norm_sd, scale=np.exp(true_dist.norm_mean)
+                )
                 est_answer = hist.ppf(frac)
                 frac_errs.append(abs(est_answer - true_answer) / true_answer)
             median_err = np.median(frac_errs)
@@ -685,5 +771,7 @@ def test_richardson_exp():
             err_rates.append(median_err)
 
     if len(err_rates) == len(bin_sizes):
-        best_fit = optimize.curve_fit(lambda x, a, r: a*x**r, bin_sizes, err_rates, p0=[1, 2])[0]
+        best_fit = optimize.curve_fit(lambda x, a, r: a * x**r, bin_sizes, err_rates, p0=[1, 2])[
+            0
+        ]
         print(f"\nBest fit: {best_fit}")

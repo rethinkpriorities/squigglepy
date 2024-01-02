@@ -8,7 +8,7 @@ from numpy import exp, log, pi, sqrt
 import operator
 import scipy.stats
 from scipy import special
-from scipy.special import erf, erfc, erfinv
+from scipy.special import erfc, erfinv
 import warnings
 
 from typing import Optional, Union
@@ -18,7 +18,6 @@ from .utils import (
     _is_numpy,
     is_dist,
     _round,
-    ConvergenceWarning,
 )
 from .version import __version__
 from .correlation import CorrelationGroup
@@ -734,24 +733,6 @@ class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __str__(self):
         return "<Distribution> uniform({}, {})".format(self.x, self.y)
 
-    def contribution_to_ev_old(self, x: Union[np.ndarray, float], normalized=True):
-        x = np.asarray(x)
-        a = self.x
-        b = self.y
-
-        # Shift the distribution over so that the left edge is at zero. This
-        # preserves the result but makes the math easier when the support
-        # crosses zero.
-        pseudo_mean = (b - a) / 2
-
-        fraction = np.squeeze((x - a) ** 2 / (b - a) ** 2)
-        fraction = np.where(x < a, 0, fraction)
-        fraction = np.where(x > b, 1, fraction)
-        if normalized:
-            return fraction
-        else:
-            return fraction * (b - a) / 2
-
     def contribution_to_ev(self, x: Union[np.ndarray, float], normalized=True):
         x = np.asarray(x)
         a = self.x
@@ -861,24 +842,29 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         sigma = self.sd
         sigma_scalar = sigma / sqrt(2 * pi)
 
-        # erf_term(x) + exp_term(x) is the antiderivative of x * PDF(x).
-        # Separated into two functions for readability.
-        erf_term = lambda t: 0.5 * mu * erf((t - mu) / (sigma * sqrt(2)))
-        exp_term = lambda t: -sigma_scalar * (exp(-((t - mu) ** 2) / sigma**2 / 2))
-
-        # = erf_term(-inf) + exp_term(-inf)
-        neg_inf_term = -0.5 * mu
-
         # The definite integral from the formula for EV, evaluated from -inf to
         # x. Evaluating from -inf to +inf would give the EV. This number alone
         # doesn't tell us the contribution to EV because it is negative for x <
-        # 0.
-        normal_integral = erf_term(x) + exp_term(x) - neg_inf_term
+        # 0. Note: This computes ``erf((x - mu) / (sigma * sqrt(2))) -
+        # erf(-inf)`` as ``erfc(-(x - mu) / (sigma * sqrt(2)))`` to avoid
+        # floating point rounding issues.
+        normal_integral = 0.5 * mu * erfc((mu - x) / (sigma * sqrt(2))) - sigma_scalar * (
+            exp(-((x - mu) ** 2) / sigma**2 / 2)
+        )
 
         # The absolute value of the integral from -infinity to 0. When
         # evaluating the formula for normal dist EV, all the values up to zero
         # contribute negatively to EV, so we flip the sign on these.
-        zero_term = -(erf_term(0) + exp_term(0) - neg_inf_term)
+        zero_term = -(
+            0.5 * mu * erfc(mu / (sigma * sqrt(2)))
+            - sigma_scalar * (exp(-((-mu) ** 2) / sigma**2 / 2))
+        )
+
+        # Fix floating point rounding issue where if x is very small, these
+        # values can end up on the wrong side of zero. This happens when mu is
+        # big and x is far out on the tail, so erf_term(x) is close enough to
+        # 0.5 * mu that the difference cannot be faithfully represented as a
+        # float, and it ends up exaggerating the difference.
 
         # When x >= 0, add zero_term to get contribution_to_ev(0) up to 0. Then
         # add zero_term again because that's how much of the contribution to EV
@@ -899,7 +885,9 @@ class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
         deriv = x * exp(-((mu - abs(x)) ** 2) / (2 * sigma**2)) / (sigma * sqrt(2 * pi))
         return deriv
 
-    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float], full_output: bool = False):
+    def inv_contribution_to_ev(
+        self, fraction: Union[np.ndarray, float], full_output: bool = False
+    ):
         if isinstance(fraction, float) or isinstance(fraction, int):
             fraction = np.array([fraction])
         mu = self.mean

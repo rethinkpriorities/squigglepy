@@ -1,9 +1,7 @@
 import hypothesis.strategies as st
 import numpy as np
-import pytest
 from pytest import approx
 from scipy import stats
-import warnings
 from hypothesis import assume, example, given, settings
 
 from ..squigglepy.distributions import (
@@ -14,7 +12,6 @@ from ..squigglepy.distributions import (
     ParetoDistribution,
     UniformDistribution,
 )
-from ..squigglepy.utils import ConvergenceWarning
 
 
 @given(
@@ -38,10 +35,16 @@ def test_lognorm_basic():
     assert dist.contribution_to_ev(dist.inv_contribution_to_ev(ev_fraction)) == approx(ev_fraction)
 
 
+def test_norm_basic():
+    dist = NormalDistribution(mean=100, sd=11.97)
+    assert dist.contribution_to_ev(-1e-14) >= 0
+
+
 @given(
     mu=st.floats(min_value=-10, max_value=10),
     sigma=st.floats(min_value=0.01, max_value=100),
 )
+@example(mu=0, sigma=1)
 def test_norm_contribution_to_ev(mu, sigma):
     dist = NormalDistribution(mean=mu, sd=sigma)
 
