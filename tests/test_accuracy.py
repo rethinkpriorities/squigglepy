@@ -17,6 +17,12 @@ RUN_PRINT_ONLY_TESTS = False
 """Some tests print information but don't assert anything. This flag determines
 whether to run those tests."""
 
+RUN_MONTE_CARLO_TESTS = False
+"""Some tests compare the accuracy of NumericDistribution to Monte Carlo. They
+can occasionally fail due to Monte Carlo getting lucky, so you might not want
+to run them.
+"""
+
 
 def relative_error(x, y):
     if x == 0 and y == 0:
@@ -353,10 +359,9 @@ def test_gamma_bin_sizing_accuracy():
 def test_norm_product_sd_accuracy_vs_monte_carlo():
     """Test that PMH SD is more accurate than Monte Carlo SD both for initial
     distributions and when multiplying up to 8 distributions together.
-
-    Note: With more multiplications, MC has a good chance of being more
-    accurate, and is significantly more accurate at 16 multiplications.
     """
+    if not RUN_MONTE_CARLO_TESTS:
+        return None
     # Time complexity for binary operations is roughly O(n^2) for PMH and O(n)
     # for MC, so let MC have num_bins^2 samples.
     num_bins = 100
@@ -373,6 +378,8 @@ def test_norm_product_sd_accuracy_vs_monte_carlo():
 def test_lognorm_product_sd_accuracy_vs_monte_carlo():
     """Test that PMH SD is more accurate than Monte Carlo SD both for initial
     distributions and when multiplying up to 16 distributions together."""
+    if not RUN_MONTE_CARLO_TESTS:
+        return None
     num_bins = 100
     num_samples = 100**2
     dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(9)]
@@ -391,6 +398,8 @@ def test_norm_sum_sd_accuracy_vs_monte_carlo():
     Note: With more multiplications, MC has a good chance of being more
     accurate, and is significantly more accurate at 16 multiplications.
     """
+    if not RUN_MONTE_CARLO_TESTS:
+        return None
     num_bins = 1000
     num_samples = num_bins**2
     dists = [NormalDistribution(mean=i, sd=0.5 + i / 4) for i in range(9)]
@@ -407,6 +416,8 @@ def test_norm_sum_sd_accuracy_vs_monte_carlo():
 def test_lognorm_sum_sd_accuracy_vs_monte_carlo():
     """Test that PMH SD is more accurate than Monte Carlo SD both for initial
     distributions and when multiplying up to 16 distributions together."""
+    if not RUN_MONTE_CARLO_TESTS:
+        return None
     num_bins = 100
     num_samples = 100**2
     dists = [LognormalDistribution(norm_mean=i, norm_sd=0.5 + i / 4) for i in range(17)]
