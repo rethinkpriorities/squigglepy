@@ -1,11 +1,24 @@
-import operator
+"""
+A collection of probability distributions and functions to operate on them.
+"""
+
 import math
 import numpy as np
+from numpy import exp, log, pi, sqrt
+import operator
 import scipy.stats
+from scipy import special
+from scipy.special import erfc, erfinv
+import warnings
 
 from typing import Optional, Union
 
-from .utils import _process_weights_values, _is_numpy, is_dist, _round
+from .utils import (
+    _process_weights_values,
+    _is_numpy,
+    is_dist,
+    _round,
+)
 from .version import __version__
 from .correlation import CorrelationGroup
 
@@ -56,6 +69,64 @@ class BaseDistribution(ABC):
                 self.__str__() + f" (version {self._version}, corr_group {self.correlation_group})"
             )
         return self.__str__() + f" (version {self._version})"
+
+
+class IntegrableEVDistribution(ABC):
+    """
+    A base class for distributions that can be integrated to find the
+    contribution to expected value.
+    """
+
+    @abstractmethod
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized: bool = True):
+        """Find the fraction of this distribution's absolute expected value
+        given by the portion of the distribution that lies to the left of x.
+        For a distribution with support on [a, b], ``contribution_to_ev(a) =
+        0`` and ``contribution_to_ev(b) = 1``.
+
+        ``contribution_to_ev(x, normalized=False)`` is defined as
+
+        .. math:: \\int_a^x |t| f(t) dt
+
+        where `f(t)` is the PDF of the normal distribution. ``normalized=True``
+        divides this result by ``contribution_to_ev(b, normalized=False)``.
+
+        Note that this is different from the partial expected value, which is
+        defined as
+
+        .. math:: \\int_{x}^\\infty t f_X(t | X > x) dt
+
+        This function does not respect lclip/rclip.
+
+        Parameters
+        ----------
+        x : array-like
+            The value(s) to find the contribution to expected value for.
+        normalized : bool (default=True)
+            If True, normalize the result such that the return value is a
+            fraction (between 0 and 1). If False, return the raw integral
+            value.
+
+        """
+        # TODO: can compute this via numeric integration for any scipy
+        # distribution using something like
+        #
+        #     scipy_dist.expect(lambda x: abs(x), ub=x, loc=loc, scale=scale)
+        #
+        # This is equivalent to contribution_to_ev(x, normalized=False).
+        # I tested that this works correctly for normal and lognormal dists.
+        ...
+
+    @abstractmethod
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
+        """For a given fraction of expected value, find the number such that
+        that fraction lies to the left of that number. The inverse of
+        :func:`contribution_to_ev`.
+
+        This function is analogous to scipy.stats.ppf except that
+        the integrand is :math:`|x| f(x) dx` instead of :math:`f(x) dx`.
+        """
+        ...
 
 
 class OperableDistribution(BaseDistribution):
@@ -652,7 +723,7 @@ def const(x):
     return ConstantDistribution(x)
 
 
-class UniformDistribution(ContinuousDistribution):
+class UniformDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, x, y):
         super().__init__()
         self.x = x
@@ -661,6 +732,40 @@ class UniformDistribution(ContinuousDistribution):
 
     def __str__(self):
         return "<Distribution> uniform({}, {})".format(self.x, self.y)
+
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized=True):
+        x = np.asarray(x)
+        a = self.x
+        b = self.y
+
+        x = np.where(x < a, a, x)
+        x = np.where(x > b, b, x)
+
+        fraction = np.squeeze((x**2 * np.sign(x) - a**2 * np.sign(a)) / (2 * (b - a)))
+        if not normalized:
+            return fraction
+        normalizer = self.contribution_to_ev(b, normalized=False)
+        return fraction / normalizer
+
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
+
+        a = self.x
+        b = self.y
+
+        pos_sol = np.sqrt(
+            np.abs((1 - fraction) * a**2 * np.sign(a) + fraction * b**2 * np.sign(b))
+        )
+        neg_sol = -pos_sol
+
+        if fraction < self.contribution_to_ev(0):
+            return neg_sol
+        else:
+            return pos_sol
 
 
 def uniform(x, y):
@@ -686,8 +791,17 @@ def uniform(x, y):
     return UniformDistribution(x=x, y=y)
 
 
-class NormalDistribution(ContinuousDistribution):
-    def __init__(self, x=None, y=None, mean=None, sd=None, credibility=90, lclip=None, rclip=None):
+class NormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
+    def __init__(
+        self,
+        x=None,
+        y=None,
+        mean=None,
+        sd=None,
+        credibility=90,
+        lclip=None,
+        rclip=None,
+    ):
         super().__init__()
         self.x = x
         self.y = y
@@ -721,6 +835,119 @@ class NormalDistribution(ContinuousDistribution):
             out += ", rclip={}".format(self.rclip)
         out += ")"
         return out
+
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized=True):
+        x = np.asarray(x)
+        mu = self.mean
+        sigma = self.sd
+        sigma_scalar = sigma / sqrt(2 * pi)
+
+        # The definite integral from the formula for EV, evaluated from -inf to
+        # x. Evaluating from -inf to +inf would give the EV. This number alone
+        # doesn't tell us the contribution to EV because it is negative for x <
+        # 0. Note: This computes ``erf((x - mu) / (sigma * sqrt(2))) -
+        # erf(-inf)`` as ``erfc(-(x - mu) / (sigma * sqrt(2)))`` to avoid
+        # floating point rounding issues.
+        normal_integral = 0.5 * mu * erfc((mu - x) / (sigma * sqrt(2))) - sigma_scalar * (
+            exp(-((x - mu) ** 2) / sigma**2 / 2)
+        )
+
+        # The absolute value of the integral from -infinity to 0. When
+        # evaluating the formula for normal dist EV, all the values up to zero
+        # contribute negatively to EV, so we flip the sign on these.
+        zero_term = -(
+            0.5 * mu * erfc(mu / (sigma * sqrt(2)))
+            - sigma_scalar * (exp(-((-mu) ** 2) / sigma**2 / 2))
+        )
+
+        # Fix floating point rounding issue where if x is very small, these
+        # values can end up on the wrong side of zero. This happens when mu is
+        # big and x is far out on the tail, so erf_term(x) is close enough to
+        # 0.5 * mu that the difference cannot be faithfully represented as a
+        # float, and it ends up exaggerating the difference.
+
+        # When x >= 0, add zero_term to get contribution_to_ev(0) up to 0. Then
+        # add zero_term again because that's how much of the contribution to EV
+        # we already integrated. When x < 0, we don't need to adjust
+        # normal_integral for the negative left values, but normal_integral is
+        # negative so we flip the sign.
+        contribution = np.where(x >= 0, 2 * zero_term + normal_integral, -normal_integral)
+
+        # Normalize by the total integral over abs(x) * PDF(x). Note: We cannot
+        # use scipy.stats.foldnorm because its scale parameter is not the same
+        # thing as sigma, and I don't know how to translate.
+        abs_mean = mu + 2 * zero_term
+        return np.squeeze(contribution) / (abs_mean if normalized else 1)
+
+    def _derivative_contribution_to_ev(self, x: np.ndarray):
+        mu = self.mean
+        sigma = self.sd
+        deriv = x * exp(-((mu - abs(x)) ** 2) / (2 * sigma**2)) / (sigma * sqrt(2 * pi))
+        return deriv
+
+    def inv_contribution_to_ev(
+        self, fraction: Union[np.ndarray, float], full_output: bool = False
+    ):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+        mu = self.mean
+        sigma = self.sd
+        tolerance = 1e-8
+
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
+
+        # Approximate using Newton's method. Sometimes this has trouble
+        # converging b/c it diverges or gets caught in a cycle, so use binary
+        # search as a fallback.
+        guess = np.full_like(fraction, mu)
+        max_iter = 10
+        newton_iter = 0
+        binary_iter = 0
+        converged = False
+
+        # Catch warnings because Newton's method often causes divisions by
+        # zero. If that does happen, we will just fall back to binary search.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            for newton_iter in range(max_iter):
+                root = self.contribution_to_ev(guess) - fraction
+                if all(abs(root) < tolerance):
+                    converged = True
+                    break
+                deriv = self._derivative_contribution_to_ev(guess)
+                if all(deriv == 0):
+                    break
+                guess = np.where(abs(deriv) == 0, guess, guess - root / deriv)
+
+        if not converged:
+            # Approximate using binary search (RIP)
+            lower = np.full_like(fraction, scipy.stats.norm.ppf(1e-10, mu, scale=sigma))
+            upper = np.full_like(fraction, scipy.stats.norm.ppf(1 - 1e-10, mu, scale=sigma))
+            guess = scipy.stats.norm.ppf(fraction, mu, scale=sigma)
+            max_iter = 50
+            for binary_iter in range(max_iter):
+                y = self.contribution_to_ev(guess)
+                diff = y - fraction
+                if all(abs(diff) < tolerance):
+                    converged = True
+                    break
+                lower = np.where(diff < 0, guess, lower)
+                upper = np.where(diff > 0, guess, upper)
+                guess = (lower + upper) / 2
+
+        if full_output:
+            return (
+                np.squeeze(guess),
+                {
+                    "success": converged,
+                    "newton_iterations": newton_iter,
+                    "binary_search_iterations": binary_iter,
+                    "used_binary_search": binary_iter > 0,
+                },
+            )
+        else:
+            return np.squeeze(guess)
 
 
 def norm(
@@ -762,11 +989,17 @@ def norm(
     <Distribution> norm(mean=1, sd=2)
     """
     return NormalDistribution(
-        x=x, y=y, credibility=credibility, mean=mean, sd=sd, lclip=lclip, rclip=rclip
+        x=x,
+        y=y,
+        credibility=credibility,
+        mean=mean,
+        sd=sd,
+        lclip=lclip,
+        rclip=rclip,
     )
 
 
-class LognormalDistribution(ContinuousDistribution):
+class LognormalDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(
         self,
         x=None,
@@ -817,21 +1050,24 @@ class LognormalDistribution(ContinuousDistribution):
             self.lognorm_mean = 1
 
         if self.x is not None:
-            self.norm_mean = (np.log(self.x) + np.log(self.y)) / 2
+            self.norm_mean = (log(self.x) + log(self.y)) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = scipy.stats.norm.ppf(cdf_value)
-            self.norm_sd = (np.log(self.y) - self.norm_mean) / normed_sigma
+            self.norm_sd = (log(self.y) - self.norm_mean) / normed_sigma
 
         if self.lognorm_sd is None:
-            self.lognorm_mean = np.exp(self.norm_mean + self.norm_sd**2 / 2)
+            self.lognorm_mean = exp(self.norm_mean + self.norm_sd**2 / 2)
             self.lognorm_sd = (
-                (np.exp(self.norm_sd**2) - 1) * np.exp(2 * self.norm_mean + self.norm_sd**2)
+                (exp(self.norm_sd**2) - 1) * exp(2 * self.norm_mean + self.norm_sd**2)
             ) ** 0.5
         elif self.norm_sd is None:
-            self.norm_mean = np.log(
-                (self.lognorm_mean**2 / np.sqrt(self.lognorm_sd**2 + self.lognorm_mean**2))
+            self.norm_mean = log(
+                (self.lognorm_mean**2 / sqrt(self.lognorm_sd**2 + self.lognorm_mean**2))
             )
-            self.norm_sd = np.sqrt(np.log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
+            self.norm_sd = sqrt(log(1 + self.lognorm_sd**2 / self.lognorm_mean**2))
+
+        # Cached value for calculating ``contribution_to_ev``
+        self._EV_DENOM = sqrt(2) * self.norm_sd
 
     def __str__(self):
         out = "<Distribution> lognorm(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
@@ -847,6 +1083,39 @@ class LognormalDistribution(ContinuousDistribution):
             out += ", rclip={}".format(self.rclip)
         out += ")"
         return out
+
+    def contribution_to_ev(self, x, normalized=True):
+        x = np.asarray(x)
+        mu = self.norm_mean
+        sigma = self.norm_sd
+
+        with np.errstate(divide="ignore"):
+            # Note: erf can have floating point rounding errors when x is very
+            # small because erf(inf) = 1. erfc is better because erfc(inf) =
+            # 0 so floats can represent the result with more significant digits.
+            inner = -erfc((-log(x) + mu + sigma**2) / self._EV_DENOM)
+
+        return -0.5 * np.squeeze(inner) * (1 if normalized else self.lognorm_mean)
+
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
+        """For a given fraction of expected value, find the number such that
+        that fraction lies to the left of that number. The inverse of
+        `contribution_to_ev`.
+
+        This function is analogous to `lognorm.ppf` except that
+        the integrand is `x * f(x) dx` instead of `f(x) dx`.
+        """
+        if isinstance(fraction, float):
+            fraction = np.array([fraction])
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
+
+        mu = self.norm_mean
+        sigma = self.norm_sd
+        y = fraction * self.lognorm_mean
+        return np.squeeze(
+            exp(mu + sigma**2 - sqrt(2) * sigma * erfinv(1 - 2 * exp(-mu - sigma**2 / 2) * y))
+        )
 
 
 def lognorm(
@@ -993,14 +1262,34 @@ def binomial(n, p):
     return BinomialDistribution(n=n, p=p)
 
 
-class BetaDistribution(ContinuousDistribution):
+class BetaDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, a, b):
         super().__init__()
         self.a = a
         self.b = b
+        self.mean = a / (a + b)
 
     def __str__(self):
         return "<Distribution> beta(a={}, b={})".format(self.a, self.b)
+
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized=True):
+        x = np.asarray(x)
+        a = self.a
+        b = self.b
+
+        res = special.betainc(a + 1, b, x) * special.beta(a + 1, b) / special.beta(a, b)
+        return np.squeeze(res) / (self.mean if normalized else 1)
+
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+        if any(fraction < 0) or any(fraction > 1):
+            raise ValueError(f"fraction must be >= 0 and <= 1, not {fraction}")
+
+        a = self.a
+        b = self.b
+        y = fraction * self.mean * special.beta(a, b) / special.beta(a + 1, b)
+        return np.squeeze(special.betaincinv(a + 1, b, y))
 
 
 def beta(a, b):
@@ -1476,13 +1765,14 @@ def exponential(scale, lclip=None, rclip=None):
     return ExponentialDistribution(scale=scale, lclip=lclip, rclip=rclip)
 
 
-class GammaDistribution(ContinuousDistribution):
+class GammaDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, shape, scale=1, lclip=None, rclip=None):
         super().__init__()
         self.shape = shape
         self.scale = scale
         self.lclip = lclip
         self.rclip = rclip
+        self.mean = shape * scale
 
     def __str__(self):
         out = "<Distribution> gamma(shape={}, scale={}".format(self.shape, self.scale)
@@ -1492,6 +1782,23 @@ class GammaDistribution(ContinuousDistribution):
             out += ", rclip={}".format(self.rclip)
         out += ")"
         return out
+
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized: bool = True):
+        x = np.asarray(x)
+        k = self.shape
+        scale = self.scale
+        res = special.gammainc(k + 1, x / scale)
+        return np.squeeze(res) * (1 if normalized else self.mean)
+
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+        if any(fraction < 0) or any(fraction >= 1):
+            raise ValueError(f"fraction must be >= 0 and < 1, not {fraction}")
+
+        k = self.shape
+        scale = self.scale
+        return np.squeeze(special.gammaincinv(k + 1, fraction) * scale)
 
 
 def gamma(shape, scale=1, lclip=None, rclip=None):
@@ -1521,13 +1828,30 @@ def gamma(shape, scale=1, lclip=None, rclip=None):
     return GammaDistribution(shape=shape, scale=scale, lclip=lclip, rclip=rclip)
 
 
-class ParetoDistribution(ContinuousDistribution):
+class ParetoDistribution(ContinuousDistribution, IntegrableEVDistribution):
     def __init__(self, shape):
         super().__init__()
         self.shape = shape
+        self.mean = np.inf if shape <= 1 else shape / (shape - 1)
 
     def __str__(self):
         return "<Distribution> pareto({})".format(self.shape)
+
+    def contribution_to_ev(self, x: Union[np.ndarray, float], normalized: bool = True):
+        x = np.asarray(x)
+        a = self.shape
+        res = np.where(x <= 1, 0, a / (a - 1) * (1 - x ** (1 - a)))
+        return np.squeeze(res) / (self.mean if normalized else 1)
+
+    def inv_contribution_to_ev(self, fraction: Union[np.ndarray, float]):
+        if isinstance(fraction, float) or isinstance(fraction, int):
+            fraction = np.array([fraction])
+        if any(fraction < 0) or any(fraction >= 1):
+            raise ValueError(f"fraction must be >= 0 and < 1, not {fraction}")
+
+        a = self.shape
+        x = (1 - fraction) ** (1 / (1 - a))
+        return np.squeeze(x)
 
 
 def pareto(shape):
@@ -1547,12 +1871,20 @@ def pareto(shape):
     --------
     >>> pareto(1)
     <Distribution> pareto(1)
+
     """
     return ParetoDistribution(shape=shape)
 
 
 class MixtureDistribution(CompositeDistribution):
-    def __init__(self, dists, weights=None, relative_weights=None, lclip=None, rclip=None):
+    def __init__(
+        self,
+        dists,
+        weights=None,
+        relative_weights=None,
+        lclip=None,
+        rclip=None,
+    ):
         super().__init__()
         weights, dists = _process_weights_values(weights, relative_weights, dists)
         self.dists = dists

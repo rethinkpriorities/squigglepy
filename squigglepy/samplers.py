@@ -47,6 +47,7 @@ from .distributions import (
     UniformDistribution,
     const,
 )
+from .numeric_distribution import NumericDistribution
 
 _squigglepy_internal_sample_caches = {}
 
@@ -465,13 +466,14 @@ def pareto_sample(shape, samples=1):
     Returns
     -------
     int
-        A random number sampled from an pareto distribution.
+        A random number sampled from a pareto distribution.
 
     Examples
     --------
     >>> set_seed(42)
     >>> pareto_sample(1)
     10.069666324736094
+
     """
     # Add 1 because Numpy's "pareto" sampler actually samples from a Lomax
     # distribution
@@ -1108,6 +1110,9 @@ def sample(
 
             if is_dist(samples) or callable(samples):
                 samples = sample(samples, n=n)
+
+        elif isinstance(dist, NumericDistribution):
+            samples = dist.sample(n=n)
 
         else:
             raise ValueError("{} sampler not found".format(type(dist)))

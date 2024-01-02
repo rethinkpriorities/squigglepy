@@ -107,9 +107,10 @@ def correlate(
     >>> solar_radiation, temperature = sq.gamma(300, 100), sq.to(22, 28)
     >>> solar_radiation, temperature = sq.correlate((solar_radiation, temperature), 0.7)
     >>> print(np.corrcoef(solar_radiation @ 1000, temperature @ 1000)[0, 1])
-        0.6975960649767123
+    0.6975960649767123
 
     Or you could pass a correlation matrix:
+
     >>> funding_gap, cost_per_delivery, effect_size = (
             sq.to(20_000, 80_000), sq.to(30, 80), sq.beta(2, 5)
         )
@@ -118,9 +119,9 @@ def correlate(
             [[1, 0.6, -0.5], [0.6, 1, -0.2], [-0.5, -0.2, 1]]
         )
     >>> print(np.corrcoef(funding_gap @ 1000, cost_per_delivery @ 1000, effect_size @ 1000))
-        array([[ 1.      ,  0.580520  , -0.480149],
-               [ 0.580962,  1.        , -0.187831],
-               [-0.480149, -0.187831  ,  1.        ]])
+    array([[ 1.      ,  0.580520  , -0.480149],
+           [ 0.580962,  1.        , -0.187831],
+           [-0.480149, -0.187831  ,  1.        ]])
 
     """
     if not isinstance(variables, tuple):
