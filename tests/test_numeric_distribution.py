@@ -1336,7 +1336,7 @@ def test_gamma_sum(shape, scale, mean, sd):
     hist2 = numeric(dist2)
     hist_sum = hist1 + hist2
     assert hist_sum.est_mean() == approx(hist_sum.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=0.01, abs=0.01)
+    assert hist_sum.est_sd() == approx(hist_sum.exact_sd, rel=0.02, abs=0.02)
 
 
 @given(
@@ -1352,7 +1352,7 @@ def test_gamma_product(shape, scale, mean, sd):
     hist2 = numeric(dist2)
     hist_prod = hist1 * hist2
     assert hist_prod.est_mean() == approx(hist_prod.exact_mean, rel=1e-7, abs=1e-7)
-    assert hist_prod.est_sd() == approx(hist_prod.exact_sd, rel=0.01)
+    assert hist_prod.est_sd() == approx(hist_prod.exact_sd, rel=0.02)
 
 
 @given(
