@@ -1833,7 +1833,9 @@ class FlatTree:
             return cls.build(
                 ComplexDistribution(
                     dist.left,
-                    LognormalDistribution(norm_mean=-dist.right.norm_mean, norm_sd=dist.right.norm_sd),
+                    LognormalDistribution(
+                        norm_mean=-dist.right.norm_mean, norm_sd=dist.right.norm_sd
+                    ),
                     fn=operator.mul,
                     fn_str="*",
                 )
@@ -1863,7 +1865,9 @@ class FlatTree:
             else:
                 children.append(right_tree)
 
-        return cls(fn=dist.fn, fn_str=dist.fn_str, children=children, is_unary=is_unary, infix=dist.infix)
+        return cls(
+            fn=dist.fn, fn_str=dist.fn_str, children=children, is_unary=is_unary, infix=dist.infix
+        )
 
     def _join_dists(self, left_type, right_type, join_fn, commutative=True, condition=None):
         simplified_dists = []
@@ -1931,7 +1935,9 @@ class FlatTree:
                 if isinstance(child, NormalDistribution):
                     return NormalDistribution(mean=-child.mean, sd=child.sd)
 
-            return ComplexDistribution(child, right=None, fn=self.fn, fn_str=self.fn_str, infix=self.infix)
+            return ComplexDistribution(
+                child, right=None, fn=self.fn, fn_str=self.fn_str, infix=self.infix
+            )
 
         if self.fn == operator.add:
             self._join_dists(
@@ -1942,9 +1948,7 @@ class FlatTree:
                 ),
             )
             self._join_dists(
-                NormalDistribution,
-                Real,
-                lambda x, y: NormalDistribution(mean=x.mean + y, sd=x.sd)
+                NormalDistribution, Real, lambda x, y: NormalDistribution(mean=x.mean + y, sd=x.sd)
             )
             self._join_dists(
                 BernoulliDistribution,
@@ -2051,4 +2055,7 @@ class FlatTree:
                 condition=lambda x, y: y > 0,
             )
 
-        return reduce(lambda acc, x: ComplexDistribution(acc, x, fn=self.fn, fn_str=self.fn_str), self.children)
+        return reduce(
+            lambda acc, x: ComplexDistribution(acc, x, fn=self.fn, fn_str=self.fn_str),
+            self.children,
+        )

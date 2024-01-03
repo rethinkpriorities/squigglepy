@@ -1,11 +1,23 @@
-from hypothesis import assume, example, given
+from hypothesis import example, given
 import hypothesis.strategies as st
 from numbers import Real
 import numpy as np
-import pytest
 from pytest import approx
 
-from ..squigglepy.distributions import *
+from ..squigglepy.distributions import (
+    bernoulli,
+    binomial,
+    exponential,
+    gamma,
+    lognorm,
+    norm,
+    BinomialDistribution,
+    ComplexDistribution,
+    ExponentialDistribution,
+    GammaDistribution,
+    LognormalDistribution,
+    NormalDistribution,
+)
 
 
 def test_simplify_add_norm():
@@ -189,8 +201,15 @@ def test_simplify_bernoulli_sum():
     simplified = (bernoulli(p=0.5) + bernoulli(p=0.6)).simplify()
     assert isinstance(simplified, ComplexDistribution)
 
+
 def test_simplify_bernoulli_plus_binomial():
-    simplified = (bernoulli(p=0.5) + binomial(n=10, p=0.2) + binomial(n=2, p=0.5) + binomial(n=3, p=0.5) + bernoulli(p=0.5)).simplify()
+    simplified = (
+        bernoulli(p=0.5)
+        + binomial(n=10, p=0.2)
+        + binomial(n=2, p=0.5)
+        + binomial(n=3, p=0.5)
+        + bernoulli(p=0.5)
+    ).simplify()
     assert isinstance(simplified, ComplexDistribution)
     assert isinstance(simplified.left, BinomialDistribution)
     assert isinstance(simplified.right, BinomialDistribution)
@@ -230,7 +249,9 @@ def test_simplify_exponential_sum():
 
 
 def test_simplify_exponential_gamma_sum():
-    simplified = (5 * (exponential(scale=3) + gamma(shape=2, scale=3) + exponential(scale=3))).simplify()
+    simplified = (
+        5 * (exponential(scale=3) + gamma(shape=2, scale=3) + exponential(scale=3))
+    ).simplify()
     assert isinstance(simplified, GammaDistribution)
     assert simplified.shape == 4
     assert simplified.scale == 15
@@ -264,7 +285,7 @@ def test_simplify_big_sum():
 
 
 def test_preserve_non_commutative_op():
-    simplified = (2 ** 3 ** norm(mean=0, sd=1)).simplify()
+    simplified = (2**3 ** norm(mean=0, sd=1)).simplify()
     assert isinstance(simplified, ComplexDistribution)
     assert simplified.fn_str == "**"
     assert isinstance(simplified.left, Real)
