@@ -342,9 +342,7 @@ def test_get_log_percentiles_reverse():
 
 
 def test_get_log_percentiles_no_display():
-    test = get_log_percentiles(
-        [10**x for x in range(1, 10)], percentiles=[20, 80], display=False
-    )
+    test = get_log_percentiles([10**x for x in range(1, 10)], percentiles=[20, 80], display=False)
     expected = {20: 2.8, 80: 7.7}
     assert test == expected
 
