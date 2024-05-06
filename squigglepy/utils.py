@@ -1191,3 +1191,27 @@ def extremize(p, e):
         return 1 - ((1 - p) ** e)
     else:
         return p**e
+
+
+def sharpe_ratio(returns, risk_free_rate=0):
+    """
+    Returns the sharpe ratio for a given set of returns.
+
+    Parameters
+    ----------
+    returns : list
+        A list of returns to calculate the sharpe ratio for.
+    risk_free_rate : float
+        The risk-free rate to compare returns to.
+
+    Returns
+    -------
+    float
+        The sharpe ratio
+
+    Examples
+    --------
+    >>> sharpe_ratio([0.04, -0.03, 0.05, 0.02, 0.03])
+    0.7898
+    """
+    return (np.mean(returns) - risk_free_rate) / np.std(returns)
