@@ -4,6 +4,7 @@
 * **[Breaking change]** lclip / rclip have been removed from triangular distribution because that doesn't make sense.
 * **[Breaking change]** You now can nest mixture and discrete distributions within mixture distributions.
 * Added `pert` distribution.
+* Added `sharpe_ratio` to utilities.
 
 
 ## v0.27

@@ -28,6 +28,7 @@ from ..squigglepy.utils import (
     quarter_kelly,
     one_in,
     extremize,
+    sharpe_ratio,
     normalize,
 )
 from ..squigglepy.rng import set_seed
@@ -341,9 +342,7 @@ def test_get_log_percentiles_reverse():
 
 
 def test_get_log_percentiles_no_display():
-    test = get_log_percentiles(
-        [10**x for x in range(1, 10)], percentiles=[20, 80], display=False
-    )
+    test = get_log_percentiles([10**x for x in range(1, 10)], percentiles=[20, 80], display=False)
     expected = {20: 2.8, 80: 7.7}
     assert test == expected
 
@@ -851,3 +850,7 @@ def test_extremize_out_of_bounds():
 def test_core_cuts():
     assert _core_cuts(10, 2) == [5, 5]
     assert _core_cuts(10, 3) == [3, 3, 4]
+
+
+def test_sharpe_ratio():
+    assert round(sharpe_ratio([0.04, -0.03, 0.05, 0.02, 0.03]), 4) == 0.7898
