@@ -47,8 +47,7 @@ class BaseDistribution(ABC):
         self._correlated_samples: Optional[np.ndarray] = None
 
     @abstractmethod
-    def __str__(self) -> str:
-        ...
+    def __str__(self) -> str: ...
 
     def __repr__(self):
         if self.correlation_group:
@@ -176,12 +175,10 @@ class OperableDistribution(BaseDistribution):
 # Distribution are either discrete, continuous, or composite
 
 
-class DiscreteDistribution(OperableDistribution, ABC):
-    ...
+class DiscreteDistribution(OperableDistribution, ABC): ...
 
 
-class ContinuousDistribution(OperableDistribution, ABC):
-    ...
+class ContinuousDistribution(OperableDistribution, ABC): ...
 
 
 class CompositeDistribution(OperableDistribution):
