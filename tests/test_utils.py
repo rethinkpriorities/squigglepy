@@ -643,7 +643,7 @@ def test_kelly_user_below_market_price_error():
     with pytest.raises(ValueError) as execinfo:
         kelly(my_price=0.1, market_price=0.2)
     assert "below the market price" in str(execinfo.value)
-    assert "override" in str(execinfo.value)
+    assert "bypass this issue" in str(execinfo.value)
 
 
 def test_kelly_user_below_market_price_error_can_be_overriden():
