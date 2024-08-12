@@ -639,6 +639,17 @@ def test_kelly_deference_error():
         assert "deference must be >=0 and <=1" in str(execinfo.value)
 
 
+def test_kelly_user_below_market_price_error():
+    with pytest.raises(ValueError) as execinfo:
+        kelly(my_price=0.1, market_price=0.2)
+    assert "below the market price" in str(execinfo.value)
+    assert "override" in str(execinfo.value)
+
+
+def test_kelly_user_below_market_price_error_can_be_overriden():
+    assert type(kelly(my_price=0.1, market_price=0.2, error=False)) is dict
+
+
 def test_kelly_defaults():
     obj = kelly(my_price=0.99, market_price=0.01)
     assert obj["my_price"] == 0.99

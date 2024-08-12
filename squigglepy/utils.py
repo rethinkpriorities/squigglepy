@@ -885,7 +885,9 @@ def flip_coin(n=1):
     return flips[0] if len(flips) == 1 else flips
 
 
-def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0, error=True):
+def kelly(
+    my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0, error=True
+):
     """
     Calculate the Kelly criterion.
 
@@ -950,7 +952,9 @@ def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, cu
     if deference > 1 or deference < 0:
         raise ValueError("deference must be >=0 and <=1")
     if my_price < market_price and error:
-        raise ValueError("Your odds are below the market price. Use `error=False` to bypass this issue.")
+        raise ValueError(
+            "Your odds are below the market price. Use `error=False` to bypass this issue."
+        )
     adj_price = my_price * (1 - deference) + market_price * deference
     kelly = np.abs(adj_price - ((1 - adj_price) * (market_price / (1 - market_price))))
     target = bankroll * kelly
