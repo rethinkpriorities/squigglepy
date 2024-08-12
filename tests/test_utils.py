@@ -647,7 +647,7 @@ def test_kelly_user_below_market_price_error():
 
 
 def test_kelly_user_below_market_price_error_can_be_overriden():
-    assert type(kelly(my_price=0.1, market_price=0.2, error=False)) is dict
+    assert isinstance(kelly(my_price=0.1, market_price=0.2, error=False), dict)
 
 
 def test_kelly_defaults():
