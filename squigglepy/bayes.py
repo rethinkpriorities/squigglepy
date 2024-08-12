@@ -351,7 +351,7 @@ def update(prior, evidence, evidence_weight=1):
         evidence_a = evidence.a
         evidence_b = evidence.b
         return beta(prior_a + evidence_a, prior_b + evidence_b)
-    elif type(prior) != type(evidence):
+    elif isinstance(prior, type(evidence)):
         print(type(prior), type(evidence))
         raise ValueError("can only update distributions of the same type.")
     else:
