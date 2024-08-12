@@ -885,7 +885,7 @@ def flip_coin(n=1):
     return flips[0] if len(flips) == 1 else flips
 
 
-def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0):
+def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, current=0, error=True):
     """
     Calculate the Kelly criterion.
 
@@ -907,6 +907,9 @@ def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, cu
     current : float
         How much do you already have invested in this event? Used for calculating the
         additional amount you should invest. Defaults to 0.
+    error : boolean
+        Should the function raise an error if your price is below the market price? Or
+        should Kelly behave symmetrically?
 
     Returns
     -------
@@ -946,6 +949,8 @@ def kelly(my_price, market_price, deference=0, bankroll=1, resolve_date=None, cu
         raise ValueError("my_price must be >0 and <1")
     if deference > 1 or deference < 0:
         raise ValueError("deference must be >=0 and <=1")
+    if my_price < market_price and error:
+        raise ValueError("Your odds are below the market price. Use `error=False` to bypass this issue.")
     adj_price = my_price * (1 - deference) + market_price * deference
     kelly = np.abs(adj_price - ((1 - adj_price) * (market_price / (1 - market_price))))
     target = bankroll * kelly
