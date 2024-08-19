@@ -6,6 +6,7 @@
 * **[Breaking change]** `sq.kelly` now raises an error if you put in a price below the market price. You can pass `error=False` to disable this and return to the old behavior.
 * Added `pert` distribution.
 * Added `sharpe_ratio` to utilities.
+* `get_percentiles`, `get_log_percentiles`, `get_mean_and_ci`, and `get_median_and_ci` now can all take an optional `weights` parameter to do a weighted version.
 
 
 ## v0.27
@@ -24,6 +25,7 @@
 * Multicore distribution now does extra checks to avoid crashing from race conditions.
 * Using black now for formatting.
 * Switched from `flake8` to `ruff`.
+
 
 ## v0.26
 

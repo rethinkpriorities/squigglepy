@@ -403,9 +403,36 @@ def one_in(p, digits=0, verbose=True):
     return "1 in {:,}".format(p) if verbose else p
 
 
+def _weighted_percentile(data, weights, percentiles):
+    """Calculate weighted percentiles.
+
+    Parameters
+    -----------
+    - data: array-like of data
+    - weights: array-like of weights, same length as data
+    - percentiles: array-like of percentiles to compute (in range 0-100)
+
+    Returns:
+    - numpy array of weighted percentiles
+    """
+    data, weights = np.array(data), np.array(weights)
+    if len(data) != len(weights):
+        raise ValueError("Data and weights must be of the same length")
+
+    sorter = np.argsort(data)
+    data = data[sorter]
+    weights = weights[sorter]
+
+    weighted_quantiles = np.cumsum(weights) - 0.5 * weights
+    weighted_quantiles /= np.sum(weights)
+
+    return np.interp(np.array(percentiles) / 100.0, weighted_quantiles, data)
+
+
 def get_percentiles(
     data,
     percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    weights=None,
     reverse=False,
     digits=None,
 ):
@@ -418,6 +445,8 @@ def get_percentiles(
         The data to calculate percentiles for.
     percentiles : list
         A list of percentiles to calculate. Must be values between 0 and 100.
+    weights : list or None
+        Weights to use
     reverse : bool
         If `True`, the percentile values are reversed (e.g., 95th and 5th percentile
         swap values.)
@@ -436,7 +465,10 @@ def get_percentiles(
     """
     percentiles = percentiles if isinstance(percentiles, list) else [percentiles]
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
-    percentiles = np.percentile(data, percentiles)
+    if weights is not None:
+        percentiles = _weighted_percentile(data, weights, percentiles)
+    else:
+        percentiles = np.percentile(data, percentiles)
     percentiles = [_round(p, digits) for p in percentiles]
     if len(percentile_labels) == 1:
         return percentiles[0]
@@ -447,6 +479,7 @@ def get_percentiles(
 def get_log_percentiles(
     data,
     percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99],
+    weights=None,
     reverse=False,
     display=True,
     digits=1,
@@ -460,6 +493,8 @@ def get_log_percentiles(
         The data to calculate percentiles for.
     percentiles : list
         A list of percentiles to calculate. Must be values between 0 and 100.
+    weights : list or None
+        Weights to use
     reverse : bool
         If True, the percentile values are reversed (e.g., 95th and 5th percentile
         swap values.)
@@ -479,7 +514,9 @@ def get_log_percentiles(
     >>> get_percentiles(range(100), percentiles=[25, 50, 75])
     {25: 24.75, 50: 49.5, 75: 74.25}
     """
-    percentiles = get_percentiles(data, percentiles=percentiles, reverse=reverse, digits=digits)
+    percentiles = get_percentiles(
+        data, percentiles=percentiles, weights=weights, reverse=reverse, digits=digits
+    )
     if isinstance(percentiles, dict):
         if display:
             return dict(
@@ -495,7 +532,7 @@ def get_log_percentiles(
             return _round(np.log10(percentiles), digits)
 
 
-def get_mean_and_ci(data, credibility=90, digits=None):
+def get_mean_and_ci(data, credibility=90, weights=None, digits=None):
     """
     Return the mean and percentiles of the data.
 
@@ -505,6 +542,8 @@ def get_mean_and_ci(data, credibility=90, digits=None):
         The data to calculate the mean and CI for.
     credibility : float
         The credibility of the interval. Must be values between 0 and 100. Default 90 for 90% CI.
+    weights : list or None
+        Weights to use
     digits : int or None
         The number of digits to display (using rounding).
 
@@ -520,7 +559,9 @@ def get_mean_and_ci(data, credibility=90, digits=None):
     """
     ci_low = (100 - credibility) / 2
     ci_high = 100 - ci_low
-    percentiles = get_percentiles(data, percentiles=[ci_low, ci_high], digits=digits)
+    percentiles = get_percentiles(
+        data, weights=weights, percentiles=[ci_low, ci_high], digits=digits
+    )
     return {
         "mean": _round(np.mean(data), digits),
         "ci_low": percentiles[ci_low],
@@ -528,7 +569,7 @@ def get_mean_and_ci(data, credibility=90, digits=None):
     }
 
 
-def get_median_and_ci(data, credibility=90, digits=None):
+def get_median_and_ci(data, credibility=90, weights=None, digits=None):
     """
     Return the median and percentiles of the data.
 
@@ -538,6 +579,8 @@ def get_median_and_ci(data, credibility=90, digits=None):
         The data to calculate the mean and CI for.
     credibility : float
         The credibility of the interval. Must be values between 0 and 100. Default 90 for 90% CI.
+    weights : list or None
+        Weights to use
     digits : int or None
         The number of digits to display (using rounding).
 
@@ -553,7 +596,9 @@ def get_median_and_ci(data, credibility=90, digits=None):
     """
     ci_low = (100 - credibility) / 2
     ci_high = 100 - ci_low
-    percentiles = get_percentiles(data, percentiles=[ci_low, 50, ci_high], digits=digits)
+    percentiles = get_percentiles(
+        data, weights=weights, percentiles=[ci_low, 50, ci_high], digits=digits
+    )
     return {
         "median": percentiles[50],
         "ci_low": percentiles[ci_low],
