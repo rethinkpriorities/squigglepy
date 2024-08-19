@@ -9,6 +9,7 @@ from ..squigglepy.utils import (
     event_occurs,
     event_happens,
     event,
+    _weighted_percentile,
     get_percentiles,
     get_log_percentiles,
     get_mean_and_ci,
@@ -309,6 +310,49 @@ def test_get_percentiles_negative_one_digits():
     assert isinstance(expected[75], int)
 
 
+def test_weighted_percentile():
+    test = _weighted_percentile(
+        range(1, 901), weights=[1 for _ in range(900)], percentiles=[25, 75]
+    )
+    assert test[0] == 225.5
+    assert test[1] == 675.5
+    test = _weighted_percentile(range(1, 901), weights=range(900), percentiles=[25, 75])
+    assert round(test[0], 1) == 450.7
+    assert round(test[1], 1) == 780.0
+
+
+def test_weighted_percentile_requires_weights_len_equal_data_len():
+    with pytest.raises(ValueError) as execinfo:
+        _weighted_percentile([1, 2, 3], [1, 2], [1, 2, 3])
+    assert "must be of the same length" in str(execinfo.value)
+
+
+def test_get_percentiles_weighted():
+    test = get_percentiles(range(1, 901), weights=range(900), digits=-1)
+    expected = {
+        1: 90,
+        5: 200,
+        10: 290,
+        20: 400,
+        30: 490,
+        40: 570,
+        50: 640,
+        60: 700,
+        70: 750,
+        80: 810,
+        90: 850,
+        95: 880,
+        99: 900,
+    }
+    assert test == expected
+
+
+def test_get_percentiles_with_weights_requires_weights_len_equal_data_len():
+    with pytest.raises(ValueError) as execinfo:
+        get_percentiles(range(1, 901), weights=range(800), digits=-1)
+    assert "must be of the same length" in str(execinfo.value)
+
+
 def test_get_log_percentiles():
     test = get_log_percentiles([10**x for x in range(1, 10)])
     expected = {
@@ -366,6 +410,26 @@ def test_get_log_percentiles_length_one():
     assert test == 3
 
 
+def test_get_log_percentiles_weighted():
+    test = get_log_percentiles([10**x for x in range(1, 10)], weights=range(9))
+    expected = {
+        1: "7.5e+01",
+        5: "8.8e+02",
+        10: "6.8e+03",
+        20: "7.9e+04",
+        30: "6.6e+05",
+        40: "4.1e+06",
+        50: "1.0e+07",
+        60: "6.0e+07",
+        70: "1.8e+08",
+        80: "6.2e+08",
+        90: "1.0e+09",
+        95: "1.0e+09",
+        99: "1.0e+09",
+    }
+    assert test == expected
+
+
 def test_get_mean_and_ci():
     test1 = get_mean_and_ci(range(1, 901), digits=1)
     assert test1 == {"mean": 450.5, "ci_low": 46.0, "ci_high": 855.0}
@@ -378,6 +442,11 @@ def test_get_mean_and_80_pct_ci():
     assert test == {"mean": 450.5, "ci_low": 90.9, "ci_high": 810.1}
 
 
+def test_get_mean_and_ci_weighted():
+    test1 = get_mean_and_ci(range(1, 901), weights=range(900), digits=1)
+    assert test1 == {"mean": 450.5, "ci_low": 202.1, "ci_high": 877.7}
+
+
 def test_get_median_and_ci():
     test1 = get_median_and_ci(range(1, 901), digits=1)
     assert test1 == {"median": 450.5, "ci_low": 46.0, "ci_high": 855.0}
@@ -388,6 +457,11 @@ def test_get_median_and_ci():
 def test_get_median_and_80_pct_ci():
     test = get_median_and_ci(range(1, 901), digits=1, credibility=80)
     assert test == {"median": 450.5, "ci_low": 90.9, "ci_high": 810.1}
+
+
+def test_get_median_and_ci_weighted():
+    test1 = get_median_and_ci(range(1, 901), weights=range(900), digits=1)
+    assert test1 == {"median": 637.0, "ci_low": 202.1, "ci_high": 877.7}
 
 
 def test_geomean():
