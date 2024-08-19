@@ -417,7 +417,7 @@ def _weighted_percentile(data, weights, percentiles):
     """
     data, weights = np.array(data), np.array(weights)
     if len(data) != len(weights):
-        raise ValueError('Data and weights must be of the same length')
+        raise ValueError("Data and weights must be of the same length")
 
     sorter = np.argsort(data)
     data = data[sorter]
