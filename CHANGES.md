@@ -1,3 +1,8 @@
+## v0.29
+
+* ???
+
+
 ## v0.28
 
 * **[Breaking change]** `sq.pareto` previously sampled from a Lomax distribution due to a complication with numpy. Now it properly samples from a Pareto distribution.
