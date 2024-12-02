@@ -1,3 +1,7 @@
+"""
+This modules includes functions for Bayesian inference.
+"""
+
 import os
 import time
 import math
