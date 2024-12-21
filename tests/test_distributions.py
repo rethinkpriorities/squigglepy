@@ -180,9 +180,7 @@ def test_norm_overdefinition_value_error():
 def test_norm_low_gt_high():
     with pytest.raises(ValueError) as execinfo:
         norm(10, 5)
-    assert "`high value` cannot be lower than `low value`" in str(
-        execinfo.value
-    )
+    assert "`high value` cannot be lower than `low value`" in str(execinfo.value)
 
 
 def test_norm_passes_lclip_rclip():
@@ -200,9 +198,7 @@ def test_norm_passes_lclip_rclip():
     assert isinstance(obj, NormalDistribution)
     assert obj.lclip == 0
     assert obj.rclip == 3
-    assert (
-        str(obj) == "<Distribution> norm(mean=1.5, sd=0.3, lclip=0, rclip=3)"
-    )
+    assert str(obj) == "<Distribution> norm(mean=1.5, sd=0.3, lclip=0, rclip=3)"
     obj = norm(mean=1, sd=2, lclip=0, rclip=3)
     assert isinstance(obj, NormalDistribution)
     assert obj.lclip == 0
@@ -257,9 +253,7 @@ def test_lognorm_with_normmean_normsd():
 
 
 def test_lognorm_with_lognormmean_lognormsd():
-    assert isinstance(
-        lognorm(lognorm_mean=1, lognorm_sd=2), LognormalDistribution
-    )
+    assert isinstance(lognorm(lognorm_mean=1, lognorm_sd=2), LognormalDistribution)
     assert lognorm(lognorm_mean=1, lognorm_sd=2).x is None
     assert lognorm(lognorm_mean=1, lognorm_sd=2).y is None
     assert round(lognorm(lognorm_mean=1, lognorm_sd=2).norm_mean, 2) == -0.8
@@ -270,9 +264,7 @@ def test_lognorm_with_lognormmean_lognormsd():
     assert lognorm(lognorm_mean=1, lognorm_sd=2).lclip is None
     assert lognorm(lognorm_mean=1, lognorm_sd=2).rclip is None
     assert str(lognorm(lognorm_mean=1, lognorm_sd=2)) == (
-        "<Distribution> lognorm(lognorm_mean"
-        "=1, lognorm_sd=2, norm_mean=-0.8, "
-        "norm_sd=1.27)"
+        "<Distribution> lognorm(lognorm_mean" "=1, lognorm_sd=2, norm_mean=-0.8, " "norm_sd=1.27)"
     )
 
 
@@ -333,9 +325,7 @@ def test_lognorm_overdefinition_value_error():
 def test_lognorm_low_gt_high():
     with pytest.raises(ValueError) as execinfo:
         lognorm(10, 5)
-    assert "`high value` cannot be lower than `low value`" in str(
-        execinfo.value
-    )
+    assert "`high value` cannot be lower than `low value`" in str(execinfo.value)
 
 
 def test_lognorm_must_be_gt_0():
@@ -591,9 +581,7 @@ def test_log_tdist_passes_lclip_rclip():
     assert obj.lclip == 3
     assert obj.rclip == 5
     assert obj.credibility == 90
-    assert (
-        str(obj) == "<Distribution> log_tdist(x=1, y=3, t=5, lclip=3, rclip=5)"
-    )
+    assert str(obj) == "<Distribution> log_tdist(x=1, y=3, t=5, lclip=3, rclip=5)"
 
 
 def test_log_tdist_passes_credibility():
@@ -630,9 +618,7 @@ def test_pert():
     lam=st.floats(min_value=0, max_value=100),
 )
 def test_pert_sampling(left, mode_offset, right_offset, lam):
-    dist = pert(
-        left, left + mode_offset, left + mode_offset + right_offset, lam
-    )
+    dist = pert(left, left + mode_offset, left + mode_offset + right_offset, lam)
     assert isinstance(dist, PERTDistribution)
     samples = dist @ 10
     for sample in samples:
@@ -753,10 +739,7 @@ def test_gamma_lclip_rclip():
     assert isinstance(obj, GammaDistribution)
     assert obj.lclip == 10
     assert obj.rclip == 15
-    assert (
-        str(obj)
-        == "<Distribution> gamma(shape=10, scale=2, lclip=10, rclip=15)"
-    )
+    assert str(obj) == "<Distribution> gamma(shape=10, scale=2, lclip=10, rclip=15)"
 
 
 def test_pareto():
@@ -919,10 +902,7 @@ def test_lt_distribution():
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "<"
-    assert (
-        str(obj)
-        == "<Distribution> norm(mean=0.5, sd=0.3) < norm(mean=1.5, sd=0.3)"
-    )
+    assert str(obj) == "<Distribution> norm(mean=0.5, sd=0.3) < norm(mean=1.5, sd=0.3)"
 
 
 def test_lte_distribution():
@@ -935,10 +915,7 @@ def test_lte_distribution():
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "<="
-    assert (
-        str(obj)
-        == "<Distribution> norm(mean=0.5, sd=0.3) <= norm(mean=1.5, sd=0.3)"
-    )
+    assert str(obj) == "<Distribution> norm(mean=0.5, sd=0.3) <= norm(mean=1.5, sd=0.3)"
 
 
 def test_gt_distribution():
@@ -951,10 +928,7 @@ def test_gt_distribution():
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == ">"
-    assert (
-        str(obj)
-        == "<Distribution> norm(mean=0.5, sd=0.3) > norm(mean=1.5, sd=0.3)"
-    )
+    assert str(obj) == "<Distribution> norm(mean=0.5, sd=0.3) > norm(mean=1.5, sd=0.3)"
 
 
 def test_gte_distribution():
@@ -967,10 +941,7 @@ def test_gte_distribution():
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == ">="
-    assert (
-        str(obj)
-        == "<Distribution> norm(mean=0.5, sd=0.3) >= norm(mean=1.5, sd=0.3)"
-    )
+    assert str(obj) == "<Distribution> norm(mean=0.5, sd=0.3) >= norm(mean=1.5, sd=0.3)"
 
 
 def test_eq_distribution():
@@ -983,10 +954,7 @@ def test_eq_distribution():
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "=="
-    assert (
-        str(obj)
-        == "<Distribution> norm(mean=0.5, sd=0.3) == norm(mean=1.5, sd=0.3)"
-    )
+    assert str(obj) == "<Distribution> norm(mean=0.5, sd=0.3) == norm(mean=1.5, sd=0.3)"
 
 
 def test_ne_distribution():
@@ -999,10 +967,7 @@ def test_ne_distribution():
     assert obj.right.x == 1
     assert obj.right.y == 2
     assert obj.fn_str == "!="
-    assert (
-        str(obj)
-        == "<Distribution> norm(mean=0.5, sd=0.3) != norm(mean=1.5, sd=0.3)"
-    )
+    assert str(obj) == "<Distribution> norm(mean=0.5, sd=0.3) != norm(mean=1.5, sd=0.3)"
 
 
 def test_add_distribution():
@@ -1189,26 +1154,19 @@ def test_dist_fn():
 def test_dist_fn_vectorize():
     obj = dist_fn(norm(0, 1), _vectorized_mirror)
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj) == "<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))"
-    )
+    assert str(obj) == "<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))"
 
 
 def test_dist_fn2():
     obj = dist_fn(norm(0, 10), norm(1, 2), _mirror)
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj)
-        == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
-    )
+    assert str(obj) == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
 
 
 def test_dist_fn_list():
     obj = dist_fn(norm(0, 1), [_mirror, _mirror2])
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj) == "<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))"
-    )
+    assert str(obj) == "<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))"
 
 
 def test_max():
@@ -1272,10 +1230,7 @@ def test_rclip():
 def test_clip():
     obj = clip(norm(0, 1), 0.5, 0.9)
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj)
-        == "<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)"
-    )
+    assert str(obj) == "<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)"
 
 
 def test_dist_fn_pipe():
@@ -1287,18 +1242,13 @@ def test_dist_fn_pipe():
 def test_dist_fn2_pipe():
     obj = norm(0, 10) >> dist_fn(norm(1, 2), _mirror)
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj)
-        == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
-    )
+    assert str(obj) == "<Distribution> _mirror(norm(mean=5.0, sd=3.04), norm(mean=1.5, sd=0.3))"
 
 
 def test_dist_fn_vectorize_pipe():
     obj = norm(0, 1) >> dist_fn(_vectorized_mirror)
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj) == "<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))"
-    )
+    assert str(obj) == "<Distribution> _vectorized_mirror(norm(mean=0.5, sd=0.3))"
 
 
 def test_lclip_pipe():
@@ -1322,10 +1272,7 @@ def test_rclip_pipe():
 def test_clip_pipe():
     obj = norm(0, 1) >> clip(0.5, 0.9)
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj)
-        == "<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)"
-    )
+    assert str(obj) == "<Distribution> rclip(lclip(norm(mean=0.5, sd=0.3), 0.5), 0.9)"
     assert clip(0.5, 0.7, 1) == 0.7
     assert clip(1.2, 0.7, 1) == 1
 
@@ -1373,14 +1320,10 @@ def test_ceil_pipe():
 def test_two_pipes():
     obj = norm(0, 1) >> lclip(2) >> dist_round
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj) == "<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), 0)"
-    )
+    assert str(obj) == "<Distribution> round(lclip(norm(mean=0.5, sd=0.3), 2), 0)"
 
 
 def test_dist_fn_list_pipe():
     obj = norm(0, 1) >> dist_fn([_mirror, _mirror2])
     assert isinstance(obj, ComplexDistribution)
-    assert (
-        str(obj) == "<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))"
-    )
+    assert str(obj) == "<Distribution> _mirror2(_mirror(norm(mean=0.5, sd=0.3)))"
