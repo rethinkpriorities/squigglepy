@@ -759,13 +759,7 @@ def norm(
     <Distribution> norm(mean=1, sd=2)
     """
     return NormalDistribution(
-        x=x,
-        y=y,
-        credibility=credibility,
-        mean=mean,
-        sd=sd,
-        lclip=lclip,
-        rclip=rclip,
+        x=x, y=y, credibility=credibility, mean=mean, sd=sd, lclip=lclip, rclip=rclip
     )
 
 
