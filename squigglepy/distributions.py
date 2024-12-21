@@ -684,16 +684,7 @@ def uniform(x, y):
 
 
 class NormalDistribution(ContinuousDistribution):
-    def __init__(
-        self,
-        x=None,
-        y=None,
-        mean=None,
-        sd=None,
-        credibility=90,
-        lclip=None,
-        rclip=None,
-    ):
+    def __init__(self, x=None, y=None, mean=None, sd=None, credibility=90, lclip=None, rclip=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -1564,14 +1555,7 @@ def pareto(shape):
 
 
 class MixtureDistribution(CompositeDistribution):
-    def __init__(
-        self,
-        dists,
-        weights=None,
-        relative_weights=None,
-        lclip=None,
-        rclip=None,
-    ):
+    def __init__(self, dists, weights=None, relative_weights=None, lclip=None, rclip=None):
         super().__init__()
         weights, dists = _process_weights_values(weights, relative_weights, dists)
         self.dists = dists
