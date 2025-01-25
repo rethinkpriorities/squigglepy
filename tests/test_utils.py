@@ -26,6 +26,7 @@ from ..squigglepy.utils import (
     kelly,
     full_kelly,
     half_kelly,
+    third_kelly,
     quarter_kelly,
     one_in,
     extremize,
@@ -941,7 +942,14 @@ def test_kelly_with_resolve_date0pt5():
 def test_kelly_worked_example():
     half_year_from_today = datetime.now() + timedelta(days=int(round(365 * 0.5)))
     half_year_from_today_str = half_year_from_today.strftime("%Y-%m-%d")
-    obj = sq.kelly(my_price=0.6, market_price=0.17, deference=0.66, bankroll=46288, resolve_date=half_year_from_today_str, current=7300)
+    obj = kelly(
+        my_price=0.6,
+        market_price=0.17,
+        deference=0.66,
+        bankroll=46288,
+        resolve_date=half_year_from_today_str,
+        current=7300,
+    )
     assert obj["my_price"] == 0.6
     assert obj["market_price"] == 0.17
     assert obj["deference"] == 0.66
