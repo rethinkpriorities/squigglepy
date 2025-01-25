@@ -446,9 +446,12 @@ You can see more examples of squigglepy in action [here](https://github.com/pete
 
 ## Run tests
 
+Main test engine is `pytest && pip3 install . && python3 tests/integration.py`, which can also be run via `make test`
+
+Formatting is `black . && ruff check .`, which can also be run via `make format` (black with fixes on) and `make lint` (ruff check).
+
 Use `black .` for formatting.
 
-Run `ruff check . && pytest && pip3 install . && python3 tests/integration.py`
 
 ## Disclaimers
 
