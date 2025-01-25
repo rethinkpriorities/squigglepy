@@ -1,6 +1,7 @@
 ## v0.29
 
 * Added `third_kelly` as an alias for `kelly` with deference = 0.66.
+* Allows Bernoulli distributions to be defined with p=0 or p=1
 
 
 ## v0.28
