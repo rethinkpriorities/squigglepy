@@ -2,6 +2,7 @@
 
 * Added `third_kelly` as an alias for `kelly` with deference = 0.66.
 * Allows Bernoulli distributions to be defined with p=0 or p=1
+* Added a `Makefile` to help simplify testing and linting workflows
 
 
 ## v0.28

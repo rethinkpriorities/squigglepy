@@ -20,7 +20,7 @@ lint:
 
 # Run tests
 test:
-	$(POETRY) run pytest
+	pytest && pip3 install . && python3 tests/integration.py
 
 # Help
 help:
@@ -29,4 +29,4 @@ help:
 	@echo "  make install-dev   Install all dependencies including dev tools"
 	@echo "  make format        Format code using Black and Ruff"
 	@echo "  make lint          Run Ruff for linting"
-	@echo "  make test          Run tests with pytest"
+	@echo "  make test          Run tests"
