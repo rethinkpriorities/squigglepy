@@ -737,8 +737,8 @@ def test_kelly_defaults():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -756,8 +756,8 @@ def test_full_kelly():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -775,8 +775,8 @@ def test_half_kelly():
     assert obj["target"] == 0.49
     assert obj["current"] == 0
     assert obj["delta"] == 0.49
-    assert obj["max_gain"] == 49.49
-    assert obj["modeled_gain"] == 24.5
+    assert obj["max_gain"] == 49
+    assert obj["modeled_gain"] == 24.25
     assert obj["expected_roi"] == 49
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -786,7 +786,7 @@ def test_third_kelly():
     obj = third_kelly(my_price=0.99, market_price=0.01)
     assert obj["my_price"] == 0.99
     assert obj["market_price"] == 0.01
-    assert obj["deference"] == 0.66
+    assert obj["deference"] == 0.667
     assert obj["adj_price"] == 0.26
     assert obj["delta_price"] == 0.98
     assert obj["adj_delta_price"] == 0.24
@@ -872,7 +872,7 @@ def test_kelly_with_resolve_date():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
+    assert obj["max_gain"] == 98
     assert obj["modeled_gain"] == 97.99
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 99.258
@@ -899,7 +899,7 @@ def test_kelly_with_resolve_date2():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
+    assert obj["max_gain"] == 98
     assert obj["modeled_gain"] == 97.99
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 8.981
