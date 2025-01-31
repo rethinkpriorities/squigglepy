@@ -26,6 +26,7 @@ from ..squigglepy.utils import (
     kelly,
     full_kelly,
     half_kelly,
+    third_kelly,
     quarter_kelly,
     one_in,
     extremize,
@@ -736,8 +737,8 @@ def test_kelly_defaults():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -755,8 +756,8 @@ def test_full_kelly():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -774,9 +775,28 @@ def test_half_kelly():
     assert obj["target"] == 0.49
     assert obj["current"] == 0
     assert obj["delta"] == 0.49
-    assert obj["max_gain"] == 49.49
-    assert obj["modeled_gain"] == 24.5
+    assert obj["max_gain"] == 49
+    assert obj["modeled_gain"] == 24.25
     assert obj["expected_roi"] == 49
+    assert obj["expected_arr"] is None
+    assert obj["resolve_date"] is None
+
+
+def test_third_kelly():
+    obj = third_kelly(my_price=0.99, market_price=0.01)
+    assert obj["my_price"] == 0.99
+    assert obj["market_price"] == 0.01
+    assert obj["deference"] == 0.667
+    assert obj["adj_price"] == 0.26
+    assert obj["delta_price"] == 0.98
+    assert obj["adj_delta_price"] == 0.24
+    assert obj["kelly"] == 0.247
+    assert obj["target"] == 0.25
+    assert obj["current"] == 0
+    assert obj["delta"] == 0.25
+    assert obj["max_gain"] == 24.75
+    assert obj["modeled_gain"] == 6.13
+    assert obj["expected_roi"] == 24.5
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
 
@@ -852,7 +872,7 @@ def test_kelly_with_resolve_date():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
+    assert obj["max_gain"] == 98
     assert obj["modeled_gain"] == 97.99
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 99.258
@@ -879,7 +899,7 @@ def test_kelly_with_resolve_date2():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
+    assert obj["max_gain"] == 98
     assert obj["modeled_gain"] == 97.99
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 8.981
@@ -910,6 +930,40 @@ def test_kelly_with_resolve_date0pt5():
     assert obj["modeled_gain"] == 97.99
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 10575.628
+    assert obj["resolve_date"] == datetime(
+        half_year_from_today.year,
+        half_year_from_today.month,
+        half_year_from_today.day,
+        0,
+        0,
+    )
+
+
+def test_kelly_worked_example():
+    half_year_from_today = datetime.now() + timedelta(days=int(round(365 * 0.5)))
+    half_year_from_today_str = half_year_from_today.strftime("%Y-%m-%d")
+    obj = kelly(
+        my_price=0.6,
+        market_price=0.17,
+        deference=0.66,
+        bankroll=46288,
+        resolve_date=half_year_from_today_str,
+        current=7300,
+    )
+    assert obj["my_price"] == 0.6
+    assert obj["market_price"] == 0.17
+    assert obj["deference"] == 0.66
+    assert obj["adj_price"] == 0.32
+    assert obj["delta_price"] == 0.43
+    assert obj["adj_delta_price"] == 0.15
+    assert obj["kelly"] == 0.176
+    assert obj["target"] == 8153.38
+    assert obj["current"] == 7300
+    assert obj["delta"] == 853.38
+    assert obj["max_gain"] == 6767.31
+    assert obj["modeled_gain"] == 1223
+    assert obj["expected_roi"] == 0.86
+    assert obj["expected_arr"] == 0.86
     assert obj["resolve_date"] == datetime(
         half_year_from_today.year,
         half_year_from_today.month,
