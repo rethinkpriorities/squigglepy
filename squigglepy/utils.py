@@ -5,6 +5,7 @@ from tqdm import tqdm
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
+from typing import List, Tuple, Union, Optional
 
 import importlib
 import importlib.util
@@ -1330,3 +1331,98 @@ def sharpe_ratio(returns, risk_free_rate=0):
     0.7898
     """
     return (np.mean(returns) - risk_free_rate) / np.std(returns)
+
+
+def bucket_percentages(
+    data: np.ndarray,
+    bins: Optional[Union[int, List[float], np.ndarray]] = None,
+    custom_bins: Optional[List[Tuple[float, float]]] = None,
+    normalize: bool = True,
+    as_percentage: bool = True,
+    labels: Optional[List[str]] = None
+) -> dict:
+    """
+    Calculate the percentage or count of values falling into specified buckets.
+    
+    Parameters:
+    -----------
+    data : np.ndarray
+        Input array of values to categorize.
+    bins : int, list, or numpy array, optional
+        Either the number of equal-width bins or the bin edges.
+        Default is [-np.inf, 2, 4, 6, 8, 10, np.inf].
+    custom_bins : list of tuples, optional
+        List of (low, high) tuples defining custom non-uniform bins.
+        Overrides the 'bins' parameter if provided.
+    normalize : bool, default=True
+        If True, return frequencies (counts divided by total length).
+    as_percentage : bool, default=True
+        If True and normalize is True, multiply frequencies by 100.
+    labels : list of str, optional
+        Custom labels for each bin. Length must match the number of bins.
+        
+    Returns:
+    --------
+    dict
+        A dictionary mapping bin labels to their respective percentages or counts.
+        
+    Examples:
+    ---------
+    >>> import numpy as np
+    >>> data = np.random.normal(5, 2, 10000)
+    >>> 
+    >>> # Basic usage with default bins
+    >>> bucket_percentages(data)
+    {'(-inf, 2)': 6.78, '[2, 4)': 24.52, '[4, 6)': 35.44, '[6, 8)': 23.39, '[8, 10)': 7.23, '[10, inf)': 2.64}
+    >>> 
+    >>> # Custom bin edges
+    >>> bucket_percentages(data, bins=[0, 3, 6, 9, 12])
+    {'[0, 3)': 11.97, '[3, 6)': 50.77, '[6, 9)': 33.0, '[9, 12)': 4.26}
+    >>> 
+    >>> # Custom bin ranges and labels
+    >>> custom_bins = [(-np.inf, 0), (0, 5), (5, 10), (10, np.inf)]
+    >>> bucket_percentages(data, custom_bins=custom_bins, labels=['Negative', 'Low', 'Medium', 'High'])
+    {'Negative': 0.09, 'Low': 48.65, 'Medium': 48.62, 'High': 2.64}
+    >>> 
+    >>> # Get raw counts instead of percentages
+    >>> bucket_percentages(data, bins=5, normalize=False, as_percentage=False)
+    {'[-1.64, 1.17)': 374, '[1.17, 3.97)': 2187, '[3.97, 6.78)': 4615, '[6.78, 9.58)': 2496, '[9.58, 12.39)': 328}
+    """
+    
+    if custom_bins is not None:
+        # Use custom bin ranges
+        result = {}
+        for i, (low, high) in enumerate(custom_bins):
+            count = np.sum((data >= low) & (data < high))
+            result[i] = count
+        
+        bin_edges = [b[0] for b in custom_bins] + [custom_bins[-1][1]]
+        bin_count = len(custom_bins)
+    else:
+        counts, bin_edges = np.histogram(data, bins=bins)
+        result = {i: count for i, count in enumerate(counts)}
+        bin_count = len(bin_edges) - 1
+    
+    if normalize:
+        total = len(data)
+        result = {k: v / total * (100 if as_percentage else 1) for k, v in result.items()}
+    
+    if labels is None:
+        labels = []
+        for i in range(bin_count):
+            if bin_edges[i] == -np.inf:
+                left_bracket = "("
+            else:
+                left_bracket = "["
+            
+            if bin_edges[i+1] == np.inf:
+                right_bracket = ")"
+            else:
+                right_bracket = ")"
+            
+            labels.append(f"{left_bracket}{bin_edges[i]}, {bin_edges[i+1]}{right_bracket}")
+    
+    if len(labels) != bin_count:
+        raise ValueError(f"Number of labels ({len(labels)}) must match number of bins ({bin_count})")
+    
+    return {labels[k]: v for k, v in result.items()}
