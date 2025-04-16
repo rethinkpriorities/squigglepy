@@ -16,6 +16,7 @@ repository = "https://github.com/rethinkpriorities/squigglepy"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
+setuptools = "^69.0.0"
 numpy = "^1.24.3"
 scipy = "^1.10.1"
 tqdm = "^4.65.0"
