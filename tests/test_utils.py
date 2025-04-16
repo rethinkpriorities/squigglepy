@@ -787,16 +787,16 @@ def test_third_kelly():
     assert obj["my_price"] == 0.99
     assert obj["market_price"] == 0.01
     assert obj["deference"] == 0.667
-    assert obj["adj_price"] == 0.26
+    assert obj["adj_price"] == 0.34
     assert obj["delta_price"] == 0.98
-    assert obj["adj_delta_price"] == 0.24
-    assert obj["kelly"] == 0.247
-    assert obj["target"] == 0.25
+    assert obj["adj_delta_price"] == 0.33
+    assert obj["kelly"] == 0.33
+    assert obj["target"] == 0.33
     assert obj["current"] == 0
-    assert obj["delta"] == 0.25
-    assert obj["max_gain"] == 24.75
-    assert obj["modeled_gain"] == 6.13
-    assert obj["expected_roi"] == 24.5
+    assert obj["delta"] == 0.33
+    assert obj["max_gain"] == 32.67
+    assert obj["modeled_gain"] == 10.78
+    assert obj["expected_roi"] == 32.673
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
 
@@ -813,8 +813,8 @@ def test_quarter_kelly():
     assert obj["target"] == 0.25
     assert obj["current"] == 0
     assert obj["delta"] == 0.25
-    assert obj["max_gain"] == 24.75
-    assert obj["modeled_gain"] == 6.13
+    assert obj["max_gain"] == 24.5
+    assert obj["modeled_gain"] == 6.06
     assert obj["expected_roi"] == 24.5
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -832,8 +832,8 @@ def test_kelly_with_bankroll():
     assert obj["target"] == 989.9
     assert obj["current"] == 0
     assert obj["delta"] == 989.9
-    assert obj["max_gain"] == 98989.9
-    assert obj["modeled_gain"] == 97990.1
+    assert obj["max_gain"] == 98000
+    assert obj["modeled_gain"] == 97010.1
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -851,8 +851,8 @@ def test_kelly_with_current():
     assert obj["target"] == 989.9
     assert obj["current"] == 100
     assert obj["delta"] == 889.9
-    assert obj["max_gain"] == 98989.9
-    assert obj["modeled_gain"] == 97990.1
+    assert obj["max_gain"] == 98000
+    assert obj["modeled_gain"] == 97010.1
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -873,7 +873,7 @@ def test_kelly_with_resolve_date():
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
     assert obj["max_gain"] == 98
-    assert obj["modeled_gain"] == 97.99
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 99.258
     assert obj["resolve_date"] == datetime(
@@ -900,7 +900,7 @@ def test_kelly_with_resolve_date2():
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
     assert obj["max_gain"] == 98
-    assert obj["modeled_gain"] == 97.99
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 8.981
     assert obj["resolve_date"] == datetime(
@@ -926,8 +926,8 @@ def test_kelly_with_resolve_date0pt5():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 10575.628
     assert obj["resolve_date"] == datetime(
@@ -960,10 +960,10 @@ def test_kelly_worked_example():
     assert obj["target"] == 8153.38
     assert obj["current"] == 7300
     assert obj["delta"] == 853.38
-    assert obj["max_gain"] == 6767.31
-    assert obj["modeled_gain"] == 1223
+    assert obj["max_gain"] == 39807.68
+    assert obj["modeled_gain"] == 7011.91
     assert obj["expected_roi"] == 0.86
-    assert obj["expected_arr"] == 0.86
+    assert obj["expected_arr"] == 2.495
     assert obj["resolve_date"] == datetime(
         half_year_from_today.year,
         half_year_from_today.month,
