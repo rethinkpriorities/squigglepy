@@ -26,11 +26,13 @@ from ..squigglepy.utils import (
     kelly,
     full_kelly,
     half_kelly,
+    third_kelly,
     quarter_kelly,
     one_in,
     extremize,
     sharpe_ratio,
     normalize,
+    bucket_percentages,
 )
 from ..squigglepy.rng import set_seed
 from ..squigglepy.distributions import bernoulli, beta, norm, dist_round, const
@@ -736,8 +738,8 @@ def test_kelly_defaults():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -755,8 +757,8 @@ def test_full_kelly():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -774,9 +776,28 @@ def test_half_kelly():
     assert obj["target"] == 0.49
     assert obj["current"] == 0
     assert obj["delta"] == 0.49
-    assert obj["max_gain"] == 49.49
-    assert obj["modeled_gain"] == 24.5
+    assert obj["max_gain"] == 49
+    assert obj["modeled_gain"] == 24.25
     assert obj["expected_roi"] == 49
+    assert obj["expected_arr"] is None
+    assert obj["resolve_date"] is None
+
+
+def test_third_kelly():
+    obj = third_kelly(my_price=0.99, market_price=0.01)
+    assert obj["my_price"] == 0.99
+    assert obj["market_price"] == 0.01
+    assert obj["deference"] == 0.667
+    assert obj["adj_price"] == 0.34
+    assert obj["delta_price"] == 0.98
+    assert obj["adj_delta_price"] == 0.33
+    assert obj["kelly"] == 0.33
+    assert obj["target"] == 0.33
+    assert obj["current"] == 0
+    assert obj["delta"] == 0.33
+    assert obj["max_gain"] == 32.67
+    assert obj["modeled_gain"] == 10.78
+    assert obj["expected_roi"] == 32.673
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
 
@@ -793,8 +814,8 @@ def test_quarter_kelly():
     assert obj["target"] == 0.25
     assert obj["current"] == 0
     assert obj["delta"] == 0.25
-    assert obj["max_gain"] == 24.75
-    assert obj["modeled_gain"] == 6.13
+    assert obj["max_gain"] == 24.5
+    assert obj["modeled_gain"] == 6.06
     assert obj["expected_roi"] == 24.5
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -812,8 +833,8 @@ def test_kelly_with_bankroll():
     assert obj["target"] == 989.9
     assert obj["current"] == 0
     assert obj["delta"] == 989.9
-    assert obj["max_gain"] == 98989.9
-    assert obj["modeled_gain"] == 97990.1
+    assert obj["max_gain"] == 98000
+    assert obj["modeled_gain"] == 97010.1
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -831,8 +852,8 @@ def test_kelly_with_current():
     assert obj["target"] == 989.9
     assert obj["current"] == 100
     assert obj["delta"] == 889.9
-    assert obj["max_gain"] == 98989.9
-    assert obj["modeled_gain"] == 97990.1
+    assert obj["max_gain"] == 98000
+    assert obj["modeled_gain"] == 97010.1
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
@@ -852,8 +873,8 @@ def test_kelly_with_resolve_date():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 99.258
     assert obj["resolve_date"] == datetime(
@@ -879,8 +900,8 @@ def test_kelly_with_resolve_date2():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 8.981
     assert obj["resolve_date"] == datetime(
@@ -906,10 +927,44 @@ def test_kelly_with_resolve_date0pt5():
     assert obj["target"] == 0.99
     assert obj["current"] == 0
     assert obj["delta"] == 0.99
-    assert obj["max_gain"] == 98.99
-    assert obj["modeled_gain"] == 97.99
+    assert obj["max_gain"] == 98
+    assert obj["modeled_gain"] == 97.01
     assert obj["expected_roi"] == 98
     assert obj["expected_arr"] == 10575.628
+    assert obj["resolve_date"] == datetime(
+        half_year_from_today.year,
+        half_year_from_today.month,
+        half_year_from_today.day,
+        0,
+        0,
+    )
+
+
+def test_kelly_worked_example():
+    half_year_from_today = datetime.now() + timedelta(days=int(round(365 * 0.5)))
+    half_year_from_today_str = half_year_from_today.strftime("%Y-%m-%d")
+    obj = kelly(
+        my_price=0.6,
+        market_price=0.17,
+        deference=0.66,
+        bankroll=46288,
+        resolve_date=half_year_from_today_str,
+        current=7300,
+    )
+    assert obj["my_price"] == 0.6
+    assert obj["market_price"] == 0.17
+    assert obj["deference"] == 0.66
+    assert obj["adj_price"] == 0.32
+    assert obj["delta_price"] == 0.43
+    assert obj["adj_delta_price"] == 0.15
+    assert obj["kelly"] == 0.176
+    assert obj["target"] == 8153.38
+    assert obj["current"] == 7300
+    assert obj["delta"] == 853.38
+    assert obj["max_gain"] == 39807.68
+    assert obj["modeled_gain"] == 7011.91
+    assert obj["expected_roi"] == 0.86
+    assert obj["expected_arr"] == 2.495
     assert obj["resolve_date"] == datetime(
         half_year_from_today.year,
         half_year_from_today.month,
@@ -939,3 +994,58 @@ def test_core_cuts():
 
 def test_sharpe_ratio():
     assert round(sharpe_ratio([0.04, -0.03, 0.05, 0.02, 0.03]), 4) == 0.7898
+
+
+def test_bucket_percentages():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    result = bucket_percentages(data, bins=[-np.inf, 2, 4, 6, 8, 10, np.inf])
+    assert len(result) == 6
+    for val in result.values():
+        assert abs(val - 16.67) < 0.01
+
+
+def test_bucket_percentages_custom_bins():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    result = bucket_percentages(data, bins=[0, 5, 10, 15])
+    expected = {
+        "[0, 5)": 33.33,
+        "[5, 10)": 50.0,
+        "[10, 15)": 16.67,
+    }
+    for key in result:
+        assert abs(result[key] - expected[key]) < 0.01
+
+
+def test_bucket_percentages_custom_ranges_and_labels():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    custom_bins = [(-np.inf, 5), (5, 10), (10, np.inf)]
+    labels = ["Low", "Medium", "High"]
+    result = bucket_percentages(data, custom_bins=custom_bins, labels=labels)
+    expected = {
+        "Low": 33.33,
+        "Medium": 50.0,
+        "High": 16.67,
+    }
+    for key in result:
+        assert abs(result[key] - expected[key]) < 0.01
+
+
+def test_bucket_percentages_counts():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    result = bucket_percentages(data, bins=[0, 5, 10, 15], normalize=False, as_percentage=False)
+    expected = {
+        "[0, 5)": 2,
+        "[5, 10)": 3,
+        "[10, 15)": 1,
+    }
+    assert result == expected
+
+
+def test_bucket_percentages_label_mismatch():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    custom_bins = [(-np.inf, 5), (5, 10), (10, np.inf)]
+    labels = ["Low", "Medium"]  # Missing one label
+
+    with pytest.raises(ValueError) as excinfo:
+        bucket_percentages(data, custom_bins=custom_bins, labels=labels)
+    assert "Number of labels" in str(excinfo.value)

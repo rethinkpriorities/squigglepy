@@ -5,6 +5,7 @@ from tqdm import tqdm
 from datetime import datetime
 from collections import Counter
 from collections.abc import Iterable
+from typing import List, Tuple, Union, Optional
 
 import importlib
 import importlib.util
@@ -1020,10 +1021,8 @@ def kelly(
         "target": round(target, 2),
         "current": round(current, 2),
         "delta": round(target - current, 2),
-        "max_gain": round(target / market_price, 2),
-        "modeled_gain": round(
-            (adj_price * (target / market_price) + (1 - adj_price) * -target), 2
-        ),
+        "max_gain": round(target / market_price - target, 2),
+        "modeled_gain": round((adj_price * (target / market_price) - target), 2),
         "expected_roi": round(expected_roi, 3),
         "expected_arr": round(expected_arr, 3) if expected_arr is not None else None,
         "resolve_date": resolve_date,
@@ -1154,6 +1153,69 @@ def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
     )
 
 
+def third_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+    """
+    Alias for ``kelly`` where ``deference`` is 0.6666.
+
+    Parameters
+    ----------
+    my_price : float
+        The price (or probability) you give for the given event.
+    market_price : float
+        The price the market is giving for that event.
+    bankroll : float
+        How much money do you have to bet? Defaults to 1.
+    resolve_date : str or None
+        When will the event happen, the market resolve, and you get your money back? Used for
+        calculating expected ARR. Give in YYYY-MM-DD format. Defaults to None, which means
+        ARR is not calculated.
+    current : float
+        How much do you already have invested in this event? Used for calculating the
+        additional amount you should invest. Defaults to 0.
+
+    Returns
+    -------
+    dict
+        A dict of values specifying:
+        * ``my_price``
+        * ``market_price``
+        * ``deference``
+        * ``adj_price`` : an adjustment to ``my_price`` once ``deference`` is taken
+          into account.
+        * ``delta_price`` : the absolute difference between ``my_price`` and ``market_price``.
+        * ``adj_delta_price`` : the absolute difference between ``adj_price`` and
+          ``market_price``.
+        * ``kelly`` : the kelly criterion indicating the percentage of ``bankroll``
+          you should bet.
+        * ``target`` : the target amount of money you should have invested
+        * ``current``
+        * ``delta`` : the amount of money you should invest given what you already
+          have invested
+        * ``max_gain`` : the amount of money you would gain if you win
+        * ``modeled_gain`` : the expected value you would win given ``adj_price``
+        * ``expected_roi`` : the expected return on investment
+        * ``expected_arr`` : the expected ARR given ``resolve_date``
+        * ``resolve_date``
+
+    Examples
+    --------
+    >>> third_kelly(my_price=0.7, market_price=0.4, bankroll=100)
+    {'my_price': 0.7, 'market_price': 0.4, 'deference': 0.6666, 'adj_price': 0.50,
+     'delta_price': 0.3, 'adj_delta_price': 0.1, 'kelly': 0.15, 'target': 12.5,
+     'current': 0, 'delta': 12.5, 'max_gain': 31.25, 'modeled_gain': 8.28,
+     'expected_roi': 0.188, 'expected_arr': None, 'resolve_date': None}
+    """
+    # TODO: Update docstring
+    return kelly(
+        my_price=my_price,
+        market_price=market_price,
+        bankroll=bankroll,
+        resolve_date=resolve_date,
+        current=current,
+        deference=0.6666,
+    )
+
+
 def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
     """
     Alias for ``kelly`` where ``deference`` is 0.75.
@@ -1269,3 +1331,94 @@ def sharpe_ratio(returns, risk_free_rate=0):
     0.7898
     """
     return (np.mean(returns) - risk_free_rate) / np.std(returns)
+
+
+def bucket_percentages(
+    data: np.ndarray,
+    bins: Optional[Union[int, List[float], np.ndarray]] = None,
+    custom_bins: Optional[List[Tuple[float, float]]] = None,
+    normalize: bool = True,
+    as_percentage: bool = True,
+    labels: Optional[List[str]] = None,
+) -> dict:
+    """
+    Calculate the percentage or count of values falling into specified buckets.
+
+    Parameters:
+    -----------
+    data : np.ndarray
+        Input array of values to categorize.
+    bins : int, list, or numpy array, optional
+        Either the number of equal-width bins or the bin edges.
+        Default is [-np.inf, 2, 4, 6, 8, 10, np.inf].
+    custom_bins : list of tuples, optional
+        List of (low, high) tuples defining custom non-uniform bins.
+        Overrides the 'bins' parameter if provided.
+    normalize : bool, default=True
+        If True, return frequencies (counts divided by total length).
+    as_percentage : bool, default=True
+        If True and normalize is True, multiply frequencies by 100.
+    labels : list of str, optional
+        Custom labels for each bin. Length must match the number of bins.
+
+    Returns:
+    --------
+    dict
+        A dictionary mapping bin labels to their respective percentages or counts.
+
+    Examples:
+    ---------
+    >>> import numpy as np
+    >>> data = np.random.normal(5, 2, 10000)
+    >>> bucket_percentages(data, bins=[0, 3, 6, 9, 12])
+    {'[0, 3)': 11.97, '[3, 6)': 50.77, '[6, 9)': 33.0, '[9, 12)': 4.26}
+    >>>
+    >>> # Custom bin ranges and labels
+    >>> custom_bins = [(-np.inf, 0), (0, 5), (5, 10), (10, np.inf)]
+    >>> bucket_percentages(data, custom_bins=custom_bins, labels=['Negative', 'Low', 'Medium', 'High'])
+    {'Negative': 0.09, 'Low': 48.65, 'Medium': 48.62, 'High': 2.64}
+    >>>
+    >>> # Get raw counts instead of percentages
+    >>> bucket_percentages(data, bins=5, normalize=False, as_percentage=False)
+    {'[-1.64, 1.17)': 374, '[1.17, 3.97)': 2187, '[3.97, 6.78)': 4615, '[6.78, 9.58)': 2496, '[9.58, 12.39)': 328}
+    """
+
+    if custom_bins is not None:
+        # Use custom bin ranges
+        result = {}
+        for i, (low, high) in enumerate(custom_bins):
+            count = np.sum((data >= low) & (data < high))
+            result[i] = count
+
+        bin_edges = [b[0] for b in custom_bins] + [custom_bins[-1][1]]
+        bin_count = len(custom_bins)
+    else:
+        counts, bin_edges = np.histogram(data, bins=bins)
+        result = {i: count for i, count in enumerate(counts)}
+        bin_count = len(bin_edges) - 1
+
+    if normalize:
+        total = len(data)
+        result = {k: v / total * (100 if as_percentage else 1) for k, v in result.items()}
+
+    if labels is None:
+        labels = []
+        for i in range(bin_count):
+            if bin_edges[i] == -np.inf:
+                left_bracket = "("
+            else:
+                left_bracket = "["
+
+            if bin_edges[i + 1] == np.inf:
+                right_bracket = ")"
+            else:
+                right_bracket = ")"
+
+            labels.append(f"{left_bracket}{bin_edges[i]}, {bin_edges[i+1]}{right_bracket}")
+
+    if len(labels) != bin_count:
+        raise ValueError(
+            f"Number of labels ({len(labels)}) must match number of bins ({bin_count})"
+        )
+
+    return {labels[k]: v for k, v in result.items()}

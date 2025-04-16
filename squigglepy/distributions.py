@@ -846,6 +846,100 @@ class LognormalDistribution(ContinuousDistribution):
         return out
 
 
+class InverseLognormalDistribution(ContinuousDistribution):
+    def __init__(
+        self,
+        x=None,
+        y=None,
+        norm_mean=None,
+        norm_sd=None,
+        lognorm_mean=None,
+        lognorm_sd=None,
+        credibility=90,
+        lclip=None,
+        rclip=None,
+    ):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.credibility = credibility
+        self.norm_mean = norm_mean
+        self.norm_sd = norm_sd
+        self.lognorm_mean = lognorm_mean
+        self.lognorm_sd = lognorm_sd
+        self.lclip = lclip
+        self.rclip = rclip
+
+        if self.x is not None and self.y is not None and self.x > self.y:
+            raise ValueError("`high value` cannot be lower than `low value`")
+        if self.x is not None and self.x <= 0:
+            raise ValueError("inverse lognormal distribution must have values > 0")
+
+        if (self.x is None or self.y is None) and self.norm_sd is None and self.lognorm_sd is None:
+            raise ValueError(
+                ("must define only one of x/y, norm_mean/norm_sd, " "or lognorm_mean/lognorm_sd")
+            )
+        elif (self.x is not None or self.y is not None) and (
+            self.norm_sd is not None or self.lognorm_sd is not None
+        ):
+            raise ValueError(
+                ("must define only one of x/y, norm_mean/norm_sd, " "or lognorm_mean/lognorm_sd")
+            )
+        elif (self.norm_sd is not None or self.norm_mean is not None) and (
+            self.lognorm_sd is not None or self.lognorm_mean is not None
+        ):
+            raise ValueError(
+                ("must define only one of x/y, norm_mean/norm_sd, " "or lognorm_mean/lognorm_sd")
+            )
+        elif self.norm_sd is not None and self.norm_mean is None:
+            self.norm_mean = 0
+        elif self.lognorm_sd is not None and self.lognorm_mean is None:
+            self.lognorm_mean = 1
+
+        if self.x is not None:
+            inv_x, inv_y = 1 / self.y, 1 / self.x  # Note: x and y are swapped when inverted
+            self.norm_mean = (np.log(inv_x) + np.log(inv_y)) / 2
+            cdf_value = 0.5 + 0.5 * (self.credibility / 100)
+            normed_sigma = scipy.stats.norm.ppf(cdf_value)
+            self.norm_sd = (np.log(inv_y) - self.norm_mean) / normed_sigma
+
+        if self.lognorm_sd is None:
+            lognorm_mean = np.exp(self.norm_mean + self.norm_sd**2 / 2)
+            lognorm_var = (np.exp(self.norm_sd**2) - 1) * np.exp(
+                2 * self.norm_mean + self.norm_sd**2
+            )
+
+            self.lognorm_mean = (
+                1
+                / np.sqrt(lognorm_var + lognorm_mean**2)
+                * np.exp(-self.norm_mean + self.norm_sd**2 / 2)
+            )
+            self.lognorm_sd = self.lognorm_mean * np.sqrt(np.exp(self.norm_sd**2) - 1)
+
+        elif self.norm_sd is None:
+            # Start with the relationship between lognormal and its inverse
+            cv_squared = (
+                self.lognorm_sd**2 / self.lognorm_mean**2
+            )  # coefficient of variation squared
+            self.norm_sd = np.sqrt(np.log(1 + cv_squared))
+            self.norm_mean = -np.log(self.lognorm_mean) - self.norm_sd**2 / 2
+
+    def __str__(self):
+        out = "<Distribution> invlognorm(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"
+        out = out.format(
+            round(self.lognorm_mean, 2),
+            round(self.lognorm_sd, 2),
+            round(self.norm_mean, 2),
+            round(self.norm_sd, 2),
+        )
+        if self.lclip is not None:
+            out += ", lclip={}".format(self.lclip)
+        if self.rclip is not None:
+            out += ", rclip={}".format(self.rclip)
+        out += ")"
+        return out
+
+
 def lognorm(
     x=None,
     y=None,
@@ -901,6 +995,74 @@ def lognorm(
     <Distribution> lognorm(lognorm_mean=1, lognorm_sd=2, norm_mean=-0.8, norm_sd=1.27)
     """
     return LognormalDistribution(
+        x=x,
+        y=y,
+        credibility=credibility,
+        norm_mean=norm_mean,
+        norm_sd=norm_sd,
+        lognorm_mean=lognorm_mean,
+        lognorm_sd=lognorm_sd,
+        lclip=lclip,
+        rclip=rclip,
+    )
+
+
+def invlognorm(
+    x=None,
+    y=None,
+    credibility=90,
+    norm_mean=None,
+    norm_sd=None,
+    lognorm_mean=None,
+    lognorm_sd=None,
+    lclip=None,
+    rclip=None,
+):
+    """
+    Initialize an inverse lognormal distribution.
+
+    This is a left-skewed distribution created by taking the reciprocal of a lognormal distribution.
+
+    Can be defined either via a credible interval from ``x`` to ``y`` (use ``credibility`` or
+    it will default to being a 90% CI) or defined via underlying normal distribution parameters
+    or via the inverse lognormal mean and standard deviation.
+
+    Parameters
+    ----------
+    x : float
+        The low value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
+        Must be a value greater than 0.
+    y : float
+        The high value of a credible interval defined by ``credibility``. Defaults to a 90% CI.
+        Must be a value greater than 0.
+    credibility : float
+        The range of the credibility interval. Defaults to 90. Ignored if the distribution is
+        defined instead by ``mean`` and ``sd``.
+    norm_mean : float or None
+        The mean of the underlying normal distribution. If not defined, defaults to 0.
+    norm_sd : float
+        The standard deviation of the underlying normal distribution.
+    lognorm_mean : float or None
+        The mean of the inverse lognormal distribution. If not defined, defaults to 1.
+    lognorm_sd : float
+        The standard deviation of the inverse lognormal distribution.
+    lclip : float or None
+        If not None, any value below ``lclip`` will be coerced to ``lclip``.
+    rclip : float or None
+        If not None, any value below ``rclip`` will be coerced to ``rclip``.
+
+    Returns
+    -------
+    InverseLognormalDistribution
+
+    Examples
+    --------
+    >>> invlognorm(1, 10)
+    <Distribution> invlognorm(lognorm_mean=0.3, lognorm_sd=0.13, norm_mean=-1.15, norm_sd=0.7)
+    >>> invlognorm(norm_mean=-1, norm_sd=2)
+    <Distribution> invlognorm(lognorm_mean=7.39, lognorm_sd=54.1, norm_mean=-1, norm_sd=2)
+    """
+    return InverseLognormalDistribution(
         x=x,
         y=y,
         credibility=credibility,

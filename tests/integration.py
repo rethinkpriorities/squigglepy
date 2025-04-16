@@ -312,6 +312,7 @@ if __name__ == "__main__":
     sq.sample(sq.norm(-1.67, 1.67))  # This is equivalent to mean=0, sd=1
     sq.sample(sq.norm(1, 3), n=100)
     sq.sample(sq.lognorm(1, 10))
+    sq.sample(sq.invlognorm(1, 10))
     sq.sample(sq.tdist(1, 10, t=5))
     sq.sample(sq.triangular(1, 2, 3))
     sq.sample(sq.pert(1, 2, 3, lam=2))
@@ -349,6 +350,7 @@ if __name__ == "__main__":
     ~sq.norm(-1.67, 1.67)
     sq.norm(1, 3) @ 100
     ~sq.lognorm(1, 10)
+    ~sq.invlognorm(1, 10)
     ~sq.tdist(1, 10, t=5)
     ~sq.triangular(1, 2, 3)
     ~sq.pert(1, 2, 3, lam=2)
@@ -366,7 +368,7 @@ if __name__ == "__main__":
     ~sq.discrete([[0.1, 0], [0.3, 1], [0.3, 2], [0.15, 3], [0.15, 4]])
     ~sq.discrete([0, 1, 2])
     ~sq.mixture([sq.norm(1, 3), sq.norm(4, 10), sq.lognorm(1, 10)], [0.3, 0.3, 0.4])
-    ~sq.mixture([[0.3, sq.norm(1, 3)], [0.3, sq.norm(4, 10)], [0.4, sq.lognorm(1, 10)]])
+    ~sq.mixture([[0.3, sq.norm(1, 3)], [0.3, sq.norm(4, 10)], [0.4, sq.invlognorm(1, 10)]])
     ~sq.norm(1, 3) + ~sq.norm(4, 5)
     ~sq.norm(1, 3) - ~sq.norm(4, 5)
     ~sq.norm(1, 3) / ~sq.norm(4, 5)

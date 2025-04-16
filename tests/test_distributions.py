@@ -6,6 +6,7 @@ from ..squigglepy.distributions import (
     uniform,
     norm,
     lognorm,
+    invlognorm,
     binomial,
     beta,
     bernoulli,
@@ -39,6 +40,7 @@ from ..squigglepy.distributions import (
     ExponentialDistribution,
     GammaDistribution,
     LogTDistribution,
+    InverseLognormalDistribution,
     LognormalDistribution,
     MixtureDistribution,
     NormalDistribution,
@@ -402,6 +404,196 @@ def test_lognorm_passes_lclip_rclip():
 def test_lognorm_passes_credibility():
     obj = lognorm(1, 2, credibility=80)
     assert isinstance(obj, LognormalDistribution)
+    assert obj.credibility == 80
+
+
+def test_invlognorm():
+    assert isinstance(invlognorm(1, 2), InverseLognormalDistribution)
+    assert invlognorm(1, 2).x == 1
+    assert invlognorm(1, 2).y == 2
+    assert round(invlognorm(1, 2).norm_mean, 2) == -0.35
+    assert round(invlognorm(1, 2).norm_sd, 2) == 0.21
+    assert round(invlognorm(1, 2).lognorm_mean, 2) == 1.96
+    assert round(invlognorm(1, 2).lognorm_sd, 2) == 0.42
+    assert invlognorm(1, 2).credibility == 90
+    assert invlognorm(1, 2).lclip is None
+    assert invlognorm(1, 2).rclip is None
+    assert str(invlognorm(1, 2)) == (
+        "<Distribution> invlognorm(lognorm_mean=1.96, "
+        "lognorm_sd=0.42, norm_mean=-0.35, norm_sd=0.21)"
+    )
+
+
+def test_invlognorm_with_normmean_normsd():
+    assert isinstance(invlognorm(norm_mean=1, norm_sd=2), InverseLognormalDistribution)
+    assert invlognorm(norm_mean=1, norm_sd=2).x is None
+    assert invlognorm(norm_mean=1, norm_sd=2).y is None
+    assert invlognorm(norm_mean=1, norm_sd=2).norm_mean == 1
+    assert invlognorm(norm_mean=1, norm_sd=2).norm_sd == 2
+    assert round(invlognorm(norm_mean=1, norm_sd=2).lognorm_mean, 2) == 0.02
+    assert round(invlognorm(norm_mean=1, norm_sd=2).lognorm_sd, 2) == 0.13
+    assert invlognorm(norm_mean=1, norm_sd=2).credibility == 90
+    assert invlognorm(norm_mean=1, norm_sd=2).lclip is None
+    assert invlognorm(norm_mean=1, norm_sd=2).rclip is None
+    assert str(invlognorm(norm_mean=1, norm_sd=2)) == (
+        "<Distribution> invlognorm(lognorm_mean="
+        "0.02, lognorm_sd=0.13, norm_mean=1,"
+        " norm_sd=2)"
+    )
+
+
+def test_invlognorm_with_lognormmean_lognormsd():
+    assert isinstance(invlognorm(lognorm_mean=1, lognorm_sd=2), InverseLognormalDistribution)
+    assert invlognorm(lognorm_mean=1, lognorm_sd=2).x is None
+    assert invlognorm(lognorm_mean=1, lognorm_sd=2).y is None
+    assert round(invlognorm(lognorm_mean=1, lognorm_sd=2).norm_mean, 2) == -0.8
+    assert round(invlognorm(lognorm_mean=1, lognorm_sd=2).norm_sd, 2) == 1.27
+    assert invlognorm(lognorm_mean=1, lognorm_sd=2).lognorm_mean == 1
+    assert invlognorm(lognorm_mean=1, lognorm_sd=2).lognorm_sd == 2
+    assert invlognorm(lognorm_mean=1, lognorm_sd=2).credibility == 90
+    assert invlognorm(lognorm_mean=1, lognorm_sd=2).lclip is None
+    assert invlognorm(lognorm_mean=1, lognorm_sd=2).rclip is None
+    assert str(invlognorm(lognorm_mean=1, lognorm_sd=2)) == (
+        "<Distribution> invlognorm(lognorm_mean"
+        "=1, lognorm_sd=2, norm_mean=-0.8, "
+        "norm_sd=1.27)"
+    )
+
+
+def test_invlognorm_with_just_normsd_infers_zero_norm_mean():
+    assert isinstance(invlognorm(norm_sd=2), InverseLognormalDistribution)
+    assert invlognorm(norm_sd=2).x is None
+    assert invlognorm(norm_sd=2).y is None
+    assert invlognorm(norm_sd=2).norm_mean == 0
+    assert invlognorm(norm_sd=2).norm_sd == 2
+    assert round(invlognorm(norm_sd=2).lognorm_mean, 2) == 0.14
+    assert round(invlognorm(norm_sd=2).lognorm_sd, 2) == 0.99
+    assert invlognorm(norm_sd=2).credibility == 90
+    assert invlognorm(norm_sd=2).lclip is None
+    assert invlognorm(norm_sd=2).rclip is None
+
+
+def test_invlognorm_with_just_invlognormsd_infers_unit_lognorm_mean():
+    assert isinstance(invlognorm(lognorm_sd=2), InverseLognormalDistribution)
+    assert invlognorm(lognorm_sd=2).x is None
+    assert invlognorm(lognorm_sd=2).y is None
+    assert round(invlognorm(lognorm_sd=2).norm_mean, 2) == -0.8
+    assert round(invlognorm(lognorm_sd=2).norm_sd, 2) == 1.27
+    assert invlognorm(lognorm_sd=2).lognorm_mean == 1
+    assert invlognorm(lognorm_sd=2).lognorm_sd == 2
+    assert invlognorm(lognorm_sd=2).credibility == 90
+    assert invlognorm(lognorm_sd=2).lclip is None
+    assert invlognorm(lognorm_sd=2).rclip is None
+
+
+def test_invlognorm_blank_raises_value_error():
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm()
+    msg = "must define only one of x/y, norm_mean/norm_sd, or lognorm_mean/lognorm_sd"
+    assert msg in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(norm_mean=0)
+    assert msg in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(lognorm_mean=1)
+    assert msg in str(execinfo.value)
+
+
+def test_invlognorm_overdefinition_value_error():
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(x=1, y=2, norm_mean=3, norm_sd=4)
+    assert "must define only one of" in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(x=1, y=2, lognorm_mean=3, lognorm_sd=4)
+    assert "must define only one of" in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(norm_mean=1, norm_sd=2, lognorm_mean=3, lognorm_sd=4)
+    assert "must define only one of" in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(x=1, y=2, norm_mean=1, norm_sd=2, lognorm_mean=3, lognorm_sd=4)
+    assert "must define only one of" in str(execinfo.value)
+
+
+def test_invlognorm_low_gt_high():
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(10, 5)
+    assert "`high value` cannot be lower than `low value`" in str(execinfo.value)
+
+
+def test_invlognorm_must_be_gt_0():
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(0, 5)
+    assert "inverse lognormal distribution must have values > 0" in str(execinfo.value)
+    with pytest.raises(ValueError) as execinfo:
+        invlognorm(-5, 5)
+    assert "inverse lognormal distribution must have values > 0" in str(execinfo.value)
+
+
+def test_invlognorm_passes_lclip_rclip():
+    obj = invlognorm(1, 2, lclip=1)
+    assert isinstance(obj, InverseLognormalDistribution)
+    assert obj.lclip == 1
+    assert obj.rclip is None
+    expected_str = (
+        "<Distribution> invlognorm(lognorm_mean=1.96, lognorm_sd=0.42,"
+        " norm_mean=-0.35, norm_sd=0.21, lclip=1)"
+    )
+    assert str(obj) == expected_str
+    obj = invlognorm(1, 2, rclip=1)
+    assert isinstance(obj, InverseLognormalDistribution)
+    assert obj.lclip is None
+    assert obj.rclip == 1
+    expected_str = (
+        "<Distribution> invlognorm(lognorm_mean=1.96, lognorm_sd=0.42,"
+        " norm_mean=-0.35, norm_sd=0.21, rclip=1)"
+    )
+    assert str(obj) == expected_str
+    obj = invlognorm(1, 2, lclip=0, rclip=3)
+    assert isinstance(obj, InverseLognormalDistribution)
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    expected_str = (
+        "<Distribution> invlognorm(lognorm_mean=1.96, lognorm_sd=0.42,"
+        " norm_mean=-0.35, norm_sd=0.21, lclip=0, rclip=3)"
+    )
+    assert str(obj) == expected_str
+    obj = invlognorm(norm_mean=1, norm_sd=2, lclip=0, rclip=3)
+    assert isinstance(obj, InverseLognormalDistribution)
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    expected_str = (
+        "<Distribution> invlognorm(lognorm_mean=0.02, lognorm_sd=0.13,"
+        " norm_mean=1, norm_sd=2, lclip=0, rclip=3)"
+    )
+    assert str(obj) == expected_str
+    obj = invlognorm(norm_sd=2, lclip=0, rclip=3)
+    assert isinstance(obj, InverseLognormalDistribution)
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    expected_str = (
+        "<Distribution> invlognorm(lognorm_mean=0.14, lognorm_sd=0.99,"
+        " norm_mean=0, norm_sd=2, lclip=0, rclip=3)"
+    )
+    assert str(obj) == expected_str
+    obj = invlognorm(lognorm_mean=1, lognorm_sd=2, lclip=0, rclip=3)
+    assert isinstance(obj, InverseLognormalDistribution)
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    expected_str = (
+        "<Distribution> invlognorm(lognorm_mean=1, lognorm_sd=2,"
+        " norm_mean=-0.8, norm_sd=1.27, lclip=0, rclip=3)"
+    )
+    assert str(obj) == expected_str
+    obj = invlognorm(lognorm_sd=2, lclip=0, rclip=3)
+    assert isinstance(obj, InverseLognormalDistribution)
+    assert obj.lclip == 0
+    assert obj.rclip == 3
+    assert str(obj) == expected_str
+
+
+def test_invlognorm_passes_credibility():
+    obj = invlognorm(1, 2, credibility=80)
+    assert isinstance(obj, InverseLognormalDistribution)
     assert obj.credibility == 80
 
 
