@@ -454,7 +454,9 @@ def test_invlognorm_with_lognormmean_lognormsd():
     assert invlognorm(lognorm_mean=1, lognorm_sd=2).lclip is None
     assert invlognorm(lognorm_mean=1, lognorm_sd=2).rclip is None
     assert str(invlognorm(lognorm_mean=1, lognorm_sd=2)) == (
-        "<Distribution> invlognorm(lognorm_mean" "=1, lognorm_sd=2, norm_mean=-0.8, " "norm_sd=1.27)"
+        "<Distribution> invlognorm(lognorm_mean"
+        "=1, lognorm_sd=2, norm_mean=-0.8, "
+        "norm_sd=1.27)"
     )
 
 

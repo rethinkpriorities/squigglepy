@@ -897,7 +897,7 @@ class InverseLognormalDistribution(ContinuousDistribution):
             self.lognorm_mean = 1
 
         if self.x is not None:
-            inv_x, inv_y = 1/self.y, 1/self.x  # Note: x and y are swapped when inverted
+            inv_x, inv_y = 1 / self.y, 1 / self.x  # Note: x and y are swapped when inverted
             self.norm_mean = (np.log(inv_x) + np.log(inv_y)) / 2
             cdf_value = 0.5 + 0.5 * (self.credibility / 100)
             normed_sigma = scipy.stats.norm.ppf(cdf_value)
@@ -905,16 +905,24 @@ class InverseLognormalDistribution(ContinuousDistribution):
 
         if self.lognorm_sd is None:
             lognorm_mean = np.exp(self.norm_mean + self.norm_sd**2 / 2)
-            lognorm_var = (np.exp(self.norm_sd**2) - 1) * np.exp(2 * self.norm_mean + self.norm_sd**2)
-            
-            self.lognorm_mean = 1 / np.sqrt(lognorm_var + lognorm_mean**2) * np.exp(-self.norm_mean + self.norm_sd**2/2)
+            lognorm_var = (np.exp(self.norm_sd**2) - 1) * np.exp(
+                2 * self.norm_mean + self.norm_sd**2
+            )
+
+            self.lognorm_mean = (
+                1
+                / np.sqrt(lognorm_var + lognorm_mean**2)
+                * np.exp(-self.norm_mean + self.norm_sd**2 / 2)
+            )
             self.lognorm_sd = self.lognorm_mean * np.sqrt(np.exp(self.norm_sd**2) - 1)
-            
+
         elif self.norm_sd is None:
             # Start with the relationship between lognormal and its inverse
-            cv_squared = self.lognorm_sd**2 / self.lognorm_mean**2  # coefficient of variation squared
+            cv_squared = (
+                self.lognorm_sd**2 / self.lognorm_mean**2
+            )  # coefficient of variation squared
             self.norm_sd = np.sqrt(np.log(1 + cv_squared))
-            self.norm_mean = -np.log(self.lognorm_mean) - self.norm_sd**2/2
+            self.norm_mean = -np.log(self.lognorm_mean) - self.norm_sd**2 / 2
 
     def __str__(self):
         out = "<Distribution> invlognorm(lognorm_mean={}, lognorm_sd={}, norm_mean={}, norm_sd={}"

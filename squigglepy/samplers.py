@@ -117,7 +117,7 @@ def lognormal_sample(mean, sd, samples=1):
 def inverse_lognormal_sample(mean, sd, samples=1):
     """
     Sample a random number according to an inverse lognormal distribution.
-    
+
     This is equivalent to taking the reciprocal of samples from a lognormal distribution,
     producing a left-skewed distribution (rather than the right-skewed lognormal).
 
@@ -1080,7 +1080,7 @@ def sample(
 
         elif isinstance(dist, LognormalDistribution):
             samples = lognormal_sample(mean=dist.norm_mean, sd=dist.norm_sd, samples=n)
-            
+
         elif isinstance(dist, InverseLognormalDistribution):
             samples = inverse_lognormal_sample(mean=dist.norm_mean, sd=dist.norm_sd, samples=n)
 
