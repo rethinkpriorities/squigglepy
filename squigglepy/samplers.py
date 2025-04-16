@@ -37,6 +37,7 @@ from .distributions import (
     GeometricDistribution,
     LogTDistribution,
     LognormalDistribution,
+    InverseLognormalDistribution,
     MixtureDistribution,
     NormalDistribution,
     ParetoDistribution,
@@ -111,6 +112,38 @@ def lognormal_sample(mean, sd, samples=1):
     1.3562412406168636
     """
     return _simplify(_get_rng().lognormal(mean, sd, samples))
+
+
+def inverse_lognormal_sample(mean, sd, samples=1):
+    """
+    Sample a random number according to an inverse lognormal distribution.
+    
+    This is equivalent to taking the reciprocal of samples from a lognormal distribution,
+    producing a left-skewed distribution (rather than the right-skewed lognormal).
+
+    Parameters
+    ----------
+    mean : float
+        The mean of the underlying normal distribution in log space.
+    sd : float
+        The standard deviation of the underlying normal distribution in log space.
+    samples : int
+        The number of samples to return.
+
+    Returns
+    -------
+    float
+        A random number sampled from an inverse lognormal distribution.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> inverse_lognormal_sample(0, 1)
+    0.7373871753169729
+    """
+    # Generate lognormal samples and take their reciprocals
+    lognorm_samples = _get_rng().lognormal(mean, sd, samples)
+    return _simplify(1.0 / lognorm_samples)
 
 
 def t_sample(low=None, high=None, t=20, samples=1, credibility=90):
@@ -1047,6 +1080,9 @@ def sample(
 
         elif isinstance(dist, LognormalDistribution):
             samples = lognormal_sample(mean=dist.norm_mean, sd=dist.norm_sd, samples=n)
+            
+        elif isinstance(dist, InverseLognormalDistribution):
+            samples = inverse_lognormal_sample(mean=dist.norm_mean, sd=dist.norm_sd, samples=n)
 
         elif isinstance(dist, BinomialDistribution):
             samples = binomial_sample(n=dist.n, p=dist.p, samples=n)
