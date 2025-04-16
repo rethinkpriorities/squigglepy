@@ -2,7 +2,7 @@
 
 * Fixes a bug where `max_gain` and `modeled_gain` were incorrect in kelly output.
 * Added `invlognorm` as a new distribution.
-* Added `bucket_percentages` to more easily get the percentage of values within a bucket. (TODO: Add tests for this. Also maybe make a separate bucketing utility?)
+* Added `bucket_percentages` to more easily get the percentage of values within a bucket.
 * Added `third_kelly` as an alias for `kelly` with deference = 0.66. (TODO: Fix tests)
 * Allows Bernoulli distributions to be defined with p=0 or p=1
 * Added a `Makefile` to help simplify testing and linting workflows

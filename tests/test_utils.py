@@ -32,6 +32,7 @@ from ..squigglepy.utils import (
     extremize,
     sharpe_ratio,
     normalize,
+    bucket_percentages,
 )
 from ..squigglepy.rng import set_seed
 from ..squigglepy.distributions import bernoulli, beta, norm, dist_round, const
@@ -993,3 +994,58 @@ def test_core_cuts():
 
 def test_sharpe_ratio():
     assert round(sharpe_ratio([0.04, -0.03, 0.05, 0.02, 0.03]), 4) == 0.7898
+
+
+def test_bucket_percentages():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    result = bucket_percentages(data, bins=[-np.inf, 2, 4, 6, 8, 10, np.inf])
+    assert len(result) == 6
+    for val in result.values():
+        assert abs(val - 16.67) < 0.01
+
+
+def test_bucket_percentages_custom_bins():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    result = bucket_percentages(data, bins=[0, 5, 10, 15])
+    expected = {
+        '[0, 5)': 33.33,
+        '[5, 10)': 50.0,
+        '[10, 15)': 16.67,
+    }
+    for key in result:
+        assert abs(result[key] - expected[key]) < 0.01
+
+
+def test_bucket_percentages_custom_ranges_and_labels():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    custom_bins = [(-np.inf, 5), (5, 10), (10, np.inf)]
+    labels = ['Low', 'Medium', 'High']
+    result = bucket_percentages(data, custom_bins=custom_bins, labels=labels)
+    expected = {
+        'Low': 33.33,
+        'Medium': 50.0,
+        'High': 16.67,
+    }
+    for key in result:
+        assert abs(result[key] - expected[key]) < 0.01
+
+
+def test_bucket_percentages_counts():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    result = bucket_percentages(data, bins=[0, 5, 10, 15], normalize=False, as_percentage=False)
+    expected = {
+        '[0, 5)': 2,
+        '[5, 10)': 3,
+        '[10, 15)': 1,
+    }
+    assert result == expected
+
+
+def test_bucket_percentages_label_mismatch():
+    data = np.array([1, 3, 5, 7, 9, 11])
+    custom_bins = [(-np.inf, 5), (5, 10), (10, np.inf)]
+    labels = ['Low', 'Medium']  # Missing one label
+    
+    with pytest.raises(ValueError) as excinfo:
+        bucket_percentages(data, custom_bins=custom_bins, labels=labels)
+    assert "Number of labels" in str(excinfo.value)

@@ -1370,12 +1370,6 @@ def bucket_percentages(
     ---------
     >>> import numpy as np
     >>> data = np.random.normal(5, 2, 10000)
-    >>> 
-    >>> # Basic usage with default bins
-    >>> bucket_percentages(data)
-    {'(-inf, 2)': 6.78, '[2, 4)': 24.52, '[4, 6)': 35.44, '[6, 8)': 23.39, '[8, 10)': 7.23, '[10, inf)': 2.64}
-    >>> 
-    >>> # Custom bin edges
     >>> bucket_percentages(data, bins=[0, 3, 6, 9, 12])
     {'[0, 3)': 11.97, '[3, 6)': 50.77, '[6, 9)': 33.0, '[9, 12)': 4.26}
     >>> 
