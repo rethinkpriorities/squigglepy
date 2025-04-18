@@ -764,6 +764,15 @@ def test_full_kelly():
     assert obj["resolve_date"] is None
 
 
+def test_full_kelly_passes_error_parameter():
+    obj = full_kelly(my_price=0.1, market_price=0.2, error=False)
+    assert isinstance(obj, dict)
+
+    with pytest.raises(ValueError) as excinfo:
+        full_kelly(my_price=0.1, market_price=0.2, error=True)
+    assert "below the market price" in str(excinfo.value)
+
+
 def test_half_kelly():
     obj = half_kelly(my_price=0.99, market_price=0.01)
     assert obj["my_price"] == 0.99
@@ -781,6 +790,15 @@ def test_half_kelly():
     assert obj["expected_roi"] == 49
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
+
+
+def test_half_kelly_passes_error_parameter():
+    obj = half_kelly(my_price=0.1, market_price=0.2, error=False)
+    assert isinstance(obj, dict)
+
+    with pytest.raises(ValueError) as excinfo:
+        half_kelly(my_price=0.1, market_price=0.2, error=True)
+    assert "below the market price" in str(excinfo.value)
 
 
 def test_third_kelly():
@@ -802,6 +820,15 @@ def test_third_kelly():
     assert obj["resolve_date"] is None
 
 
+def test_third_kelly_passes_error_parameter():
+    obj = third_kelly(my_price=0.1, market_price=0.2, error=False)
+    assert isinstance(obj, dict)
+
+    with pytest.raises(ValueError) as excinfo:
+        third_kelly(my_price=0.1, market_price=0.2, error=True)
+    assert "below the market price" in str(excinfo.value)
+
+
 def test_quarter_kelly():
     obj = quarter_kelly(my_price=0.99, market_price=0.01)
     assert obj["my_price"] == 0.99
@@ -819,6 +846,15 @@ def test_quarter_kelly():
     assert obj["expected_roi"] == 24.5
     assert obj["expected_arr"] is None
     assert obj["resolve_date"] is None
+
+
+def test_quarter_kelly_passes_error_parameter():
+    obj = quarter_kelly(my_price=0.1, market_price=0.2, error=False)
+    assert isinstance(obj, dict)
+
+    with pytest.raises(ValueError) as excinfo:
+        quarter_kelly(my_price=0.1, market_price=0.2, error=True)
+    assert "below the market price" in str(excinfo.value)
 
 
 def test_kelly_with_bankroll():

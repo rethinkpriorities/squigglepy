@@ -1,6 +1,7 @@
 ## v0.29
 
 * Fixes a bug where `max_gain` and `modeled_gain` were incorrect in kelly output.
+* Fixes a bug where `error` was not correctly passed from `half_kelly`, `third_kelly`, and `quarter_kelly`.
 * Added `invlognorm` as a new distribution.
 * Added `bucket_percentages` to more easily get the percentage of values within a bucket.
 * Added `third_kelly` as an alias for `kelly` with deference = 0.66. (TODO: Fix tests)

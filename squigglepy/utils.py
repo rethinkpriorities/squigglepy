@@ -1029,7 +1029,7 @@ def kelly(
     }
 
 
-def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0, error=True):
     """
     Alias for ``kelly`` where ``deference`` is 0.
 
@@ -1048,6 +1048,9 @@ def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
     current : float
         How much do you already have invested in this event? Used for calculating the
         additional amount you should invest. Defaults to 0.
+    error : boolean
+        Should the function raise an error if your price is below the market price? Or
+        should Kelly behave symmetrically?
 
     Returns
     -------
@@ -1088,10 +1091,11 @@ def full_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
         resolve_date=resolve_date,
         current=current,
         deference=0,
+        error=error,
     )
 
 
-def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0, error=True):
     """
     Alias for ``kelly`` where ``deference`` is 0.5.
 
@@ -1110,6 +1114,9 @@ def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
     current : float
         How much do you already have invested in this event? Used for calculating the
         additional amount you should invest. Defaults to 0.
+    error : boolean
+        Should the function raise an error if your price is below the market price? Or
+        should Kelly behave symmetrically?
 
     Returns
     -------
@@ -1150,10 +1157,11 @@ def half_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0)
         resolve_date=resolve_date,
         current=current,
         deference=0.5,
+        error=error,
     )
 
 
-def third_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+def third_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0, error=True):
     """
     Alias for ``kelly`` where ``deference`` is 0.6666.
 
@@ -1172,6 +1180,9 @@ def third_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0
     current : float
         How much do you already have invested in this event? Used for calculating the
         additional amount you should invest. Defaults to 0.
+    error : boolean
+        Should the function raise an error if your price is below the market price? Or
+        should Kelly behave symmetrically?
 
     Returns
     -------
@@ -1200,12 +1211,11 @@ def third_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0
     Examples
     --------
     >>> third_kelly(my_price=0.7, market_price=0.4, bankroll=100)
-    {'my_price': 0.7, 'market_price': 0.4, 'deference': 0.6666, 'adj_price': 0.50,
-     'delta_price': 0.3, 'adj_delta_price': 0.1, 'kelly': 0.15, 'target': 12.5,
-     'current': 0, 'delta': 12.5, 'max_gain': 31.25, 'modeled_gain': 8.28,
-     'expected_roi': 0.188, 'expected_arr': None, 'resolve_date': None}
+    {'my_price': 0.7, 'market_price': 0.4, 'deference': 0.6667, 'adj_price': 0.50,
+     'delta_price': 0.3, 'adj_delta_price': 0.1, 'kelly': 0.167, 'target': 16.67,
+     'current': 0, 'delta': 16.67, 'max_gain': 25.01, 'modeled_gain': 4.17,
+     'expected_roi': 0.25, 'expected_arr': None, 'resolve_date': None}
     """
-    # TODO: Update docstring
     return kelly(
         my_price=my_price,
         market_price=market_price,
@@ -1213,10 +1223,11 @@ def third_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0
         resolve_date=resolve_date,
         current=current,
         deference=0.6666,
+        error=error,
     )
 
 
-def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0):
+def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current=0, error=True):
     """
     Alias for ``kelly`` where ``deference`` is 0.75.
 
@@ -1235,6 +1246,9 @@ def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current
     current : float
         How much do you already have invested in this event? Used for calculating the
         additional amount you should invest. Defaults to 0.
+    error : boolean
+        Should the function raise an error if your price is below the market price? Or
+        should Kelly behave symmetrically?
 
     Returns
     -------
@@ -1275,6 +1289,7 @@ def quarter_kelly(my_price, market_price, bankroll=1, resolve_date=None, current
         resolve_date=resolve_date,
         current=current,
         deference=0.75,
+        error=error,
     )
 
 
