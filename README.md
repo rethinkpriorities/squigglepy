@@ -100,6 +100,7 @@ sq.sample(sq.norm(1, 3), n=1000, verbose=True)
 
 # Other distributions exist
 sq.lognorm(1, 10)
+sq.invlognorm(1, 10)
 sq.tdist(1, 10, t=5)
 sq.triangular(1, 2, 3)
 sq.pert(1, 2, 3, lam=2)
