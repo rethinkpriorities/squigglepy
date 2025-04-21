@@ -1,4 +1,8 @@
-## v0.29
+## v0.30 - development version
+
+* To come
+
+## v0.29 - latest release
 
 * Fixes a bug where `max_gain` and `modeled_gain` were incorrect in kelly output.
 * Fixes a bug where `error` was not correctly passed from `half_kelly`, `third_kelly`, and `quarter_kelly`.
