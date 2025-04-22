@@ -1,6 +1,6 @@
 ## v0.30 - development version
 
-* To come
+* Uses prettier `tqdm` output that is now aware of Jupyter notebooks.
 
 ## v0.29 - latest release
 

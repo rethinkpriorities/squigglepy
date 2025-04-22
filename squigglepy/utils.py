@@ -185,11 +185,33 @@ def _core_cuts(n, cores):
     return cuts
 
 
+def _is_notebook():
+    """
+    Detect if code is running in a Jupyter notebook environment.
+    """
+    try:
+        # Check if ipython is available
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True  # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal IPython
+        else:
+            return False  # Other type
+    except NameError:
+        return False  # Regular Python interpreter
+
+
 def _init_tqdm(verbose=True, total=None):
-    if verbose:
-        return tqdm(total=total)
-    else:
+    if not verbose:
         return None
+        
+    # Import the appropriate tqdm variant based on environment
+    if _is_notebook():
+        from tqdm.notebook import tqdm as notebook_tqdm
+        return notebook_tqdm(total=total)
+    else:
+        return tqdm(total=total)
 
 
 def _tick_tqdm(pbar, tick_size=1):
