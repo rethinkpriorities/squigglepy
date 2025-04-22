@@ -192,9 +192,9 @@ def _is_notebook():
     try:
         # Check if ipython is available
         shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
+        if shell == "ZMQInteractiveShell":
             return True  # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
+        elif shell == "TerminalInteractiveShell":
             return False  # Terminal IPython
         else:
             return False  # Other type
@@ -205,10 +205,11 @@ def _is_notebook():
 def _init_tqdm(verbose=True, total=None):
     if not verbose:
         return None
-        
+
     # Import the appropriate tqdm variant based on environment
     if _is_notebook():
         from tqdm.notebook import tqdm as notebook_tqdm
+
         return notebook_tqdm(total=total)
     else:
         return tqdm(total=total)
