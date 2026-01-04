@@ -1,6 +1,7 @@
 ## v0.30 - development version
 
 * Uses prettier `tqdm` output that is now aware of Jupyter notebooks.
+* `bayes.update` now supports `lognorm` and `gamma` distributions in addition to `norm` and `beta`.
 
 ## v0.29 - latest release
 
