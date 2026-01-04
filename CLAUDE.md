@@ -18,3 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Error handling: Validate inputs, use ValueError with descriptive messages
 - Use operator overloading (`__add__`, `__mul__`, etc.) and custom operators (`@` for sampling)
 - Tests: Descriptive names, unit tests match module structure, use hypothesis for property testing
+
+## Workflow
+- Always run `make format` before committing to ensure code passes formatting checks
+- Update CHANGES.md when adding new features or fixing bugs

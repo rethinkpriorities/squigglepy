@@ -8,7 +8,17 @@ import pathos.multiprocessing as mp
 
 from datetime import datetime
 
-from .distributions import BetaDistribution, NormalDistribution, norm, beta, mixture
+from .distributions import (
+    BetaDistribution,
+    NormalDistribution,
+    LognormalDistribution,
+    GammaDistribution,
+    norm,
+    beta,
+    lognorm,
+    gamma,
+    mixture,
+)
 from .utils import _core_cuts, _init_tqdm, _tick_tqdm, _flush_tqdm
 
 
@@ -310,14 +320,15 @@ def update(prior, evidence, evidence_weight=1):
     Parameters
     ----------
     prior : Distribution
-        The prior distribution. Currently must either be normal or beta type. Other
-        types are not yet supported.
+        The prior distribution. Supported types: normal, lognormal, beta, gamma.
     evidence : Distribution
-        The distribution used to update the prior. Currently must either be normal
-        or beta type. Other types are not yet supported.
+        The distribution used to update the prior. Must be the same type as prior.
+        Supported types: normal, lognormal, beta, gamma.
     evidence_weight : float
-        How much weight to put on the evidence distribution? Currently this only matters
-        for normal distributions, where this should be equivalent to the sample weight.
+        How much weight to put on the evidence distribution? For normal and lognormal
+        distributions, this is equivalent to the sample weight. For gamma distributions,
+        this scales the evidence shape parameter. For beta distributions, this parameter
+        is currently ignored.
 
     Returns
     -------
@@ -330,6 +341,14 @@ def update(prior, evidence, evidence_weight=1):
     >> evidence = sq.norm(2,3)
     >> bayes.update(prior, evidence)
     <Distribution> norm(mean=2.53, sd=0.29)
+    >> prior = sq.lognorm(1, 10)
+    >> evidence = sq.lognorm(2, 8)
+    >> bayes.update(prior, evidence)
+    <Distribution> lognorm(...)
+    >> prior = sq.gamma(shape=2, scale=1)
+    >> evidence = sq.gamma(shape=3, scale=1.5)
+    >> bayes.update(prior, evidence)
+    <Distribution> gamma(shape=5, scale=...)
     """
     if isinstance(prior, NormalDistribution) and isinstance(evidence, NormalDistribution):
         prior_mean = prior.mean
@@ -345,12 +364,48 @@ def update(prior, evidence, evidence_weight=1):
                 (evidence_var * prior_var) / (evidence_weight * prior_var + evidence_var)
             ),
         )
+    elif isinstance(prior, LognormalDistribution) and isinstance(evidence, LognormalDistribution):
+        # Lognormal update is performed in log-space where it behaves like a normal
+        prior_norm_mean = prior.norm_mean
+        prior_norm_var = prior.norm_sd**2
+        evidence_norm_mean = evidence.norm_mean
+        evidence_norm_var = evidence.norm_sd**2
+        # Apply normal update formula in log-space
+        posterior_norm_mean = (
+            evidence_norm_var * prior_norm_mean
+            + evidence_weight * (prior_norm_var * evidence_norm_mean)
+        ) / (evidence_weight * prior_norm_var + evidence_norm_var)
+        posterior_norm_sd = math.sqrt(
+            (evidence_norm_var * prior_norm_var)
+            / (evidence_weight * prior_norm_var + evidence_norm_var)
+        )
+        return lognorm(norm_mean=posterior_norm_mean, norm_sd=posterior_norm_sd)
     elif isinstance(prior, BetaDistribution) and isinstance(evidence, BetaDistribution):
         prior_a = prior.a
         prior_b = prior.b
         evidence_a = evidence.a
         evidence_b = evidence.b
         return beta(prior_a + evidence_a, prior_b + evidence_b)
+    elif isinstance(prior, GammaDistribution) and isinstance(evidence, GammaDistribution):
+        # Gamma conjugate update: combine shape parameters and compute weighted scale
+        # For gamma distributions with shape α and scale θ, the mean is αθ
+        # We add the shapes and compute a weighted harmonic mean of scales
+        prior_shape = prior.shape
+        prior_scale = prior.scale
+        evidence_shape = evidence.shape * evidence_weight
+        evidence_scale = evidence.scale
+        # Posterior shape is sum of shapes
+        posterior_shape = prior_shape + evidence_shape
+        # Posterior scale uses precision-weighted combination (like normal variance)
+        # Using rate (1/scale) for combination, then converting back
+        prior_rate = 1 / prior_scale
+        evidence_rate = 1 / evidence_scale
+        # Weight rates by their respective shape parameters (effective sample sizes)
+        posterior_rate = (prior_shape * prior_rate + evidence_shape * evidence_rate) / (
+            prior_shape + evidence_shape
+        )
+        posterior_scale = 1 / posterior_rate
+        return gamma(shape=posterior_shape, scale=posterior_scale)
     elif not isinstance(prior, type(evidence)):
         print(type(prior), type(evidence))
         raise ValueError("can only update distributions of the same type.")

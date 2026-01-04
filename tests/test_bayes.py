@@ -3,9 +3,15 @@ import pytest
 
 from ..squigglepy.bayes import simple_bayes, bayesnet, update, average
 from ..squigglepy.samplers import sample
-from ..squigglepy.distributions import discrete, norm, beta, gamma
+from ..squigglepy.distributions import discrete, norm, beta, gamma, lognorm, poisson
 from ..squigglepy.rng import set_seed
-from ..squigglepy.distributions import BetaDistribution, MixtureDistribution, NormalDistribution
+from ..squigglepy.distributions import (
+    BetaDistribution,
+    GammaDistribution,
+    LognormalDistribution,
+    MixtureDistribution,
+    NormalDistribution,
+)
 
 
 def test_simple_bayes():
@@ -407,9 +413,54 @@ def test_update_beta():
     assert out.b == 3
 
 
+def test_update_lognormal():
+    # Lognormal update is performed in log-space
+    out = update(lognorm(1, 10), lognorm(2, 8))
+    assert isinstance(out, LognormalDistribution)
+    # The posterior should be between the prior and evidence in log-space
+    assert out.norm_mean is not None
+    assert out.norm_sd is not None
+    # Posterior uncertainty should be less than both prior and evidence
+    prior_norm_sd = lognorm(1, 10).norm_sd
+    evidence_norm_sd = lognorm(2, 8).norm_sd
+    assert out.norm_sd < prior_norm_sd
+    assert out.norm_sd < evidence_norm_sd
+
+
+def test_update_lognormal_evidence_weight():
+    # With higher evidence weight, posterior should be closer to evidence
+    prior = lognorm(1, 10)
+    evidence = lognorm(2, 8)
+    out_weight1 = update(prior, evidence, evidence_weight=1)
+    out_weight3 = update(prior, evidence, evidence_weight=3)
+    assert isinstance(out_weight3, LognormalDistribution)
+    # With higher weight on evidence, posterior norm_mean should be closer to evidence
+    assert abs(out_weight3.norm_mean - evidence.norm_mean) < abs(
+        out_weight1.norm_mean - evidence.norm_mean
+    )
+
+
+def test_update_gamma():
+    out = update(gamma(shape=2, scale=1), gamma(shape=3, scale=1.5))
+    assert isinstance(out, GammaDistribution)
+    # Shape should be the sum of shapes
+    assert out.shape == 5
+    # Scale should be between the two scales (weighted harmonic mean)
+    assert 1 < out.scale < 1.5
+
+
+def test_update_gamma_evidence_weight():
+    prior = gamma(shape=2, scale=1)
+    evidence = gamma(shape=3, scale=2)
+    out = update(prior, evidence, evidence_weight=2)
+    assert isinstance(out, GammaDistribution)
+    # Shape should be prior.shape + evidence_weight * evidence.shape
+    assert out.shape == 2 + 2 * 3  # = 8
+
+
 def test_update_not_implemented():
     with pytest.raises(ValueError) as excinfo:
-        update(gamma(1), gamma(2))
+        update(poisson(1), poisson(2))
     assert "not supported" in str(excinfo.value)
 
 
