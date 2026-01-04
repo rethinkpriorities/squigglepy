@@ -21,4 +21,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workflow
 - Always run `make format` before committing to ensure code passes formatting checks
-- Update CHANGES.md when adding new features or fixing bugs
+- Always update `CHANGES.md` when making code changes (bug fixes, new features, etc.)
+- Add changelog entries under the development version section at the top (marked with `- development version`)
+- Follow the existing format: `* Description of change`
