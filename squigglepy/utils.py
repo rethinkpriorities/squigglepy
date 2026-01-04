@@ -823,7 +823,7 @@ def growth_rate_to_doubling_time(growth_rate):
     where 0.05 means +5% to a doubling time. The time unit remains the same, so if we've
     got +5% annual growth, the returned value is the doubling time in years.
 
-    NOTE: This only works works for numbers, arrays and distributions where all numbers
+    NOTE: This only works for numbers, arrays and distributions where all numbers
     are above 0. (Otherwise it makes no sense to talk about doubling times.)
 
     Parameters
@@ -860,7 +860,7 @@ def doubling_time_to_growth_rate(doubling_time):
     same, so if we've got a doubling time of 2 years, the returned value is the annual
     growth rate.
 
-    NOTE: This only works works for numbers, arrays and distributions where all numbers
+    NOTE: This only works for numbers, arrays and distributions where all numbers
     are above 0. (Otherwise it makes no sense to talk about doubling times.)
 
     Parameters
