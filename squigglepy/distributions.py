@@ -1796,8 +1796,15 @@ def zero_inflated(p_zero, dist):
      - 0
      - <Distribution> norm(mean=1.5, sd=0.3)
     """
-    if p_zero > 1 or p_zero < 0 or not isinstance(p_zero, float):
+    if isinstance(p_zero, bool) or not isinstance(p_zero, (float, int)):
+        raise ValueError("`p_zero` must be a float or int")
+    if not 0 <= p_zero <= 1:
         raise ValueError("`p_zero` must be between 0 and 1")
+    # Handle edge cases: p_zero=1 means always 0, p_zero=0 means always sample from dist
+    if p_zero == 1:
+        return MixtureDistribution(dists=[0], weights=[1])
+    elif p_zero == 0:
+        return MixtureDistribution(dists=[dist], weights=[1])
     return MixtureDistribution(dists=[0, dist], weights=p_zero)
 
 

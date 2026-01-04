@@ -32,7 +32,7 @@ def _process_weights_values(weights=None, relative_weights=None, values=None, dr
         weights = relative_weights
         relative = True
 
-    if isinstance(weights, float):
+    if isinstance(weights, (float, int)) and not isinstance(weights, bool):
         weights = [weights]
     elif isinstance(weights, np.ndarray):
         weights = list(weights)
