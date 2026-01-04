@@ -364,9 +364,7 @@ def update(prior, evidence, evidence_weight=1):
                 (evidence_var * prior_var) / (evidence_weight * prior_var + evidence_var)
             ),
         )
-    elif isinstance(prior, LognormalDistribution) and isinstance(
-        evidence, LognormalDistribution
-    ):
+    elif isinstance(prior, LognormalDistribution) and isinstance(evidence, LognormalDistribution):
         # Lognormal update is performed in log-space where it behaves like a normal
         prior_norm_mean = prior.norm_mean
         prior_norm_var = prior.norm_sd**2
