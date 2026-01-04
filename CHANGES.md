@@ -8,7 +8,7 @@
 * Fixes a bug where `error` was not correctly passed from `half_kelly`, `third_kelly`, and `quarter_kelly`.
 * Added `invlognorm` as a new distribution.
 * Added `bucket_percentages` to more easily get the percentage of values within a bucket.
-* Added `third_kelly` as an alias for `kelly` with deference = 0.66. (TODO: Fix tests)
+* Added `third_kelly` as an alias for `kelly` with deference = 0.66.
 * Allows Bernoulli distributions to be defined with p=0 or p=1
 * Added a `Makefile` to help simplify testing and linting workflows
 
