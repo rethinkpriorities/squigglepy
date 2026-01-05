@@ -1,5 +1,6 @@
 ## v0.30 - development version
 
+* Adds support for Python 3.13, drops support for Python 3.9 and 3.10.
 * Uses prettier `tqdm` output that is now aware of Jupyter notebooks.
 * `bayes.update` now supports `lognorm` and `gamma` distributions in addition to `norm` and `beta`.
 * Allow `zero_inflated` to accept 0 or 1 as probabilities.
