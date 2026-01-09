@@ -892,6 +892,10 @@ def roll_die(sides, n=1):
     """
     Roll a die.
 
+    .. deprecated::
+        Use ``sq.die(sides) @ n`` or ``sq.sample(sq.die(sides), n=n)`` instead.
+        This function is kept for backwards compatibility.
+
     Parameters
     ----------
     sides : int
@@ -910,26 +914,26 @@ def roll_die(sides, n=1):
     >>> roll_die(6)
     5
     """
-    if is_dist(sides) or callable(sides):
-        from .samplers import sample
+    import warnings
 
-        sides = sample(sides)
-    if not isinstance(n, int):
-        raise ValueError("can only roll an integer number of times")
-    elif sides < 2:
-        raise ValueError("cannot roll less than a 2-sided die.")
-    elif not isinstance(sides, int):
-        raise ValueError("can only roll an integer number of sides")
-    else:
-        from .samplers import sample
-        from .distributions import discrete
+    warnings.warn(
+        "roll_die is deprecated. Use sq.die(sides) @ n or sq.sample(sq.die(sides), n=n) instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .dice import die
+    from .samplers import sample
 
-        return sample(discrete(list(range(1, sides + 1))), n=n) if sides > 0 else None
+    return sample(die(sides), n=n)
 
 
 def flip_coin(n=1):
     """
     Flip a coin.
+
+    .. deprecated::
+        Use ``sq.coin() @ n`` or ``sq.sample(sq.coin(), n=n)`` instead.
+        This function is kept for backwards compatibility.
 
     Parameters
     ----------
@@ -947,11 +951,18 @@ def flip_coin(n=1):
     >>> flip_coin()
     'heads'
     """
-    rolls = roll_die(2, n=n)
-    if isinstance(rolls, int):
-        rolls = [rolls]
-    flips = ["heads" if d == 2 else "tails" for d in rolls]
-    return flips[0] if len(flips) == 1 else flips
+    import warnings
+
+    warnings.warn(
+        "flip_coin is deprecated. Use sq.coin() @ n or sq.sample(sq.coin(), n=n) instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .dice import coin
+    from .samplers import sample
+
+    result = sample(coin(), n=n)
+    return result
 
 
 def kelly(

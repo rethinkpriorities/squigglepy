@@ -176,21 +176,34 @@ a, b = sq.correlate((a, b), 0.5)  # Correlate a and b with a correlation of 0.5
 a, b = sq.correlate((a, b), [[1, 0.5], [0.5, 1]])
 ```
 
-#### Example: Rolling a Die
+#### Example: Rolling Dice and Flipping Coins
 
-An example of how to use distributions to build tools:
+Squigglepy has built-in support for dice and coins as distribution objects:
 
 ```Python
 import squigglepy as sq
 
-def roll_die(sides, n=1):
-    return sq.discrete(list(range(1, sides + 1))) @ n if sides > 0 else None
-
-roll_die(sides=6, n=10)
+# Roll a 6-sided die
+sq.die(6) @ 10  # Roll 10 times
 # [2, 6, 5, 2, 6, 2, 3, 1, 5, 2]
+
+# Use the ~ operator for a single sample
+~sq.die(6)  # Roll once
+# 4
+
+# Flip a coin
+~sq.coin()
+# 'heads'
+
+sq.coin() @ 5  # Flip 5 times
+# ['heads', 'tails', 'heads', 'heads', 'tails']
+
+# Exploding dice (roll again when you get certain values)
+sq.die(6, explode_on=6) @ 5  # D6 that explodes on 6
+# [3, 8, 2, 5, 1]  # The 8 came from rolling 6 + 2
 ```
 
-This is already included standard in the utils of this package. Use `sq.roll_die`.
+Since `die` and `coin` are distribution objects, they work with all distribution operations:
 
 ### Bayesian inference
 
@@ -405,10 +418,11 @@ from squigglepy.numbers import K, M, B, T
 from squigglepy import bayes
 
 def define_event():
-    if sq.flip_coin() == 'heads': # Blue bag
-        return sq.roll_die(6)
+    if ~sq.coin() == 'heads': # Blue bag
+        return ~sq.die(6)
     else: # Red bag
-        return sq.discrete([4, 6, 10, 20]) >> sq.roll_die
+        sides = ~sq.discrete([4, 6, 10, 20])
+        return ~sq.die(sides)
 
 
 bayes.bayesnet(define_event,
