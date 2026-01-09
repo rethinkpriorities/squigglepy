@@ -21,8 +21,6 @@ from ..squigglepy.utils import (
     laplace,
     growth_rate_to_doubling_time,
     doubling_time_to_growth_rate,
-    roll_die,
-    flip_coin,
     kelly,
     full_kelly,
     half_kelly,
@@ -644,80 +642,6 @@ def test_doubling_time_to_growth_rate_nparray():
 
 def test_doubling_time_to_growth_rate_dist():
     assert round(doubling_time_to_growth_rate(const(12)) @ 1, 2) == 0.06
-
-
-def test_roll_die():
-    import warnings
-
-    set_seed(42)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        result = roll_die(6)
-    assert 1 <= result <= 6
-
-
-def test_roll_die_different_sides():
-    import warnings
-
-    set_seed(42)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        result = roll_die(4)
-    assert 1 <= result <= 4
-
-
-def test_roll_one_sided_die():
-    import warnings
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        with pytest.raises(ValueError) as excinfo:
-            roll_die(1)
-    assert "cannot roll less than a 2-sided die" in str(excinfo.value)
-
-
-def test_roll_nonint_die():
-    import warnings
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        with pytest.raises(ValueError) as excinfo:
-            roll_die(2.5)
-    assert "can only roll an integer number of sides" in str(excinfo.value)
-
-
-def test_roll_five_die():
-    import warnings
-
-    set_seed(42)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        result = roll_die(4, 4)
-    assert len(result) == 4
-    for r in result:
-        assert 1 <= r <= 4
-
-
-def test_flip_coin():
-    import warnings
-
-    set_seed(42)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        result = flip_coin()
-    assert result in ["heads", "tails"]
-
-
-def test_flip_five_coins():
-    import warnings
-
-    set_seed(42)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        result = flip_coin(5)
-    assert len(result) == 5
-    for r in result:
-        assert r in ["heads", "tails"]
 
 
 def test_kelly_market_price_error():

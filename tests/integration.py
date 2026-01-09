@@ -157,12 +157,12 @@ def monte_hall_event():
 
 
 def coins_and_dice():
-    flip = sq.flip_coin()
+    flip = ~sq.coin()
     if flip == "heads":
         dice_sides = 6
     else:
         dice_sides = ~sq.discrete([4, 6, 10, 20])
-    return sq.roll_die(dice_sides)
+    return ~sq.die(dice_sides)
 
 
 def model():
