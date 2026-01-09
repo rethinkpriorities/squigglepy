@@ -2,6 +2,7 @@ import pytest
 
 from ..squigglepy.rng import set_seed
 from ..squigglepy.dice import die, coin, Die, Coin
+from ..squigglepy.distributions import OperableDistribution
 from ..squigglepy.samplers import sample
 
 
@@ -9,7 +10,7 @@ def test_die_basic():
     """Test basic die roll."""
     set_seed(42)
     result = ~die(6)
-    assert 1 <= result <= 6
+    assert result == 1
 
 
 def test_die_multiple_samples():
@@ -93,7 +94,7 @@ def test_coin_basic():
     """Test basic coin flip."""
     set_seed(42)
     result = ~coin()
-    assert result in ["heads", "tails"]
+    assert result == "tails"
 
 
 def test_coin_multiple_samples():
@@ -125,16 +126,18 @@ def test_die_is_operable():
     set_seed(42)
     d = die(6)
     # Test that it's an OperableDistribution
+    assert isinstance(d, OperableDistribution)
     assert isinstance(d, Die)
     # Test basic operations
     double_die = d * 2
     result = ~double_die
-    assert 2 <= result <= 12
+    assert result == 2
 
 
 def test_coin_is_operable():
     """Test that coin is an OperableDistribution."""
     c = coin()
+    assert isinstance(c, OperableDistribution)
     assert isinstance(c, Coin)
 
 

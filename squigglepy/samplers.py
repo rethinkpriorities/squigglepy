@@ -673,25 +673,6 @@ def die_sample(sides, explode_on=None, samples=1):
     """
 
     def _single_roll():
-        result = int(_get_rng().integers(1, sides + 1))
-        if explode_on is not None:
-            explode_list = explode_on if isinstance(explode_on, list) else [explode_on]
-            while (
-                result % sides in [0] + [e % sides for e in explode_list] or result in explode_list
-            ):
-                # Check if the last roll was an explosion trigger
-                last_roll = result if result <= sides else (result - 1) % sides + 1
-                if last_roll in explode_list:
-                    new_roll = int(_get_rng().integers(1, sides + 1))
-                    result += new_roll
-                    if new_roll not in explode_list:
-                        break
-                else:
-                    break
-        return result
-
-    # Simpler and more correct implementation
-    def _single_roll_v2():
         total = 0
         roll = int(_get_rng().integers(1, sides + 1))
         total += roll
@@ -703,9 +684,9 @@ def die_sample(sides, explode_on=None, samples=1):
         return total
 
     if samples == 1:
-        return _single_roll_v2()
+        return _single_roll()
     else:
-        return np.array([_single_roll_v2() for _ in range(samples)])
+        return np.array([_single_roll() for _ in range(samples)])
 
 
 def coin_sample(samples=1):
