@@ -4,6 +4,8 @@
 * Uses prettier `tqdm` output that is now aware of Jupyter notebooks.
 * `bayes.update` now supports `lognorm` and `gamma` distributions in addition to `norm` and `beta`.
 * Allow `zero_inflated` to accept 0 or 1 as probabilities.
+* **[New feature]** Added `die(sides, explode_on=None)` and `coin()` as distribution objects for dice and coins. These support all distribution operations like `~`, `@`, `+`, `-`, etc. The `die` distribution also supports "exploding dice" mechanics via the `explode_on` parameter.
+* **[Breaking change]** Removed `roll_die` and `flip_coin` functions. Use `sq.die(sides) @ n` or `~sq.coin()` instead.
 
 ## v0.29 - latest release
 

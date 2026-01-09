@@ -49,6 +49,8 @@ from .distributions import (
     const,
 )
 
+from .dice import Coin, Die
+
 _squigglepy_internal_sample_caches = {}
 
 
@@ -643,6 +645,77 @@ def geometric_sample(p, samples=1):
     return _simplify(_get_rng().geometric(p, samples))
 
 
+def die_sample(sides, explode_on=None, samples=1):
+    """
+    Sample a random number from a die roll.
+
+    Parameters
+    ----------
+    sides : int
+        The number of sides of the die.
+    explode_on : list or int or None
+        Values that trigger an additional die roll. Implements "exploding dice" mechanics.
+    samples : int
+        The number of samples to return.
+
+    Returns
+    -------
+    int or array
+        A random number (or array of numbers) from rolling the die.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> die_sample(6)
+    5
+    >>> die_sample(6, explode_on=6, samples=3)
+    array([4, 2, 8])  # The 8 came from rolling a 6 and then a 2
+    """
+
+    def _single_roll():
+        total = 0
+        roll = int(_get_rng().integers(1, sides + 1))
+        total += roll
+        if explode_on is not None:
+            explode_list = explode_on if isinstance(explode_on, list) else [explode_on]
+            while roll in explode_list:
+                roll = int(_get_rng().integers(1, sides + 1))
+                total += roll
+        return total
+
+    if samples == 1:
+        return _single_roll()
+    else:
+        return np.array([_single_roll() for _ in range(samples)])
+
+
+def coin_sample(samples=1):
+    """
+    Sample a coin flip.
+
+    Parameters
+    ----------
+    samples : int
+        The number of samples to return.
+
+    Returns
+    -------
+    str or list
+        "heads" or "tails" for a single sample, or a list of results for multiple samples.
+
+    Examples
+    --------
+    >>> set_seed(42)
+    >>> coin_sample()
+    'heads'
+    """
+    if samples == 1:
+        return "heads" if _get_rng().integers(0, 2) == 1 else "tails"
+    else:
+        results = _get_rng().integers(0, 2, samples)
+        return ["heads" if r == 1 else "tails" for r in results]
+
+
 def _mixture_sample_for_large_n(
     values,
     weights=None,
@@ -1132,6 +1205,12 @@ def sample(
 
         elif isinstance(dist, GeometricDistribution):
             samples = geometric_sample(p=dist.p, samples=n)
+
+        elif isinstance(dist, Die):
+            samples = die_sample(sides=dist.sides, explode_on=dist.explode_on, samples=n)
+
+        elif isinstance(dist, Coin):
+            samples = coin_sample(samples=n)
 
         elif isinstance(dist, ComplexDistribution):
             if dist.right is None:

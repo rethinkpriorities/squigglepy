@@ -21,8 +21,6 @@ from ..squigglepy.utils import (
     laplace,
     growth_rate_to_doubling_time,
     doubling_time_to_growth_rate,
-    roll_die,
-    flip_coin,
     kelly,
     full_kelly,
     half_kelly,
@@ -35,7 +33,7 @@ from ..squigglepy.utils import (
     bucket_percentages,
 )
 from ..squigglepy.rng import set_seed
-from ..squigglepy.distributions import bernoulli, beta, norm, dist_round, const
+from ..squigglepy.distributions import bernoulli, beta, const
 
 
 def test_process_weights_values_simple_case():
@@ -644,54 +642,6 @@ def test_doubling_time_to_growth_rate_nparray():
 
 def test_doubling_time_to_growth_rate_dist():
     assert round(doubling_time_to_growth_rate(const(12)) @ 1, 2) == 0.06
-
-
-def test_roll_die():
-    set_seed(42)
-    assert roll_die(6) == 5
-
-
-def test_roll_die_different_sides():
-    set_seed(42)
-    assert roll_die(4) == 4
-
-
-def test_roll_die_with_distribution():
-    set_seed(42)
-    assert (norm(2, 6) >> dist_round >> roll_die) == 2
-
-
-def test_roll_one_sided_die():
-    with pytest.raises(ValueError) as excinfo:
-        roll_die(1)
-    assert "cannot roll less than a 2-sided die" in str(excinfo.value)
-
-
-def test_roll_nonint_die():
-    with pytest.raises(ValueError) as excinfo:
-        roll_die(2.5)
-    assert "can only roll an integer number of sides" in str(excinfo.value)
-
-
-def test_roll_nonint_n():
-    with pytest.raises(ValueError) as excinfo:
-        roll_die(6, 2.5)
-    assert "can only roll an integer number of times" in str(excinfo.value)
-
-
-def test_roll_five_die():
-    set_seed(42)
-    assert list(roll_die(4, 4)) == [4, 2, 4, 3]
-
-
-def test_flip_coin():
-    set_seed(42)
-    assert flip_coin() == "heads"
-
-
-def test_flip_five_coins():
-    set_seed(42)
-    assert flip_coin(5) == ["heads", "tails", "heads", "heads", "tails"]
 
 
 def test_kelly_market_price_error():
