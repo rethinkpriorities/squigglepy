@@ -216,7 +216,7 @@ import squigglepy as sq
 def revenue_model():
     customers = sq.to(100, 500)  # 90% CI: 100-500 customers
     revenue_per_customer = sq.to(10, 50)  # 90% CI: $10-$50 per customer
-    return ~customers * ~revenue_per_customer
+    return customers * revenue_per_customer
 
 # Sample from the model
 samples = sq.sample(revenue_model, n=1000)
@@ -241,7 +241,7 @@ def project_cost_model():
     else:
         multiplier = sq.const(1.0)
 
-    return ~base_cost * ~multiplier
+    return base_cost * multiplier
 
 # Get 1000 samples from the model
 results = sq.sample(project_cost_model, n=1000)
