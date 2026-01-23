@@ -203,7 +203,50 @@ sq.die(6, explode_on=6) @ 5  # D6 that explodes on 6
 # [3, 8, 2, 5, 1]  # The 8 came from rolling 6 + 2
 ```
 
-Since `die` and `coin` are distribution objects, they work with all distribution operations:
+Since `die` and `coin` are distribution objects, they work with all distribution operations like `+`, `-`, `*`, `/`, and mixtures.
+
+### Model Functions
+
+You can define a model as a Python function that uses squigglepy distributions, then sample from it using `sq.sample`. This is useful for building more complex probabilistic models:
+
+```Python
+import squigglepy as sq
+
+# Define a simple model function
+def revenue_model():
+    customers = sq.to(100, 500)  # 90% CI: 100-500 customers
+    revenue_per_customer = sq.to(10, 50)  # 90% CI: $10-$50 per customer
+    return ~customers * ~revenue_per_customer
+
+# Sample from the model
+samples = sq.sample(revenue_model, n=1000)
+
+# Analyze the results
+sq.get_percentiles(samples)
+```
+
+Model functions can include conditional logic and more complex structures:
+
+```Python
+import squigglepy as sq
+
+def project_cost_model():
+    # Base cost estimate
+    base_cost = sq.to(50_000, 100_000)
+
+    # Risk factor - 30% chance of complications
+    if sq.event(0.3):
+        # Complications add 20-50% to cost
+        multiplier = sq.uniform(1.2, 1.5)
+    else:
+        multiplier = sq.const(1.0)
+
+    return ~base_cost * ~multiplier
+
+# Get 1000 samples from the model
+results = sq.sample(project_cost_model, n=1000)
+print(sq.get_percentiles(results))
+```
 
 ### Bayesian inference
 

@@ -1,5 +1,6 @@
 ## v0.30 - development version
 
+* Added documentation for model functions and `sq.sample` in README.
 * Adds support for Python 3.13, drops support for Python 3.9 and 3.10.
 * Uses prettier `tqdm` output that is now aware of Jupyter notebooks.
 * `bayes.update` now supports `lognorm` and `gamma` distributions in addition to `norm` and `beta`.
