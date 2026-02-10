@@ -40,6 +40,7 @@ from .distributions import (
     InverseLognormalDistribution,
     MixtureDistribution,
     NormalDistribution,
+    OperableDistribution,
     ParetoDistribution,
     PoissonDistribution,
     TDistribution,
@@ -984,6 +985,10 @@ def sample(
 
     if verbose is None:
         verbose = n >= 1000000
+
+    # Simplify distribution analytically before sampling
+    if isinstance(dist, OperableDistribution):
+        dist = dist.simplify()
 
     # Handle loading from cache
     samples = None
